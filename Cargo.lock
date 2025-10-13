@@ -3003,12 +3003,35 @@ dependencies = [
 
 [[package]]
 name = "evm_protocol_adapter_bindings"
+version = "1.0.0-rc.2"
+source = "git+https://github.com/anoma/evm-protocol-adapter.git?rev=d1d0e83ce413df0ca87d63e019332b2628b982e0#d1d0e83ce413df0ca87d63e019332b2628b982e0"
+dependencies = [
+ "alloy",
+ "arm",
+ "serde",
+ "tokio",
+]
+
+[[package]]
+name = "evm_protocol_adapter_bindings"
 version = "1.0.0-rc.3"
 source = "git+https://github.com/anoma/evm-protocol-adapter?branch=main#c55e814c4eb79f8e3a3e205c5aa9efb0b5a24a6f"
 dependencies = [
  "alloy",
  "arm",
  "serde",
+ "tokio",
+]
+
+[[package]]
+name = "example_transactions"
+version = "1.0.0-rc.2"
+dependencies = [
+ "alloy",
+ "arm",
+ "evm_protocol_adapter_bindings 1.0.0-rc.2",
+ "sha2",
+ "simple-transfer-app",
  "tokio",
 ]
 
@@ -3807,7 +3830,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.6.1",
+ "socket2 0.5.10",
  "system-configuration",
  "tokio",
  "tower-service",
@@ -5406,7 +5429,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls",
- "socket2 0.6.1",
+ "socket2 0.5.10",
  "thiserror 2.0.17",
  "tokio",
  "tracing",
@@ -5443,7 +5466,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.6.1",
+ "socket2 0.5.10",
  "tracing",
  "windows-sys 0.60.2",
 ]
@@ -6846,6 +6869,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 
 [[package]]
+name = "simple-transfer-app"
+version = "0.1.0"
+source = "git+https://github.com/anoma/arm-risc0?tag=v0.8.1#a0cca9cdc8e87508b97f6afc65a3b7582aa3e59d"
+dependencies = [
+ "arm",
+ "hex",
+ "lazy_static",
+ "rand 0.8.5",
+ "risc0-zkvm",
+ "serde",
+ "simple-transfer-witness",
+]
+
+[[package]]
+name = "simple-transfer-witness"
+version = "0.1.0"
+source = "git+https://github.com/anoma/arm-risc0?tag=v0.8.1#a0cca9cdc8e87508b97f6afc65a3b7582aa3e59d"
+dependencies = [
+ "arm",
+ "rand 0.8.5",
+ "serde",
+]
+
+[[package]]
 name = "simple_asn1"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7542,7 +7589,7 @@ dependencies = [
  "bincode",
  "bonsai-sdk",
  "dotenv",
- "evm_protocol_adapter_bindings",
+ "evm_protocol_adapter_bindings 1.0.0-rc.3",
  "futures",
  "k256",
  "log",
