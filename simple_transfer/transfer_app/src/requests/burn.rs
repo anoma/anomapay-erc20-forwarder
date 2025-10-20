@@ -31,6 +31,7 @@ use transfer_library::TransferLogic;
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub struct BurnRequest {
     pub burned_resource: JsonResource,
+    pub created_resource: JsonResource,
     #[serde_as(as = "Base64")]
     pub burner_nf_key: Vec<u8>,
     pub burner_verifying_key: AffinePoint,
@@ -48,6 +49,8 @@ pub async fn burn_from_request(
 ) -> Result<Transaction, TransactionError> {
     let burned_resource: Resource =
         Expand::expand(request.burned_resource).map_err(|_| DecodingError)?;
+    let created_resource: Resource =
+        Expand::expand(request.created_resource).map_err(|_| DecodingError)?;
     let burner_nf_key: NullifierKey = NullifierKey::from_bytes(request.burner_nf_key.as_slice());
     let burner_auth_verifying_key: AuthorizationVerifyingKey =
         AuthorizationVerifyingKey::from_affine(request.burner_verifying_key);
