@@ -3,7 +3,7 @@ use crate::errors::TransactionError::{
     ActionError, ActionTreeError, ComplianceUnitCreateError, DeltaProofCreateError,
     InvalidKeyChain, InvalidNullifierSizeError, LogicProofCreateError, MerkleProofError,
 };
-use crate::evm::evm_calls::pa_merkle_path;
+use crate::evm::indexer::pa_merkle_path;
 use crate::examples::burn::value_ref_ephemeral_burn;
 use crate::examples::shared::{label_ref, random_nonce, verify_transaction};
 use crate::user::Keychain;

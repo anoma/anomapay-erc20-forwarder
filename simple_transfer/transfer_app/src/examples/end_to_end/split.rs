@@ -3,7 +3,7 @@ use crate::errors::TransactionError::{
     ActionError, ComplianceUnitCreateError, DeltaProofCreateError, InvalidAmount, InvalidKeyChain,
     InvalidNullifierSizeError, LogicProofCreateError, MerklePathError, MerkleProofError,
 };
-use crate::evm::evm_calls::pa_merkle_path;
+use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::{label_ref, random_nonce, value_ref_created, verify_transaction};
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
