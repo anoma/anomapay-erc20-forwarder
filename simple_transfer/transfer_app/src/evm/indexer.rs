@@ -114,7 +114,7 @@ mod tests {
     use arm::Digest;
 
     #[tokio::test]
-    async fn fails_with_internal_server_error_on_non_existent_merkle_path() {
+    async fn fails_with_internal_server_error_on_non_existent_commitment() {
         let cm = Digest::new([0u32; 8]);
         assert_eq!(
             merkle_path_from_indexer(cm)
