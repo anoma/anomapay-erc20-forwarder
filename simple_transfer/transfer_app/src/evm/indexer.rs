@@ -1,6 +1,5 @@
 use crate::evm::errors::EvmError;
 use crate::evm::errors::EvmError::IndexerError;
-use alloy::hex::ToHexExt;
 use arm::merkle_path::MerklePath;
 use arm::Digest;
 use futures::TryFutureExt;
@@ -28,16 +27,18 @@ struct Frontier {
 /// Fetches the merkle path from the indexer and returns its parsed response. On
 /// This still has to be converted into a real MerklePath struct.
 async fn merkle_path_from_indexer(commitment: Digest) -> Result<ProofResponse, Error> {
-    let hash = ToHexExt::encode_hex(&commitment);
-    let url: Url = format!("http://localhost:4000/generate_proof/0x{hash}")
-        .parse()
-        .unwrap();
+    let url: Url = format!(
+        "http://localhost:4000/generate_proof/0x{}",
+        commitment.to_string()
+    )
+    .parse()
+    .unwrap();
 
     let client = reqwest::Client::new();
     let mut delay = Duration::from_millis(250);
     let mut last_err: Option<Error> = None;
 
-    for attempt in 1..=6 {
+    for attempt in 1u8..=6 {
         let resp_res = client.get(url.clone()).send().await?;
 
         match resp_res.error_for_status_ref() {

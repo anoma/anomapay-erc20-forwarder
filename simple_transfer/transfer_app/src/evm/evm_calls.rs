@@ -6,7 +6,7 @@ use arm::transaction::Transaction;
 use evm_protocol_adapter_bindings::call::protocol_adapter;
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
 
-/// Submit a transaction to the protocol adapter, and wait for the receipt
+/// Submit a transaction to the protocol adapter and wait for the receipt.
 pub async fn pa_submit_transaction(
     transaction: Transaction,
 ) -> Result<TransactionReceipt, EvmError> {
