@@ -34,26 +34,23 @@ struct AnomaPayConfig {
     forwarder_address: Address,
     // url of the ethereum rpc
     ethereum_rpc: String,
-    // api key for the ethereum rpc
-    #[serde(skip_serializing)]
-    ethereum_rpc_api_key: String,
+    // url of the anoma indexer
     indexer_address: String,
 }
 
 /// Reads the environment for required values and sets them into the config.
 fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
-    let forwarder_address = env::var("FORWARDER_ADDRESS").map_err(|_| "USER_ADDRESS not set")?;
+    let forwarder_address =
+        env::var("FORWARDER_ADDRESS").map_err(|_| "FORWARDER_ADDRESS not set")?;
     let forwarder_address = Address::parse_checksummed(forwarder_address, None)
         .map_err(|_| "FORWARDER_ADDRESS invalid")?;
 
     let ethereum_rpc = env::var("RPC_URL").map_err(|_| "RPC_URL not set")?;
     let indexer_address = env::var("INDEXER_ADDRESS").map_err(|_| "INDEXER_ADDRESS not set")?;
-    let ethereum_rpc_api_key = env::var("API_KEY").map_err(|_| "API_KEY not set")?;
 
     Ok(AnomaPayConfig {
         forwarder_address,
         ethereum_rpc,
-        ethereum_rpc_api_key,
         indexer_address,
     })
 }

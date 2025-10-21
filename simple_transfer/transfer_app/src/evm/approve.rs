@@ -27,11 +27,8 @@ pub async fn is_address_approved(
     config: &AnomaPayConfig,
     token_address: Address,
 ) -> Result<bool, Box<dyn Error>> {
-    // rpc url of sepolia to talk to the contract
-    let rpc_url_with_key = format!("{}/{}", config.ethereum_rpc, config.ethereum_rpc_api_key);
-
     // call the contract to check if the user approved
-    let url = rpc_url_with_key.parse()?;
+    let url = config.ethereum_rpc.parse()?;
     let provider = ProviderBuilder::new().connect_http(url);
 
     // create a contract instance
