@@ -3,7 +3,7 @@ use crate::errors::TransactionError::{
     ActionError, ActionTreeError, ComplianceUnitCreateError, DecodingError, DeltaProofCreateError,
     EncodingError, InvalidKeyChain, LogicProofCreateError, MerkleProofError,
 };
-use crate::evm::evm_calls::pa_merkle_path;
+use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::verify_transaction;
 use crate::requests::resource::JsonResource;
 use crate::requests::Expand;

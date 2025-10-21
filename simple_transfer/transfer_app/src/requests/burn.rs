@@ -4,7 +4,7 @@ use crate::errors::TransactionError::{
     EncodingError, InvalidKeyChain, InvalidNullifierSizeError, LogicProofCreateError,
     MerkleProofError,
 };
-use crate::evm::evm_calls::pa_merkle_path;
+use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::{label_ref, random_nonce, value_ref, verify_transaction};
 use crate::requests::resource::JsonResource;
 use crate::requests::Expand;
