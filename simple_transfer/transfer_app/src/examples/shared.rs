@@ -50,14 +50,8 @@ pub fn value_ref_created(keychain: &Keychain) -> Digest {
 /// value allows us to distinguish between wrapped USDC or USDT tokens, for example. The
 /// forwarder contract is used for multiple tokens, so the tuple (forwarder address, token
 /// contract) uniquely identifies a resource.
-pub fn label_ref(config: &AnomaPayConfig) -> Digest {
-    hash_bytes(
-        &[
-            config.forwarder_address.to_vec(),
-            config.token_address.to_vec(),
-        ]
-        .concat(),
-    )
+pub fn label_ref(config: &AnomaPayConfig, token_address: Address) -> Digest {
+    hash_bytes(&[config.forwarder_address.to_vec(), token_address.to_vec()].concat())
 }
 
 // these can be dead code because they're used for development.
@@ -85,13 +79,14 @@ pub async fn create_permit_signature(
     nullifier: [u8; 32],
     amount: u128,
     config: &AnomaPayConfig,
+    token_address: Address,
 ) -> Signature {
     let action_tree_root: Digest = action_tree.root();
     let action_tree_encoded: &[u8] = action_tree_root.as_ref();
 
     let x = Permit2Data {
         chain_id: 11155111,
-        token: config.token_address,
+        token: token_address,
         amount: U256::from(amount),
         nonce: U256::from_be_bytes(nullifier),
         deadline: U256::from(config.deadline),

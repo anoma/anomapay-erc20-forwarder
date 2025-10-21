@@ -17,7 +17,7 @@ mod tests;
 mod user;
 mod webserver;
 
-use crate::requests::mint::json_example_mint_request;
+use crate::examples::mint::json_example_mint_request;
 use crate::webserver::{
     all_options, burn, default_error, health, is_approved, mint, split, transfer, unprocessable,
     Cors,
@@ -30,8 +30,6 @@ use std::error::Error;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct AnomaPayConfig {
-    // Address of the tokens that are being wrapped (e.g., USDC)
-    token_address: Address,
     // Address of the permi2 contract (see https://docs.uniswap.org/contracts/v4/deployments)
     permit2_address: Address,
     // default amount to use in mint/transfer
@@ -50,10 +48,6 @@ struct AnomaPayConfig {
 
 /// Reads the environment for required values and sets them into the config.
 fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
-    let token_address = env::var("TOKEN_ADDRESS").map_err(|_| "TOKEN_ADDRESS not set")?;
-    let token_address =
-        Address::parse_checksummed(token_address, None).map_err(|_| "TOKEN_ADDRESS invalid")?;
-
     let permit2_address = env::var("PERMIT2_ADDRESS").map_err(|_| "USER_ADDRESS not set")?;
     let permit2_address =
         Address::parse_checksummed(permit2_address, None).map_err(|_| "PERMIT2_ADDRESS invalid")?;
@@ -75,7 +69,6 @@ fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
     let ethereum_rpc_api_key = env::var("API_KEY").map_err(|_| "API_KEY not set")?;
 
     Ok(AnomaPayConfig {
-        token_address,
         permit2_address,
         default_amount,
         deadline,

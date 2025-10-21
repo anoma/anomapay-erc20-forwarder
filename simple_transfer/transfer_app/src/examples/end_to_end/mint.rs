@@ -7,6 +7,7 @@ use crate::examples::mint::value_ref_ephemeral_mint;
 use crate::examples::shared::{
     create_permit_signature, label_ref, random_nonce, value_ref_created, verify_transaction,
 };
+use crate::examples::TOKEN_ADDRESS_SEPOLIA_USDC;
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
 use alloy::primitives::U256;
@@ -39,7 +40,7 @@ pub async fn create_mint_transaction(
     let nonce = random_nonce();
     let consumed_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
-        label_ref: label_ref(config),
+        label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: amount,
         value_ref: value_ref_ephemeral_mint(&minter),
         is_ephemeral: true,
@@ -68,7 +69,7 @@ pub async fn create_mint_transaction(
 
     let created_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
-        label_ref: label_ref(config),
+        label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: amount,
         value_ref: value_ref_created(&minter),
         is_ephemeral: false,
@@ -100,6 +101,7 @@ pub async fn create_mint_transaction(
         nullifier,
         amount,
         config,
+        TOKEN_ADDRESS_SEPOLIA_USDC,
     )
     .await;
 
@@ -146,7 +148,7 @@ pub async fn create_mint_transaction(
         consumed_resource_path,
         minter.nf_key.clone(),
         config.forwarder_address.to_vec(),
-        config.token_address.to_vec(),
+        TOKEN_ADDRESS_SEPOLIA_USDC.to_vec(),
         minter.evm_address.to_vec(),
         nonce.to_vec(),
         U256::from(config.deadline).to_be_bytes_vec(),

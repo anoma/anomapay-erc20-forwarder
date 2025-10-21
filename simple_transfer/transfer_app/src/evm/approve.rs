@@ -24,6 +24,7 @@ interface IERC20 {
 pub async fn is_address_approved(
     token_holder: Address,
     config: &AnomaPayConfig,
+    token_address: Address,
 ) -> Result<bool, Box<dyn Error>> {
     // rpc url of sepolia to talk to the contract
     let rpc_url_with_key = format!("{}/{}", config.ethereum_rpc, config.ethereum_rpc_api_key);
@@ -33,7 +34,7 @@ pub async fn is_address_approved(
     let provider = ProviderBuilder::new().connect_http(url);
 
     // create a contract instance
-    let contract = IERC20::new(config.token_address, provider.clone());
+    let contract = IERC20::new(token_address, provider.clone());
 
     let res = contract
         .allowance(token_holder, config.permit2_address)

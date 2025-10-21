@@ -2,6 +2,7 @@
 mod tests {
     use crate::evm::approve::is_address_approved;
     use crate::load_config;
+    use crate::tests::TOKEN_ADDRESS_SEPOLIA_USDC;
     use alloy::primitives::address;
 
     /// Given an address that should not be approved on the permit2 contract, verify that it
@@ -18,7 +19,8 @@ mod tests {
         let unapproved_address = address!("0x44B73CbC3C2E902cD0768854c2ff914DD44a325F");
 
         // assert this address is unapproved.
-        let is_approved = is_address_approved(unapproved_address, &config).await;
+        let is_approved =
+            is_address_approved(unapproved_address, &config, TOKEN_ADDRESS_SEPOLIA_USDC).await;
         assert!(is_approved.is_ok());
         let is_approved = is_approved.unwrap();
 
@@ -33,7 +35,8 @@ mod tests {
         let approved_address = address!("0x26aBD8C363f6Aa7FC4db989Ba4F34E7Bd5573A16");
 
         // assert this address is unapproved.
-        let is_approved = is_address_approved(approved_address, &config).await;
+        let is_approved =
+            is_address_approved(approved_address, &config, TOKEN_ADDRESS_SEPOLIA_USDC).await;
         assert!(is_approved.is_ok());
         let is_approved = is_approved.unwrap();
 
