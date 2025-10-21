@@ -1,13 +1,18 @@
 use crate::evm::errors::EvmError;
-use crate::evm::errors::EvmError::IndexerError;
+use crate::evm::errors::EvmError::{MerklePathNotFound, MerklePathValueError};
+use crate::evm::errors::IndexerError;
+use crate::evm::errors::IndexerError::{
+    InvalidIndexer, OverloadedIndexer, Recoverable, Unrecoverable,
+};
 use arm::merkle_path::MerklePath;
 use arm::Digest;
-use futures::TryFutureExt;
-use reqwest::{Error, Url};
+use log::{error, warn};
+use reqwest::{Client, Url};
 use serde::Deserialize;
 use serde_with::hex::Hex;
 use serde_with::serde_as;
 use std::time::Duration;
+use tokio::time::sleep;
 
 #[serde_as]
 #[derive(Deserialize, Debug, PartialEq)]
@@ -24,70 +29,9 @@ struct Frontier {
     is_left: bool,
 }
 
-/// Fetches the merkle path from the indexer and returns its parsed response.
-/// On failure, it attempts to retry up to 6 times.
-/// This still has to be converted into a real MerklePath struct.
-async fn merkle_path_from_indexer(commitment: Digest) -> Result<ProofResponse, Error> {
-    let url: Url = format!("http://localhost:4000/generate_proof/0x{commitment}")
-        .parse()
-        .unwrap();
-
-    let client = reqwest::Client::new();
-    let mut delay = Duration::from_millis(250);
-    let mut last_err: Option<Error> = None;
-
-    for attempt in 1u8..=6 {
-        let resp_res = client.get(url.clone()).send().await?;
-
-        match resp_res.error_for_status_ref() {
-            Ok(_) => {
-                let json = resp_res.json::<ProofResponse>().await?;
-                println!("{json:?}");
-                return Ok(json);
-            }
-            Err(err) if err.status() == Some(reqwest::StatusCode::TOO_MANY_REQUESTS) => {
-                let dur = Duration::from_secs(10);
-                println!("Attempt #{attempt} failed with {err:?}. Retry in {dur:?}...");
-
-                tokio::time::sleep(dur).await;
-                last_err = Some(err);
-            }
-            Err(err)
-                if err.status().is_some_and(|s| s.is_server_error()) // 5xx errors.
-                    || err.is_connect() // DNS resolution failures, connection refused/reset, etc.
-                    || err.is_timeout() // Request or connect timeout.
-                    || err.is_request() // Transient request build/dispatch issue.
-                    || err.is_body()    // Transient body read/decode issues.
-            =>
-            {
-                println!("Attempt #{attempt} failed with {err:?}. Retry in {delay:?}...");
-                tokio::time::sleep(delay).await;
-
-                // Update last error.
-                last_err = Some(err);
-
-                // Prepare for the next attempt.
-                delay *= 2;
-            }
-            Err(err) => {
-                // Non-retryable. Bubble up immediately.
-                return Err(err);
-            }
-        }
-    }
-    match last_err {
-        Some(err) => Err(err),
-        None => panic!("exhausted retries without a specific error"),
-    }
-}
-
-/// Given a commitment of a resource, looks up the merkle path for this resource.
-pub async fn pa_merkle_path(commitment: Digest) -> Result<MerklePath, EvmError> {
-    let merkle_path_response = merkle_path_from_indexer(commitment)
-        .map_err(|_| IndexerError)
-        .await?;
-
-    let x: Result<Vec<(Digest, bool)>, EvmError> = merkle_path_response
+/// Given a ProofResponse, parses into a MerklePath.
+fn parse_merkle_path(proof_response: ProofResponse) -> Result<MerklePath, EvmError> {
+    let merkle_path: Result<Vec<(Digest, bool)>, EvmError> = proof_response
         .frontiers
         .into_iter()
         .map(|frontier| {
@@ -95,34 +39,119 @@ pub async fn pa_merkle_path(commitment: Digest) -> Result<MerklePath, EvmError> 
                 .neighbour
                 .as_slice()
                 .try_into()
-                .map_err(|_| IndexerError)?;
-            println!("{bytes:?}");
+                .map_err(|_| MerklePathValueError)?;
+            println!("{:?}", bytes);
             let sibling_digest = Digest::from(bytes);
             Ok((sibling_digest, !frontier.is_left))
         })
         .collect();
 
-    let merkle_path_vec = x?;
-
+    let merkle_path_vec = merkle_path?;
     Ok(MerklePath::from_path(merkle_path_vec.as_slice()))
+}
+
+/// Try to get the merkle path from the indexer for the given commitment.
+/// If the path is
+async fn get_merkle_path(client: &Client, url: &Url) -> Result<ProofResponse, IndexerError> {
+    // try and parse the json response.
+    let response = client.get(url.to_owned()).send().await;
+    match response {
+        Ok(response) => {
+            match response.error_for_status_ref() {
+                // got a valid response from the indexer
+                Ok(_) => response
+                    .json::<ProofResponse>()
+                    .await
+                    .map_err(|_| InvalidIndexer),
+                // too many requests is recoverable, but requires waiting a bit longer
+                Err(err) if err.status() == Some(reqwest::StatusCode::TOO_MANY_REQUESTS) => {
+                    Err(OverloadedIndexer)
+                }
+                // some errors are recoverable
+                Err(err)
+                if err.status().is_some_and(|s| s.is_server_error()) // 5xx errors.
+                    || err.is_connect() // DNS resolution failures, connection refused/reset, etc.
+                    || err.is_timeout() // Request or connect timeout.
+                    || err.is_request() // Transient request build/dispatch issue.
+                    || err.is_body()    // Transient body read/decode issues.
+                =>
+                    {
+                        Err(Recoverable(err))
+                    }
+                // any other HTTP response codes are unrecoverable
+                Err(err) => {
+                    // Non-retryable. Bubble up immediately.
+                    Err(Unrecoverable(err))
+                }
+            }
+        }
+        // failed to communicate with the webserver (wrong url or something)
+        Err(err) => Err(Unrecoverable(err)),
+    }
+}
+
+/// Tries to fetch the merkle path for the given commitment, and retries at most `retries` times.
+async fn try_get_merkle_path(
+    client: &Client,
+    url: &Url,
+    tries: u32,
+) -> Result<ProofResponse, EvmError> {
+    for attempt in 0..=tries {
+        let delay = Duration::from_millis(250 * 2_u64.pow(attempt));
+        sleep(delay).await;
+
+        let result = get_merkle_path(client, url).await;
+
+        match result {
+            Ok(proof_response) => return Ok(proof_response),
+            Err(Recoverable(err)) => {
+                warn!("recoverable error while getting merkle path: {:?}", err)
+            }
+            Err(OverloadedIndexer) => {}
+            Err(Unrecoverable(err)) => {
+                error!("unrecoverable error while getting merkle path: {:?}", err)
+            }
+            Err(err) => return Err(EvmError::Indexer(err)),
+        }
+        warn!("failed to get merkle path, attempting again...")
+    }
+
+    // tried `tries` times and did not get a result
+    Err(MerklePathNotFound)
+}
+
+/// Given a commitment of a resource, looks up the merkle path for this resource.
+pub async fn pa_merkle_path(commitment: Digest) -> Result<MerklePath, EvmError> {
+    let url: Url = format!("http://navi.localdomain:4000/generate_proof/0x{commitment}")
+        .parse()
+        .unwrap();
+
+    let client = Client::new();
+
+    match try_get_merkle_path(&client, &url, 5).await {
+        Ok(proof_response) => parse_merkle_path(proof_response),
+        Err(EvmError::Indexer(err)) => {
+            error!("failed to get merkle path: {:?}", err);
+            Err(EvmError::Indexer(err))
+        }
+        Err(err) => {
+            error!("failed to get merkle path: {:?}", err);
+            Err(err)
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::evm::indexer::merkle_path_from_indexer;
+    use crate::evm::indexer::pa_merkle_path;
     use arm::Digest;
 
     #[tokio::test]
     async fn fails_with_internal_server_error_on_non_existent_commitment() {
         let cm = Digest::new([0u32; 8]);
-        assert_eq!(
-            merkle_path_from_indexer(cm)
-                .await
-                .err()
-                .unwrap()
-                .status()
-                .unwrap(),
-            reqwest::StatusCode::INTERNAL_SERVER_ERROR
-        );
+
+        let result = pa_merkle_path(cm).await;
+        assert!(result.is_err());
     }
 }
+
