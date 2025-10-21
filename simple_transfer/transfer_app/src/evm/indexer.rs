@@ -27,12 +27,9 @@ struct Frontier {
 /// Fetches the merkle path from the indexer and returns its parsed response. On
 /// This still has to be converted into a real MerklePath struct.
 async fn merkle_path_from_indexer(commitment: Digest) -> Result<ProofResponse, Error> {
-    let url: Url = format!(
-        "http://localhost:4000/generate_proof/0x{}",
-        commitment.to_string()
-    )
-    .parse()
-    .unwrap();
+    let url: Url = format!("http://localhost:4000/generate_proof/0x{commitment}")
+        .parse()
+        .unwrap();
 
     let client = reqwest::Client::new();
     let mut delay = Duration::from_millis(250);
@@ -78,7 +75,7 @@ async fn merkle_path_from_indexer(commitment: Digest) -> Result<ProofResponse, E
         }
     }
     match last_err {
-        Some(e) => Err(reqwest::Error::from(e)),
+        Some(err) => Err(err),
         None => panic!("exhausted retries without a specific error"),
     }
 }
@@ -98,7 +95,7 @@ pub async fn pa_merkle_path(commitment: Digest) -> Result<MerklePath, EvmError> 
                 .as_slice()
                 .try_into()
                 .map_err(|_| IndexerError)?;
-            println!("{:?}", bytes);
+            println!("{bytes:?}");
             let sibling_digest = Digest::from(bytes);
             Ok((sibling_digest, !frontier.is_left))
         })
