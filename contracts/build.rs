@@ -10,7 +10,7 @@ fn main() {
 
     // run forge build --ast
     let status = Command::new("forge")
-        .args(&["build", "--ast"])
+        .args(["build", "--ast"])
         .status()
         .expect("failed to run forge command");
 
