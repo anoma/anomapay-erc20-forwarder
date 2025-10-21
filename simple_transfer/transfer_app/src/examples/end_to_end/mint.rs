@@ -7,7 +7,7 @@ use crate::examples::mint::value_ref_ephemeral_mint;
 use crate::examples::shared::{
     create_permit_signature, label_ref, random_nonce, value_ref_created, verify_transaction,
 };
-use crate::examples::TOKEN_ADDRESS_SEPOLIA_USDC;
+use crate::examples::{DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC};
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
 use alloy::primitives::U256;
@@ -102,6 +102,7 @@ pub async fn create_mint_transaction(
         amount,
         config,
         TOKEN_ADDRESS_SEPOLIA_USDC,
+        DEFAULT_DEADLINE,
     )
     .await;
 
@@ -151,7 +152,7 @@ pub async fn create_mint_transaction(
         TOKEN_ADDRESS_SEPOLIA_USDC.to_vec(),
         minter.evm_address.to_vec(),
         nonce.to_vec(),
-        U256::from(config.deadline).to_be_bytes_vec(),
+        U256::from(DEFAULT_DEADLINE).to_be_bytes_vec(),
         permit_signature.as_bytes().to_vec(),
     );
 

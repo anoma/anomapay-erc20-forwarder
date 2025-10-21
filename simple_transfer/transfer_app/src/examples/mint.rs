@@ -4,12 +4,11 @@ use crate::examples::shared::{
     create_permit_signature, label_ref, random_nonce, read_address, read_private_key, value_ref,
     value_ref_created,
 };
-use crate::examples::TOKEN_ADDRESS_SEPOLIA_USDC;
+use crate::examples::{DEFAULT_AMOUNT, DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC};
 use crate::requests::mint::CreateRequest;
 use crate::requests::Expand;
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
-use alloy::primitives::U256;
 use arm::action_tree::MerkleTree;
 use arm::compliance::INITIAL_ROOT;
 use arm::evm::CallType;
@@ -35,7 +34,7 @@ pub async fn json_example_mint_request(
     let address = read_address();
     let alice = Keychain::alice(address, Some(private_key));
 
-    let create_request = mint_request_example(alice, config.default_amount as u128, config).await?;
+    let create_request = mint_request_example(alice, DEFAULT_AMOUNT as u128, config).await?;
     let json_str = to_string_pretty(&create_request).map_err(|_| EncodingError)?;
     Ok(json_str)
 }
@@ -118,6 +117,7 @@ pub async fn mint_request_example(
         amount,
         config,
         TOKEN_ADDRESS_SEPOLIA_USDC,
+        DEFAULT_DEADLINE,
     )
     .await;
 
@@ -130,7 +130,7 @@ pub async fn mint_request_example(
         token_addr: TOKEN_ADDRESS_SEPOLIA_USDC.to_vec(),
         user_addr: minter.evm_address.to_vec(),
         permit_nonce: nonce.to_vec(),
-        permit_deadline: U256::from(config.deadline).to_be_bytes_vec(),
+        permit_deadline: DEFAULT_DEADLINE,
         permit_sig: permit_signature.as_bytes().to_vec(),
         created_discovery_pk: minter.discovery_pk,
         created_encryption_pk: minter.encryption_pk,

@@ -80,6 +80,7 @@ pub async fn create_permit_signature(
     amount: u128,
     config: &AnomaPayConfig,
     token_address: Address,
+    deadline: u64,
 ) -> Signature {
     let action_tree_root: Digest = action_tree.root();
     let action_tree_encoded: &[u8] = action_tree_root.as_ref();
@@ -89,7 +90,7 @@ pub async fn create_permit_signature(
         token: token_address,
         amount: U256::from(amount),
         nonce: U256::from_be_bytes(nullifier),
-        deadline: U256::from(config.deadline),
+        deadline: U256::from(deadline),
         spender: config.forwarder_address,
         action_tree_root: B256::from_slice(action_tree_encoded),
     };

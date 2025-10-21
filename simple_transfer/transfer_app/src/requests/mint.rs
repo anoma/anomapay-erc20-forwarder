@@ -45,8 +45,7 @@ pub struct CreateRequest {
     pub user_addr: Vec<u8>,
     #[serde_as(as = "Base64")]
     pub permit_nonce: Vec<u8>,
-    #[serde_as(as = "Base64")]
-    pub permit_deadline: Vec<u8>,
+    pub permit_deadline: u64,
     #[serde_as(as = "Base64")]
     pub permit_sig: Vec<u8>,
     pub created_discovery_pk: AffinePoint,
@@ -82,6 +81,7 @@ pub fn mint_from_request(
     let permit_signature = request.permit_sig;
     let discovery_pk: AffinePoint = request.created_discovery_pk;
     let encryption_pk: AffinePoint = request.created_encryption_pk;
+    let permit_deadline = request.permit_deadline;
 
     ////////////////////////////////////////////////////////////////////////////
     // Create the action tree
@@ -130,7 +130,7 @@ pub fn mint_from_request(
         token_address,
         user_address,
         nonce.to_vec(),
-        U256::from(config.deadline).to_be_bytes_vec(),
+        U256::from(permit_deadline).to_be_bytes_vec(),
         permit_signature,
     );
 

@@ -1,6 +1,7 @@
 use alloy::sol;
 use std::error::Error;
 
+use crate::permit2::PERMIT2_CONTRACT_ADDRESS;
 use crate::AnomaPayConfig;
 use alloy::primitives::Address;
 use alloy::providers::ProviderBuilder;
@@ -37,7 +38,7 @@ pub async fn is_address_approved(
     let contract = IERC20::new(token_address, provider.clone());
 
     let res = contract
-        .allowance(token_holder, config.permit2_address)
+        .allowance(token_holder, PERMIT2_CONTRACT_ADDRESS)
         .call()
         .await?;
 
