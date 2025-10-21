@@ -5,6 +5,7 @@ use crate::errors::TransactionError::{
 };
 use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::{label_ref, random_nonce, value_ref_created, verify_transaction};
+use crate::examples::TOKEN_ADDRESS_SEPOLIA_USDC;
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
 use arm::action::Action;
@@ -83,7 +84,7 @@ pub async fn create_split_transaction(
 
     let created_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
-        label_ref: label_ref(config),
+        label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: amount,
         value_ref: value_ref_created(&receiver),
         is_ephemeral: false,

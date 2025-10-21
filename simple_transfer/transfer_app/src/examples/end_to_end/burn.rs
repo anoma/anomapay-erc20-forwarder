@@ -6,6 +6,7 @@ use crate::errors::TransactionError::{
 use crate::evm::indexer::pa_merkle_path;
 use crate::examples::burn::value_ref_ephemeral_burn;
 use crate::examples::shared::{label_ref, random_nonce, verify_transaction};
+use crate::examples::TOKEN_ADDRESS_SEPOLIA_USDC;
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
 use arm::action::Action;
@@ -43,7 +44,7 @@ pub async fn create_burn_transaction(
 
     let created_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
-        label_ref: label_ref(config),
+        label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: burned_resource.quantity,
         value_ref: value_ref_ephemeral_burn(&burner),
         is_ephemeral: true,
@@ -139,7 +140,7 @@ pub async fn create_burn_transaction(
         created_resource,
         created_resource_path,
         config.forwarder_address.to_vec(),
-        config.token_address.to_vec(),
+        TOKEN_ADDRESS_SEPOLIA_USDC.to_vec(),
         burner.evm_address.to_vec(),
     );
 

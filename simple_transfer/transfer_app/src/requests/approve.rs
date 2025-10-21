@@ -8,4 +8,6 @@ use serde_with::serde_as;
 pub struct ApproveRequest {
     #[serde_as(as = "Base64")]
     pub user_addr: Vec<u8>,
+    #[serde_as(as = "Base64")]
+    pub token_addr: Vec<u8>,
 }

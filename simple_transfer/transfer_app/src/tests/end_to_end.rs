@@ -94,8 +94,8 @@ mod tests {
 
     #[tokio::test]
     #[serial]
-    /// Create a mint transaction, and then split the resource between the minter and another
-    /// person. Burn the remainder resource afterward.
+    /// Create a mint trson. Burn tansaction, and then split the resource between the minter and another
+    /// perhe remainder resource afterward.
     async fn test_mint_and_split_and_burn() {
         let config = load_config().expect("failed to load config in test");
         // create a keychain with a private key

@@ -39,7 +39,11 @@ pub async fn is_approved(
         return Json(json!({"error": "failed to submit transaction"}));
     };
 
-    match is_address_approved(address, config).await {
+    let Some(token_addr) = parse_address(approve_request.token_addr) else {
+        return Json(json!({"error": "failed to read token_addr"}));
+    };
+
+    match is_address_approved(address, config, token_addr).await {
         Ok(is_approved) => Json(json!({"success": is_approved})),
         Err(_) => Json(json!({"error": "failed to check approval"})),
     }

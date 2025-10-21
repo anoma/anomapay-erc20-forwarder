@@ -9,6 +9,7 @@ use crate::examples::shared::{label_ref, random_nonce, value_ref, verify_transac
 use crate::requests::resource::JsonResource;
 use crate::requests::Expand;
 use crate::AnomaPayConfig;
+use alloy::primitives::Address;
 use arm::action::Action;
 use arm::action_tree::MerkleTree;
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
@@ -40,6 +41,8 @@ pub struct BurnRequest {
     pub burner_address: Vec<u8>,
     #[serde_as(as = "Base64")]
     pub auth_signature: Vec<u8>,
+    #[serde_as(as = "Base64")]
+    pub token_addr: Vec<u8>,
 }
 
 pub async fn burn_from_request(
@@ -65,6 +68,15 @@ pub async fn burn_from_request(
     let auth_signature: AuthorizationSignature =
         AuthorizationSignature::from_bytes(request.auth_signature.as_slice())
             .map_err(|_| EncodingError)?;
+
+    let token_bytes: [u8; 20] = request
+        .token_addr
+        .as_slice()
+        .try_into()
+        .map_err(|_| DecodingError)?;
+
+    let token_addr = Address::from(token_bytes);
+
     ////////////////////////////////////////////////////////////////////////////
     // Construct the ephemeral resource to create
 
@@ -75,7 +87,7 @@ pub async fn burn_from_request(
 
     let created_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
-        label_ref: label_ref(config),
+        label_ref: label_ref(config, token_addr),
         quantity: burned_resource.quantity,
         value_ref: value_ref(CallType::Unwrap, burner_address.as_ref()),
         is_ephemeral: true,
@@ -154,7 +166,7 @@ pub async fn burn_from_request(
         created_resource,
         created_resource_path,
         config.forwarder_address.to_vec(),
-        config.token_address.to_vec(),
+        token_addr.to_vec(),
         burner_address.to_vec(),
     );
 
