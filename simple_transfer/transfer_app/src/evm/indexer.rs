@@ -24,7 +24,8 @@ struct Frontier {
     is_left: bool,
 }
 
-/// Fetches the merkle path from the indexer and returns its parsed response. On
+/// Fetches the merkle path from the indexer and returns its parsed response.
+/// On failure, it attempts to retry up to 6 times.
 /// This still has to be converted into a real MerklePath struct.
 async fn merkle_path_from_indexer(commitment: Digest) -> Result<ProofResponse, Error> {
     let url: Url = format!("http://localhost:4000/generate_proof/0x{commitment}")
