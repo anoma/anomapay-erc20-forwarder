@@ -7,6 +7,7 @@ use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::verify_transaction;
 use crate::requests::resource::JsonResource;
 use crate::requests::Expand;
+use crate::AnomaPayConfig;
 use arm::action::Action;
 use arm::action_tree::MerkleTree;
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
@@ -42,6 +43,7 @@ pub struct TransferRequest {
 /// Handles an incoming transfer request
 pub async fn transfer_from_request(
     request: TransferRequest,
+    config: &AnomaPayConfig,
 ) -> Result<(Resource, Transaction), TransactionError> {
     // convert some bytes into their proper data structure from the request.
     let transferred_resource: Resource =
@@ -60,7 +62,7 @@ pub async fn transfer_from_request(
 
     let transferred_resource_commitment = transferred_resource.commitment();
 
-    let merkle_proof = pa_merkle_path(transferred_resource_commitment)
+    let merkle_proof = pa_merkle_path(config, transferred_resource_commitment)
         .await
         .map_err(|_| MerkleProofError)?;
 

@@ -78,7 +78,7 @@ pub async fn create_transfer_transaction(
 
     let transferred_resource_commitment = transferred_resource.commitment();
 
-    let merkle_proof = pa_merkle_path(transferred_resource_commitment)
+    let merkle_proof = pa_merkle_path(config, transferred_resource_commitment)
         .await
         .map_err(|_| MerkleProofError)?;
 

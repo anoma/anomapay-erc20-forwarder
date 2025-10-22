@@ -74,7 +74,7 @@ pub async fn create_burn_transaction(
 
     let burned_resource_commitment = burned_resource.commitment();
 
-    let merkle_proof = pa_merkle_path(burned_resource_commitment)
+    let merkle_proof = pa_merkle_path(config, burned_resource_commitment)
         .await
         .map_err(|_| MerkleProofError)?;
 

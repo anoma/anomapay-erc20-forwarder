@@ -131,7 +131,7 @@ pub async fn create_split_transaction(
     ////////////////////////////////////////////////////////////////////////////
     // Get the merkle proof for the resource being split and the padding resource.
 
-    let merkle_proof_to_split = pa_merkle_path(to_split_resource.commitment())
+    let merkle_proof_to_split = pa_merkle_path(config, to_split_resource.commitment())
         .await
         .map_err(|_| MerkleProofError)?;
 

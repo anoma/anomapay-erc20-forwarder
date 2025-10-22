@@ -7,6 +7,7 @@ use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::verify_transaction;
 use crate::requests::resource::JsonResource;
 use crate::requests::Expand;
+use crate::AnomaPayConfig;
 use arm::action::Action;
 use arm::action_tree::MerkleTree;
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
@@ -45,7 +46,10 @@ pub struct SplitRequest {
 }
 
 /// Execute a burn transaction from a burn request.
-pub async fn split_from_request(request: SplitRequest) -> Result<Transaction, TransactionError> {
+pub async fn split_from_request(
+    request: SplitRequest,
+    config: &AnomaPayConfig,
+) -> Result<Transaction, TransactionError> {
     let to_split_resource: Resource =
         Expand::expand(request.to_split_resource).map_err(|_| DecodingError)?;
     let created_resource: Resource =
@@ -89,7 +93,7 @@ pub async fn split_from_request(request: SplitRequest) -> Result<Transaction, Tr
     ////////////////////////////////////////////////////////////////////////////
     // Get the merkle proof for the resource being split and the padding resource.
 
-    let merkle_proof_to_split = pa_merkle_path(to_split_resource.commitment())
+    let merkle_proof_to_split = pa_merkle_path(config, to_split_resource.commitment())
         .await
         .map_err(|_| MerkleProofError)?;
 

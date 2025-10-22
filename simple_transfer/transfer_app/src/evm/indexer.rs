@@ -4,6 +4,7 @@ use crate::evm::errors::IndexerError;
 use crate::evm::errors::IndexerError::{
     InvalidIndexer, OverloadedIndexer, Recoverable, Unrecoverable,
 };
+use crate::AnomaPayConfig;
 use arm::merkle_path::MerklePath;
 use arm::Digest;
 use log::{error, warn};
@@ -121,8 +122,11 @@ async fn try_get_merkle_path(
 }
 
 /// Given a commitment of a resource, looks up the merkle path for this resource.
-pub async fn pa_merkle_path(commitment: Digest) -> Result<MerklePath, EvmError> {
-    let url: Url = format!("http://navi.localdomain:4000/generate_proof/0x{commitment}")
+pub async fn pa_merkle_path(
+    config: &AnomaPayConfig,
+    commitment: Digest,
+) -> Result<MerklePath, EvmError> {
+    let url: Url = format!("{}/generate_proof/0x{}", config.indexer_address, commitment)
         .parse()
         .unwrap();
 
@@ -144,13 +148,15 @@ pub async fn pa_merkle_path(commitment: Digest) -> Result<MerklePath, EvmError> 
 #[cfg(test)]
 mod tests {
     use crate::evm::indexer::pa_merkle_path;
+    use crate::load_config;
     use arm::Digest;
 
     #[tokio::test]
     async fn fails_with_internal_server_error_on_non_existent_commitment() {
+        let config = load_config().expect("failed to load config in test");
         let cm = Digest::new([0u32; 8]);
 
-        let result = pa_merkle_path(cm).await;
+        let result = pa_merkle_path(&config, cm).await;
         assert!(result.is_err());
     }
 }

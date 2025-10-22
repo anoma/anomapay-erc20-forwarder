@@ -67,11 +67,15 @@ pub async fn mint(payload: Json<CreateRequest>, config: &State<AnomaPayConfig>) 
 
 /// Handles a request from the user to mint.
 #[post("/api/transfer", data = "<payload>")]
-pub async fn transfer(payload: Json<TransferRequest>) -> Json<Value> {
+pub async fn transfer(
+    payload: Json<TransferRequest>,
+    config: &State<AnomaPayConfig>,
+) -> Json<Value> {
+    let config: &AnomaPayConfig = config.inner();
     let request = payload.into_inner();
 
     // create the transaction
-    let Ok((created_resource, transaction)) = transfer_from_request(request).await else {
+    let Ok((created_resource, transaction)) = transfer_from_request(request, config).await else {
         return Json(json!({"error": "failed to create transfer transaction"}));
     };
 
@@ -107,11 +111,12 @@ pub async fn burn(payload: Json<BurnRequest>, config: &State<AnomaPayConfig>) ->
 
 /// Handles a request from the user to split a resource.
 #[post("/api/split", data = "<payload>")]
-pub async fn split(payload: Json<SplitRequest>) -> Json<Value> {
+pub async fn split(payload: Json<SplitRequest>, config: &State<AnomaPayConfig>) -> Json<Value> {
+    let config: &AnomaPayConfig = config.inner();
     let request = payload.into_inner();
 
     // create the transaction
-    let Ok(transaction) = split_from_request(request).await else {
+    let Ok(transaction) = split_from_request(request, config).await else {
         return Json(json!({"error": "failed to create split transaction"}));
     };
 
