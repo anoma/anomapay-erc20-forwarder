@@ -16,7 +16,7 @@ mod tests {
     async fn test_unapproved() {
         let config = load_config().expect("failed to load config in test");
         // create a keychain with a private key
-        let unapproved_address = address!("0x44B73CbC3C2E902cD0768854c2ff914DD44a325F");
+        let unapproved_address = address!("0x44B73CbC3C2E902cD0768854c2ff914DD44a3200");
 
         // assert this address is unapproved.
         let is_approved =
