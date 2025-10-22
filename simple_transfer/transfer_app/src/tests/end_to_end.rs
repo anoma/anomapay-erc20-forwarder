@@ -22,7 +22,7 @@ mod tests {
     async fn test_mint() {
         let config = load_config().expect("failed to load config in test");
         // create a keychain with a private key
-        let alice = alice_keychain();
+        let alice = alice_keychain(&config);
 
         // create a test mint transaction for alice
         let (minted_resource, transaction) = create_test_mint_transaction(&config, &alice).await;
@@ -40,7 +40,7 @@ mod tests {
     async fn test_mint_and_transfer() {
         let config = load_config().expect("failed to load config in test");
         // create a keychain with a private key
-        let alice = alice_keychain();
+        let alice = alice_keychain(&config);
         let bob = bob_keychain();
 
         // create a test mint transaction for alice
@@ -69,7 +69,7 @@ mod tests {
     async fn test_mint_and_split() {
         let config = load_config().expect("failed to load config in test");
         // create a keychain with a private key
-        let alice = alice_keychain();
+        let alice = alice_keychain(&config);
         let bob = bob_keychain();
 
         // create a test mint transaction for alice
@@ -99,7 +99,7 @@ mod tests {
     async fn test_mint_and_split_and_burn() {
         let config = load_config().expect("failed to load config in test");
         // create a keychain with a private key
-        let alice = alice_keychain();
+        let alice = alice_keychain(&config);
         let bob = bob_keychain();
 
         // create a test mint transaction for alice
@@ -137,7 +137,7 @@ mod tests {
     async fn test_mint_and_burn() {
         let config = load_config().expect("failed to load config in test");
         // create a keychain with a private key
-        let alice = alice_keychain();
+        let alice = alice_keychain(&config);
 
         // create a test mint transaction for alice
         let (minted_resource, transaction) = create_test_mint_transaction(&config, &alice).await;

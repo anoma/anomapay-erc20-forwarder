@@ -1,14 +1,14 @@
 use crate::errors::TransactionError;
 use crate::errors::TransactionError::{EncodingError, InvalidKeyChain, InvalidNullifierSizeError};
 use crate::examples::shared::{
-    create_permit_signature, label_ref, random_nonce, read_address, read_private_key, value_ref,
-    value_ref_created,
+    create_permit_signature, label_ref, random_nonce, value_ref, value_ref_created,
 };
 use crate::examples::{DEFAULT_AMOUNT, DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC};
 use crate::requests::mint::CreateRequest;
 use crate::requests::Expand;
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
+use alloy::hex::ToHexExt;
 use arm::action_tree::MerkleTree;
 use arm::compliance::INITIAL_ROOT;
 use arm::evm::CallType;
@@ -30,9 +30,10 @@ pub fn value_ref_ephemeral_mint(minter: &Keychain) -> Digest {
 pub async fn json_example_mint_request(
     config: &AnomaPayConfig,
 ) -> Result<String, TransactionError> {
-    let private_key = read_private_key();
-    let address = read_address();
-    let alice = Keychain::alice(address, Some(private_key));
+    let alice = Keychain::alice(
+        config.hot_wallet_address.encode_hex(),
+        Some(config.hot_wallet_private_key.clone()),
+    );
 
     let create_request = mint_request_example(alice, DEFAULT_AMOUNT as u128, config).await?;
     let json_str = to_string_pretty(&create_request).map_err(|_| EncodingError)?;

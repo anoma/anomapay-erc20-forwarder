@@ -11,7 +11,6 @@ use arm::transaction::Transaction;
 use arm::utils::hash_bytes;
 use arm::Digest;
 use rand::Rng;
-use std::env;
 
 pub fn parse_address(address_bytes: Vec<u8>) -> Option<Address> {
     let bytes: Result<[u8; 20], _> = address_bytes.try_into();
@@ -52,19 +51,6 @@ pub fn value_ref_created(keychain: &Keychain) -> Digest {
 /// contract) uniquely identifies a resource.
 pub fn label_ref(config: &AnomaPayConfig, token_address: Address) -> Digest {
     hash_bytes(&[config.forwarder_address.to_vec(), token_address.to_vec()].concat())
-}
-
-// these can be dead code because they're used for development.
-#[allow(dead_code)]
-pub fn read_private_key() -> PrivateKeySigner {
-    let env_val: String = env::var("PRIVATE_KEY").expect("env var PRIVATE_KEY not found");
-    let private_key: PrivateKeySigner = env_val.parse().expect("failed to parse PRIVATE_KEY");
-    private_key
-}
-
-#[allow(dead_code)]
-pub fn read_address() -> String {
-    env::var("USER_ADDRESS").expect("env var USER_ADDRESS not found")
 }
 
 pub fn value_ref(call_type: CallType, user_addr: &[u8]) -> Digest {

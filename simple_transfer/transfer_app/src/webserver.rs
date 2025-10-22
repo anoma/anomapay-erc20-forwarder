@@ -10,19 +10,15 @@ use crate::requests::Expand;
 use crate::AnomaPayConfig;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
-use rocket::serde::json::{json, to_value, Json};
+use rocket::serde::json::{json, Json};
 use rocket::{catch, get, options, post, Request, Response, State};
 use serde_json::Value;
 
 /// Return the health status
 #[get("/health")]
-pub fn health(config: &State<AnomaPayConfig>) -> Json<Value> {
-    let config: &AnomaPayConfig = config.inner();
-    let Ok(config_json) = to_value(config) else {
-        return Json(json!({"error": "failed to serialize configuration"}));
-    };
+pub fn health() -> Json<Value> {
     Json(json!({
-        "ok": config_json
+        "ok": "live long and prosper"
     }))
 }
 

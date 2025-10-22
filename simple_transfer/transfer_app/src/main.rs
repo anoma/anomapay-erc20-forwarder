@@ -23,12 +23,11 @@ use crate::webserver::{
     Cors,
 };
 use alloy::primitives::Address;
-use rocket::serde::{Deserialize, Serialize};
+use alloy::signers::local::PrivateKeySigner;
 use rocket::{catchers, launch, routes};
 use std::env;
 use std::error::Error;
 
-#[derive(Debug, Deserialize, Serialize)]
 struct AnomaPayConfig {
     // address of the anoma forwarder contract
     forwarder_address: Address,
@@ -36,6 +35,10 @@ struct AnomaPayConfig {
     ethereum_rpc: String,
     // url of the anoma indexer
     indexer_address: String,
+    // the address of the hot wallet
+    hot_wallet_address: Address,
+    // the private key of the hot wallet
+    hot_wallet_private_key: PrivateKeySigner,
 }
 
 /// Reads the environment for required values and sets them into the config.
@@ -48,10 +51,22 @@ fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
     let ethereum_rpc = env::var("RPC_URL").map_err(|_| "RPC_URL not set")?;
     let indexer_address = env::var("INDEXER_ADDRESS").map_err(|_| "INDEXER_ADDRESS not set")?;
 
+    let hot_wallet_private_key: String =
+        env::var("HOT_WALLET_PRIVATE_KEY").expect("HOT_WALLET_PRIVATE_KEY not found");
+    let hot_wallet_private_key: PrivateKeySigner = hot_wallet_private_key
+        .parse()
+        .map_err(|_| "HOT_WALLET_PRIVATE_KEY invalid")?;
+
+    let hot_wallet_address: String =
+        env::var("HOT_WALLET_USER_ADDRESS").map_err(|_| "HOT_WALLET_USER_ADDRESS not set")?;
+    let hot_wallet_address: Address = hot_wallet_address.parse()?;
+
     Ok(AnomaPayConfig {
         forwarder_address,
         ethereum_rpc,
         indexer_address,
+        hot_wallet_private_key,
+        hot_wallet_address,
     })
 }
 #[launch]
