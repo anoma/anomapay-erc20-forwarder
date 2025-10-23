@@ -48,7 +48,7 @@ fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
     let forwarder_address = Address::parse_checksummed(forwarder_address, None)
         .map_err(|_| "FORWARDER_ADDRESS invalid")?;
 
-    let ethereum_rpc = env::var("RPC_URL").map_err(|_| "RPC_URL not set")?;
+    let ethereum_rpc = env::var("ETHEREUM_RPC").map_err(|_| "ETHEREUM_RPC not set")?;
     let indexer_address = env::var("INDEXER_ADDRESS").map_err(|_| "INDEXER_ADDRESS not set")?;
 
     let hot_wallet_private_key: String =

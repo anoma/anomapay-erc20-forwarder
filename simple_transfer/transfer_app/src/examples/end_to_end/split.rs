@@ -6,6 +6,7 @@ use crate::errors::TransactionError::{
 use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::{label_ref, random_nonce, value_ref_created, verify_transaction};
 use crate::examples::TOKEN_ADDRESS_SEPOLIA_USDC;
+use crate::requests::logic_proof;
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
 use arm::action::Action;
@@ -193,18 +194,9 @@ pub async fn create_split_transaction(
         auth_signature,
     );
 
-    // generate the proof in a separate thread
-    let to_split_logic_proof = thread::spawn(move || to_split_logic_witness.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
-
+    // generate the proof in a separate threa
+    let to_split_logic_proof_future = logic_proof(&to_split_logic_witness);
+    let to_split_logic_proof = to_split_logic_proof_future.await?;
     //--------------------------------------------------------------------------
     // padding proof
 
@@ -219,16 +211,8 @@ pub async fn create_split_transaction(
         true,
     );
 
-    let padding_logic_proof = thread::spawn(move || padding_logic_witness.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let padding_logic_proof_future = logic_proof(&padding_logic_witness);
+    let padding_logic_proof = padding_logic_proof_future.await?;
 
     //--------------------------------------------------------------------------
     // created proof
@@ -244,16 +228,8 @@ pub async fn create_split_transaction(
         receiver.encryption_pk,
     );
 
-    let created_logic_proof = thread::spawn(move || created_logic_witness.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let created_logic_proof_future = logic_proof(&created_logic_witness);
+    let created_logic_proof = created_logic_proof_future.await?;
 
     //--------------------------------------------------------------------------
     // remainder proof
@@ -269,16 +245,8 @@ pub async fn create_split_transaction(
         receiver.encryption_pk,
     );
 
-    let remainder_logic_proof = thread::spawn(move || remainder_logic_witness.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let remainder_logic_proof_future = logic_proof(&remainder_logic_witness);
+    let remainder_logic_proof = remainder_logic_proof_future.await?;
 
     ////////////////////////////////////////////////////////////////////////////
     // Create actions for transaction

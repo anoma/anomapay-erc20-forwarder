@@ -52,7 +52,7 @@ pub async fn mint(payload: Json<CreateRequest>, config: &State<AnomaPayConfig>) 
     let request = payload.into_inner();
 
     // create the transaction
-    let Ok((created_resource, transaction)) = mint_from_request(request, config) else {
+    let Ok((created_resource, transaction)) = mint_from_request(request, config).await else {
         return Json(json!({"error": "failed to create mint transaction"}));
     };
 

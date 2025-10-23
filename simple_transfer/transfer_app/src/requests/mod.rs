@@ -1,3 +1,8 @@
+use crate::errors::TransactionError;
+use crate::errors::TransactionError::{ComplianceUnitCreateError, LogicProofCreateError};
+use arm::compliance::ComplianceWitness;
+use arm::compliance_unit::ComplianceUnit;
+use arm::logic_proof::{LogicProver, LogicVerifier};
 use arm::Digest;
 
 pub mod approve;
@@ -25,4 +30,30 @@ fn to_array<const N: usize>(v: Vec<u8>, field: &str) -> Result<[u8; N], String> 
 
 fn to_digest(v: Vec<u8>, field: &str) -> Result<Digest, String> {
     v.try_into().map_err(|_| format!("{} invalid size", field))
+}
+
+/// Given a compliance witness, generates a compliance unit.
+pub async fn compliance_proof(
+    compliance_witness: &ComplianceWitness,
+) -> Result<ComplianceUnit, TransactionError> {
+    let compliance_witness_clone = compliance_witness.clone();
+    tokio::task::spawn_blocking(move || {
+        ComplianceUnit::create(&compliance_witness_clone).map_err(|_| ComplianceUnitCreateError)
+    })
+    .await
+    .unwrap()
+}
+
+/// Given a logic witness, returns a logic proof.
+pub async fn logic_proof<T: LogicProver + Send + 'static>(
+    transfer_logic: &T,
+) -> Result<LogicVerifier, TransactionError> {
+    let transfer_logic_clone = transfer_logic.clone();
+    tokio::task::spawn_blocking(move || {
+        transfer_logic_clone
+            .prove()
+            .map_err(|_e| LogicProofCreateError)
+    })
+    .await
+    .unwrap()
 }

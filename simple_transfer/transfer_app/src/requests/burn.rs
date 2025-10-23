@@ -1,20 +1,18 @@
 use crate::errors::TransactionError;
 use crate::errors::TransactionError::{
-    ActionError, ActionTreeError, ComplianceUnitCreateError, DecodingError, DeltaProofCreateError,
-    EncodingError, InvalidKeyChain, InvalidNullifierSizeError, LogicProofCreateError,
-    MerkleProofError,
+    ActionError, ActionTreeError, DecodingError, DeltaProofCreateError, EncodingError,
+    InvalidKeyChain, InvalidNullifierSizeError, LogicProofCreateError, MerkleProofError,
 };
 use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::{label_ref, random_nonce, value_ref, verify_transaction};
 use crate::requests::resource::JsonResource;
-use crate::requests::Expand;
+use crate::requests::{compliance_proof, logic_proof, Expand};
 use crate::AnomaPayConfig;
 use alloy::primitives::Address;
 use arm::action::Action;
 use arm::action_tree::MerkleTree;
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use arm::compliance::ComplianceWitness;
-use arm::compliance_unit::ComplianceUnit;
 use arm::delta_proof::DeltaWitness;
 use arm::evm::CallType;
 use arm::logic_proof::LogicProver;
@@ -26,7 +24,6 @@ use k256::AffinePoint;
 use rocket::serde::{Deserialize, Serialize};
 use serde_with::base64::Base64;
 use serde_with::serde_as;
-use std::thread;
 use transfer_library::TransferLogic;
 
 /// Defines the payload sent to the API to execute a burn request on /api/burn.
@@ -115,18 +112,8 @@ pub async fn burn_from_request(
     );
 
     // generate the proof in a separate thread
-    let compliance_witness_clone = compliance_witness.clone();
-    let compliance_unit =
-        thread::spawn(move || ComplianceUnit::create(&compliance_witness_clone.clone()))
-            .join()
-            .map_err(|e| {
-                println!("prove thread panic: {:?}", e);
-                ComplianceUnitCreateError
-            })?
-            .map_err(|e| {
-                println!("proving error: {:?}", e);
-                ComplianceUnitCreateError
-            })?;
+    let compliance_unit_future = compliance_proof(&compliance_witness);
+    let compliance_unit = compliance_unit_future.await?;
 
     ////////////////////////////////////////////////////////////////////////////
     // Create logic proof
@@ -150,17 +137,8 @@ pub async fn burn_from_request(
     // generate the proof in a separate thread
     // this is due to bonsai being non-blocking or something. there is a feature flag for bonsai
     // that allows it to be non-blocking or vice versa, but this is to figure out.
-    let created_logic_witness_clone = created_logic_witness.clone();
-    let created_logic_proof = thread::spawn(move || created_logic_witness_clone.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let created_logic_proof_future = logic_proof(&created_logic_witness);
+    let created_logic_proof = created_logic_proof_future.await?;
 
     let burned_logic_witness: TransferLogic = TransferLogic::burn_resource_logic(
         created_resource,
@@ -170,20 +148,8 @@ pub async fn burn_from_request(
         burner_address.to_vec(),
     );
 
-    // generate the proof in a separate thread
-    // this is due to bonsai being non-blocking or something. there is a feature flag for bonsai
-    // that allows it to be non-blocking or vice versa, but this is to figure out.
-    let burned_resource_logic_clone = burned_logic_witness.clone();
-    let burned_logic_proof = thread::spawn(move || burned_resource_logic_clone.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let burned_logic_proof_future = logic_proof(&burned_logic_witness);
+    let burned_logic_proof = burned_logic_proof_future.await?;
 
     ////////////////////////////////////////////////////////////////////////////
     // Create actions for transaction

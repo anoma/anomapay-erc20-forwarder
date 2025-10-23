@@ -9,11 +9,10 @@ use alloy::hex::ToHexExt;
 /// The address and private key for alice are read from the environment to test actual submission
 /// to sepolia.
 pub fn alice_keychain(config: &AnomaPayConfig) -> Keychain {
-    let keychain = Keychain::alice(
+    Keychain::alice(
         config.hot_wallet_address.encode_hex(),
         Some(config.hot_wallet_private_key.clone()),
-    );
-    keychain
+    )
 }
 
 /// Helper function to geneate the keychain for bob.

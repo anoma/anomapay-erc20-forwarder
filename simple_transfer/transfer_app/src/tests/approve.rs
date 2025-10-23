@@ -24,7 +24,7 @@ mod tests {
         assert!(is_approved.is_ok());
         let is_approved = is_approved.unwrap();
 
-        assert_ne!(is_approved, true);
+        assert!(!is_approved);
     }
 
     /// Given an address that should be approved on the permit2 contract, verify that it
