@@ -1,20 +1,18 @@
 use crate::errors::TransactionError;
 use crate::errors::TransactionError::{
-    ActionError, ActionTreeError, ComplianceUnitCreateError, DecodingError, DeltaProofCreateError,
-    EncodingError, InvalidKeyChain, LogicProofCreateError, MerkleProofError,
+    ActionError, ActionTreeError, DecodingError, DeltaProofCreateError, EncodingError,
+    InvalidKeyChain, LogicProofCreateError, MerkleProofError,
 };
 use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::verify_transaction;
 use crate::requests::resource::JsonResource;
-use crate::requests::Expand;
+use crate::requests::{compliance_proof, logic_proof, Expand};
 use crate::AnomaPayConfig;
 use arm::action::Action;
 use arm::action_tree::MerkleTree;
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use arm::compliance::ComplianceWitness;
-use arm::compliance_unit::ComplianceUnit;
 use arm::delta_proof::DeltaWitness;
-use arm::logic_proof::LogicProver;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::transaction::{Delta, Transaction};
@@ -22,7 +20,6 @@ use k256::AffinePoint;
 use serde::{Deserialize, Serialize};
 use serde_with::base64::Base64;
 use serde_with::serde_as;
-use std::thread;
 use transfer_library::TransferLogic;
 
 /// Struct to hold the fields for a transfer request to the api.
@@ -91,18 +88,7 @@ pub async fn transfer_from_request(
     );
 
     // generate the proof in a separate thread
-    let compliance_witness_clone = compliance_witness.clone();
-    let compliance_unit =
-        thread::spawn(move || ComplianceUnit::create(&compliance_witness_clone.clone()))
-            .join()
-            .map_err(|e| {
-                println!("prove thread panic: {:?}", e);
-                ComplianceUnitCreateError
-            })?
-            .map_err(|e| {
-                println!("proving error: {:?}", e);
-                ComplianceUnitCreateError
-            })?;
+    let compliance_unit_future = compliance_proof(&compliance_witness);
 
     ////////////////////////////////////////////////////////////////////////////
     // Create logic proof
@@ -118,21 +104,7 @@ pub async fn transfer_from_request(
         sender_auth_verifying_key,
         auth_signature,
     );
-
-    // generate the proof in a separate thread
-    // this is due to bonsai being non-blocking or something. there is a feature flag for bonsai
-    // that allows it to be non-blocking or vice versa, but this is to figure out.
-    let transferred_logic_witness_clone = transferred_logic_witness.clone();
-    let transferred_logic_proof = thread::spawn(move || transferred_logic_witness_clone.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let transferred_logic_proof_future = logic_proof(&transferred_logic_witness);
 
     let created_resource_path = action_tree
         .generate_path(&created_resource_commitment)
@@ -145,23 +117,14 @@ pub async fn transfer_from_request(
         receiver_encryption_pk,
     );
 
-    // generate the proof in a separate thread
-    // this is due to bonsai being non-blocking or something. there is a feature flag for bonsai
-    // that allows it to be non-blocking or vice versa, but this is to figure out.
-    let created_logic_witness_clone = created_logic_witness.clone();
-    let created_logic_proof = thread::spawn(move || created_logic_witness_clone.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let created_logic_proof_future = logic_proof(&created_logic_witness);
 
     ////////////////////////////////////////////////////////////////////////////
     // Create actions for transaction
+
+    let compliance_unit = compliance_unit_future.await?;
+    let created_logic_proof = created_logic_proof_future.await?;
+    let transferred_logic_proof = transferred_logic_proof_future.await?;
 
     let action: Action = Action::new(
         vec![compliance_unit],

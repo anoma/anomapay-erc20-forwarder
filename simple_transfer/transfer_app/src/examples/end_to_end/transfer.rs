@@ -1,24 +1,23 @@
 use crate::errors::TransactionError;
 use crate::errors::TransactionError::{
-    ActionError, ActionTreeError, ComplianceUnitCreateError, DeltaProofCreateError,
-    InvalidKeyChain, InvalidNullifierSizeError, LogicProofCreateError, MerkleProofError,
+    ActionError, ActionTreeError, DeltaProofCreateError, InvalidKeyChain,
+    InvalidNullifierSizeError, LogicProofCreateError, MerkleProofError,
 };
 use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::{label_ref, value_ref_created, verify_transaction};
 use crate::examples::TOKEN_ADDRESS_SEPOLIA_USDC;
+use crate::requests::{compliance_proof, logic_proof};
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
 use arm::action::Action;
 use arm::action_tree::MerkleTree;
 use arm::authorization::AuthorizationSignature;
 use arm::compliance::ComplianceWitness;
-use arm::compliance_unit::ComplianceUnit;
 use arm::delta_proof::DeltaWitness;
 use arm::logic_proof::LogicProver;
 use arm::resource::Resource;
 use arm::transaction::{Delta, Transaction};
 use arm::Digest;
-use std::thread;
 use transfer_library::TransferLogic;
 
 /// To transfer a resource, we have to create a new resource, and consume the resource that is
@@ -93,18 +92,8 @@ pub async fn create_transfer_transaction(
     );
 
     // generate the proof in a separate thread
-    let compliance_witness_clone = compliance_witness.clone();
-    let compliance_unit =
-        thread::spawn(move || ComplianceUnit::create(&compliance_witness_clone.clone()))
-            .join()
-            .map_err(|e| {
-                println!("prove thread panic: {:?}", e);
-                ComplianceUnitCreateError
-            })?
-            .map_err(|e| {
-                println!("proving error: {:?}", e);
-                ComplianceUnitCreateError
-            })?;
+    let compliance_unit_future = compliance_proof(&compliance_witness);
+    let compliance_unit = compliance_unit_future.await?;
 
     ////////////////////////////////////////////////////////////////////////////
     // Create logic proof
@@ -121,20 +110,8 @@ pub async fn create_transfer_transaction(
         auth_signature,
     );
 
-    // generate the proof in a separate thread
-    // this is due to bonsai being non-blocking or something. there is a feature flag for bonsai
-    // that allows it to be non-blocking or vice versa, but this is to figure out.
-    let transferred_logic_witness_clone = transferred_logic_witness.clone();
-    let transferred_logic_proof = thread::spawn(move || transferred_logic_witness_clone.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let transferred_logic_proof_future = logic_proof(&transferred_logic_witness);
+    let transferred_logic_proof = transferred_logic_proof_future.await?;
 
     let created_resource_path = action_tree
         .generate_path(&created_resource_commitment)
@@ -150,17 +127,8 @@ pub async fn create_transfer_transaction(
     // generate the proof in a separate thread
     // this is due to bonsai being non-blocking or something. there is a feature flag for bonsai
     // that allows it to be non-blocking or vice versa, but this is to figure out.
-    let created_logic_witness_clone = created_logic_witness.clone();
-    let created_logic_proof = thread::spawn(move || created_logic_witness_clone.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let created_logic_proof_future = logic_proof(&created_logic_witness);
+    let created_logic_proof = created_logic_proof_future.await?;
 
     ////////////////////////////////////////////////////////////////////////////
     // Create actions for transaction

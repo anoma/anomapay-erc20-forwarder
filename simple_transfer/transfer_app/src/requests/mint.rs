@@ -1,20 +1,18 @@
 use crate::errors::TransactionError;
 use crate::errors::TransactionError::{
-    ActionError, ActionTreeError, ComplianceUnitCreateError, DecodingError, DeltaProofCreateError,
-    InvalidKeyChain, LogicProofCreateError, MerklePathError,
+    ActionError, ActionTreeError, DecodingError, DeltaProofCreateError, InvalidKeyChain,
+    LogicProofCreateError, MerklePathError,
 };
 use crate::examples::shared::verify_transaction;
 
 use crate::requests::resource::JsonResource;
-use crate::requests::Expand;
+use crate::requests::{compliance_proof, logic_proof, Expand};
 use crate::AnomaPayConfig;
 use alloy::primitives::U256;
 use arm::action::Action;
 use arm::action_tree::MerkleTree;
 use arm::compliance::ComplianceWitness;
-use arm::compliance_unit::ComplianceUnit;
 use arm::delta_proof::DeltaWitness;
-use arm::logic_proof::LogicProver;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::transaction::{Delta, Transaction};
@@ -24,7 +22,6 @@ use k256::AffinePoint;
 use serde::{Deserialize, Serialize};
 use serde_with::base64::Base64;
 use serde_with::serde_as;
-use std::thread;
 use transfer_library::TransferLogic;
 
 /// Defines the payload sent to the API to execute a minting request on /api/minting.
@@ -53,7 +50,7 @@ pub struct CreateRequest {
 }
 
 /// Hanldes a mint request
-pub fn mint_from_request(
+pub async fn mint_from_request(
     request: CreateRequest,
     config: &AnomaPayConfig,
 ) -> Result<(Resource, Transaction), TransactionError> {
@@ -101,19 +98,7 @@ pub fn mint_from_request(
         created_resource,
     );
 
-    // generate the proof in a separate thread
-    let compliance_witness_clone = compliance_witness.clone();
-    let compliance_unit =
-        thread::spawn(move || ComplianceUnit::create(&compliance_witness_clone.clone()))
-            .join()
-            .map_err(|e| {
-                println!("prove thread panic: {:?}", e);
-                ComplianceUnitCreateError
-            })?
-            .map_err(|e| {
-                println!("proving error: {:?}", e);
-                ComplianceUnitCreateError
-            })?;
+    let compliance_unit_future = compliance_proof(&compliance_witness);
 
     ////////////////////////////////////////////////////////////////////////////
     // Create logic proof
@@ -134,18 +119,7 @@ pub fn mint_from_request(
         permit_signature,
     );
 
-    // generate the proof in a separate thread
-    let consumed_logic_witness_clone = consumed_logic_witness.clone();
-    let consumed_logic_proof = thread::spawn(move || consumed_logic_witness_clone.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let consumed_logic_proof_future = logic_proof(&consumed_logic_witness);
 
     let created_resource_path = action_tree
         .generate_path(&created_resource_commitment)
@@ -158,23 +132,14 @@ pub fn mint_from_request(
         encryption_pk,
     );
 
-    // generate the proof in a separate thread
-    // this is due to bonsai being non-blocking or something. there is a feature flag for bonsai
-    // that allows it to be non-blocking or vice versa, but this is to figure out.
-    let created_logic_witness_clone = created_logic_witness.clone();
-    let created_logic_proof = thread::spawn(move || created_logic_witness_clone.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let created_logic_proof_future = logic_proof(&created_logic_witness);
 
     ////////////////////////////////////////////////////////////////////////////
     // Create actions for transaction
+
+    let compliance_unit = compliance_unit_future.await?;
+    let created_logic_proof = created_logic_proof_future.await?;
+    let consumed_logic_proof = consumed_logic_proof_future.await?;
 
     let action: Action = Action::new(
         vec![compliance_unit],

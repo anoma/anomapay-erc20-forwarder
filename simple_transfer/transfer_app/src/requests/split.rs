@@ -1,20 +1,18 @@
 use crate::errors::TransactionError;
 use crate::errors::TransactionError::{
-    ActionError, ComplianceUnitCreateError, DecodingError, DeltaProofCreateError, EncodingError,
-    InvalidKeyChain, LogicProofCreateError, MerklePathError, MerkleProofError,
+    ActionError, DecodingError, DeltaProofCreateError, EncodingError, InvalidKeyChain,
+    LogicProofCreateError, MerklePathError, MerkleProofError,
 };
 use crate::evm::indexer::pa_merkle_path;
 use crate::examples::shared::verify_transaction;
 use crate::requests::resource::JsonResource;
-use crate::requests::Expand;
+use crate::requests::{compliance_proof, logic_proof, Expand};
 use crate::AnomaPayConfig;
 use arm::action::Action;
 use arm::action_tree::MerkleTree;
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use arm::compliance::ComplianceWitness;
-use arm::compliance_unit::ComplianceUnit;
 use arm::delta_proof::DeltaWitness;
-use arm::logic_proof::LogicProver;
 use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
@@ -24,7 +22,6 @@ use k256::AffinePoint;
 use serde::{Deserialize, Serialize};
 use serde_with::base64::Base64;
 use serde_with::serde_as;
-use std::thread;
 use transfer_library::TransferLogic;
 
 #[serde_as]
@@ -107,35 +104,19 @@ pub async fn split_from_request(
         created_resource,
     );
 
-    // generate the proof in a separate thread
-    let compliance_witness_created_clone = compliance_witness_created.clone();
-    let compliance_unit_created =
-        thread::spawn(move || ComplianceUnit::create(&compliance_witness_created_clone.clone()))
-            .join()
-            .map_err(|e| {
-                println!("prove thread panic: {:?}", e);
-                ComplianceUnitCreateError
-            })?
-            .map_err(|e| {
-                println!("proving error: {:?}", e);
-                ComplianceUnitCreateError
-            })?;
+    let compliance_unit_created_future = compliance_proof(&compliance_witness_created);
+    let compliance_unit_created = compliance_unit_created_future.await?;
 
-    let compliance_witness_remainder_resource = ComplianceWitness::from_resources_with_path(
+    let compliance_witness_remainder = ComplianceWitness::from_resources_with_path(
         padding_resource,
         NullifierKey::default(),
         MerklePath::default(),
         remainder_resource,
     );
 
-    // generate the proof in a separate thread
-    let compliance_witness_remainder_resource_clone = compliance_witness_remainder_resource.clone();
-    let compliance_unit_remainder = thread::spawn(move || {
-        ComplianceUnit::create(&compliance_witness_remainder_resource_clone.clone())
-    })
-    .join()
-    .unwrap()
-    .map_err(|_| ComplianceUnitCreateError)?;
+    let compliance_unit_remainder_future = compliance_proof(&compliance_witness_remainder);
+    let compliance_unit_remainder = compliance_unit_remainder_future.await?;
+
     ////////////////////////////////////////////////////////////////////////////
     // Create logic proof
 
@@ -154,17 +135,8 @@ pub async fn split_from_request(
         auth_signature,
     );
 
-    // generate the proof in a separate thread
-    let to_split_logic_proof = thread::spawn(move || to_split_logic_witness.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let to_split_logic_proof_future = logic_proof(&to_split_logic_witness);
+    let to_split_logic_proof = to_split_logic_proof_future.await?;
 
     //--------------------------------------------------------------------------
     // padding proof
@@ -180,16 +152,8 @@ pub async fn split_from_request(
         true,
     );
 
-    let padding_logic_proof = thread::spawn(move || padding_logic_witness.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let padding_logic_proof_future = logic_proof(&padding_logic_witness);
+    let padding_logic_proof = padding_logic_proof_future.await?;
 
     //--------------------------------------------------------------------------
     // created proof
@@ -205,16 +169,8 @@ pub async fn split_from_request(
         receiver_encryption_pk,
     );
 
-    let created_logic_proof = thread::spawn(move || created_logic_witness.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let created_logic_proof_future = logic_proof(&created_logic_witness);
+    let created_logic_proof = created_logic_proof_future.await?;
 
     //--------------------------------------------------------------------------
     // remainder proof
@@ -230,16 +186,8 @@ pub async fn split_from_request(
         receiver_encryption_pk,
     );
 
-    let remainder_logic_proof = thread::spawn(move || remainder_logic_witness.prove())
-        .join()
-        .map_err(|e| {
-            println!("prove thread panic: {:?}", e);
-            LogicProofCreateError
-        })?
-        .map_err(|e| {
-            println!("proving error: {:?}", e);
-            LogicProofCreateError
-        })?;
+    let remainder_logic_proof_future = logic_proof(&remainder_logic_witness);
+    let remainder_logic_proof = remainder_logic_proof_future.await?;
 
     ////////////////////////////////////////////////////////////////////////////
     // Create actions for transaction
@@ -257,7 +205,7 @@ pub async fn split_from_request(
 
     let delta_witness: DeltaWitness = DeltaWitness::from_bytes_vec(&[
         compliance_witness_created.rcv,
-        compliance_witness_remainder_resource.rcv,
+        compliance_witness_remainder.rcv,
     ])
     .map_err(|_| LogicProofCreateError)?;
 
