@@ -1,10 +1,10 @@
 use crate::errors::TransactionError;
 use crate::errors::TransactionError::{
     ActionError, ActionTreeError, DecodingError, DeltaProofCreateError, EncodingError,
-    InvalidKeyChain, InvalidNullifierSizeError, LogicProofCreateError, MerkleProofError,
+    InvalidKeyChain, LogicProofCreateError, MerkleProofError,
 };
 use crate::evm::indexer::pa_merkle_path;
-use crate::examples::shared::{label_ref, random_nonce, value_ref, verify_transaction};
+use crate::examples::shared::verify_transaction;
 use crate::requests::resource::JsonResource;
 use crate::requests::{compliance_proof, logic_proof, Expand};
 use crate::AnomaPayConfig;
@@ -14,8 +14,6 @@ use arm::action_tree::MerkleTree;
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use arm::compliance::ComplianceWitness;
 use arm::delta_proof::DeltaWitness;
-use arm::evm::CallType;
-use arm::logic_proof::LogicProver;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::transaction::{Delta, Transaction};
@@ -79,22 +77,6 @@ pub async fn burn_from_request(
 
     ////////////////////////////////////////////////////////////////////////////
     // Construct the ephemeral resource to create
-
-    let nonce = burned_resource_nullifier
-        .as_bytes()
-        .try_into()
-        .map_err(|_| InvalidNullifierSizeError)?;
-
-    let created_resource = Resource {
-        logic_ref: TransferLogic::verifying_key(),
-        label_ref: label_ref(config, token_addr),
-        quantity: burned_resource.quantity,
-        value_ref: value_ref(CallType::Unwrap, burner_address.as_ref()),
-        is_ephemeral: true,
-        nonce,
-        nk_commitment: burner_nf_key.commit(),
-        rand_seed: random_nonce(),
-    };
 
     let created_resource_commitment = created_resource.commitment();
 
