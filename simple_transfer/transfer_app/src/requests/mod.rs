@@ -25,11 +25,11 @@ pub trait Expand {
 }
 
 fn to_array<const N: usize>(v: Vec<u8>, field: &str) -> Result<[u8; N], String> {
-    v.try_into().map_err(|_| format!("{} invalid size", field))
+    v.try_into().map_err(|_| format!("{field} invalid size"))
 }
 
 fn to_digest(v: Vec<u8>, field: &str) -> Result<Digest, String> {
-    v.try_into().map_err(|_| format!("{} invalid size", field))
+    v.try_into().map_err(|_| format!("{field} invalid size"))
 }
 
 /// Given a compliance witness, generates a compliance unit.

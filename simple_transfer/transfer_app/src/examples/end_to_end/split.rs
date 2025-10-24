@@ -152,11 +152,11 @@ pub async fn create_split_transaction(
         thread::spawn(move || ComplianceUnit::create(&compliance_witness_created_clone.clone()))
             .join()
             .map_err(|e| {
-                println!("prove thread panic: {:?}", e);
+                println!("prove thread panic: {e:?}");
                 ComplianceUnitCreateError
             })?
             .map_err(|e| {
-                println!("proving error: {:?}", e);
+                println!("proving error: {e:?}");
                 ComplianceUnitCreateError
             })?;
 

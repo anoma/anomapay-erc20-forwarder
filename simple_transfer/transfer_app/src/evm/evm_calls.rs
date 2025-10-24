@@ -19,7 +19,7 @@ pub async fn pa_submit_transaction(
         .send()
         .await
         .map_err(|err| {
-            println!("Failed to submit transaction {:?}", err);
+            println!("Failed to submit transaction {err:?}");
             EvmSubmitError
         })
         .expect("Failed to submit transaction")

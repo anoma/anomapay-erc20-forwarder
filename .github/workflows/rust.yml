@@ -10,7 +10,7 @@ env:
 jobs:
   lint-rust:
     name: Lint Rust
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     permissions:
       packages: write
       contents: read
@@ -42,6 +42,9 @@ jobs:
 
       - name: run clippy
         run: cargo clippy -- -Dwarnings
+
+      - name: run clippy on test
+        run: cargo clippy --tests -- -Dwarnings
 
       # - name: check for undocumented functions
       #   run: RUSTFLAGS="-W missing_docs" cargo check
