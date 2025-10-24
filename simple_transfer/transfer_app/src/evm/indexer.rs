@@ -41,7 +41,7 @@ fn parse_merkle_path(proof_response: ProofResponse) -> Result<MerklePath, EvmErr
                 .as_slice()
                 .try_into()
                 .map_err(|_| MerklePathValueError)?;
-            println!("{:?}", bytes);
+            println!("{bytes:?}");
             let sibling_digest = Digest::from(bytes);
             Ok((sibling_digest, !frontier.is_left))
         })
@@ -106,11 +106,11 @@ async fn try_get_merkle_path(
         match result {
             Ok(proof_response) => return Ok(proof_response),
             Err(Recoverable(err)) => {
-                warn!("recoverable error while getting merkle path: {:?}", err)
+                warn!("recoverable error while getting merkle path: {err:?}")
             }
             Err(OverloadedIndexer) => {}
             Err(Unrecoverable(err)) => {
-                error!("unrecoverable error while getting merkle path: {:?}", err)
+                error!("unrecoverable error while getting merkle path: {err:?}")
             }
             Err(err) => return Err(EvmError::Indexer(err)),
         }
@@ -135,11 +135,11 @@ pub async fn pa_merkle_path(
     match try_get_merkle_path(&client, &url, 5).await {
         Ok(proof_response) => parse_merkle_path(proof_response),
         Err(EvmError::Indexer(err)) => {
-            error!("failed to get merkle path: {:?}", err);
+            error!("failed to get merkle path: {err:?}");
             Err(EvmError::Indexer(err))
         }
         Err(err) => {
-            error!("failed to get merkle path: {:?}", err);
+            error!("failed to get merkle path: {err:?}");
             Err(err)
         }
     }

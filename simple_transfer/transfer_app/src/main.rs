@@ -73,7 +73,7 @@ fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
 async fn rocket() -> _ {
     // load the config
     let config: AnomaPayConfig = load_config().unwrap_or_else(|e| {
-        eprintln!("Error loading config: {}", e);
+        eprintln!("Error loading config: {e}");
         std::process::exit(1);
     });
 
@@ -86,7 +86,7 @@ async fn rocket() -> _ {
             println!("failed to create a json string example");
             std::process::exit(0);
         };
-        println!("{}", json_str);
+        println!("{json_str}");
         std::process::exit(0);
     }
 
