@@ -241,8 +241,8 @@ pub async fn create_split_transaction(
     let remainder_logic_witness = TransferLogic::create_persistent_resource_logic(
         remainder_resource,
         remainder_resource_path,
-        &receiver.discovery_pk,
-        receiver.encryption_pk,
+        &sender.discovery_pk,
+        sender.encryption_pk,
     );
 
     let remainder_logic_proof_future = logic_proof(&remainder_logic_witness);
