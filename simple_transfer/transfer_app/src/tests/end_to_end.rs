@@ -76,7 +76,7 @@ mod tests {
 
         // create a test split transaction function from bob to alice.
         // alice gets 1, and bob gets 1 too.
-        let (_resource, _remainder_resource, transaction) =
+        let (_resource, _maybe_remainder_resource, transaction) =
             create_test_split_transaction(&config, &alice, &bob, minted_resource, 1).await;
 
         pa_submit_transaction(transaction)
@@ -102,19 +102,27 @@ mod tests {
             .expect("failed to submit mint transaction");
 
         // create a test split transaction from bob to alice
-        let (_resource, remainder_resource, transaction) =
+        let (_resource, maybe_remainder_resource, transaction) =
             create_test_split_transaction(&config, &alice, &bob, minted_resource, 1).await;
 
-        pa_submit_transaction(transaction)
-            .await
-            .expect("failed to submit split transaction");
+        match maybe_remainder_resource {
+            Some(remainder_resource) => {
+                pa_submit_transaction(transaction)
+                    .await
+                    .expect("failed to submit split transaction");
 
-        // create a burn transfer for alice's remainder resource.
-        let transaction = create_test_burn_transaction(&config, &alice, remainder_resource).await;
+                // create a burn transfer for alice's remainder resource.
+                let transaction =
+                    create_test_burn_transaction(&config, &alice, remainder_resource).await;
 
-        pa_submit_transaction(transaction)
-            .await
-            .expect("failed to submit burn transaction");
+                pa_submit_transaction(transaction)
+                    .await
+                    .expect("failed to submit burn transaction");
+            }
+            None => {
+                panic! {"No resource to burn from split!"}
+            }
+        }
     }
 
     #[tokio::test]
@@ -198,7 +206,7 @@ mod tests {
         receiver: &Keychain,
         resource: Resource,
         amount: u128,
-    ) -> (Resource, Resource, Transaction) {
+    ) -> (Resource, Option<Resource>, Transaction) {
         // create the transaction and assert it did not fail.
         let result =
             create_split_transaction(sender.clone(), receiver.clone(), resource, amount, config)
@@ -206,8 +214,8 @@ mod tests {
         assert!(result.is_ok());
 
         // assert the created transaction verifies
-        let (sent_resource, created_resource, transaction) = result.unwrap();
+        let (sent_resource, maybe_created_resource, transaction) = result.unwrap();
         assert!(transaction.clone().verify().is_ok());
-        (sent_resource, created_resource, transaction)
+        (sent_resource, maybe_created_resource, transaction)
     }
 }

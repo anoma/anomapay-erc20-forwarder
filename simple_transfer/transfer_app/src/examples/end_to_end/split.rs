@@ -4,6 +4,7 @@ use crate::errors::TransactionError::{
     InvalidNullifierSizeError, LogicProofCreateError, MerklePathError, MerkleProofError,
 };
 use crate::evm::indexer::pa_merkle_path;
+use crate::examples::end_to_end::transfer::create_transfer_transaction;
 use crate::examples::shared::{label_ref, random_nonce, value_ref_created, verify_transaction};
 use crate::examples::TOKEN_ADDRESS_SEPOLIA_USDC;
 use crate::requests::logic_proof;
@@ -45,13 +46,20 @@ pub async fn create_split_transaction(
     to_split_resource: Resource,
     amount: u128,
     config: &AnomaPayConfig,
-) -> Result<(Resource, Resource, Transaction), TransactionError> {
+) -> Result<(Resource, Option<Resource>, Transaction), TransactionError> {
     // ensure the amount is enough to split
-    if to_split_resource.quantity <= amount {
+    if to_split_resource.quantity < amount {
         return Err(InvalidAmount);
     };
     let remainder = to_split_resource.quantity - amount;
 
+    if remainder == 0 {
+        // If the remainder is 0, default to a transfer
+        let (sent_resource, transaction) =
+            create_transfer_transaction(sender, receiver, to_split_resource, config).await?;
+
+        return Ok((sent_resource, None, transaction));
+    }
     // In a split, we need a balanced transaction. That means if we create two resources, we have
     // to consume two as well. This empty resource is called a padding resource.
     // This resource does not need the resource logic of the simple transfer either, so we use
@@ -275,5 +283,5 @@ pub async fn create_split_transaction(
         .map_err(|_| DeltaProofCreateError)?;
     verify_transaction(transaction.clone())?;
 
-    Ok((created_resource, remainder_resource, transaction))
+    Ok((created_resource, Some(remainder_resource), transaction))
 }
