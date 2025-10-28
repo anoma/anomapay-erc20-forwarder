@@ -2,12 +2,13 @@
 mod tests {
     use crate::evm::evm_calls::pa_submit_transaction;
     use crate::examples::end_to_end::burn::create_burn_transaction;
+    use crate::examples::end_to_end::generalized_transfer::create_general_transfer_transaction;
     use crate::examples::end_to_end::mint::create_mint_transaction;
     use crate::examples::end_to_end::split::create_split_transaction;
     use crate::examples::end_to_end::transfer::create_transfer_transaction;
     use crate::tests::fixtures::{alice_keychain, bob_keychain};
     use crate::user::Keychain;
-    use crate::{load_config, AnomaPayConfig};
+    use crate::{AnomaPayConfig, load_config};
     use arm::resource::Resource;
     use arm::transaction::Transaction;
     use serial_test::serial;
@@ -244,6 +245,31 @@ mod tests {
         let result =
             create_split_transaction(sender.clone(), receiver.clone(), resource, amount, config)
                 .await;
+        assert!(result.is_ok());
+
+        // assert the created transaction verifies
+        let (sent_resource, maybe_created_resource, transaction) = result.unwrap();
+        assert!(transaction.clone().verify().is_ok());
+        (sent_resource, maybe_created_resource, transaction)
+    }
+
+    /// Creates a transaction which can split from many resources
+    async fn create_test_generalized_transfer_transaction(
+        sender: &Keychain,
+        maybe_receiver: Option<Keychain>,
+        to_send_resources: Vec<Resource>,
+        amount: u128,
+        config: &AnomaPayConfig,
+    ) -> (Resource, Option<Resource>, Transaction) {
+        let result = create_general_transfer_transaction(
+            sender.clone(),
+            maybe_receiver,
+            to_send_resources,
+            amount,
+            config,
+        )
+        .await;
+
         assert!(result.is_ok());
 
         // assert the created transaction verifies
