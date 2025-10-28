@@ -86,6 +86,39 @@ mod tests {
 
     #[tokio::test]
     #[serial]
+    /// Create a mint transaction, and then split the resource so that none remains.
+    async fn test_mint_and_split_defaults_to_transfer() {
+        let config = load_config().expect("failed to load config in test");
+        // create a keychain with a private key
+        let alice = alice_keychain(&config);
+        let bob = bob_keychain();
+
+        // create a test mint transaction for alice
+        let (minted_resource, transaction) = create_test_mint_transaction(&config, &alice).await;
+
+        pa_submit_transaction(transaction)
+            .await
+            .expect("failed to submit mint transaction");
+
+        // create a test split transaction function from bob to alice.
+        // alice does not get anything, bob gets 2.
+        let (_resource, maybe_remainder_resource, transaction) =
+            create_test_split_transaction(&config, &alice, &bob, minted_resource, 2).await;
+
+        match maybe_remainder_resource {
+            Some(_remainder) => {
+                panic! {"Some remains after transfer!"}
+            }
+            None => {
+                pa_submit_transaction(transaction)
+                    .await
+                    .expect("failed to submit split transaction");
+            }
+        }
+    }
+
+    #[tokio::test]
+    #[serial]
     /// Create a mint trson. Burn tansaction, and then split the resource between the minter and another
     /// perhe remainder resource afterward.
     async fn test_mint_and_split_and_burn() {
