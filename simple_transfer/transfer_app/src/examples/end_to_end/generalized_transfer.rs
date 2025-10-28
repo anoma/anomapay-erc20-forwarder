@@ -112,7 +112,7 @@ pub async fn create_general_transfer_transaction(
                 logic_ref: TransferLogic::verifying_key(),
                 label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
                 quantity: amount,
-                value_ref: value_ref_created(&receiver),
+                value_ref: value_ref_created(receiver),
                 is_ephemeral: false,
                 nonce,
                 nk_commitment: receiver.nf_key.commit(),
@@ -219,7 +219,7 @@ pub async fn create_general_transfer_transaction(
                 .map_err(|_| MerkleProofError)?;
 
             let witness = ComplianceWitness::from_resources_with_path(
-                consumed_resource.clone(),
+                *consumed_resource,
                 sender.nf_key.clone(),
                 path,
                 created_resources[index],
@@ -252,7 +252,7 @@ pub async fn create_general_transfer_transaction(
                 .map_err(|_| MerklePathError)?;
 
             let witness = TransferLogic::consume_persistent_resource_logic(
-                consumed_resource.clone(),
+                *consumed_resource,
                 consumed_resource_path.clone(),
                 sender.nf_key.clone(),       //TODO ! // sender_nf_key.clone(),
                 sender.auth_verifying_key(), //TODO ! // sender_verifying_key,
