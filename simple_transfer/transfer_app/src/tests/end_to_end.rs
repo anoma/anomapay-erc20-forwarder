@@ -163,7 +163,7 @@ mod tests {
     #[serial]
     /// Create two mint transactions, and then split the resource between the minter and another
     /// person.
-    async fn test_mint_and_generalized_split() {
+    async fn test_mint_and_generalized_split_without_padding() {
         let config = load_config().expect("failed to load config in test");
         // create a keychain with a private key
         let alice = alice_keychain(&config);
@@ -196,6 +196,72 @@ mod tests {
                 Some(bob),
                 vec![first_minted_resource, second_minted_resource],
                 3,
+                &config,
+            )
+            .await;
+
+        match maybe_remainder_resource {
+            Some(_remainder) => {
+                pa_submit_transaction(transaction)
+                    .await
+                    .expect("failed to submit general split transaction");
+            }
+            None => {
+                panic! {"None remaining from generalized transfer!"}
+            }
+        }
+    }
+
+    #[tokio::test]
+    #[serial]
+    /// Create 3 mint transactions, and then split the resource between the minter and another
+    /// person.
+    async fn test_mint_and_generalized_split_with_padding() {
+        let config = load_config().expect("failed to load config in test");
+        // create a keychain with a private key
+        let alice = alice_keychain(&config);
+        let bob = bob_keychain();
+
+        // create test mint transactions for alice
+        let (first_minted_resource, first_transaction) =
+            create_test_mint_transaction(&config, &alice).await;
+
+        pa_submit_transaction(first_transaction)
+            .await
+            .expect("failed to submit first mint transaction");
+
+        // Alice now has 2
+
+        let (second_minted_resource, second_transaction) =
+            create_test_mint_transaction(&config, &alice).await;
+
+        pa_submit_transaction(second_transaction)
+            .await
+            .expect("failed to submit second mint transaction");
+
+        // Alice now has 4
+
+        let (third_minted_resource, third_transaction) =
+            create_test_mint_transaction(&config, &alice).await;
+
+        pa_submit_transaction(third_transaction)
+            .await
+            .expect("failed to submit second mint transaction");
+
+        // Alice now has 6
+
+        // create a test split transaction function from alice to bob.
+        // alice gets 1, and bob gets 5.
+        let (_resource, maybe_remainder_resource, transaction) =
+            create_test_generalized_transfer_transaction(
+                &alice,
+                Some(bob),
+                vec![
+                    first_minted_resource,
+                    second_minted_resource,
+                    third_minted_resource,
+                ],
+                5,
                 &config,
             )
             .await;
