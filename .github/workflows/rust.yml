@@ -1,8 +1,8 @@
 name: Rust CI
 on:
   push:
-    # branches:
-    #   - "*"
+  # branches:
+  #   - "*"
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -49,8 +49,7 @@ jobs:
 
       # - name: check for undocumented functions
       #   run: RUSTFLAGS="-W missing_docs" cargo check
-  container-build:
-    # only build container on main
+  container-build: # only build container on main
     #if: github.ref == 'refs/heads/main'
     name: Build Container
     needs: lint-rust
@@ -60,8 +59,7 @@ jobs:
       contents: read
       attestations: write
       id-token: write
-    steps:
-      # github is poopoo
+    steps: # github is poopoo
       - name: Aggressive cleanup
         run: |
           # Remove Java (JDKs)
@@ -102,13 +100,16 @@ jobs:
           df -h
 
       - uses: actions/checkout@v5
+        with:
+          submodules: "recursive"
+
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          submodules: "recursive"
+
 
 
       - name: Extract metadata (tags, labels) for Docker
