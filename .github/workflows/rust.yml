@@ -18,7 +18,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v5
-
+        with:
+          submodules: "recursive"
       - name: restore dependencies cache
         uses: actions/cache@v3
         with:
@@ -107,6 +108,9 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          submodules: "recursive"
+
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
