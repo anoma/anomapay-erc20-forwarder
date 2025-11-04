@@ -1,9 +1,14 @@
 #[cfg(test)]
 use alloy::primitives::{address, Address};
 
-mod approve;
 mod end_to_end;
 mod fixtures;
+
+mod evm;
+mod transactions;
+mod webserver;
+mod helpers;
+pub mod permit2;
 
 // this is the token address for USDC on Sepolia. In this example we assume the user wants to
 // transfer USDC.

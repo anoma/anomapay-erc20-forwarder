@@ -1,3 +1,4 @@
+#![cfg(test)]
 use alloy::primitives::{address, Address, Signature, B256, U256};
 use alloy::signers::{local::PrivateKeySigner, Signer};
 use alloy::sol;

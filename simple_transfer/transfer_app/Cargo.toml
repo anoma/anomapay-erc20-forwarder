@@ -33,6 +33,8 @@ futures = { version = "0.3.31", features = ["thread-pool"] }
 rocket = { version = "0.5", features = ["json"] }
 reqwest = { version = "0.12", features = [] }
 log = "0.4.28"
+chrono = "0.4.42"
+thiserror = "2.0.17"
 
 [dev-dependencies]
 serial_test = "3.2.0"

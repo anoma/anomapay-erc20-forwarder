@@ -1,6 +1,10 @@
+#![cfg(test)]
+
 use alloy::primitives::Address;
 use alloy::signers::local::PrivateKeySigner;
-use arm::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
+use arm::authorization::AuthorizationSigningKey;
+#[cfg(test)]
+use arm::authorization::AuthorizationVerifyingKey;
 use arm::encryption::SecretKey;
 use arm::nullifier_key::NullifierKey;
 use k256::AffinePoint;
@@ -25,7 +29,7 @@ pub struct Keychain {
 
 impl Keychain {
     // these can be dead code because they're used for development.
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub fn bob(private_key: Option<PrivateKeySigner>) -> Keychain {
         let evm_address = "0x44B73CbC3C2E902cD0768854c2ff914DD44a325F"
             .parse::<Address>()
@@ -84,7 +88,7 @@ impl Keychain {
         }
     }
     // these can be dead code because they're used for development.
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub fn alice(address: String, private_key: Option<PrivateKeySigner>) -> Keychain {
         let evm_address = address.parse::<Address>().unwrap();
 
@@ -138,6 +142,7 @@ impl Keychain {
             private_key,
         }
     }
+    #[cfg(test)]
     pub fn auth_verifying_key(&self) -> AuthorizationVerifyingKey {
         AuthorizationVerifyingKey::from_signing_key(&self.auth_signing_key)
     }

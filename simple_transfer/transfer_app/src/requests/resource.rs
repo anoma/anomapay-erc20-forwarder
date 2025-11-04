@@ -8,7 +8,7 @@ use serde_with::serde_as;
 /// Defines teh shape of a resource sent via JSON to the API.
 /// Implements functions
 #[serde_as]
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct JsonResource {
     #[serde_as(as = "Base64")]
     pub logic_ref: Vec<u8>,
