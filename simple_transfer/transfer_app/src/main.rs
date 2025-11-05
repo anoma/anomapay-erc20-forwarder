@@ -35,8 +35,10 @@ struct AnomaPayConfig {
     // url of the anoma indexer
     indexer_address: String,
     // the address of the hot wallet
+    #[allow(dead_code)]
     hot_wallet_address: Address,
     // the private key of the hot wallet
+    #[allow(dead_code)]
     hot_wallet_private_key: PrivateKeySigner,
 }
 

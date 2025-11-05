@@ -1,8 +1,10 @@
 use alloy::sol;
 use std::error::Error;
 
+use crate::evm::EvmError::{ContractCallError, InvalidEthereumRPC};
+use crate::evm::{EvmResult, PERMIT2_CONTRACT};
 use crate::AnomaPayConfig;
-use alloy::primitives::{address, Address};
+use alloy::primitives::Address;
 use alloy::providers::ProviderBuilder;
 
 // solidity interface code taken from
@@ -34,10 +36,7 @@ pub async fn is_address_approved(
     let contract = IERC20::new(token_address, provider.clone());
 
     let res = contract
-        .allowance(
-            token_holder,
-            address!("0x000000000022D473030F116dDEE9F6B43aC78BA3"),
-        )
+        .allowance(token_holder, PERMIT2_CONTRACT)
         .call()
         .await?;
 
