@@ -1,6 +1,7 @@
 //! Module that defines helper functions to create split transactions.
 
 use crate::evm::indexer::pa_merkle_path;
+use crate::helpers::verify_transaction;
 use crate::transactions::helpers::{compliance_proof_async, logic_proof_async};
 use crate::transactions::split::SplitError::{
     ComplianceProofGenerationError, CreatedResourceLogicProofError, CreatedResourceNotInActionTree,
@@ -23,7 +24,6 @@ use arm::resource_logic::TrivialLogicWitness;
 use arm::transaction::{Delta, Transaction};
 use k256::AffinePoint;
 use transfer_library::TransferLogic;
-use crate::helpers::verify_transaction;
 
 // A custom type alias for functions that generate split transactions.
 pub type SplitResult<T> = Result<T, SplitError>;

@@ -34,7 +34,10 @@ pub async fn is_address_approved(
     let contract = IERC20::new(token_address, provider.clone());
 
     let res = contract
-        .allowance(token_holder, address!("0x000000000022D473030F116dDEE9F6B43aC78BA3"))
+        .allowance(
+            token_holder,
+            address!("0x000000000022D473030F116dDEE9F6B43aC78BA3"),
+        )
         .call()
         .await?;
 

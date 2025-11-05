@@ -5,10 +5,10 @@ mod end_to_end;
 mod fixtures;
 
 mod evm;
-mod transactions;
-mod webserver;
 mod helpers;
 pub mod permit2;
+mod transactions;
+mod webserver;
 
 // this is the token address for USDC on Sepolia. In this example we assume the user wants to
 // transfer USDC.

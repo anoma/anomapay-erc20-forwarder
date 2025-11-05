@@ -10,12 +10,12 @@
 mod errors;
 
 mod evm;
+mod helpers;
 mod requests;
 mod tests;
 mod transactions;
 mod user;
 mod webserver;
-mod helpers;
 
 use crate::webserver::{
     all_options, burn, default_error, health, is_approved, mint, split, transfer, unprocessable,

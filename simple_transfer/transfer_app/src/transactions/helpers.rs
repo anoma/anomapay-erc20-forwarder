@@ -1,9 +1,7 @@
 //! Defines helper functions to be used in creating transactions.
 
 use crate::errors::TransactionError;
-use crate::errors::TransactionError::{
-    ComplianceUnitCreateError, LogicProofCreateError,
-};
+use crate::errors::TransactionError::{ComplianceUnitCreateError, LogicProofCreateError};
 use arm::compliance::ComplianceWitness;
 use arm::compliance_unit::ComplianceUnit;
 use arm::logic_proof::{LogicProver, LogicVerifier};

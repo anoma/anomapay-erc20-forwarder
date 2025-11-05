@@ -1,6 +1,7 @@
 //! Module that defines helper functions to create transfer transactions.
 
 use crate::evm::indexer::pa_merkle_path;
+use crate::helpers::verify_transaction;
 use crate::transactions::helpers::{compliance_proof_asyncc, logic_proof_asyncc};
 use crate::transactions::transfer::TransferError::{
     ComplianceProofGenerationError, CreatedResourceLogicProofError, CreatedResourceNotInActionTree,
@@ -27,7 +28,6 @@ use arm::{
 use k256::AffinePoint;
 use tokio::try_join;
 use transfer_library::TransferLogic;
-use crate::helpers::verify_transaction;
 
 // A custom type alias for functions that generate transfer transactions.
 pub type TransferResult<T> = Result<T, TransferError>;

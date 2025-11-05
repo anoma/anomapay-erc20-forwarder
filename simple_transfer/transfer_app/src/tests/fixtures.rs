@@ -1,7 +1,10 @@
 #![cfg(test)]
 use crate::errors::TransactionError;
 use crate::errors::TransactionError::{InvalidKeyChain, InvalidNullifierSizeError};
-use crate::tests::helpers::{create_permit_signature, label_ref, random_nonce, value_ref_created, value_ref_ephemeral_burn, value_ref_ephemeral_mint};
+use crate::tests::helpers::{
+    create_permit_signature, label_ref, random_nonce, value_ref_created, value_ref_ephemeral_burn,
+    value_ref_ephemeral_mint,
+};
 use crate::transactions::burn::BurnParameters;
 use crate::transactions::mint::MintParameters;
 use crate::transactions::split::SplitParameters;

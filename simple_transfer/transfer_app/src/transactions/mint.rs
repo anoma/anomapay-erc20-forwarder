@@ -4,6 +4,7 @@ use crate::errors::TransactionError::{
     ActionError, ActionTreeError, DeltaProofCreateError, LogicProofCreateError, MerklePathError,
     ProofGenerationError,
 };
+use crate::helpers::verify_transaction;
 use crate::transactions::helpers::{compliance_proof_asyncc, logic_proof_asyncc, TxResult};
 use alloy::primitives::U256;
 use arm::action::Action;
@@ -19,7 +20,6 @@ use arm::Digest;
 use k256::AffinePoint;
 use tokio::try_join;
 use transfer_library::TransferLogic;
-use crate::helpers::verify_transaction;
 
 /// Defines a struct that holds all the necessary values to create a mint transaction.
 #[derive(Debug)]

@@ -1,8 +1,5 @@
 use crate::errors::TransactionError;
-use crate::errors::TransactionError::{
-    DecodingError, InvalidKeyChain
-    , TransactionSubmitError,
-};
+use crate::errors::TransactionError::{DecodingError, InvalidKeyChain, TransactionSubmitError};
 
 use crate::evm::evm_calls::pa_submit_transaction;
 use crate::requests::resource::JsonResource;
