@@ -1,9 +1,8 @@
-use crate::evm::errors::EvmError;
-use crate::evm::errors::EvmError::{MerklePathNotFound, MerklePathValueError};
-use crate::evm::errors::IndexerError;
-use crate::evm::errors::IndexerError::{
-    InvalidIndexer, OverloadedIndexer, Recoverable, Unrecoverable,
+use crate::evm::IndexerError::{
+    IndexerOverloaded, InvalidIndexerUrl, InvalidResponse, MerklePathNotFound, NeighbourValueError,
+    Recoverable, Unrecoverable,
 };
+use crate::evm::IndexerResult;
 use crate::AnomaPayConfig;
 use arm::merkle_path::MerklePath;
 use arm::Digest;
@@ -31,8 +30,8 @@ struct Frontier {
 }
 
 /// Given a ProofResponse, parses into a MerklePath.
-fn parse_merkle_path(proof_response: ProofResponse) -> Result<MerklePath, EvmError> {
-    let merkle_path: Result<Vec<(Digest, bool)>, EvmError> = proof_response
+fn parse_merkle_path(proof_response: ProofResponse) -> IndexerResult<MerklePath> {
+    let merkle_path: IndexerResult<Vec<(Digest, bool)>> = proof_response
         .frontiers
         .into_iter()
         .map(|frontier| {
@@ -40,7 +39,7 @@ fn parse_merkle_path(proof_response: ProofResponse) -> Result<MerklePath, EvmErr
                 .neighbour
                 .as_slice()
                 .try_into()
-                .map_err(|_| MerklePathValueError)?;
+                .map_err(|_| NeighbourValueError(frontier.neighbour))?;
             let sibling_digest = Digest::from(bytes);
             Ok((sibling_digest, !frontier.is_left))
         })
@@ -52,9 +51,11 @@ fn parse_merkle_path(proof_response: ProofResponse) -> Result<MerklePath, EvmErr
 
 /// Try to get the merkle path from the indexer for the given commitment.
 /// If the path is
-async fn get_merkle_path(client: &Client, url: &Url) -> Result<ProofResponse, IndexerError> {
-    // try and parse the json response.
+async fn get_merkle_path(client: &Client, url: &Url) -> IndexerResult<ProofResponse> {
+    // Make the request to the indexer
     let response = client.get(url.to_owned()).send().await;
+
+    // Try parse the result of the indexer
     match response {
         Ok(response) => {
             match response.error_for_status_ref() {
@@ -62,10 +63,10 @@ async fn get_merkle_path(client: &Client, url: &Url) -> Result<ProofResponse, In
                 Ok(_) => response
                     .json::<ProofResponse>()
                     .await
-                    .map_err(|_| InvalidIndexer),
+                    .map_err(|_| InvalidResponse),
                 // too many requests is recoverable, but requires waiting a bit longer
                 Err(err) if err.status() == Some(reqwest::StatusCode::TOO_MANY_REQUESTS) => {
-                    Err(OverloadedIndexer)
+                    Err(IndexerOverloaded)
                 }
                 // some errors are recoverable
                 Err(err)
@@ -95,7 +96,7 @@ async fn try_get_merkle_path(
     client: &Client,
     url: &Url,
     tries: u32,
-) -> Result<ProofResponse, EvmError> {
+) -> IndexerResult<ProofResponse> {
     for attempt in 0..=tries {
         let delay = Duration::from_millis(250 * 2_u64.pow(attempt));
         sleep(delay).await;
@@ -104,14 +105,14 @@ async fn try_get_merkle_path(
 
         match result {
             Ok(proof_response) => return Ok(proof_response),
+            Err(IndexerOverloaded) => {}
             Err(Recoverable(err)) => {
                 warn!("recoverable error while getting merkle path: {err:?}")
             }
-            Err(OverloadedIndexer) => {}
             Err(Unrecoverable(err)) => {
                 error!("unrecoverable error while getting merkle path: {err:?}")
             }
-            Err(err) => return Err(EvmError::Indexer(err)),
+            Err(err) => return Err(err),
         }
         warn!("failed to get merkle path, attempting again...")
     }
@@ -124,24 +125,15 @@ async fn try_get_merkle_path(
 pub async fn pa_merkle_path(
     config: &AnomaPayConfig,
     commitment: Digest,
-) -> Result<MerklePath, EvmError> {
-    let url: Url = format!("{}/generate_proof/0x{}", config.indexer_address, commitment)
+) -> IndexerResult<MerklePath> {
+    let url = format!("{}/generate_proof/0x{}", config.indexer_address, commitment)
         .parse()
-        .unwrap();
+        .map_err(|_e| InvalidIndexerUrl)?;
 
     let client = Client::new();
 
-    match try_get_merkle_path(&client, &url, 5).await {
-        Ok(proof_response) => parse_merkle_path(proof_response),
-        Err(EvmError::Indexer(err)) => {
-            error!("failed to get merkle path: {err:?}");
-            Err(EvmError::Indexer(err))
-        }
-        Err(err) => {
-            error!("failed to get merkle path: {err:?}");
-            Err(err)
-        }
-    }
+    let indexer_response = try_get_merkle_path(&client, &url, 5).await?;
+    parse_merkle_path(indexer_response)
 }
 
 #[cfg(test)]

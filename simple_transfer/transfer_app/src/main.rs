@@ -7,8 +7,6 @@
 //!  - splitting
 //!  - burning
 
-mod errors;
-
 mod evm;
 mod helpers;
 mod requests;
@@ -79,7 +77,6 @@ async fn rocket() -> _ {
     });
 
     rocket::build()
-        .configure(rocket::Config::figment().merge(("port", 8001)))
         .manage(config)
         .attach(Cors)
         .mount(

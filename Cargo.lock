@@ -7540,6 +7540,7 @@ name = "transfer_app"
 version = "0.1.0"
 dependencies = [
  "alloy",
+ "alloy-contract",
  "arm",
  "bincode",
  "bonsai-sdk",

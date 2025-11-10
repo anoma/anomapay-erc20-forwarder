@@ -1,11 +1,12 @@
 //! Module that defines helper functions to create mint transactions.
 
-use crate::errors::TransactionError::{
-    ActionError, ActionTreeError, DeltaProofCreateError, LogicProofCreateError, MerklePathError,
-    ProofGenerationError,
+use crate::transactions::helpers::{compliance_proof_asyncc, logic_proof_asyncc};
+use crate::transactions::mint::MintError::{
+    ComplianceProofGenerationError, ConsumedLogicProofGenerationError,
+    ConsumedResourceNotInActionTree, CreatedLogicProofGenerationError,
+    CreatedResourceNotInActionTree, DeltaProofGenerationError, DeltaWitnessGenerationError,
+    InvalidLogicProofsInAction, ProofGenerationError, TransactionVerificationError,
 };
-use crate::helpers::verify_transaction;
-use crate::transactions::helpers::{compliance_proof_asyncc, logic_proof_asyncc, TxResult};
 use alloy::primitives::U256;
 use arm::action::Action;
 use arm::action_tree::MerkleTree;
@@ -18,9 +19,38 @@ use arm::resource::Resource;
 use arm::transaction::{Delta, Transaction};
 use arm::Digest;
 use k256::AffinePoint;
+use thiserror::Error;
 use tokio::try_join;
 use transfer_library::TransferLogic;
 
+// A custom type alias for functions that generate transfer transactions.
+pub type MintResult<T> = Result<T, MintError>;
+
+#[derive(Error, Debug, Clone)]
+pub enum MintError {
+    #[error("The nullifier for the consumed resource was not found in the action tree.")]
+    ConsumedResourceNotInActionTree,
+    #[error("The created resource commitment was not found in the action tree.")]
+    CreatedResourceNotInActionTree,
+    #[error("An error occurred creating threads to generate the proofs.")]
+    ProofGenerationError,
+    #[error("An error occurred generating the Action. The resource logics might be wrong.")]
+    InvalidLogicProofsInAction,
+    #[error(
+        "An error occurred generating the Delta Witness. The compliance witness might be wrong."
+    )]
+    DeltaWitnessGenerationError,
+    #[error("Failed to generate the delta proof.")]
+    DeltaProofGenerationError,
+    #[error("Failed to verify the mint transaction.")]
+    TransactionVerificationError,
+    #[error("Failed to generate the resource logic proof for the consumed resource.")]
+    ConsumedLogicProofGenerationError,
+    #[error("Failed to generate the compliance proof for the mint transaction.")]
+    ComplianceProofGenerationError,
+    #[error("Failed to generate the resource logic proof for the created resource.")]
+    CreatedLogicProofGenerationError,
+}
 /// Defines a struct that holds all the necessary values to create a mint transaction.
 #[derive(Debug)]
 pub struct MintParameters {
@@ -78,11 +108,11 @@ impl MintParameters {
     }
 
     // Create the resource logic witness to generate the resource logic proof for the consumed resource.
-    fn consumed_logic_witness(&self, action_tree: &MerkleTree) -> TxResult<TransferLogic> {
+    fn consumed_logic_witness(&self, action_tree: &MerkleTree) -> MintResult<TransferLogic> {
         // compute the resource path from the action tree for the consumed resource.
         let consumed_resource_path = action_tree
             .generate_path(&self.consumed_resource_nullifier)
-            .map_err(|_| MerklePathError)?;
+            .map_err(|_| ConsumedResourceNotInActionTree)?;
 
         Ok(TransferLogic::mint_resource_logic_with_permit(
             self.consumed_resource,
@@ -98,11 +128,11 @@ impl MintParameters {
     }
 
     // Create the resource logic witness for the created resource.
-    fn created_logic_witness(&self, action_tree: &MerkleTree) -> TxResult<TransferLogic> {
+    fn created_logic_witness(&self, action_tree: &MerkleTree) -> MintResult<TransferLogic> {
         // compute the resource path from the action tree and created resource.
         let created_resource_path = action_tree
             .generate_path(&self.created_resource_commitment)
-            .map_err(|_| ActionTreeError)?;
+            .map_err(|_| CreatedResourceNotInActionTree)?;
 
         Ok(TransferLogic::create_persistent_resource_logic(
             self.created_resource,
@@ -113,7 +143,7 @@ impl MintParameters {
     }
 
     // Generates a transaction for a MintParameters.
-    pub async fn generate_transaction(&self) -> TxResult<Transaction> {
+    pub async fn generate_transaction(&self) -> MintResult<Transaction> {
         // Generate the action tree for the resources in this transaction.
         let action_tree = self.action_tree();
 
@@ -134,20 +164,23 @@ impl MintParameters {
         )
         .map_err(|_| ProofGenerationError)?;
 
-        let created_logic_proof: LogicVerifier = created_logic_proof?;
-        let compliance_unit: ComplianceUnit = compliance_unit?;
-        let consumed_logic_proof: LogicVerifier = consumed_logic_proof?;
+        let created_logic_proof: LogicVerifier =
+            created_logic_proof.map_err(|_| CreatedLogicProofGenerationError)?;
+        let compliance_unit: ComplianceUnit =
+            compliance_unit.map_err(|_| ComplianceProofGenerationError)?;
+        let consumed_logic_proof: LogicVerifier =
+            consumed_logic_proof.map_err(|_| ConsumedLogicProofGenerationError)?;
 
         // Create the action based on the three proofs.
         let action: Action = Action::new(
             vec![compliance_unit],
             vec![consumed_logic_proof, created_logic_proof],
         )
-        .map_err(|_| ActionError)?;
+        .map_err(|_| InvalidLogicProofsInAction)?;
 
         // Create the delta proof for this transaction.
-        let delta_witness =
-            DeltaWitness::from_bytes(&compliance_witness.rcv).map_err(|_| LogicProofCreateError)?;
+        let delta_witness = DeltaWitness::from_bytes(&compliance_witness.rcv)
+            .map_err(|_| DeltaWitnessGenerationError)?;
 
         // Create the transaction object
         let transaction = Transaction::create(vec![action], Delta::Witness(delta_witness));
@@ -155,11 +188,12 @@ impl MintParameters {
         // Generate the delta proof
         let transaction = transaction
             .generate_delta_proof()
-            .map_err(|_| DeltaProofCreateError)?;
+            .map_err(|_| DeltaProofGenerationError)?;
 
         // Verify the transaction before returning. If it does not verify, something went wrong.
-        verify_transaction(transaction.clone())?;
-
-        Ok(transaction)
+        match transaction.clone().verify() {
+            Ok(_) => Ok(transaction),
+            Err(_) => Err(TransactionVerificationError),
+        }
     }
 }

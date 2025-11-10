@@ -1,15 +1,15 @@
 //! Module that defines helper functions to create split transactions.
 
 use crate::evm::indexer::pa_merkle_path;
-use crate::helpers::verify_transaction;
 use crate::transactions::helpers::{compliance_proof_async, logic_proof_async};
 use crate::transactions::split::SplitError::{
-    ComplianceProofGenerationError, CreatedResourceLogicProofError, CreatedResourceNotInActionTree,
-    DeltaProofGenerationError, DeltaWitnessGenerationError, InvalidLogicProofsInAction,
-    InvalidSenderNullifierKey, PaddingResourceLogicProofError, PaddingResourceNotInActionTree,
-    RemainderResourceLogicProofError, RemainderResourceNotInActionTree,
-    SplitResourceMerkleProofNotFound, ToSplitResourceLogicProofError,
-    ToSplitResourceNotInActionTree, TransactionVerificationError,
+    CreatedComplianceProofGenerationError, CreatedResourceLogicProofError,
+    CreatedResourceNotInActionTree, DeltaProofGenerationError, DeltaWitnessGenerationError,
+    InvalidLogicProofsInAction, InvalidSenderNullifierKey, PaddingResourceLogicProofError,
+    PaddingResourceNotInActionTree, PaddingResourceNullifierFailed,
+    RemainderComplianceProofGenerationError, RemainderResourceLogicProofError,
+    RemainderResourceNotInActionTree, SplitResourceMerkleProofNotFound,
+    ToSplitResourceLogicProofError, ToSplitResourceNotInActionTree, TransactionVerificationError,
 };
 use crate::AnomaPayConfig;
 use arm::action::Action;
@@ -23,41 +23,52 @@ use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
 use arm::transaction::{Delta, Transaction};
 use k256::AffinePoint;
+use thiserror::Error;
 use transfer_library::TransferLogic;
 
 // A custom type alias for functions that generate split transactions.
 pub type SplitResult<T> = Result<T, SplitError>;
 
 // Set of errors that can occur during the creation of a split transaction.
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
 pub enum SplitError {
-    // The user provided an invalid sender nullifier key
+    #[error("Failed to generate nullifier for the padding resource.")]
+    PaddingResourceNullifierFailed,
+    #[error("The nullifier key of the sender is invalid.")]
     InvalidSenderNullifierKey,
-    // The merkle proof for the resource being transferred did not exist or was not fetched.
+    #[error("Failed to fetch the merkle proof for the resource to split from the PA.")]
     SplitResourceMerkleProofNotFound,
-    // An error occurred generating the compliance proof
-    ComplianceProofGenerationError,
-    // An error occurred generating the logic proof for the transferred resource
+    #[error("An error occurred generating the compliance proof of the created resource")]
+    CreatedComplianceProofGenerationError,
+    #[error("An error occurred generating the compliance proof of the created resource")]
+    RemainderComplianceProofGenerationError,
+    #[error("An error occurred generating the resource logic proof for the to split resource.")]
     ToSplitResourceLogicProofError,
-    // An error occurred generating the logic proof for the created resource.
+    #[error("An error occurred generating the resource logic proof for the created resource.")]
     CreatedResourceLogicProofError,
-    // An error occurred generating the proof for the padding resource
+    #[error("An error occurred generating the resource logic proof for the padding resource.")]
     PaddingResourceLogicProofError,
-    // An error occurred for the remainder resource logic proof
+    #[error("An error occurred generating the resource logic proof for the remainder resource.")]
     RemainderResourceLogicProofError,
     // The created resource was not found in the action tree.
+    #[error("The nullifer of the created resource was not found in the action tree.")]
     CreatedResourceNotInActionTree,
+    #[error("The nullifer of the to split resource was not found in the action tree.")]
     ToSplitResourceNotInActionTree,
+    #[error("The commitment of the remainder resource was not found in the action tree.")]
     RemainderResourceNotInActionTree,
+    #[error("The nullifer of the padding resource was not found in the action tree.")]
     PaddingResourceNotInActionTree,
-    // The logic proofs were not valid inputs to create an action
-    InvalidLogicProofsInAction,
-    // Failed to create the delta witness for the given actions.
+    #[error(
+        "An error occurred generating the Delta Witness. The compliance witness might be wrong."
+    )]
     DeltaWitnessGenerationError,
-    // Failed to generate the delta proof for the transaction
+    #[error("Failed to generate the delta proof.")]
     DeltaProofGenerationError,
-    // The created transaction failed to verify.
+    #[error("Failed to verify the split transaction.")]
     TransactionVerificationError,
+    #[error("An error occurred generating the Action. The resource logics might be wrong.")]
+    InvalidLogicProofsInAction,
 }
 
 /// Defines a struct that holds all the necessary values to create a split transaction.
@@ -89,7 +100,7 @@ impl SplitParameters {
         let padding_resource_nullifier = self
             .padding_resource
             .nullifier(&NullifierKey::default())
-            .map_err(|_| InvalidSenderNullifierKey)?;
+            .map_err(|_| PaddingResourceNullifierFailed)?;
 
         let to_split_resource_nullifier = self
             .to_split_resource
@@ -160,7 +171,7 @@ impl SplitParameters {
         let padding_resource_nullifier = self
             .padding_resource
             .nullifier(&NullifierKey::default())
-            .map_err(|_| InvalidSenderNullifierKey)?;
+            .map_err(|_| PaddingResourceNullifierFailed)?;
 
         let padding_resource_path = action_tree
             .generate_path(&padding_resource_nullifier)
@@ -217,13 +228,13 @@ impl SplitParameters {
             self.compliance_witness_created(merkle_proof_transferred_resource);
         let compliance_unit_created = compliance_proof_async(&compliance_witness_created)
             .await
-            .map_err(|_| ComplianceProofGenerationError)?;
+            .map_err(|_| CreatedComplianceProofGenerationError)?;
 
         // Generate the compliance proof for the padding resource
         let compliance_witness_remainder = self.compliance_witness_remainder();
         let compliance_unit_remainder = compliance_proof_async(&compliance_witness_remainder)
             .await
-            .map_err(|_| ComplianceProofGenerationError)?;
+            .map_err(|_| RemainderComplianceProofGenerationError)?;
 
         // Create the logic proofs for the 4 resources.
         let created_logic_witness = self.logic_proof_created_resource(&action_tree)?;
@@ -274,8 +285,9 @@ impl SplitParameters {
             .map_err(|_| DeltaProofGenerationError)?;
 
         // Verify the transaction before returning. If it does not verify, something went wrong.
-        verify_transaction(transaction.clone()).map_err(|_| TransactionVerificationError)?;
-
-        Ok(transaction)
+        match transaction.clone().verify() {
+            Ok(_) => Ok(transaction),
+            Err(_) => Err(TransactionVerificationError),
+        }
     }
 }

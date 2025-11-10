@@ -1,4 +1,7 @@
-use crate::requests::{to_array, to_digest, Expand};
+use crate::requests::DecodingErr::{
+    ArrayDecodingError, DigestDecodingError, ResourceInvalidNullifierKeyCommitment,
+};
+use crate::requests::{to_array, DecodeResult, Expand};
 use arm::nullifier_key::NullifierKeyCommitment;
 use arm::resource::Resource;
 use serde::{Deserialize, Serialize};
@@ -43,21 +46,37 @@ impl Expand for Resource {
         }
     }
 
-    fn expand(json_resource: JsonResource) -> Result<Self, Self::Error> {
-        let nk_commitment_bytes: [u8; 32] = to_array(json_resource.nk_commitment, "nk_commitment")?;
+    fn expand(json_resource: JsonResource) -> DecodeResult<Self> {
+        let nk_commitment_bytes: [u8; 32] = to_array(json_resource.nk_commitment, "nk_commitment")
+            .map_err(|_| ResourceInvalidNullifierKeyCommitment)?;
 
         let nk_commitment = NullifierKeyCommitment::from_bytes(&nk_commitment_bytes)
-            .map_err(|_| "invalid nk_commitment format")?;
+            .map_err(|_| ResourceInvalidNullifierKeyCommitment)?;
 
         Ok(Resource {
-            logic_ref: to_digest(json_resource.logic_ref, "logic_ref")?,
-            label_ref: to_digest(json_resource.label_ref, "label_ref")?,
+            logic_ref: json_resource
+                .logic_ref
+                .try_into()
+                .map_err(|_| DigestDecodingError("logic_ref".to_string()))?,
+            label_ref: json_resource
+                .label_ref
+                .try_into()
+                .map_err(|_| DigestDecodingError("label_ref".to_string()))?,
             quantity: json_resource.quantity,
-            value_ref: to_digest(json_resource.value_ref, "value_ref")?,
+            value_ref: json_resource
+                .value_ref
+                .try_into()
+                .map_err(|_| DigestDecodingError("value_ref".to_string()))?,
             is_ephemeral: json_resource.is_ephemeral,
-            nonce: to_array(json_resource.nonce, "nonce")?,
+            nonce: json_resource
+                .nonce
+                .try_into()
+                .map_err(|_| ArrayDecodingError("nonce".to_string()))?,
             nk_commitment,
-            rand_seed: to_array(json_resource.rand_seed, "rand_seed")?,
+            rand_seed: json_resource
+                .rand_seed
+                .try_into()
+                .map_err(|_| ArrayDecodingError("rand_seed".to_string()))?,
         })
     }
 }
