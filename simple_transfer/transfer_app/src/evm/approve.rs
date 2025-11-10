@@ -1,8 +1,7 @@
 use alloy::sol;
 use std::error::Error;
 
-use crate::evm::EvmError::{ContractCallError, InvalidEthereumRPC};
-use crate::evm::{EvmResult, PERMIT2_CONTRACT};
+use crate::evm::PERMIT2_CONTRACT;
 use crate::AnomaPayConfig;
 use alloy::primitives::Address;
 use alloy::providers::ProviderBuilder;
