@@ -5,13 +5,15 @@ pub enum TransactionError {
     MerklePathError,
     ActionTreeError,
     VerificationFailure,
-    MerkleProofError,
-    InvalidAmount,
     EncodingError,
     DecodingError,
     ActionError,
     ComplianceUnitCreateError,
     LogicProofCreateError,
     DeltaProofCreateError,
+    TransactionSubmitError,
+    TransactionCreationError,
+    ProofGenerationError,
+    #[cfg(test)]
     InvalidNullifierSizeError,
 }

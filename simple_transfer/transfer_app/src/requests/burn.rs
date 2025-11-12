@@ -1,32 +1,24 @@
 use crate::errors::TransactionError;
 use crate::errors::TransactionError::{
-    ActionError, ActionTreeError, DecodingError, DeltaProofCreateError, EncodingError,
-    InvalidKeyChain, LogicProofCreateError, MerkleProofError,
+    DecodingError, EncodingError, TransactionCreationError, TransactionSubmitError,
 };
-use crate::evm::indexer::pa_merkle_path;
-use crate::examples::shared::verify_transaction;
+use crate::evm::evm_calls::pa_submit_transaction;
 use crate::requests::resource::JsonResource;
-use crate::requests::{compliance_proof, logic_proof, Expand};
+use crate::requests::Expand;
+use crate::transactions::burn::BurnParameters;
 use crate::AnomaPayConfig;
 use alloy::primitives::Address;
-use arm::action::Action;
-use arm::action_tree::MerkleTree;
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
-use arm::compliance::ComplianceWitness;
-use arm::delta_proof::DeltaWitness;
 use arm::nullifier_key::NullifierKey;
-use arm::resource::Resource;
-use arm::transaction::{Delta, Transaction};
-use arm::Digest;
+use arm::transaction::Transaction;
 use k256::AffinePoint;
 use rocket::serde::{Deserialize, Serialize};
 use serde_with::base64::Base64;
 use serde_with::serde_as;
-use transfer_library::TransferLogic;
 
 /// Defines the payload sent to the API to execute a burn request on /api/burn.
 #[serde_as]
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct BurnRequest {
     pub burned_resource: JsonResource,
     pub created_resource: JsonResource,
@@ -41,118 +33,47 @@ pub struct BurnRequest {
     pub token_addr: Vec<u8>,
 }
 
-pub async fn burn_from_request(
+impl BurnRequest {
+    pub fn to_params(&self) -> Result<BurnParameters, TransactionError> {
+        let burned_resource =
+            Expand::expand(self.burned_resource.clone()).map_err(|_| DecodingError)?;
+        let created_resource =
+            Expand::expand(self.created_resource.clone()).map_err(|_| DecodingError)?;
+        let burner_nullifier_key = NullifierKey::from_bytes(self.burner_nf_key.as_slice());
+        let burner_auth_verifying_key =
+            AuthorizationVerifyingKey::from_affine(self.burner_verifying_key);
+        let burner_address = Address::from_slice(&self.burner_address);
+        let auth_signature = AuthorizationSignature::from_bytes(self.auth_signature.as_slice())
+            .map_err(|_| EncodingError)?;
+        let token_address = Address::from_slice(&self.token_addr);
+
+        Ok(BurnParameters {
+            burned_resource,
+            created_resource,
+            burner_nullifier_key,
+            burner_auth_verifying_key,
+            burner_address,
+            auth_signature,
+            token_address,
+        })
+    }
+}
+
+pub async fn handle_burn_request(
     request: BurnRequest,
     config: &AnomaPayConfig,
-) -> Result<Transaction, TransactionError> {
-    let burned_resource: Resource =
-        Expand::expand(request.burned_resource).map_err(|_| DecodingError)?;
-    let created_resource: Resource =
-        Expand::expand(request.created_resource).map_err(|_| DecodingError)?;
-    let burner_nf_key: NullifierKey = NullifierKey::from_bytes(request.burner_nf_key.as_slice());
-    let burner_auth_verifying_key: AuthorizationVerifyingKey =
-        AuthorizationVerifyingKey::from_affine(request.burner_verifying_key);
-    let burned_resource_commitment = burned_resource.commitment();
+) -> Result<(BurnParameters, Transaction), TransactionError> {
+    let burn_params = request.to_params()?;
 
-    let merkle_proof = pa_merkle_path(config, burned_resource_commitment)
+    let transaction = burn_params
+        .generate_transaction(config)
         .await
-        .map_err(|_| MerkleProofError)?;
-    let burner_address = request.burner_address;
+        .map_err(|_| TransactionCreationError)?;
 
-    let burned_resource_nullifier: Digest = burned_resource
-        .nullifier(&burner_nf_key)
-        .map_err(|_| InvalidKeyChain)?;
+    // Submit the transaction.
+    let _submit_result = pa_submit_transaction(transaction.clone())
+        .await
+        .map_err(|_| TransactionSubmitError)?;
 
-    let auth_signature: AuthorizationSignature =
-        AuthorizationSignature::from_bytes(request.auth_signature.as_slice())
-            .map_err(|_| EncodingError)?;
-
-    let token_bytes: [u8; 20] = request
-        .token_addr
-        .as_slice()
-        .try_into()
-        .map_err(|_| DecodingError)?;
-
-    let token_addr = Address::from(token_bytes);
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Construct the ephemeral resource to create
-
-    let created_resource_commitment = created_resource.commitment();
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Create the action tree
-
-    let action_tree: MerkleTree =
-        MerkleTree::new(vec![burned_resource_nullifier, created_resource_commitment]);
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Create compliance proof
-
-    let compliance_witness = ComplianceWitness::from_resources_with_path(
-        burned_resource,
-        burner_nf_key.clone(),
-        merkle_proof,
-        created_resource,
-    );
-
-    // generate the proof in a separate thread
-    let compliance_unit_future = compliance_proof(&compliance_witness);
-    let compliance_unit = compliance_unit_future.await?;
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Create logic proof
-
-    let created_resource_path = action_tree
-        .generate_path(&created_resource_commitment)
-        .map_err(|_| ActionTreeError)?;
-
-    let burned_resource_path = action_tree
-        .generate_path(&burned_resource_nullifier)
-        .map_err(|_| ActionTreeError)?;
-
-    let created_logic_witness: TransferLogic = TransferLogic::consume_persistent_resource_logic(
-        burned_resource,
-        burned_resource_path,
-        burner_nf_key.clone(),
-        burner_auth_verifying_key,
-        auth_signature,
-    );
-
-    // generate the proof in a separate thread
-    // this is due to bonsai being non-blocking or something. there is a feature flag for bonsai
-    // that allows it to be non-blocking or vice versa, but this is to figure out.
-    let created_logic_proof_future = logic_proof(&created_logic_witness);
-    let created_logic_proof = created_logic_proof_future.await?;
-
-    let burned_logic_witness: TransferLogic = TransferLogic::burn_resource_logic(
-        created_resource,
-        created_resource_path,
-        config.forwarder_address.to_vec(),
-        token_addr.to_vec(),
-        burner_address.to_vec(),
-    );
-
-    let burned_logic_proof_future = logic_proof(&burned_logic_witness);
-    let burned_logic_proof = burned_logic_proof_future.await?;
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Create actions for transaction
-
-    let action: Action = Action::new(
-        vec![compliance_unit],
-        vec![burned_logic_proof, created_logic_proof],
-    )
-    .map_err(|_| ActionError)?;
-
-    let delta_witness =
-        DeltaWitness::from_bytes(&compliance_witness.rcv).map_err(|_| LogicProofCreateError)?;
-    let transaction = Transaction::create(vec![action], Delta::Witness(delta_witness));
-
-    let transaction = transaction
-        .generate_delta_proof()
-        .map_err(|_| DeltaProofCreateError)?;
-
-    verify_transaction(transaction.clone())?;
-    Ok(transaction)
+    Ok((burn_params, transaction))
 }

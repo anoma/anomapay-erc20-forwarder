@@ -10,14 +10,13 @@
 mod errors;
 
 mod evm;
-mod examples;
-mod permit2;
+mod helpers;
 mod requests;
 mod tests;
+mod transactions;
 mod user;
 mod webserver;
 
-use crate::examples::mint::json_example_mint_request;
 use crate::webserver::{
     all_options, burn, default_error, health, is_approved, mint, split, transfer, unprocessable,
     Cors,
@@ -36,8 +35,10 @@ struct AnomaPayConfig {
     // url of the anoma indexer
     indexer_address: String,
     // the address of the hot wallet
+    #[allow(dead_code)]
     hot_wallet_address: Address,
     // the private key of the hot wallet
+    #[allow(dead_code)]
     hot_wallet_private_key: PrivateKeySigner,
 }
 
@@ -77,20 +78,8 @@ async fn rocket() -> _ {
         std::process::exit(1);
     });
 
-    // read in cli arguments
-    let args: Vec<String> = env::args().collect();
-
-    // --mint-example produces an example json string for minting a transaction
-    if args.contains(&"--minting-example".to_string()) {
-        let Ok(json_str) = json_example_mint_request(&config).await else {
-            println!("failed to create a json string example");
-            std::process::exit(0);
-        };
-        println!("{json_str}");
-        std::process::exit(0);
-    }
-
     rocket::build()
+        .configure(rocket::Config::figment().merge(("port", 8001)))
         .manage(config)
         .attach(Cors)
         .mount(

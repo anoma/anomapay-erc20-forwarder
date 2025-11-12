@@ -41,7 +41,6 @@ fn parse_merkle_path(proof_response: ProofResponse) -> Result<MerklePath, EvmErr
                 .as_slice()
                 .try_into()
                 .map_err(|_| MerklePathValueError)?;
-            println!("{bytes:?}");
             let sibling_digest = Digest::from(bytes);
             Ok((sibling_digest, !frontier.is_left))
         })
