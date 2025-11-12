@@ -24,8 +24,7 @@ pub async fn create_split_request(
         config,
         mint_parameters.created_resource,
     )
-    .await
-    .expect("failed to create MintParameters");
+    .await;
 
     // Create a request
     SplitRequest {
@@ -47,7 +46,7 @@ pub async fn create_split_request(
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_split_request() {
     let config = load_config().expect("failed to load config in test");
     let alice = alice_keychain(&config);

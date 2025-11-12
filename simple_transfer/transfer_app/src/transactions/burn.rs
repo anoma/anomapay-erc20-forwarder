@@ -1,7 +1,6 @@
 //! Module that defines functions to burn a resource
 
 use crate::evm::indexer::pa_merkle_path;
-use crate::helpers::verify_transaction;
 use crate::transactions::burn::BurnError::{
     BurnedResourceLogicProofGenerationError, BurnedResourceMerkleProofNotFound,
     BurnedResourceNotInActionTree, ComplianceProofGenerationError, CreatedResourceLogicProofError,
@@ -21,6 +20,7 @@ use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::transaction::{Delta, Transaction};
+use thiserror::Error;
 use tokio::try_join;
 use transfer_library::TransferLogic;
 
@@ -28,30 +28,33 @@ use transfer_library::TransferLogic;
 pub type BurnResult<T> = Result<T, BurnError>;
 
 // Set of errors that can occur during the creation of a transfer transaction.
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
 pub enum BurnError {
-    // The user provided an invalid sender nullifier key
+    #[error("The sender's nullifier key given for burn was invalid.")]
     InvalidSenderNullifierKey,
-    // The merkle proof for the burned resource was not found.
+    #[error("Failed to fetch the merkle path for the burned resource from the protocol adapter.")]
     BurnedResourceMerkleProofNotFound,
-    // There was an issue generating the logic proof for the burned resource.
+    #[error("The commitment for the burned resource was not found in the action tree.")]
     BurnedResourceLogicProofGenerationError,
-    // The burned resource is not present in the action tree
+    #[error("The commitment for the burned resource was not found in the action tree.")]
     BurnedResourceNotInActionTree,
-    // An error occurred generating the compliance proof
+    #[error("An error occurred generating the compliance proof.")]
     ComplianceProofGenerationError,
-    // The created resource for this burn transaction was not found in the action tree
+    #[error("The created resource was not found in the action tree.")]
     CreatedResourceNotInActionTree,
-    // Error generating the logic proof for the created resource
+    #[error("An error occurred creating the resource logic proof for the created resource.")]
     CreatedResourceLogicProofError,
-    // The action could ont be created
+    #[error("An error occurred generating the Action. The resource logics might be wrong.")]
     InvalidLogicProofsInAction,
-    // Failed to create the delta witness for the given actions.
+    #[error(
+        "An error occurred generating the Delta Witness. The compliance witness might be wrong."
+    )]
     DeltaWitnessGenerationError,
-    // Failed to generate the delta proof for the transaction
+    #[error("Failed to generate the delta proof.")]
     DeltaProofGenerationError,
-    // The created transaction failed to verify.
+    #[error("Failed to verify the burn transaction.")]
     TransactionVerificationError,
+    #[error("An error occurred creating threads to generate the proofs.")]
     ProofGenerationError,
 }
 
@@ -198,8 +201,9 @@ impl BurnParameters {
             .map_err(|_| DeltaProofGenerationError)?;
 
         // Verify the transaction before returning. If it does not verify, something went wrong.
-        verify_transaction(transaction.clone()).map_err(|_| TransactionVerificationError)?;
-
-        Ok(transaction)
+        match transaction.clone().verify() {
+            Ok(_) => Ok(transaction),
+            Err(_) => Err(TransactionVerificationError),
+        }
     }
 }

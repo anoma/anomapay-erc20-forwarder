@@ -1,32 +1,28 @@
-use crate::evm::errors::EvmError;
-use crate::evm::errors::EvmError::EvmSubmitError;
+use crate::evm::EvmError::{FetchReceiptError, SubmitTransactionError};
+use crate::evm::EvmResult;
+use alloy::hex::ToHexExt;
 use alloy::network::ReceiptResponse;
-use alloy::rpc::types::TransactionReceipt;
 use arm::transaction::Transaction;
 use evm_protocol_adapter_bindings::call::protocol_adapter;
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
 
 /// Submit a transaction to the protocol adapter and wait for the receipt.
-pub async fn pa_submit_transaction(
-    transaction: Transaction,
-) -> Result<TransactionReceipt, EvmError> {
+pub async fn pa_submit_transaction(transaction: Transaction) -> EvmResult<String> {
     // convert the transaction to an EVM transaction struct.
     let tx = ProtocolAdapter::Transaction::from(transaction);
 
-    // submit the transaction
-    let receipt = protocol_adapter()
+    let transaction_builder = protocol_adapter()
         .execute(tx)
         .send()
         .await
-        .map_err(|err| {
-            println!("Failed to submit transaction {err:?}");
-            EvmSubmitError
-        })
-        .expect("Failed to submit transaction")
+        .map_err(SubmitTransactionError)?;
+
+    let receipt = transaction_builder
         .get_receipt()
         .await
-        .expect("Failed to get receipt");
+        .map_err(FetchReceiptError)?;
 
-    println!("submitted transaction {}", receipt.transaction_hash());
-    Ok(receipt)
+    let tx_hash = receipt.transaction_hash();
+
+    Ok(tx_hash.0.encode_hex())
 }

@@ -1,7 +1,4 @@
-use crate::errors::TransactionError;
-use crate::errors::TransactionError::VerificationFailure;
 use alloy::primitives::Address;
-use arm::transaction::Transaction;
 
 /// Parse a Vec<u8> into an Address struct.
 pub fn parse_address(address_bytes: Vec<u8>) -> Option<Address> {
@@ -11,9 +8,4 @@ pub fn parse_address(address_bytes: Vec<u8>) -> Option<Address> {
 
         _ => None,
     }
-}
-
-/// Verifies a transaction. Returns an error if verification failed.
-pub fn verify_transaction(transaction: Transaction) -> Result<(), TransactionError> {
-    transaction.verify().map_err(|_| VerificationFailure)
 }

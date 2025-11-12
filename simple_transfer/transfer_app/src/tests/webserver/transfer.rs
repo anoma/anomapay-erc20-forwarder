@@ -22,8 +22,7 @@ pub async fn create_transfer_request(
         config,
         mint_parameters.created_resource,
     )
-    .await
-    .expect("failed to create SplitParameters");
+    .await;
 
     TransferRequest {
         transferred_resource: x.transferred_resource.simplify(),
@@ -37,7 +36,7 @@ pub async fn create_transfer_request(
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_transfer_request() {
     let config = load_config().expect("failed to load config in test");
     let alice = alice_keychain(&config);

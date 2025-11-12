@@ -1,10 +1,8 @@
-use crate::errors::TransactionError;
-use crate::errors::TransactionError::{
-    DecodingError, EncodingError, TransactionCreationError, TransactionSubmitError,
-};
 use crate::evm::evm_calls::pa_submit_transaction;
 use crate::requests::resource::JsonResource;
-use crate::requests::Expand;
+use crate::requests::DecodingErr::AuthorizationSignatureDecodeError;
+use crate::requests::RequestErr::FailedSplitRequest;
+use crate::requests::{DecodeResult, Expand, RequestResult};
 use crate::transactions::split::SplitParameters;
 use crate::AnomaPayConfig;
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
@@ -35,15 +33,12 @@ pub struct SplitRequest {
 }
 
 impl SplitRequest {
-    pub fn to_params(&self, _config: &AnomaPayConfig) -> Result<SplitParameters, TransactionError> {
-        let to_split_resource: Resource =
-            Expand::expand(self.to_split_resource.clone()).map_err(|_| DecodingError)?;
-        let created_resource: Resource =
-            Expand::expand(self.created_resource.clone()).map_err(|_| DecodingError)?;
-        let padding_resource: Resource =
-            Expand::expand(self.padding_resource.clone()).map_err(|_| DecodingError)?;
-        let remainder_resource: Resource =
-            Expand::expand(self.remainder_resource.clone()).map_err(|_| DecodingError)?;
+    pub fn to_params(&self, _config: &AnomaPayConfig) -> DecodeResult<SplitParameters> {
+        let to_split_resource: Resource = Expand::expand(self.to_split_resource.clone())?;
+        let created_resource: Resource = Expand::expand(self.created_resource.clone())?;
+        let padding_resource: Resource = Expand::expand(self.padding_resource.clone())?;
+        let remainder_resource: Resource = Expand::expand(self.remainder_resource.clone())?;
+
         let receiver_discovery_pk = self.receiver_discovery_pk;
         let receiver_encryption_pk = self.receiver_encryption_pk;
         let sender_nullifier_key: NullifierKey =
@@ -53,7 +48,7 @@ impl SplitRequest {
 
         let auth_signature: AuthorizationSignature =
             AuthorizationSignature::from_bytes(self.auth_signature.as_slice())
-                .map_err(|_| EncodingError)?;
+                .map_err(|_| AuthorizationSignatureDecodeError("auth_signature".to_string()))?;
 
         let owner_discovery_pk = self.owner_discovery_pk;
         let owner_encryption_pk = self.owner_encryption_pk;
@@ -77,18 +72,20 @@ impl SplitRequest {
 pub async fn handle_split_request(
     request: SplitRequest,
     config: &AnomaPayConfig,
-) -> Result<(SplitParameters, Transaction), TransactionError> {
-    let split_params = request.to_params(config)?;
+) -> RequestResult<(SplitParameters, Transaction, String)> {
+    let split_params = request
+        .to_params(config)
+        .map_err(|err| FailedSplitRequest(Box::new(err)))?;
 
     let transaction = split_params
         .generate_transaction(config)
         .await
-        .map_err(|_| TransactionCreationError)?;
+        .map_err(|err| FailedSplitRequest(Box::new(err)))?;
 
     // Submit the transaction.
-    let _submit_result = pa_submit_transaction(transaction.clone())
+    let transaction_hash = pa_submit_transaction(transaction.clone())
         .await
-        .map_err(|_| TransactionSubmitError)?;
+        .map_err(|err| FailedSplitRequest(Box::new(err)))?;
 
-    Ok((split_params, transaction))
+    Ok((split_params, transaction, transaction_hash))
 }

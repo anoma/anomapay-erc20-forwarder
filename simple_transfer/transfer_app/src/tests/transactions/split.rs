@@ -21,9 +21,8 @@ pub async fn create_split_transaction_for(
     let bob = bob_keychain();
 
     // Transfer the minted resource to bob.
-    let split_parameters = split_parameters_example(alice.clone(), bob.clone(), config, to_split)
-        .await
-        .expect("failed to create SplitParameters");
+    let split_parameters =
+        split_parameters_example(alice.clone(), bob.clone(), config, to_split).await;
 
     let transaction = split_parameters.generate_transaction(config).await;
     println!("{:?}", transaction);
@@ -77,7 +76,7 @@ pub async fn submit_split_transaction_for(
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_create_split_transaction() {
     let config = load_config().expect("failed to load config in test");
     // create a keychain with a private key
@@ -88,7 +87,7 @@ async fn test_create_split_transaction() {
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_submit_split_transaction() {
     let config = load_config().expect("failed to load config in test");
     // create a keychain with a private key

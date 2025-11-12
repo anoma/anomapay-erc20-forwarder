@@ -1,10 +1,8 @@
-use crate::errors::TransactionError;
-use crate::errors::TransactionError::{
-    DecodingError, EncodingError, TransactionCreationError, TransactionSubmitError,
-};
 use crate::evm::evm_calls::pa_submit_transaction;
 use crate::requests::resource::JsonResource;
-use crate::requests::Expand;
+use crate::requests::DecodingErr::AuthorizationSignatureDecodeError;
+use crate::requests::RequestErr::{FailedBurnRequest, FailedTransferRequest};
+use crate::requests::{DecodeResult, Expand, RequestResult};
 use crate::transactions::transfer::TransferParameters;
 use crate::AnomaPayConfig;
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
@@ -34,15 +32,10 @@ pub struct TransferRequest {
 impl TransferRequest {
     /// Turns a TransferRequest into a TransferParameters struct.
     /// This ensures that all values are properly deserialized.
-    pub fn to_params(
-        &self,
-        _config: &AnomaPayConfig,
-    ) -> Result<TransferParameters, TransactionError> {
+    pub fn to_params(&self, _config: &AnomaPayConfig) -> DecodeResult<TransferParameters> {
         // convert some bytes into their proper data structure from the request.
-        let transferred_resource: Resource =
-            Expand::expand(self.transferred_resource.clone()).map_err(|_| DecodingError)?;
-        let created_resource: Resource =
-            Expand::expand(self.created_resource.clone()).map_err(|_| DecodingError)?;
+        let transferred_resource: Resource = Expand::expand(self.transferred_resource.clone())?;
+        let created_resource: Resource = Expand::expand(self.created_resource.clone())?;
 
         let sender_nullifier_key: NullifierKey =
             NullifierKey::from_bytes(self.sender_nf_key.as_slice());
@@ -50,7 +43,7 @@ impl TransferRequest {
             AuthorizationVerifyingKey::from_affine(self.sender_verifying_key);
         let auth_signature: AuthorizationSignature =
             AuthorizationSignature::from_bytes(self.auth_signature.as_slice())
-                .map_err(|_| EncodingError)?;
+                .map_err(|_| AuthorizationSignatureDecodeError("auth_signature".to_string()))?;
 
         let receiver_discovery_pk = self.receiver_discovery_pk;
         let receiver_encryption_pk = self.receiver_encryption_pk;
@@ -70,17 +63,20 @@ impl TransferRequest {
 pub async fn handle_transfer_request(
     request: TransferRequest,
     config: &AnomaPayConfig,
-) -> Result<(TransferParameters, Transaction), TransactionError> {
-    let transfer_params = request.to_params(config)?;
+) -> RequestResult<(TransferParameters, Transaction, String)> {
+    let transfer_params = request
+        .to_params(config)
+        .map_err(|err| FailedTransferRequest(Box::new(err)))?;
+
     let transaction = transfer_params
         .generate_transaction(config)
         .await
-        .map_err(|_| TransactionCreationError)?;
+        .map_err(|err| FailedTransferRequest(Box::new(err)))?;
 
     // Submit the transaction.
-    let _submit_result = pa_submit_transaction(transaction.clone())
+    let transaction_hash = pa_submit_transaction(transaction.clone())
         .await
-        .map_err(|_| TransactionSubmitError)?;
+        .map_err(|err| FailedBurnRequest(Box::new(err)))?;
 
-    Ok((transfer_params, transaction))
+    Ok((transfer_params, transaction, transaction_hash))
 }

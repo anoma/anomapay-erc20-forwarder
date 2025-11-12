@@ -1,7 +1,6 @@
 //! Module that defines helper functions to create transfer transactions.
 
 use crate::evm::indexer::pa_merkle_path;
-use crate::helpers::verify_transaction;
 use crate::transactions::helpers::{compliance_proof_asyncc, logic_proof_asyncc};
 use crate::transactions::transfer::TransferError::{
     ComplianceProofGenerationError, CreatedResourceLogicProofError, CreatedResourceNotInActionTree,
@@ -26,6 +25,7 @@ use arm::{
     transaction::Transaction,
 };
 use k256::AffinePoint;
+use thiserror::Error;
 use tokio::try_join;
 use transfer_library::TransferLogic;
 
@@ -33,31 +33,36 @@ use transfer_library::TransferLogic;
 pub type TransferResult<T> = Result<T, TransferError>;
 
 // Set of errors that can occur during the creation of a transfer transaction.
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
 pub enum TransferError {
-    // The user provided an invalid sender nullifier key
+    #[error("The sender's nullifier key given for burn was invalid.")]
     InvalidSenderNullifierKey,
-    // The merkle proof for the resource being transferred did not exist or was not fetched.
+    #[error(
+        "Failed to fetch the merkle path for the transferred resource from the protocol adapter."
+    )]
     TransferredResourceMerkleProofNotFound,
-    // The resource nullifier was not found in the action tree for the transaction.
+    #[error("The nullifier of the transferred resource was not found in the action tree.")]
     TransferredResourceNotInActionTree,
-    // An error occurred generating the compliance proof
-    ComplianceProofGenerationError,
-    // An error occurred generating the logic proof for the transferred resource
-    TransferredResourceLogicProofError,
-    // An error occurred generating the logic proof for the created resource.
-    CreatedResourceLogicProofError,
-    // The created resource was not found in the action tree.
+    #[error("The commitment of the created resource was not found in the action tree.")]
     CreatedResourceNotInActionTree,
-    // The logic proofs were not valid inputs to create an action
+    #[error("An error occurred generating the compliance proof.")]
+    ComplianceProofGenerationError,
+    #[error("An error occurred generating the resource logic proof for the transferred resource.")]
+    TransferredResourceLogicProofError,
+    #[error("An error occurred generating the resource logic proof for the created resource.")]
+    CreatedResourceLogicProofError,
+    #[error("An error occurred generating the Action. The resource logics might be wrong.")]
     InvalidLogicProofsInAction,
-    // Failed to create the delta witness for the given actions.
-    DeltaWitnessGenerationError,
-    // Failed to generate the delta proof for the transaction
+    #[error("Failed to generate the delta proof.")]
     DeltaProofGenerationError,
-    // The created transaction failed to verify.
+    #[error("Failed to verify the burn transaction.")]
     TransactionVerificationError,
+    #[error("An error occurred creating threads to generate the proofs.")]
     ProofGenerationError,
+    #[error(
+        "An error occurred generating the Delta Witness. The compliance witness might be wrong."
+    )]
+    DeltaWitnessGenerationError,
 }
 
 #[derive(Debug)]
@@ -203,8 +208,9 @@ impl TransferParameters {
             .map_err(|_| DeltaProofGenerationError)?;
 
         // Verify the transaction before returning. If it does not verify, something went wrong.
-        verify_transaction(transaction.clone()).map_err(|_| TransactionVerificationError)?;
-
-        Ok(transaction)
+        match transaction.clone().verify() {
+            Ok(_) => Ok(transaction),
+            Err(_) => Err(TransactionVerificationError),
+        }
     }
 }

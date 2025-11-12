@@ -6,6 +6,8 @@ edition = "2021"
 [lints.rust]
 missing_docs = "warn"
 
+[lints.clippy]
+enum_variant_names = "allow"
 [features]
 default = ["arm/bonsai"]
 gpu = ["arm/cuda"]
@@ -18,7 +20,7 @@ transfer_library = { path = "../transfer_library" }
 arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.8.1", default-features = false, features = ["transaction",
     "groth16_prover",
 ] }
-bonsai-sdk = { version = "1.4.1", features = ["non_blocking"]}
+bonsai-sdk = { version = "1.4.1", features = ["non_blocking"] }
 risc0-zkvm = { version = "3.0.3", default-features = false }
 
 rand = "0.8"
@@ -35,6 +37,7 @@ reqwest = { version = "0.12", features = [] }
 log = "0.4.28"
 chrono = "0.4.42"
 thiserror = "2.0.17"
+alloy-contract = "1.0.41"
 
 [dev-dependencies]
 serial_test = "3.2.0"

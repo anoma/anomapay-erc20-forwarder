@@ -1,10 +1,8 @@
-use crate::errors::TransactionError;
-use crate::errors::TransactionError::{
-    DecodingError, EncodingError, TransactionCreationError, TransactionSubmitError,
-};
 use crate::evm::evm_calls::pa_submit_transaction;
 use crate::requests::resource::JsonResource;
-use crate::requests::Expand;
+use crate::requests::DecodingErr::AuthorizationSignatureDecodeError;
+use crate::requests::RequestErr::FailedBurnRequest;
+use crate::requests::{DecodeResult, Expand, RequestResult};
 use crate::transactions::burn::BurnParameters;
 use crate::AnomaPayConfig;
 use alloy::primitives::Address;
@@ -34,17 +32,15 @@ pub struct BurnRequest {
 }
 
 impl BurnRequest {
-    pub fn to_params(&self) -> Result<BurnParameters, TransactionError> {
-        let burned_resource =
-            Expand::expand(self.burned_resource.clone()).map_err(|_| DecodingError)?;
-        let created_resource =
-            Expand::expand(self.created_resource.clone()).map_err(|_| DecodingError)?;
+    pub fn to_params(&self) -> DecodeResult<BurnParameters> {
+        let burned_resource = Expand::expand(self.burned_resource.clone())?;
+        let created_resource = Expand::expand(self.created_resource.clone())?;
         let burner_nullifier_key = NullifierKey::from_bytes(self.burner_nf_key.as_slice());
         let burner_auth_verifying_key =
             AuthorizationVerifyingKey::from_affine(self.burner_verifying_key);
         let burner_address = Address::from_slice(&self.burner_address);
         let auth_signature = AuthorizationSignature::from_bytes(self.auth_signature.as_slice())
-            .map_err(|_| EncodingError)?;
+            .map_err(|_| AuthorizationSignatureDecodeError("auth_signature".to_string()))?;
         let token_address = Address::from_slice(&self.token_addr);
 
         Ok(BurnParameters {
@@ -62,18 +58,20 @@ impl BurnRequest {
 pub async fn handle_burn_request(
     request: BurnRequest,
     config: &AnomaPayConfig,
-) -> Result<(BurnParameters, Transaction), TransactionError> {
-    let burn_params = request.to_params()?;
+) -> RequestResult<(BurnParameters, Transaction, String)> {
+    let burn_params = request
+        .to_params()
+        .map_err(|err| FailedBurnRequest(Box::new(err)))?;
 
     let transaction = burn_params
         .generate_transaction(config)
         .await
-        .map_err(|_| TransactionCreationError)?;
+        .map_err(|err| FailedBurnRequest(Box::new(err)))?;
 
     // Submit the transaction.
-    let _submit_result = pa_submit_transaction(transaction.clone())
+    let transaction_hash = pa_submit_transaction(transaction.clone())
         .await
-        .map_err(|_| TransactionSubmitError)?;
+        .map_err(|err| FailedBurnRequest(Box::new(err)))?;
 
-    Ok((burn_params, transaction))
+    Ok((burn_params, transaction, transaction_hash))
 }

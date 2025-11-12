@@ -1,7 +1,7 @@
 use alloy::sol;
-use std::error::Error;
 
-use crate::evm::PERMIT2_CONTRACT;
+use crate::evm::EvmError::{ContractCallError, InvalidEthereumRPC};
+use crate::evm::{EvmResult, PERMIT2_CONTRACT};
 use crate::AnomaPayConfig;
 use alloy::primitives::Address;
 use alloy::providers::ProviderBuilder;
@@ -26,9 +26,12 @@ pub async fn is_address_approved(
     token_holder: Address,
     config: &AnomaPayConfig,
     token_address: Address,
-) -> Result<bool, Box<dyn Error>> {
+) -> EvmResult<bool> {
     // call the contract to check if the user approved
-    let url = config.ethereum_rpc.parse()?;
+    let url = config
+        .ethereum_rpc
+        .parse()
+        .map_err(|_| InvalidEthereumRPC)?;
     let provider = ProviderBuilder::new().connect_http(url);
 
     // create a contract instance
@@ -37,9 +40,8 @@ pub async fn is_address_approved(
     let res = contract
         .allowance(token_holder, PERMIT2_CONTRACT)
         .call()
-        .await?;
-
-    println!("Approved: {:?}{}", res, res != 0);
+        .await
+        .map_err(ContractCallError)?;
 
     Ok(res != 0)
 }

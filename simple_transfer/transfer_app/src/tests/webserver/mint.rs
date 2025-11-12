@@ -10,9 +10,7 @@ use serial_test::serial;
 /// Create an example request to mint a resource.
 pub async fn create_mint_request(config: &AnomaPayConfig, alice: Keychain) -> MintRequest {
     // Create an example of mint parameters for alice.
-    let mint_parameters = mint_parameters_example(alice.clone(), config)
-        .await
-        .expect("failed to create MintParameters");
+    let mint_parameters = mint_parameters_example(alice.clone(), config).await;
 
     // Create a request
     MintRequest {
@@ -35,7 +33,7 @@ pub async fn create_mint_request(config: &AnomaPayConfig, alice: Keychain) -> Mi
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_mint_request() {
     let config = load_config().expect("failed to load config in test");
     let alice = alice_keychain(&config);

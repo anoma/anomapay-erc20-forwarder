@@ -1,6 +1,4 @@
 #![cfg(test)]
-use crate::errors::TransactionError;
-use crate::errors::TransactionError::{InvalidKeyChain, InvalidNullifierSizeError};
 use crate::tests::helpers::{
     create_permit_signature, label_ref, random_nonce, value_ref_created, value_ref_ephemeral_burn,
     value_ref_ephemeral_mint,
@@ -52,10 +50,7 @@ pub fn bob_keychain() -> Keychain {
 
 /// Creates an example of MintParameters to be used in tests.
 /// The given minter keychain will create one resource with quantity 2.
-pub async fn mint_parameters_example(
-    minter: Keychain,
-    config: &AnomaPayConfig,
-) -> Result<MintParameters, TransactionError> {
+pub async fn mint_parameters_example(minter: Keychain, config: &AnomaPayConfig) -> MintParameters {
     // Use the empty initial root for this mint transaction.
     // Ideally we use the real latest root, however.
     let latest_commitment_tree_root: Digest = *INITIAL_ROOT;
@@ -78,12 +73,12 @@ pub async fn mint_parameters_example(
 
     let consumed_resource_nullifier = consumed_resource
         .nullifier(&minter.nf_key)
-        .map_err(|_| InvalidKeyChain)?;
+        .expect("failed to create nullifier for consumed resource");
 
     let created_resource_nonce = consumed_resource_nullifier
         .as_bytes()
         .try_into()
-        .map_err(|_| InvalidNullifierSizeError)?;
+        .expect("consumed resource nullifier is not 32 bytes");
 
     // Construct the created resource (i.e., the one that wraps our tokens)
     let created_resource = Resource {
@@ -116,7 +111,7 @@ pub async fn mint_parameters_example(
     )
     .await;
 
-    Ok(MintParameters {
+    MintParameters {
         created_resource,
         consumed_resource,
         consumed_resource_nullifier,
@@ -131,7 +126,7 @@ pub async fn mint_parameters_example(
         forwarder_contract_address: config.forwarder_address.to_vec(),
         consumed_nullifier_key: minter.nf_key,
         created_resource_commitment: created_resource.commitment(),
-    })
+    }
 }
 
 /// Create an example of TransferParameters based on the given keychain and resource.
@@ -141,13 +136,13 @@ pub async fn transfer_parameters_example(
     receiver: Keychain,
     config: &AnomaPayConfig,
     to_transfer_resource: Resource,
-) -> Result<TransferParameters, TransactionError> {
+) -> TransferParameters {
     let transferred_resource_nullifier = to_transfer_resource.nullifier(&sender.nf_key).unwrap();
 
     let nonce = transferred_resource_nullifier
         .as_bytes()
         .try_into()
-        .map_err(|_| InvalidNullifierSizeError)?;
+        .expect("transferred_resource_nullifier is not 32 bytes");
 
     let created_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
@@ -174,7 +169,7 @@ pub async fn transfer_parameters_example(
     let receiver_discovery_pk = receiver.discovery_pk;
     let receiver_encryption_pk = receiver.encryption_pk;
 
-    Ok(TransferParameters {
+    TransferParameters {
         transferred_resource,
         created_resource,
         sender_nullifier_key,
@@ -182,7 +177,7 @@ pub async fn transfer_parameters_example(
         auth_signature,
         receiver_discovery_pk,
         receiver_encryption_pk,
-    })
+    }
 }
 
 /// Create an example of the BurnParameters request based on a keychain and a resource to be burned.
@@ -190,11 +185,11 @@ pub async fn burn_parameters_example(
     burner: Keychain,
     config: &AnomaPayConfig,
     to_burn_resource: Resource,
-) -> Result<BurnParameters, TransactionError> {
+) -> BurnParameters {
     // to burn a resource, we need the nullifier of that resource.
     let burned_resource_nullifier = to_burn_resource
         .nullifier(&burner.nf_key)
-        .map_err(|_| InvalidKeyChain)?;
+        .expect("could not create nullifier for burned resource with given nullifier key");
 
     ////////////////////////////////////////////////////////////////////////////
     // Construct the ephemeral resource to create
@@ -228,7 +223,7 @@ pub async fn burn_parameters_example(
     let auth_signature: AuthorizationSignature =
         burner.auth_signing_key.sign(action_tree_root.as_bytes());
 
-    Ok(BurnParameters {
+    BurnParameters {
         burned_resource: to_burn_resource,
         created_resource,
         burner_nullifier_key: burner.clone().nf_key,
@@ -236,7 +231,7 @@ pub async fn burn_parameters_example(
         burner_address: burner.evm_address,
         auth_signature,
         token_address: TOKEN_ADDRESS_SEPOLIA_USDC,
-    })
+    }
 }
 
 /// Create an example of a SplitParameters struct based on a sender, receiver, and a resource to be split.
@@ -245,7 +240,7 @@ pub async fn split_parameters_example(
     receiver: Keychain,
     config: &AnomaPayConfig,
     to_split_resource: Resource,
-) -> Result<SplitParameters, TransactionError> {
+) -> SplitParameters {
     let remainder = to_split_resource.quantity - 1;
 
     // In a split, we need a balanced transaction. That means if we create two resources, we have
@@ -265,11 +260,11 @@ pub async fn split_parameters_example(
 
     let padding_resource_nullifier = padding_resource
         .nullifier(&NullifierKey::default())
-        .map_err(|_| InvalidKeyChain)?;
+        .expect("could not create nullifier for padding resource with given nullifier key");
 
     let to_split_resource_nullifier = to_split_resource
         .nullifier(&sender.nf_key)
-        .map_err(|_| InvalidKeyChain)?;
+        .expect("failed to create nullifier for to_split_resource with given nullifier key");
 
     ////////////////////////////////////////////////////////////////////////////
     // Construct the resource for the receiver
@@ -277,7 +272,7 @@ pub async fn split_parameters_example(
     let nonce = to_split_resource_nullifier
         .as_bytes()
         .try_into()
-        .map_err(|_| InvalidNullifierSizeError)?;
+        .expect("to_split_resource_nullifier is not 32 bytes");
 
     let created_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
@@ -298,7 +293,7 @@ pub async fn split_parameters_example(
     let nonce = padding_resource_nullifier
         .as_bytes()
         .try_into()
-        .map_err(|_| InvalidNullifierSizeError)?;
+        .expect("padding_resource_nullifier is not 32 bytes");
 
     let remainder_resource = Resource {
         quantity: remainder,
@@ -325,7 +320,7 @@ pub async fn split_parameters_example(
     let auth_signature: AuthorizationSignature =
         sender.auth_signing_key.sign(action_tree_root.as_bytes());
 
-    Ok(SplitParameters {
+    SplitParameters {
         to_split_resource,
         created_resource,
         remainder_resource,
@@ -337,5 +332,5 @@ pub async fn split_parameters_example(
         receiver_encryption_pk: receiver.encryption_pk,
         sender_discovery_pk: sender.discovery_pk,
         sender_encryption_pk: sender.encryption_pk,
-    })
+    }
 }

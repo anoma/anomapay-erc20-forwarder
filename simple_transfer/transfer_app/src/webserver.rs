@@ -1,5 +1,4 @@
 use crate::evm::approve::is_address_approved;
-use crate::evm::evm_calls::pa_submit_transaction;
 use crate::helpers::parse_address;
 use crate::requests::approve::ApproveRequest;
 use crate::requests::burn::{handle_burn_request, BurnRequest};
@@ -68,19 +67,18 @@ pub async fn mint(
     let request = payload.into_inner();
 
     // create the transaction
-    let Ok((mint_params, transaction)) = handle_mint_request(request.clone(), config).await else {
-        return Custom(
-            Status::UnprocessableEntity,
-            Json(json!({"error": "failed to create mint transaction"})),
-        );
-    };
-
-    // submit the transaction
-    let Ok(tx_hash) = pa_submit_transaction(transaction).await else {
-        return Custom(
-            Status::UnprocessableEntity,
-            Json(json!({"error": "failed to submit mint transaction"})),
-        );
+    let (mint_params, _transaction, tx_hash) = match handle_mint_request(request.clone(), config)
+        .await
+    {
+        Ok(res) => res,
+        Err(err) => {
+            return Custom(
+                Status::UnprocessableEntity,
+                Json(
+                    json!({"error": "failed to create mint transaction", "message": format!("{}", err)}),
+                ),
+            )
+        }
     };
 
     // create the response
@@ -102,26 +100,29 @@ pub async fn transfer(
     let request = payload.into_inner();
 
     // create the transaction
-    let Ok((transfer_params, transaction)) = handle_transfer_request(request.clone(), config).await
-    else {
-        return Custom(
-            Status::UnprocessableEntity,
-            Json(json!({"error": "failed to create transfer transaction"})),
-        );
-    };
-
-    // submit the transaction
-    let Ok(receipt) = pa_submit_transaction(transaction).await else {
-        return Custom(
-            Status::UnprocessableEntity,
-            Json(json!({"error": "failed to submit transfer transaction"})),
-        );
+    let (transfer_params, _transaction, transaction_hash) = match handle_transfer_request(
+        request.clone(),
+        config,
+    )
+    .await
+    {
+        Ok(res) => res,
+        Err(err) => {
+            return Custom(
+                Status::UnprocessableEntity,
+                Json(
+                    json!({"error": "failed to create transfer transaction", "message": format!("{}", err)}),
+                ),
+            )
+        }
     };
 
     // create the response
     Custom(
         Status::Accepted,
-        Json(json!({"receipt": receipt, "resource": transfer_params.created_resource.simplify()})),
+        Json(
+            json!({"receipt": transaction_hash, "resource": transfer_params.created_resource.simplify()}),
+        ),
     )
 }
 
@@ -135,23 +136,25 @@ pub async fn burn(
 
     let request = payload.into_inner();
 
-    let Ok((_burn_params, transaction)) = handle_burn_request(request.clone(), config).await else {
-        return Custom(
-            Status::UnprocessableEntity,
-            Json(json!({"error": "failed to create burn transaction"})),
-        );
-    };
-
-    // submit the transaction
-    let Ok(receipt) = pa_submit_transaction(transaction).await else {
-        return Custom(
-            Status::UnprocessableEntity,
-            Json(json!({"error": "failed to submit burn transaction"})),
-        );
+    let (_burn_parameters, _transaction, transaction_hash) = match handle_burn_request(
+        request.clone(),
+        config,
+    )
+    .await
+    {
+        Ok(res) => res,
+        Err(err) => {
+            return Custom(
+                Status::UnprocessableEntity,
+                Json(
+                    json!({"error": "failed to create burn transaction", "message": format!("{}", err)}),
+                ),
+            )
+        }
     };
 
     // create the response
-    Custom(Status::Accepted, Json(json!({"receipt": receipt})))
+    Custom(Status::Accepted, Json(json!({"receipt": transaction_hash})))
 }
 
 /// Handles a request from the user to split a resource.
@@ -163,24 +166,25 @@ pub async fn split(
     let config: &AnomaPayConfig = config.inner();
     let request = payload.into_inner();
 
-    let Ok((_split_params, transaction)) = handle_split_request(request.clone(), config).await
-    else {
-        return Custom(
-            Status::UnprocessableEntity,
-            Json(json!({"error": "failed to create split transaction"})),
-        );
-    };
-
-    // submit the transaction
-    let Ok(receipt) = pa_submit_transaction(transaction).await else {
-        return Custom(
-            Status::UnprocessableEntity,
-            Json(json!({"error": "failed to submit split transaction"})),
-        );
+    let (_split_params, _transaction, transaction_hash) = match handle_split_request(
+        request.clone(),
+        config,
+    )
+    .await
+    {
+        Ok(res) => res,
+        Err(err) => {
+            return Custom(
+                Status::UnprocessableEntity,
+                Json(
+                    json!({"error": "failed to create split transaction", "message": format!("{}", err)}),
+                ),
+            )
+        }
     };
 
     // create the response
-    Custom(Status::Accepted, Json(json!({"receipt": receipt})))
+    Custom(Status::Accepted, Json(json!({"receipt": transaction_hash})))
 }
 
 #[catch(422)]

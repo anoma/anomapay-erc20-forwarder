@@ -25,8 +25,7 @@ async fn create_transfer_transaction(
         config,
         mint_parameters.created_resource,
     )
-    .await
-    .expect("failed to create TransferParameters");
+    .await;
 
     let transaction = transfer_parameters.generate_transaction(config).await;
     println!("{:?}", transaction);
@@ -51,7 +50,7 @@ async fn submit_transfer_transaction(
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_create_transfer_transaction() {
     let config = load_config().expect("failed to load config in test");
     // create a keychain with a private key
@@ -61,7 +60,7 @@ async fn test_create_transfer_transaction() {
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_submit_transfer_transaction() {
     let config = load_config().expect("failed to load config in test");
     // create a keychain with a private key

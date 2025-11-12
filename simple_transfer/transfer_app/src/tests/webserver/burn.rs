@@ -14,9 +14,7 @@ pub async fn create_burn_request(config: &AnomaPayConfig, alice: Keychain) -> Bu
     let (mint_parameters, _transaction) = submit_mint_transaction(config, alice.clone()).await;
 
     let burn_parameters =
-        burn_parameters_example(alice.clone(), config, mint_parameters.created_resource)
-            .await
-            .expect("failed to create BurnParameters");
+        burn_parameters_example(alice.clone(), config, mint_parameters.created_resource).await;
 
     BurnRequest {
         burned_resource: burn_parameters.burned_resource.simplify(),
@@ -33,7 +31,7 @@ pub async fn create_burn_request(config: &AnomaPayConfig, alice: Keychain) -> Bu
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_burn_request() {
     let config = load_config().expect("failed to load config in test");
     let alice = alice_keychain(&config);

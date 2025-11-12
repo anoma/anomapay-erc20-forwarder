@@ -20,12 +20,9 @@ pub async fn create_burn_transaction(
 
     // Transfer the minted resource to bob.
     let burn_parameters =
-        burn_parameters_example(alice.clone(), config, mint_parameters.created_resource)
-            .await
-            .expect("failed to create BurnParameters");
+        burn_parameters_example(alice.clone(), config, mint_parameters.created_resource).await;
 
     let transaction = burn_parameters.generate_transaction(config).await;
-    println!("{:?}", transaction);
     assert!(transaction.is_ok());
 
     (burn_parameters, transaction)
@@ -39,9 +36,7 @@ pub async fn create_burn_transaction_for(
     // Create a mint transaction and submit it to have a resource to transfer.
 
     // Transfer the minted resource to bob.
-    let burn_parameters = burn_parameters_example(alice.clone(), config, to_burn)
-        .await
-        .expect("failed to create BurnParameters");
+    let burn_parameters = burn_parameters_example(alice.clone(), config, to_burn).await;
 
     let transaction = burn_parameters.generate_transaction(config).await;
     println!("{:?}", transaction);
@@ -104,7 +99,7 @@ async fn submit_mint_split_burn_transactions(
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_create_burn_transaction() {
     let config = load_config().expect("failed to load config in test");
     // create a keychain with a private key
@@ -114,7 +109,7 @@ async fn test_create_burn_transaction() {
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_submit_burn_transaction() {
     let config = load_config().expect("failed to load config in test");
     // create a keychain with a private key
@@ -124,7 +119,7 @@ async fn test_submit_burn_transaction() {
 }
 
 #[tokio::test]
-#[serial(submit_evm)]
+#[serial]
 async fn test_submit_mint_split_burn_transaction() {
     let config = load_config().expect("failed to load config in test");
     // create a keychain with a private key

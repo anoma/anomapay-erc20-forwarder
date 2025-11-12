@@ -1,9 +1,8 @@
-use crate::errors::TransactionError;
-use crate::errors::TransactionError::{DecodingError, InvalidKeyChain, TransactionSubmitError};
-
 use crate::evm::evm_calls::pa_submit_transaction;
 use crate::requests::resource::JsonResource;
-use crate::requests::Expand;
+use crate::requests::DecodingErr::{InvalidNullifierKey, LatestCommitmentTreeRootDecodeError};
+use crate::requests::RequestErr::FailedMintRequest;
+use crate::requests::{DecodeResult, Expand, RequestResult};
 use crate::transactions::mint::MintParameters;
 use crate::AnomaPayConfig;
 use arm::nullifier_key::NullifierKey;
@@ -44,11 +43,9 @@ pub struct MintRequest {
 impl MintRequest {
     /// Turns a MintRequest into a MintParameters struct.
     /// This ensures that all values are properly deserialized.
-    pub fn to_params(&self, config: &AnomaPayConfig) -> Result<MintParameters, TransactionError> {
-        let created_resource: Resource =
-            Expand::expand(self.created_resource.clone()).map_err(|_| DecodingError)?;
-        let consumed_resource: Resource =
-            Expand::expand(self.consumed_resource.clone()).map_err(|_| DecodingError)?;
+    pub fn to_params(&self, config: &AnomaPayConfig) -> DecodeResult<MintParameters> {
+        let created_resource: Resource = Expand::expand(self.created_resource.clone())?;
+        let consumed_resource: Resource = Expand::expand(self.consumed_resource.clone())?;
         let consumed_nullifier_key: NullifierKey =
             NullifierKey::from_bytes(self.consumed_nf_key.as_slice());
 
@@ -56,12 +53,14 @@ impl MintRequest {
 
         let consumed_resource_nullifier: Digest = consumed_resource
             .nullifier(&consumed_nullifier_key)
-            .map_err(|_| InvalidKeyChain)?;
+            .map_err(|_| InvalidNullifierKey)?;
 
         let latest_commitment_tree_root: Digest =
             bytes_to_words(self.latest_cm_tree_root.as_slice())
                 .try_into()
-                .map_err(|_| DecodingError)?;
+                .map_err(|_| {
+                    LatestCommitmentTreeRootDecodeError("latest_commitment_tree_root".to_string())
+                })?;
 
         let user_address = self.user_addr.clone();
         let permit_nonce = self.permit_nonce.clone();
@@ -93,17 +92,22 @@ impl MintRequest {
 pub async fn handle_mint_request(
     request: MintRequest,
     config: &AnomaPayConfig,
-) -> Result<(MintParameters, Transaction), TransactionError> {
+) -> RequestResult<(MintParameters, Transaction, String)> {
     // Convert from request to parameters
-    let mint_params = request.to_params(config)?;
+    let mint_params = request
+        .to_params(config)
+        .map_err(|err| FailedMintRequest(Box::new(err)))?;
 
     // Generate the transaction.
-    let transaction = mint_params.generate_transaction().await?;
+    let transaction = mint_params
+        .generate_transaction()
+        .await
+        .map_err(|err| FailedMintRequest(Box::new(err)))?;
 
     // Submit the transaction.
-    let _submit_result = pa_submit_transaction(transaction.clone())
+    let transaction_hash = pa_submit_transaction(transaction.clone())
         .await
-        .map_err(|_| TransactionSubmitError)?;
+        .map_err(|err| FailedMintRequest(Box::new(err)))?;
 
-    Ok((mint_params, transaction))
+    Ok((mint_params, transaction, transaction_hash))
 }
