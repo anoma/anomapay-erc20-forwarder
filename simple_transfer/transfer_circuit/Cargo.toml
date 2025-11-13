@@ -1,0 +1,11 @@
+[package]
+name = "simple-transfer"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+simple-transfer-methods = { path = "methods" }
+risc0-zkvm = "3.0.3"
+arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.8.1", default-features = false }
