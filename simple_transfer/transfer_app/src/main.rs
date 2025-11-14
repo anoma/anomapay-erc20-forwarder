@@ -34,8 +34,13 @@ pub struct AnomaPayConfig {
     /// the private key of the hot wallet
     #[allow(dead_code)]
     hot_wallet_private_key: PrivateKeySigner,
+<<<<<<< HEAD
     /// The Alchemy API key
     alchemy_api_key: String,
+=======
+    // Alchemy API key for token balance queries
+    api_key_alchemy: String,
+>>>>>>> 59a9e51 (chore: rename env var)
 }
 
 /// Reads the environment for required values and sets them into the config.
@@ -56,15 +61,24 @@ async fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
         .get_chain_id()
         .await?;
 
+<<<<<<< HEAD
     let alchemy_api_key: String =
         env::var("ALCHEMY_API_KEY").map_err(|_| "ALCHEMY_API_KEY not set")?;
+=======
+    let api_key_alchemy = env::var("API_KEY_ALCHEMY").map_err(|_| "API_KEY_ALCHEMY not set")?;
+>>>>>>> 59a9e51 (chore: rename env var)
 
     Ok(AnomaPayConfig {
         chain_id,
         ethereum_rpc,
         indexer_address,
         hot_wallet_private_key,
+<<<<<<< HEAD
         alchemy_api_key,
+=======
+        hot_wallet_address,
+        api_key_alchemy,
+>>>>>>> 59a9e51 (chore: rename env var)
     })
 }
 
