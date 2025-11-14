@@ -6,15 +6,19 @@ use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
 
+//----------------------------------------------------------------------------
+// Consumed Ephemeral Resource
+
+/// The `ConsumedEphemeral` resource witness data holds all the information
+/// necessary to consume an ephemeral resource.
+///
+/// An ephemeral resource is consumed in, for example, a split. The user splits
+/// 1 resource into 2 resources. To balance the transaction a trivial consumed
+/// ephemeral resource is created.
 #[derive(Clone)]
 #[allow(dead_code)]
 /// The empty witness data for consumed ephemeral resources.
 struct ConsumedEphemeral {}
-
-#[derive(Clone)]
-#[allow(dead_code)]
-/// The empty witness data for consumed ephemeral resources.
-struct CreatedEphemeral {}
 
 impl ConsumedWitnessData for ConsumedEphemeral {
     type WitnessType = TrivialLogicWitness;
@@ -38,6 +42,25 @@ impl ConsumedWitnessData for ConsumedEphemeral {
         ))
     }
 }
+
+//----------------------------------------------------------------------------
+// Created Ephemeral Resource
+
+#[derive(Clone)]
+#[allow(dead_code)]
+/// The `CreatedEphemeral` resource witness data holds all the information to
+/// consume an ephemeral trivial resource.
+///
+/// An ephemeral trivial resource is consumed in, for example, a burn
+/// transaction. If the user wants to withdraw 2 resources, 2 token transfer
+/// resources are consumed. There is only 1 token_transfer function generated
+/// which holds the total amount of withdrawn tokens. To balance the
+/// transaction, a trivial created resource is added.
+///
+///
+/// These resources have no witness data associated with them, so the struct is
+/// empty.
+struct CreatedEphemeral {}
 
 impl CreatedWitnessData for CreatedEphemeral {
     type WitnessType = TrivialLogicWitness;
