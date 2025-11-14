@@ -5,6 +5,20 @@
 //! list of consumed resource and their meta data, and a list of created
 //! resources and their meta data.
 
+use crate::request::compliance_proof::{compliance_proof_async, compliance_proofs_async};
+use crate::request::logic_proof::{logic_proof_async, logic_proofs_async};
+use crate::request::resources::{Consumed, Created};
+use crate::request::ProvingError::{
+    ConsumedAndCreatedResourceCountMismatch, LogicProofGenerationError,
+};
+use crate::request::{
+    ProvingError::{
+        AsyncError, ComplianceProofGenerationError, DeltaProofGenerationError,
+        TransactionVerificationError,
+    },
+    ProvingResult,
+};
+use crate::AnomaPayConfig;
 use arm::compliance::ComplianceWitness;
 use arm::compliance_unit::ComplianceUnit;
 use arm::delta_proof::DeltaWitness;
@@ -12,19 +26,7 @@ use arm::logic_proof::{LogicProver, LogicVerifier};
 use arm::transaction::{Delta, Transaction};
 use arm::Digest;
 use arm::{action::Action, action_tree::MerkleTree};
-
-use crate::request::compliance_proof::compliance_proof_async;
-use crate::request::logic_proof::logic_proof_async;
-use crate::request::resources::{Consumed, Created};
-use crate::request::ProvingError::ConsumedAndCreatedResourceCountMismatch;
-use crate::request::{
-    ProvingError::{
-        AsyncError, ComplianceProofGenerationError, DeltaProofGenerationError,
-        LogicProofGenerationError, TransactionVerificationError,
-    },
-    ProvingResult,
-};
-use crate::AnomaPayConfig;
+use tokio::{join, try_join};
 
 /// The `Parameters` struct holds all the necessary resources to generate a
 /// transaction.
@@ -158,29 +160,24 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
         // Generate the compliance witness
         let compliance_witnesses: Vec<ComplianceWitness> = self.compliance_witnesses()?;
 
-        // For each compliance witness, compute the compliance unit (i.e., proof).
-        let mut compliance_units: Vec<ComplianceUnit> = vec![];
-        for compliance_witness in compliance_witnesses.iter() {
-            let compliance_unit = compliance_proof_async(compliance_witness)
-                .await
-                .map_err(|e| AsyncError(e.to_string()))?
-                .map_err(|_| ComplianceProofGenerationError)?;
-
-            compliance_units.push(compliance_unit);
-        }
-
         // Generate the logic witnesses.
         let logic_witnesses: Vec<WitnessType> = self.logic_witnesses(config)?;
 
-        // For each logic witness, compute the logic proof.
-        let mut logic_proofs: Vec<LogicVerifier> = vec![];
-        for logic_witness in logic_witnesses.into_iter() {
-            let logic_proof = logic_proof_async(&logic_witness)
-                .await
-                .map_err(|e| AsyncError(e.to_string()))?
-                .map_err(|_| LogicProofGenerationError)?;
-            logic_proofs.push(logic_proof);
-        }
+        // let compliance_units: Vec<ComplianceUnit> =
+        //     compliance_proofs_async(compliance_witnesses.clone()).await?;
+        //
+        // let logic_proofs = logic_proofs_async(logic_witnesses).await?;
+
+        // Compute all the proofs concurrently
+        let (compliance_units, logic_proofs) = try_join!(
+            compliance_proofs_async(compliance_witnesses.clone()),
+            logic_proofs_async(logic_witnesses)
+        )?;
+        println!("compliance units: {:?}", compliance_units);
+        println!("logic proofs: {:?}", logic_proofs);
+        // let (compliance_units, logic_proofs) = (compliance_units?, logic_proofs?);
+
+
 
         // Create the action based on the compliance units and logic proofs.
         let action: Action = Action::new(compliance_units, logic_proofs).unwrap();
