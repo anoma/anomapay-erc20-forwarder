@@ -88,8 +88,6 @@ fn get_alchemy_base_url(config: &AnomaPayConfig) -> String {
         } else {
             let chain = if config.ethereum_rpc.contains("sepolia") {
                 "eth-sepolia"
-            } else if config.ethereum_rpc.contains("goerli") {
-                "eth-goerli"
             } else {
                 "eth-mainnet"
             };
