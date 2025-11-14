@@ -1,13 +1,13 @@
-use alloy::sol;
 use crate::evm::EvmError::{AlchemyApiError, ContractCallError, InvalidEthereumRPC};
 use crate::evm::EvmResult;
 use crate::AnomaPayConfig;
+use alloy::hex;
 use alloy::primitives::{Address, U256};
 use alloy::providers::ProviderBuilder;
+use alloy::sol;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use alloy::hex;
 
 // Extended ERC20 interface with metadata functions
 sol! {
@@ -62,7 +62,6 @@ struct AlchemyError {
     message: String,
 }
 
-
 /// Token balance information
 pub struct TokenBalance {
     pub address: Address,
@@ -77,7 +76,7 @@ async fn get_alchemy_token_balances(
     config: &AnomaPayConfig,
 ) -> EvmResult<Vec<(Address, U256)>> {
     let client = Client::new();
-    
+
     // Determine the base URL from the ethereum_rpc URL
     // If it's an Alchemy URL, extract the API key; otherwise construct it
     let base_url = if config.ethereum_rpc.contains("alchemy.com") {
@@ -92,11 +91,17 @@ async fn get_alchemy_token_balances(
             } else {
                 "eth-mainnet"
             };
-            format!("https://{}.g.alchemy.com/v2/{}", chain, config.alchemy_api_key)
+            format!(
+                "https://{}.g.alchemy.com/v2/{}",
+                chain, config.alchemy_api_key
+            )
         }
     } else {
         // Default to mainnet if not an Alchemy URL
-        format!("https://eth-mainnet.g.alchemy.com/v2/{}", config.alchemy_api_key)
+        format!(
+            "https://eth-mainnet.g.alchemy.com/v2/{}",
+            config.alchemy_api_key
+        )
     };
 
     let address_hex = format!("0x{}", hex::encode(user_address.as_slice()));
@@ -171,11 +176,8 @@ async fn get_token_metadata(
     let decimals_call = contract.decimals();
     let symbol_call = contract.symbol();
 
-    let (decimals_result, symbol_result) = tokio::try_join!(
-        decimals_call.call(),
-        symbol_call.call(),
-    )
-    .map_err(ContractCallError)?;
+    let (decimals_result, symbol_result) =
+        tokio::try_join!(decimals_call.call(), symbol_call.call(),).map_err(ContractCallError)?;
 
     Ok((decimals_result, symbol_result))
 }
@@ -206,11 +208,7 @@ pub async fn get_all_token_balances(
                 });
             }
             Err(e) => {
-                log::warn!(
-                    "Failed to fetch metadata for token {:?}: {}",
-                    token_addr,
-                    e
-                );
+                log::warn!("Failed to fetch metadata for token {:?}: {}", token_addr, e);
             }
         }
     }

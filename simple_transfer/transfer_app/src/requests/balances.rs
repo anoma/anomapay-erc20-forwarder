@@ -30,13 +30,12 @@ pub async fn handle_token_balances_request(
     request: TokenBalancesRequest,
     config: &AnomaPayConfig,
 ) -> RequestResult<Vec<TokenBalanceResponse>> {
-    let user_address = parse_address(request.address)
-        .ok_or_else(|| {
-            FailedTokenBalancesRequest(Box::new(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "invalid user address",
-            )))
-        })?;
+    let user_address = parse_address(request.address).ok_or_else(|| {
+        FailedTokenBalancesRequest(Box::new(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "invalid user address",
+        )))
+    })?;
 
     let balances = get_all_token_balances(user_address, config)
         .await
@@ -54,4 +53,3 @@ pub async fn handle_token_balances_request(
 
     Ok(response)
 }
-
