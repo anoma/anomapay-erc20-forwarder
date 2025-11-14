@@ -10,6 +10,8 @@ use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::Digest;
 
+//----------------------------------------------------------------------------
+// Consumed Resource
 
 /// `Consumed` holds all the data required to use a consumed resource in a
 /// transaction. A `Consumed` struct contains the actual ARM resource, it's
@@ -17,12 +19,18 @@ use arm::Digest;
 ///
 /// The witness data depends on which kind of resource this is.
 pub struct Consumed<T> {
+    /// The resource that is being consumed.
     pub resource: Resource,
+    /// The nullifier key belonging to this resource.
     pub nullifier_key: NullifierKey,
+    /// The witness data that is necessary to consume this resource.
     pub witness_data: Box<dyn ConsumedWitnessData<WitnessType = T>>,
 }
 
 impl<T: LogicProver + Send + 'static> Clone for Consumed<T> {
+    //! To clone a resource the `witness_data` has to be cloned as well. Because
+    //! this is a box we can't derive the default `Clone` trait and have to
+    //! implement it manually.
     fn clone(&self) -> Self {
         Consumed {
             resource: self.resource,
@@ -33,12 +41,17 @@ impl<T: LogicProver + Send + 'static> Clone for Consumed<T> {
 }
 
 impl<T: LogicProver + Send + 'static> Consumed<T> {
+    /// Returns the nullifier for this consumed resource.
+    ///
+    /// The nullifier is computed using the resource and the nullifier key. If
+    /// the nullifier key is not correct, this will fail.
     pub fn nullifier(&self) -> ProvingResult<Digest> {
         self.resource
             .nullifier(&self.nullifier_key)
             .map_err(|_e| InvalidSenderNullifierKey)
     }
 
+    /// Compute the logic witness for this resource.
     pub fn logic_witness(
         &self,
 
@@ -56,17 +69,25 @@ impl<T: LogicProver + Send + 'static> Consumed<T> {
     }
 }
 
+//----------------------------------------------------------------------------
+// Created Resource
+
 /// `Created` holds all the data require to use a created resource in a
 /// transaction.
 ///
 /// To create a resource you need the ARM resource, as well as witness data. The
 /// witness data depends on which kind of resource this is.
 pub struct Created<T> {
+    /// The resource that is being created.
     pub resource: Resource,
+    /// The witness data that is necessary to create this resource.
     pub witness_data: Box<dyn CreatedWitnessData<WitnessType = T>>,
 }
 
 impl<T: LogicProver + Send + 'static> Clone for Created<T> {
+    //! To clone a resource the `witness_data` has to be cloned as well. Because
+    //! this is a box we can't derive the default `Clone` trait and have to
+    //! implement it manually.
     fn clone(&self) -> Self {
         Created {
             resource: self.resource,
@@ -76,10 +97,12 @@ impl<T: LogicProver + Send + 'static> Clone for Created<T> {
 }
 
 impl<T: LogicProver + Send + 'static> Created<T> {
+    /// The commitment of a created resource is the commitment of the underlying resource.
     pub fn commitment(&self) -> Digest {
         self.resource.commitment()
     }
 
+    /// Compute the logic witness for this resource.
     pub fn logic_witness(
         &self,
         action_tree: &MerkleTree,
