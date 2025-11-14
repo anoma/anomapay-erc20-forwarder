@@ -10,6 +10,7 @@ use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::Digest;
 
+
 /// `Consumed` holds all the data required to use a consumed resource in a
 /// transaction. A `Consumed` struct contains the actual ARM resource, it's
 /// nullifier key, and additional witness data to generate the proofs.

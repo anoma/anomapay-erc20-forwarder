@@ -1,3 +1,10 @@
+//! Contains the `Parameters` struct and its implementations.
+//!
+//! The `Parameters` struct holds all the information required to generate a
+//! transaction for a user. To generate a transaction all that is required is a
+//! list of consumed resource and their meta data, and a list of created
+//! resources and their meta data.
+
 use arm::compliance::ComplianceWitness;
 use arm::compliance_unit::ComplianceUnit;
 use arm::delta_proof::DeltaWitness;
@@ -9,34 +16,40 @@ use arm::{action::Action, action_tree::MerkleTree};
 use crate::request::compliance_proof::compliance_proof_async;
 use crate::request::logic_proof::logic_proof_async;
 use crate::request::resources::{Consumed, Created};
+use crate::request::ProvingError::ConsumedAndCreatedResourceCountMismatch;
 use crate::request::{
     ProvingError::{
-        self, AsyncError, ComplianceProofGenerationError, DeltaProofGenerationError,
+        AsyncError, ComplianceProofGenerationError, DeltaProofGenerationError,
         LogicProofGenerationError, TransactionVerificationError,
     },
     ProvingResult,
 };
 use crate::AnomaPayConfig;
 
-/// The `Parameters` struct holds all the information required to generate a
-/// transaction for a user. To generate a transaction all that is required is a
-/// list of consumed resource and their meta data, and a list of created
-/// resources and their meta data.
+/// The `Parameters` struct holds all the necessary resources to generate a
+/// transaction.
 pub struct Parameters<T: LogicProver + Send + 'static> {
+    /// the list of resources the transaction is expected to create.
     pub created_resources: Vec<Created<T>>,
+    /// The list of resources the transaction is expected to consume.
     pub consumed_resources: Vec<Consumed<T>>,
+    /// The latest commitment tree root when this transaction is requested.
     pub latest_commitment_tree_root: Digest,
 }
 
 impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
     #[allow(dead_code)]
+    /// Creates a new `Parameters` struct with the given lists of resources and commitment tree root.
+    /// The function asserts that both lists are equal in length or fails.
     pub fn new(
         created_resources: Vec<Created<WitnessType>>,
         consumed_resources: Vec<Consumed<WitnessType>>,
         latest_commitment_tree_root: Digest,
     ) -> ProvingResult<Self> {
+        // The transaction has to be balanced. That is, equal amount of consumed
+        // resources and created resources.
         if consumed_resources.len() != created_resources.len() {
-            return Err(ProvingError::ConsumedAndCreatedResourceCountMismatch);
+            return Err(ConsumedAndCreatedResourceCountMismatch);
         }
 
         Ok(Self {
@@ -46,7 +59,15 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
         })
     }
 
-    pub(crate) fn compliance_witnesses(&self) -> ProvingResult<Vec<ComplianceWitness>> {
+    /// Create the compliance witnesses for the `Parameters`. Compliance
+    /// witnesses are built using pairs of consumed and created resources. For
+    /// each consumed resource a created resource is taken, and that pair is
+    /// used to create a compliance witness.
+    ///
+    /// In total there will be len(created_resources) / 2 compliance witnesses.
+    fn compliance_witnesses(&self) -> ProvingResult<Vec<ComplianceWitness>> {
+        // Create a list of pairs of created and consumed resources.
+        // Each pair will be used to create 1 compliance witness.
         let pairs: Vec<(Consumed<WitnessType>, Created<WitnessType>)> = self
             .consumed_resources
             .iter()
@@ -69,31 +90,40 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
             .collect())
     }
 
-    pub(crate) fn logic_witnesses(
-        &self,
-        config: &AnomaPayConfig,
-    ) -> ProvingResult<Vec<WitnessType>> {
+    /// Create the logic witnesses for all the resources. A logic witness is
+    /// created for each resource.
+    ///
+    /// In total there will be len(created_resources) + len(consumed_resources)
+    /// logic witnesses.
+    fn logic_witnesses(&self, config: &AnomaPayConfig) -> ProvingResult<Vec<WitnessType>> {
         let action_tree = self.action_tree()?;
 
+        // Create all the logic witnesses for the created resources.
         let mut created_logic_witnesses: Vec<WitnessType> = self
             .created_resources
             .iter()
             .map(|resource| resource.logic_witness(&action_tree, config))
             .collect::<ProvingResult<Vec<WitnessType>>>()?;
 
+        // Create the logic witnesses for all the consumed resources.
         let mut consumed_logic_witnesses: Vec<WitnessType> = self
             .consumed_resources
             .iter()
             .map(|r| r.logic_witness(&action_tree, config))
             .collect::<ProvingResult<Vec<WitnessType>>>()?;
 
+        // Append the created and consumed logic witnesses.
         created_logic_witnesses.append(&mut consumed_logic_witnesses);
 
         Ok(created_logic_witnesses)
     }
 
-    // Action tree is built on all the resources.
+    // Builds the action tree for the resources. The action tree consists of all
+    // the resources in the `Parameters`.
     fn action_tree(&self) -> ProvingResult<MerkleTree> {
+        // To create the action tree, the tag of each resource is required. For
+        // a consumed resource the tag is the nullifier. For a created resource
+        // the tag is the commitment.
         let consumed_tags: ProvingResult<Vec<Digest>> = self
             .consumed_resources
             .iter()
@@ -107,6 +137,9 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
             .map(|r| r.commitment())
             .collect();
 
+        // The action tree expects a list of tags, but the leaves have to be
+        // interleaved as consumed, created, consumed, created, etc. To achieve
+        // this interleaving, zip the two lists and flaten them again.
         let action_tags = consumed_tags
             .into_iter()
             .zip(created_tags)
@@ -115,6 +148,8 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
 
         Ok(MerkleTree::new(action_tags))
     }
+
+    /// Generates a transaction for the given `Parameters` struct.
     #[allow(dead_code)]
     pub async fn generate_transaction(
         &self,
@@ -147,11 +182,14 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
             logic_proofs.push(logic_proof);
         }
 
+        // Create the action based on the compliance units and logic proofs.
         let action: Action = Action::new(compliance_units, logic_proofs).unwrap();
 
+        // Compute the delta witness for the delta proof of this transaction.
         let rcvs: Vec<Vec<u8>> = compliance_witnesses.iter().map(|w| w.rcv.clone()).collect();
         let delta_witness = DeltaWitness::from_bytes_vec(&rcvs).unwrap();
 
+        // Create the transaction that holds the action and the delta witness.
         let transaction = Transaction::create(vec![action], Delta::Witness(delta_witness));
 
         // Generate the delta proof
