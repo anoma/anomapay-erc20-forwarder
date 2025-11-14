@@ -7,6 +7,7 @@
 //!  - splitting
 //!  - burning
 
+mod ethereum;
 mod request;
 mod tests;
 mod user;

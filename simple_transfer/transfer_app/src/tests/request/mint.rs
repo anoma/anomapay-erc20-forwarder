@@ -1,26 +1,84 @@
 #![cfg(test)]
 //! Test the behavior of minting a resource.
 
+use crate::ethereum::pa_submit_transaction;
+use crate::request::parameters::Parameters;
+use crate::request::resources::{Consumed, Created};
+use crate::request::witness_data::token_transfer::{
+    ConsumedEphemeral, CreatedPersistent, Permit2Data,
+};
 use crate::tests::fixtures::{
     create_permit_signature, default_commitment_tree_root, label_ref, random_nonce,
-    value_ref_created, value_ref_ephemeral_consumed, DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC,
+    user_with_private_key, value_ref_created, value_ref_ephemeral_consumed, DEFAULT_DEADLINE,
+    TOKEN_ADDRESS_SEPOLIA_USDC,
 };
 use crate::user::Keychain;
-use crate::AnomaPayConfig;
+use crate::{load_config, AnomaPayConfig};
 use arm::action_tree::MerkleTree;
 use arm::logic_proof::LogicProver;
 use arm::resource::Resource;
+use arm::transaction::Transaction;
 use transfer_library::TransferLogic;
 
-/// Mint parameters need one consumed ephemeral resource and one created
-/// persistent resource.
-async fn mint_parameters(minter: Keychain, config: &AnomaPayConfig, amount: u128) {
-    // Use the default commitment tree root.
-    let commitment_tree_root = default_commitment_tree_root();
+#[ignore]
+#[tokio::test]
+/// Test creation of a mint transaction.
+/// This test verifies that the proofs are generated, and the transaction is valid.
+async fn test_create_mint_transaction() {
+    // Load the configuration parameters.
+    let config = load_config().expect("failed to load config in test");
+    // Create a keychain with a private key
+    let user = user_with_private_key(&config);
 
-    // Amount of the resource to mint.
-    let amount: u128 = 2;
+    // Create a mint transaction.
+    let (_parameters, transaction) = example_mint_transaction(user, &config).await;
 
+    // Make sure the transaction verifies.
+    transaction.verify().expect("failed to verify transaction")
+}
+
+#[tokio::test]
+/// Test submitting a mint transaction to the protocol adapter.
+/// This requires an account with private key to actually submit to ethereum.
+async fn test_submit_mint_transaction() {
+    // Load the configuration parameters.
+    let config = load_config().expect("failed to load config in test");
+    // Create a keychain with a private key
+    let user = user_with_private_key(&config);
+
+    // Create a mint transaction.
+    let (_parameters, transaction) = example_mint_transaction(user, &config).await;
+
+    // Submit the transaction.
+    let tx_hash = pa_submit_transaction(transaction)
+        .await
+        .expect("failed to submit ethereum transaction");
+
+    println!("mint transaction hash: {}", tx_hash)
+}
+
+/// Creates an example transaction that mints 1 resource for the given user.
+async fn example_mint_transaction(
+    user: Keychain,
+    config: &AnomaPayConfig,
+) -> (Parameters<TransferLogic>, Transaction) {
+    // Create a set of parameters that amount to a mint transaction.
+    let parameters = example_mint_parameters(user, config, 1).await;
+
+    // Create the transaction for these parameters.
+    let transaction = parameters
+        .generate_transaction(config)
+        .await
+        .expect("failed to generate mint transaction");
+
+    (parameters, transaction)
+}
+/// Creates an example value of `Parameters` that represents a mint transaction.
+async fn example_mint_parameters(
+    minter: Keychain,
+    config: &AnomaPayConfig,
+    amount: u128,
+) -> Parameters<TransferLogic> {
     // Construct the ephemeral resource
     let nonce = random_nonce();
     let consumed_resource = Resource {
@@ -73,4 +131,38 @@ async fn mint_parameters(minter: Keychain, config: &AnomaPayConfig, amount: u128
         DEFAULT_DEADLINE,
     )
     .await;
+
+    // Create the resources with witness data attached.
+    let consumed_witness_data = ConsumedEphemeral {
+        sender_wallet_address: minter.evm_address,
+
+        token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
+        permit2_data: Permit2Data {
+            signature: permit_signature.into(),
+            deadline: DEFAULT_DEADLINE,
+            nonce: created_resource_nonce.into(),
+        },
+    };
+
+    let consumed_resource = Consumed {
+        resource: consumed_resource,
+        nullifier_key: minter.nf_key,
+        witness_data: Box::new(consumed_witness_data),
+    };
+
+    let created_witness_data = CreatedPersistent {
+        receiver_discovery_public_key: minter.discovery_pk,
+        receiver_encryption_public_key: minter.encryption_pk,
+    };
+
+    let created_resource = Created {
+        resource: created_resource,
+        witness_data: Box::new(created_witness_data),
+    };
+
+    Parameters {
+        created_resources: vec![created_resource],
+        consumed_resources: vec![consumed_resource],
+        latest_commitment_tree_root: default_commitment_tree_root(),
+    }
 }

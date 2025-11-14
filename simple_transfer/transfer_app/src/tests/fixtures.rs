@@ -24,7 +24,7 @@ pub fn default_commitment_tree_root() -> Digest {
 }
 
 /// Creates a keychain to represent a user.
-pub fn user(config: &AnomaPayConfig) -> Keychain {
+pub fn user_with_private_key(config: &AnomaPayConfig) -> Keychain {
     Keychain::alice(
         config.hot_wallet_address.encode_hex(),
         Some(config.hot_wallet_private_key.clone()),
