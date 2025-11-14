@@ -8,7 +8,8 @@ mod web;
 
 use crate::rpc::RpcError::InvalidRPCUrl;
 use crate::web::webserver::{
-    all_options, default_error, estimate_fee, health, send_transaction, unprocessable, Cors,
+    all_options, default_error, estimate_fee, health, send_transaction, token_balances,
+    unprocessable, Cors,
 };
 use crate::web::ApiDoc;
 use alloy::providers::{Provider, ProviderBuilder};
@@ -84,7 +85,7 @@ async fn rocket() -> _ {
         )
         .mount(
             "/",
-            routes![health, send_transaction, estimate_fee, all_options],
+            routes![health, send_transaction, estimate_fee, token_balances, all_options],
         )
         .register("/", catchers![default_error, unprocessable])
 }
