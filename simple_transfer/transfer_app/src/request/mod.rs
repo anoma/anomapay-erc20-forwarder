@@ -10,9 +10,6 @@ use thiserror::Error;
 
 pub type ProvingResult<T> = Result<T, ProvingError>;
 
-// TODO What's the difference?
-pub type ProofResult<T> = Result<T, ProveErr>;
-
 #[derive(Error, Debug, Clone)]
 pub enum ProvingError {
     #[error("The sender's nullifier key given for burn was invalid.")]
@@ -34,14 +31,6 @@ pub enum ProvingError {
     DeltaProofGenerationError,
     #[error("Failed to verify the split transaction.")]
     TransactionVerificationError,
-    #[error("Async await error occurred {0}.")]
-    AsyncError(String),
-}
-
-#[derive(Error, Debug)]
-pub enum ProveErr {
-    #[error("Error creating compliance unit")]
-    ComplianceUnitCreateError(arm::error::ArmError),
-    #[error("Error creating logic proof: {0}")]
-    LogicProofCreateError(arm::error::ArmError),
+    #[error("Failed to get the merkle path for a consumed resource")]
+    MerklePathNotFound
 }

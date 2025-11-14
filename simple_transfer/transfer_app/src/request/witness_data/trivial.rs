@@ -1,6 +1,7 @@
 //! Trivial resources are resources that do not hold ERC20 tokens, but are used
 //! to balance transactions. Resources used to balance transactions are called
 //! "padding resources."
+
 use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData};
 use crate::request::ProvingResult;
 use crate::AnomaPayConfig;
@@ -8,7 +9,8 @@ use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
-
+use arm::Digest;
+use async_trait::async_trait;
 //----------------------------------------------------------------------------
 // Consumed Ephemeral Resource
 
@@ -21,8 +23,9 @@ use arm::resource_logic::TrivialLogicWitness;
 #[derive(Clone)]
 #[allow(dead_code)]
 /// The empty witness data for consumed ephemeral resources.
-struct ConsumedEphemeral {}
+pub(crate) struct ConsumedEphemeral {}
 
+#[async_trait]
 impl ConsumedWitnessData for ConsumedEphemeral {
     type WitnessType = TrivialLogicWitness;
 
@@ -44,6 +47,15 @@ impl ConsumedWitnessData for ConsumedEphemeral {
             true,
         ))
     }
+
+    async fn merkle_path(
+        &self,
+        _config: &AnomaPayConfig,
+        _commitment: Digest,
+    ) -> ProvingResult<MerklePath> {
+        Ok(MerklePath::empty())
+    }
+
 }
 
 //----------------------------------------------------------------------------

@@ -8,7 +8,6 @@ use alloy::hex::ToHexExt;
 use alloy::primitives::{address, Address, Signature, B256, U256};
 use alloy::signers::local::PrivateKeySigner;
 use arm::action_tree::MerkleTree;
-use arm::compliance::INITIAL_ROOT;
 use arm::evm::CallType;
 use rand::Rng;
 use risc0_zkvm::sha::{Digest, Impl, Sha256};
@@ -17,11 +16,6 @@ pub const TOKEN_ADDRESS_SEPOLIA_USDC: Address =
     address!("0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238");
 
 pub const DEFAULT_DEADLINE: u64 = 1893456000;
-
-/// Return the default intial root.
-pub fn default_commitment_tree_root() -> Digest {
-    *INITIAL_ROOT
-}
 
 /// Creates a keychain to represent a user.
 pub fn user_with_private_key(config: &AnomaPayConfig) -> Keychain {
@@ -57,6 +51,14 @@ pub fn value_ref(call_type: CallType, user_addr: &[u8]) -> Digest {
 pub fn value_ref_ephemeral_consumed(user: &Keychain) -> Digest {
     value_ref(CallType::Wrap, user.evm_address.as_ref())
 }
+
+/// The value ref for an ephemeral resource in a burn transaction has to hold the calltype. A
+/// burning transaction means you create an ephemeral resource, and consume an non-ephemeral
+/// resource. Therefore, the created ephemeral resource needs to have the unwrapping calltype.
+pub fn value_ref_ephemeral_created(burner: &Keychain) -> Digest {
+    value_ref(CallType::Unwrap, burner.evm_address.as_ref())
+}
+
 
 /// The value ref for a created resource in a mint transaction needs to hold the verifying key of
 /// the owner of the resource. This can be any persons' verifying key, but in this case we use

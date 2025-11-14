@@ -5,28 +5,23 @@
 //! list of consumed resource and their meta data, and a list of created
 //! resources and their meta data.
 
-use crate::request::compliance_proof::{compliance_proof_async, compliance_proofs_async};
-use crate::request::logic_proof::{logic_proof_async, logic_proofs_async};
+use crate::request::compliance_proof::compliance_proofs_async;
+use crate::request::logic_proof::logic_proofs_async;
 use crate::request::resources::{Consumed, Created};
-use crate::request::ProvingError::{
-    ConsumedAndCreatedResourceCountMismatch, LogicProofGenerationError,
-};
+use crate::request::ProvingError::ConsumedAndCreatedResourceCountMismatch;
 use crate::request::{
-    ProvingError::{
-        AsyncError, ComplianceProofGenerationError, DeltaProofGenerationError,
-        TransactionVerificationError,
-    },
+    ProvingError::{DeltaProofGenerationError, TransactionVerificationError},
     ProvingResult,
 };
 use crate::AnomaPayConfig;
 use arm::compliance::ComplianceWitness;
-use arm::compliance_unit::ComplianceUnit;
 use arm::delta_proof::DeltaWitness;
-use arm::logic_proof::{LogicProver, LogicVerifier};
+use arm::logic_proof::LogicProver;
+use arm::merkle_path::MerklePath;
 use arm::transaction::{Delta, Transaction};
 use arm::Digest;
 use arm::{action::Action, action_tree::MerkleTree};
-use tokio::{join, try_join};
+use tokio::try_join;
 
 /// The `Parameters` struct holds all the necessary resources to generate a
 /// transaction.
@@ -35,8 +30,6 @@ pub struct Parameters<T: LogicProver + Send + 'static> {
     pub created_resources: Vec<Created<T>>,
     /// The list of resources the transaction is expected to consume.
     pub consumed_resources: Vec<Consumed<T>>,
-    /// The latest commitment tree root when this transaction is requested.
-    pub latest_commitment_tree_root: Digest,
 }
 
 impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
@@ -46,7 +39,6 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
     pub fn new(
         created_resources: Vec<Created<WitnessType>>,
         consumed_resources: Vec<Consumed<WitnessType>>,
-        latest_commitment_tree_root: Digest,
     ) -> ProvingResult<Self> {
         // The transaction has to be balanced. That is, equal amount of consumed
         // resources and created resources.
@@ -57,38 +49,60 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
         Ok(Self {
             created_resources,
             consumed_resources,
-            latest_commitment_tree_root,
         })
     }
 
+    /// Fetches the merkle proof for all the consumed resources.
+    async fn merkle_proofs(&self, config: &AnomaPayConfig) -> ProvingResult<Vec<MerklePath>> {
+        let mut merkle_proofs: Vec<MerklePath> = vec![];
+
+        for consumed in self.consumed_resources.iter() {
+            let commitment = consumed.resource.commitment();
+            let merkle_path = consumed
+                .witness_data
+                .merkle_path(config, commitment)
+                .await?;
+            merkle_proofs.push(merkle_path)
+        }
+        Ok(merkle_proofs)
+    }
     /// Create the compliance witnesses for the `Parameters`. Compliance
     /// witnesses are built using pairs of consumed and created resources. For
     /// each consumed resource a created resource is taken, and that pair is
     /// used to create a compliance witness.
     ///
     /// In total there will be len(created_resources) / 2 compliance witnesses.
-    fn compliance_witnesses(&self) -> ProvingResult<Vec<ComplianceWitness>> {
+    fn compliance_witnesses(
+        &self,
+        merkle_proofs: Vec<MerklePath>,
+    ) -> ProvingResult<Vec<ComplianceWitness>> {
+        type ResourcePair<WitnessType> = (Consumed<WitnessType>, Created<WitnessType>);
+
         // Create a list of pairs of created and consumed resources.
         // Each pair will be used to create 1 compliance witness.
-        let pairs: Vec<(Consumed<WitnessType>, Created<WitnessType>)> = self
+        let pairs: Vec<ResourcePair<WitnessType>> = self
             .consumed_resources
             .iter()
             .cloned()
             .zip(self.created_resources.iter().cloned())
             .collect();
 
+        let pairs: Vec<(ResourcePair<WitnessType>, MerklePath)> = pairs
+            .iter()
+            .cloned()
+            .zip(merkle_proofs.iter().cloned())
+            .collect();
+
         Ok(pairs
             .into_iter()
-            .map(
-                |(consumed, created): (Consumed<WitnessType>, Created<WitnessType>)| {
-                    ComplianceWitness::from_resources(
-                        consumed.resource,
-                        self.latest_commitment_tree_root,
-                        consumed.nullifier_key,
-                        created.resource,
-                    )
-                },
-            )
+            .map(|((consumed, created), path): (ResourcePair<WitnessType>, MerklePath)| {
+                ComplianceWitness::from_resources_with_path(
+                    consumed.resource,
+                    consumed.nullifier_key,
+                    path,
+                    created.resource,
+                )
+            })
             .collect())
     }
 
@@ -157,27 +171,21 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
         &self,
         config: &AnomaPayConfig,
     ) -> ProvingResult<Transaction> {
+        // Compute the merkle proofs for all the consumed resources.
+        let merkle_proofs = self.merkle_proofs(config).await?;
         // Generate the compliance witness
-        let compliance_witnesses: Vec<ComplianceWitness> = self.compliance_witnesses()?;
+        let compliance_witnesses: Vec<ComplianceWitness> =
+            self.compliance_witnesses(merkle_proofs)?;
 
         // Generate the logic witnesses.
         let logic_witnesses: Vec<WitnessType> = self.logic_witnesses(config)?;
-
-        // let compliance_units: Vec<ComplianceUnit> =
-        //     compliance_proofs_async(compliance_witnesses.clone()).await?;
-        //
-        // let logic_proofs = logic_proofs_async(logic_witnesses).await?;
 
         // Compute all the proofs concurrently
         let (compliance_units, logic_proofs) = try_join!(
             compliance_proofs_async(compliance_witnesses.clone()),
             logic_proofs_async(logic_witnesses)
         )?;
-        println!("compliance units: {:?}", compliance_units);
-        println!("logic proofs: {:?}", logic_proofs);
         // let (compliance_units, logic_proofs) = (compliance_units?, logic_proofs?);
-
-
 
         // Create the action based on the compliance units and logic proofs.
         let action: Action = Action::new(compliance_units, logic_proofs).unwrap();

@@ -2,8 +2,12 @@
 
 use crate::request::ProvingError::LogicProofGenerationError;
 use crate::request::ProvingResult;
+use crate::time_it;
 use arm::logic_proof::{LogicProver, LogicVerifier};
-use chrono::Local;
+#[cfg(not(test))]
+use log::info;
+#[cfg(test)]
+use println as info;
 use tokio::task::JoinHandle;
 
 /// Given a logic witness, returns a logic proof.
@@ -13,14 +17,12 @@ use tokio::task::JoinHandle;
 pub fn logic_proof<T: LogicProver + Send + 'static>(
     transfer_logic: &T,
 ) -> ProvingResult<LogicVerifier> {
-    let now = Local::now();
-    println!("started logic proof {}", now.format("%H:%M:%S"));
-    let proof = transfer_logic
-        .prove()
-        .map_err(|_| LogicProofGenerationError);
-    let now = Local::now();
-    println!("ended logic proof {}", now.format("%H:%M:%S"));
-    proof
+    time_it!(
+        "logic proof",
+        transfer_logic
+            .prove()
+            .map_err(|_| LogicProofGenerationError)
+    )
 }
 
 /// Given a logic witness, returns a logic proof.

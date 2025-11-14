@@ -1,2 +1,3 @@
 #![cfg(test)]
-mod mint;
+pub mod mint;
+pub mod burn;

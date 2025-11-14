@@ -8,7 +8,7 @@ use crate::request::witness_data::token_transfer::{
     ConsumedEphemeral, CreatedPersistent, Permit2Data,
 };
 use crate::tests::fixtures::{
-    create_permit_signature, default_commitment_tree_root, label_ref, random_nonce,
+    create_permit_signature, label_ref, random_nonce,
     user_with_private_key, value_ref_created, value_ref_ephemeral_consumed, DEFAULT_DEADLINE,
     TOKEN_ADDRESS_SEPOLIA_USDC,
 };
@@ -34,27 +34,41 @@ async fn test_create_mint_transaction() {
     let (_parameters, transaction) = example_mint_transaction(user, &config).await;
 
     // Make sure the transaction verifies.
-    transaction.verify().expect("failed to verify transaction")
+    transaction
+        .verify()
+        .expect("failed to verify mint transaction")
 }
 
 #[tokio::test]
 /// Test submitting a mint transaction to the protocol adapter.
 /// This requires an account with private key to actually submit to ethereum.
-async fn test_submit_mint_transaction() {
+pub async fn test_submit_mint_transaction() {
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
     let user = user_with_private_key(&config);
 
+    // Call the example submit function which submits a mint transaction.
+    let (_parameters, _transaction, hash) = example_mint_transaction_submit(user, &config).await;
+    println!("mint transaction hash: {}", hash)
+}
+
+/// Creates and submits a minting transaction for the given user.
+pub async fn example_mint_transaction_submit(
+    user: Keychain,
+    config: &AnomaPayConfig,
+) -> (Parameters<TransferLogic>, Transaction, String) {
     // Create a mint transaction.
-    let (_parameters, transaction) = example_mint_transaction(user, &config).await;
+    let (parameters, transaction) = example_mint_transaction(user, config).await;
 
     // Submit the transaction.
-    let tx_hash = pa_submit_transaction(transaction)
+    let tx_hash = pa_submit_transaction(transaction.clone())
         .await
         .expect("failed to submit ethereum transaction");
 
-    println!("mint transaction hash: {}", tx_hash)
+    println!("mint transaction hash: {}", tx_hash);
+
+    (parameters, transaction, tx_hash)
 }
 
 /// Creates an example transaction that mints 1 resource for the given user.
@@ -73,6 +87,7 @@ async fn example_mint_transaction(
 
     (parameters, transaction)
 }
+
 /// Creates an example value of `Parameters` that represents a mint transaction.
 async fn example_mint_parameters(
     minter: Keychain,
@@ -80,14 +95,13 @@ async fn example_mint_parameters(
     amount: u128,
 ) -> Parameters<TransferLogic> {
     // Construct the ephemeral resource
-    let nonce = random_nonce();
     let consumed_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
         label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: amount,
         value_ref: value_ref_ephemeral_consumed(&minter),
         is_ephemeral: true,
-        nonce,
+        nonce: random_nonce(),
         nk_commitment: minter.nf_key.commit(),
         rand_seed: random_nonce(),
     };
@@ -163,6 +177,5 @@ async fn example_mint_parameters(
     Parameters {
         created_resources: vec![created_resource],
         consumed_resources: vec![consumed_resource],
-        latest_commitment_tree_root: default_commitment_tree_root(),
     }
 }

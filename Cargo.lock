@@ -7542,6 +7542,7 @@ dependencies = [
  "alloy",
  "alloy-contract",
  "arm",
+ "async-trait",
  "bincode",
  "bonsai-sdk",
  "chrono",

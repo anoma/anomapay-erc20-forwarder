@@ -3,21 +3,41 @@ use crate::request::ProvingError::ComplianceProofGenerationError;
 use crate::request::ProvingResult;
 use arm::compliance::ComplianceWitness;
 use arm::compliance_unit::ComplianceUnit;
-use chrono::Local;
 use tokio::task::JoinHandle;
+
+#[cfg(not(test))]
+use log::info;
+#[cfg(test)]
+use println as info;
+
+#[macro_export]
+/// Times the execution of an expression to print out the duration for debugging purposes and logging.
+macro_rules! time_it {
+    ($name:expr, $body:expr) => {{
+        let start = chrono::Local::now();
+        info!("start {} {}", $name, start.format("%H:%M:%S"));
+        let result = $body;
+        let end = chrono::Local::now();
+        let duration = end.signed_duration_since(start);
+        info!(
+            "end {} {} (took {:.2}s)",
+            $name,
+            end.format("%H:%M:%S"),
+            duration.num_milliseconds() as f64 / 1000.0
+        );
+        result
+    }};
+}
 
 /// Create a compliance unit based on a compliance witness.
 ///
 /// This function is blocking and cannot be used safely in an asynchronous
 /// context. Use `compliance_proof_async` instead.
 pub fn compliance_proof(compliance_witness: &ComplianceWitness) -> ProvingResult<ComplianceUnit> {
-    let now = Local::now();
-    println!("started compliance proof {}", now.format("%H:%M:%S"));
-    let compliance_unit =
-        ComplianceUnit::create(compliance_witness).map_err(|_| ComplianceProofGenerationError);
-    let now = Local::now();
-    println!("started compliance proof {}", now.format("%H:%M:%S"));
-    compliance_unit
+    time_it!(
+        "compliance proof",
+        ComplianceUnit::create(compliance_witness).map_err(|_| ComplianceProofGenerationError)
+    )
 }
 
 /// Given a compliance witness, generates a compliance unit.

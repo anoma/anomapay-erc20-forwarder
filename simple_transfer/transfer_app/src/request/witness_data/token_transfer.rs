@@ -1,6 +1,9 @@
 //! Token transfer resources are resources that hold ERC20 tokens. These are the
 //! resources that wrap these tokens and can be transferred within Anoma.
+
+use crate::indexer::pa_merkle_path;
 use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData};
+use crate::request::ProvingError::MerklePathNotFound;
 use crate::request::ProvingResult;
 use crate::AnomaPayConfig;
 use alloy::primitives::{Address, U256};
@@ -8,6 +11,8 @@ use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
+use arm::Digest;
+use async_trait::async_trait;
 use k256::AffinePoint;
 use transfer_library::TransferLogic;
 
@@ -32,11 +37,12 @@ pub struct Permit2Data {
 #[allow(dead_code)]
 pub struct ConsumedPersistent {
     /// TODO! Do we have to pass this via the api or not? Check with Yulia/Xuyang/Michael
-    sender_authorization_verifying_key: AuthorizationVerifyingKey,
+    pub(crate) sender_authorization_verifying_key: AuthorizationVerifyingKey,
     /// The signature of the sender authorizing the consumption of the resource. This signature is over the entire action tree.
-    sender_authorization_signature: AuthorizationSignature,
+    pub(crate) sender_authorization_signature: AuthorizationSignature,
 }
 
+#[async_trait]
 impl ConsumedWitnessData for ConsumedPersistent {
     type WitnessType = TransferLogic;
 
@@ -58,6 +64,17 @@ impl ConsumedWitnessData for ConsumedPersistent {
             self.sender_authorization_verifying_key,
             self.sender_authorization_signature,
         ))
+    }
+
+    async fn merkle_path(
+        &self,
+        config: &AnomaPayConfig,
+        commitment: Digest,
+    ) -> ProvingResult<MerklePath> {
+        pa_merkle_path(config, commitment).await.map_err(|e| {
+            println!("merkle_path error : {}", e);
+            MerklePathNotFound
+        })
     }
 }
 
@@ -120,6 +137,7 @@ pub struct ConsumedEphemeral {
     pub permit2_data: Permit2Data,
 }
 
+#[async_trait]
 impl ConsumedWitnessData for ConsumedEphemeral {
     type WitnessType = TransferLogic;
 
@@ -147,6 +165,14 @@ impl ConsumedWitnessData for ConsumedEphemeral {
             self.permit2_data.signature.clone(),
         ))
     }
+
+    async fn merkle_path(
+        &self,
+        _config: &AnomaPayConfig,
+        _commitment: Digest,
+    ) -> ProvingResult<MerklePath> {
+        Ok(MerklePath::empty())
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -162,9 +188,9 @@ impl ConsumedWitnessData for ConsumedEphemeral {
 #[allow(dead_code)]
 pub struct CreatedEphemeral {
     /// The address of the ERC20 token to be withdrawn by unwrapping the ERC20-R resource.
-    token_contract_address: Address,
+    pub(crate) token_contract_address: Address,
     /// The Ethereum wallet address of the receiver of the payment.
-    receiver_wallet_address: Address,
+    pub(crate) receiver_wallet_address: Address,
 }
 
 impl CreatedWitnessData for CreatedEphemeral {

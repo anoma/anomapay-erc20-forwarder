@@ -23,9 +23,11 @@ use arm::logic_proof::LogicProver;
 use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
-
+use arm::Digest;
+use async_trait::async_trait;
 /// The `ConsumedWitnessData` trait implements the behavior that is required for
 /// all witnessdata for consumed resources.
+#[async_trait]
 pub trait ConsumedWitnessData {
     type WitnessType: LogicProver + Send + 'static;
     fn clone_box(&self) -> Box<dyn ConsumedWitnessData<WitnessType = Self::WitnessType>>;
@@ -36,10 +38,17 @@ pub trait ConsumedWitnessData {
         nullifier_key: NullifierKey,
         config: &AnomaPayConfig,
     ) -> ProvingResult<Self::WitnessType>;
+
+    async fn merkle_path(
+        &self,
+        config: &AnomaPayConfig,
+        commitment: Digest,
+    ) -> ProvingResult<MerklePath>;
 }
 
 /// The `CreatedWitnessData` trait implements the behavior that is required for
 /// all witnessdata for created resources.
+#[async_trait]
 pub trait CreatedWitnessData {
     type WitnessType: LogicProver + Send + 'static;
     fn clone_box(&self) -> Box<dyn CreatedWitnessData<WitnessType = Self::WitnessType>>;
@@ -49,4 +58,6 @@ pub trait CreatedWitnessData {
         resource_path: MerklePath,
         config: &AnomaPayConfig,
     ) -> ProvingResult<Self::WitnessType>;
+
+
 }
