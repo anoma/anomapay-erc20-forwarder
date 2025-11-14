@@ -1,17 +1,15 @@
-use arm::action::Action;
-use arm::action_tree::MerkleTree;
 use arm::compliance::ComplianceWitness;
 use arm::compliance_unit::ComplianceUnit;
 use arm::delta_proof::DeltaWitness;
 use arm::logic_proof::{LogicProver, LogicVerifier};
 use arm::transaction::{Delta, Transaction};
 use arm::Digest;
+use arm::{action::Action, action_tree::MerkleTree};
 
 use crate::request::compliance_proof::compliance_proof_async;
 use crate::request::logic_proof::logic_proof_async;
 use crate::request::resources::{Consumed, Created};
-use crate::request::ProvingError::{DeltaProofGenerationError, TransactionVerificationError};
-use crate::request::{ProvingError, ProvingResult};
+use crate::request::{ProvingError::{self, DeltaProofGenerationError, TransactionVerificationError}, ProvingResult};
 use crate::AnomaPayConfig;
 
 pub struct Parameters<T: LogicProver + Send + 'static> {

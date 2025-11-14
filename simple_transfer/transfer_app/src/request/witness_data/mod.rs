@@ -23,6 +23,7 @@ use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 
+
 /// The `ConsumedWitnessData` trait implements the behavior that is required for
 /// all witnessdata for consumed resources.
 pub trait ConsumedWitnessData {
