@@ -1,3 +1,5 @@
+//! Token transfer resources are resources that hold ERC20 tokens. These are the
+//! resources that wrap these tokens and can be transferred within Anoma.
 use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData};
 use crate::request::ProvingResult;
 use crate::AnomaPayConfig;

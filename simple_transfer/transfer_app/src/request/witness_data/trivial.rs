@@ -1,3 +1,6 @@
+//! Trivial resources are resources that do not hold ERC20 tokens, but are used
+//! to balance transactions. Resources used to balance transactions are called
+//! "padding resources."
 use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData};
 use crate::request::ProvingResult;
 use crate::AnomaPayConfig;

@@ -9,9 +9,19 @@ use arm::{action::Action, action_tree::MerkleTree};
 use crate::request::compliance_proof::compliance_proof_async;
 use crate::request::logic_proof::logic_proof_async;
 use crate::request::resources::{Consumed, Created};
-use crate::request::{ProvingError::{self, DeltaProofGenerationError, TransactionVerificationError}, ProvingResult};
+use crate::request::{
+    ProvingError::{
+        self, AsyncError, ComplianceProofGenerationError, DeltaProofGenerationError,
+        LogicProofGenerationError, TransactionVerificationError,
+    },
+    ProvingResult,
+};
 use crate::AnomaPayConfig;
 
+/// The `Parameters` struct holds all the information required to generate a
+/// transaction for a user. To generate a transaction all that is required is a
+/// list of consumed resource and their meta data, and a list of created
+/// resources and their meta data.
 pub struct Parameters<T: LogicProver + Send + 'static> {
     pub created_resources: Vec<Created<T>>,
     pub consumed_resources: Vec<Consumed<T>>,
@@ -118,7 +128,9 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
         for compliance_witness in compliance_witnesses.iter() {
             let compliance_unit = compliance_proof_async(compliance_witness)
                 .await
-                .expect("comliance proof failed");
+                .map_err(|e| AsyncError(e.to_string()))?
+                .map_err(|_| ComplianceProofGenerationError)?;
+
             compliance_units.push(compliance_unit);
         }
 
@@ -130,9 +142,11 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
         for logic_witness in logic_witnesses.into_iter() {
             let logic_proof = logic_proof_async(&logic_witness)
                 .await
-                .expect("logic proof failed");
+                .map_err(|e| AsyncError(e.to_string()))?
+                .map_err(|_| LogicProofGenerationError)?;
             logic_proofs.push(logic_proof);
         }
+
         let action: Action = Action::new(compliance_units, logic_proofs).unwrap();
 
         let rcvs: Vec<Vec<u8>> = compliance_witnesses.iter().map(|w| w.rcv.clone()).collect();

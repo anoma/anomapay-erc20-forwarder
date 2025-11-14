@@ -34,6 +34,8 @@ pub enum ProvingError {
     DeltaProofGenerationError,
     #[error("Failed to verify the split transaction.")]
     TransactionVerificationError,
+    #[error("Async await error occurred {0}.")]
+    AsyncError(String)
 }
 
 #[derive(Error, Debug)]
