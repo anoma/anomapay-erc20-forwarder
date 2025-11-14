@@ -7,8 +7,8 @@
 //!  - splitting
 //!  - burning
 
-mod helpers;
 mod request;
+mod tests;
 mod user;
 mod webserver;
 

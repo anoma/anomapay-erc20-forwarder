@@ -4,7 +4,7 @@ pub mod parameters;
 /// The request module contains all the logic to deal with a request to generate
 /// a transaction. Typically these requests come in via the REST api.
 pub mod resources;
-mod witness_data;
+pub mod witness_data;
 
 use thiserror::Error;
 

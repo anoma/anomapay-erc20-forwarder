@@ -14,8 +14,8 @@
 //! token_transfer file, and witness data structs for trivial resources are in
 //! trivial.
 
-mod token_transfer;
-mod trivial;
+pub mod token_transfer;
+pub mod trivial;
 
 use crate::request::ProvingResult;
 use crate::AnomaPayConfig;
