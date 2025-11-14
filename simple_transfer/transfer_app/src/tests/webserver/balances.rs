@@ -52,11 +52,6 @@ async fn test_token_balances_handler() {
                     balance.symbol, balance.value, balance.decimals
                 );
             }
-
-            assert!(
-                !balances.is_empty() || true,
-                "Got token balances (empty is OK if address has no tokens)"
-            );
         }
         Err(e) => {
             println!("   Error fetching token balances: {}", e);
