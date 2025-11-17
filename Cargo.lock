@@ -4032,6 +4032,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "interleave"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f23fa38fecf54b4caefb362bd2d442465648698b26fa8ce66f35366b217f49c"
+
+[[package]]
 name = "interprocess"
 version = "2.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7549,6 +7555,8 @@ dependencies = [
  "dotenv",
  "evm_protocol_adapter_bindings",
  "futures",
+ "interleave",
+ "itertools 0.10.5",
  "k256",
  "log",
  "rand 0.8.5",

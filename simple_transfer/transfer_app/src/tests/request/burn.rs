@@ -20,27 +20,27 @@ use arm::transaction::Transaction;
 use arm::Digest;
 use transfer_library::TransferLogic;
 
-// #[ignore]
-// #[tokio::test]
-// /// Test creation of a burn transaction.
-// /// This test verifies that the proofs are generated, and the transaction is valid.
-// async fn test_create_burn_transaction() {
-//     // Load the configuration parameters.
-//     let config = load_config().expect("failed to load config in test");
-//     // Create a keychain with a private key
-//     let user = user_with_private_key(&config);
-//
-//     // Call the example submit function which submits a mint transaction.
-//     let (parameters, _transaction, hash) = example_mint_transaction_submit(user.clone(), &config).await;
-//     println!("mint transaction hash: {}", hash);
-//
-//     // Create a burn transaction for the just minted resource.
-//     let minted_resource = parameters.created_resources[0].resource;
-//     let (_parameters, transaction) = example_burn_transaction(user, &config, minted_resource).await;
-//
-//     // Make sure the transaction verifies.
-//     transaction.verify().expect("failed to verify burn transaction")
-// }
+#[ignore]
+#[tokio::test]
+/// Test creation of a burn transaction.
+/// This test verifies that the proofs are generated, and the transaction is valid.
+async fn test_create_burn_transaction() {
+    // Load the configuration parameters.
+    let config = load_config().expect("failed to load config in test");
+    // Create a keychain with a private key
+    let user = user_with_private_key(&config);
+
+    // Call the example submit function which submits a mint transaction.
+    let (parameters, _transaction, hash) = example_mint_transaction_submit(user.clone(), &config).await;
+    println!("mint transaction hash: {}", hash);
+
+    // Create a burn transaction for the just minted resource.
+    let minted_resource = parameters.created_resources[0].resource;
+    let (_parameters, transaction) = example_burn_transaction(user, &config, minted_resource).await;
+
+    // Make sure the transaction verifies.
+    transaction.verify().expect("failed to verify burn transaction")
+}
 
 #[tokio::test]
 /// Test submitting a burn transaction to the protocol adapter.
@@ -66,7 +66,7 @@ pub async fn example_burn_transaction_submit(
     user: Keychain,
     config: &AnomaPayConfig,
     resource: Resource,
-) -> (Parameters<TransferLogic>, Transaction, String) {
+) -> (Parameters, Transaction, String) {
     // Create a mint transaction.
     let (parameters, transaction) = example_burn_transaction(user, config, resource).await;
 
@@ -85,7 +85,7 @@ pub async fn example_burn_transaction(
     user: Keychain,
     config: &AnomaPayConfig,
     resource: Resource,
-) -> (Parameters<TransferLogic>, Transaction) {
+) -> (Parameters, Transaction) {
     // Create a set of parameters that amount to a burn transaction.
     let parameters = example_burn_parameters(user, config, resource).await;
 
@@ -103,7 +103,7 @@ async fn example_burn_parameters(
     burner: Keychain,
     config: &AnomaPayConfig,
     to_burn_resource: Resource,
-) -> Parameters<TransferLogic> {
+) -> Parameters {
     // to burn a resource, we need the nullifier of that resource.
     let burned_resource_nullifier = to_burn_resource
         .nullifier(&burner.nf_key)

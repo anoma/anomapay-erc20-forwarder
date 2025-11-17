@@ -16,29 +16,29 @@ use crate::request::{
 use crate::AnomaPayConfig;
 use arm::compliance::ComplianceWitness;
 use arm::delta_proof::DeltaWitness;
-use arm::logic_proof::LogicProver;
 use arm::merkle_path::MerklePath;
 use arm::transaction::{Delta, Transaction};
 use arm::Digest;
 use arm::{action::Action, action_tree::MerkleTree};
 use tokio::try_join;
+use crate::request::witness_data::WitnessTypes;
 
 /// The `Parameters` struct holds all the necessary resources to generate a
 /// transaction.
-pub struct Parameters<T: LogicProver + Send + 'static> {
+pub struct Parameters {
     /// the list of resources the transaction is expected to create.
-    pub created_resources: Vec<Created<T>>,
+    pub created_resources: Vec<Created>,
     /// The list of resources the transaction is expected to consume.
-    pub consumed_resources: Vec<Consumed<T>>,
+    pub consumed_resources: Vec<Consumed>,
 }
 
-impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
+impl Parameters {
     #[allow(dead_code)]
     /// Creates a new `Parameters` struct with the given lists of resources and commitment tree root.
     /// The function asserts that both lists are equal in length or fails.
     pub fn new(
-        created_resources: Vec<Created<WitnessType>>,
-        consumed_resources: Vec<Consumed<WitnessType>>,
+        created_resources: Vec<Created>,
+        consumed_resources: Vec<Consumed>,
     ) -> ProvingResult<Self> {
         // The transaction has to be balanced. That is, equal amount of consumed
         // resources and created resources.
@@ -76,18 +76,18 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
         &self,
         merkle_proofs: Vec<MerklePath>,
     ) -> ProvingResult<Vec<ComplianceWitness>> {
-        type ResourcePair<WitnessType> = (Consumed<WitnessType>, Created<WitnessType>);
+        type ResourcePair = (Consumed, Created);
 
         // Create a list of pairs of created and consumed resources.
         // Each pair will be used to create 1 compliance witness.
-        let pairs: Vec<ResourcePair<WitnessType>> = self
+        let pairs: Vec<ResourcePair> = self
             .consumed_resources
             .iter()
             .cloned()
             .zip(self.created_resources.iter().cloned())
             .collect();
 
-        let pairs: Vec<(ResourcePair<WitnessType>, MerklePath)> = pairs
+        let pairs: Vec<(ResourcePair, MerklePath)> = pairs
             .iter()
             .cloned()
             .zip(merkle_proofs.iter().cloned())
@@ -95,7 +95,7 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
 
         Ok(pairs
             .into_iter()
-            .map(|((consumed, created), path): (ResourcePair<WitnessType>, MerklePath)| {
+            .map(|((consumed, created), path): (ResourcePair, MerklePath)| {
                 ComplianceWitness::from_resources_with_path(
                     consumed.resource,
                     consumed.nullifier_key,
@@ -111,22 +111,22 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
     ///
     /// In total there will be len(created_resources) + len(consumed_resources)
     /// logic witnesses.
-    fn logic_witnesses(&self, config: &AnomaPayConfig) -> ProvingResult<Vec<WitnessType>> {
+    fn logic_witnesses(&self, config: &AnomaPayConfig) -> ProvingResult<Vec<WitnessTypes>> {
         let action_tree = self.action_tree()?;
 
         // Create all the logic witnesses for the created resources.
-        let mut created_logic_witnesses: Vec<WitnessType> = self
+        let mut created_logic_witnesses: Vec<WitnessTypes> = self
             .created_resources
             .iter()
             .map(|resource| resource.logic_witness(&action_tree, config))
-            .collect::<ProvingResult<Vec<WitnessType>>>()?;
+            .collect::<ProvingResult<Vec<WitnessTypes>>>()?;
 
         // Create the logic witnesses for all the consumed resources.
-        let mut consumed_logic_witnesses: Vec<WitnessType> = self
+        let mut consumed_logic_witnesses: Vec<WitnessTypes> = self
             .consumed_resources
             .iter()
             .map(|r| r.logic_witness(&action_tree, config))
-            .collect::<ProvingResult<Vec<WitnessType>>>()?;
+            .collect::<ProvingResult<Vec<WitnessTypes>>>()?;
 
         // Append the created and consumed logic witnesses.
         created_logic_witnesses.append(&mut consumed_logic_witnesses);
@@ -178,7 +178,7 @@ impl<WitnessType: LogicProver + Send + 'static> Parameters<WitnessType> {
             self.compliance_witnesses(merkle_proofs)?;
 
         // Generate the logic witnesses.
-        let logic_witnesses: Vec<WitnessType> = self.logic_witnesses(config)?;
+        let logic_witnesses: Vec<WitnessTypes> = self.logic_witnesses(config)?;
 
         // Compute all the proofs concurrently
         let (compliance_units, logic_proofs) = try_join!(

@@ -57,7 +57,7 @@ pub async fn test_submit_mint_transaction() {
 pub async fn example_mint_transaction_submit(
     user: Keychain,
     config: &AnomaPayConfig,
-) -> (Parameters<TransferLogic>, Transaction, String) {
+) -> (Parameters, Transaction, String) {
     // Create a mint transaction.
     let (parameters, transaction) = example_mint_transaction(user, config).await;
 
@@ -75,7 +75,7 @@ pub async fn example_mint_transaction_submit(
 async fn example_mint_transaction(
     user: Keychain,
     config: &AnomaPayConfig,
-) -> (Parameters<TransferLogic>, Transaction) {
+) -> (Parameters, Transaction) {
     // Create a set of parameters that amount to a mint transaction.
     let parameters = example_mint_parameters(user, config, 1).await;
 
@@ -93,7 +93,7 @@ async fn example_mint_parameters(
     minter: Keychain,
     config: &AnomaPayConfig,
     amount: u128,
-) -> Parameters<TransferLogic> {
+) -> Parameters {
     // Construct the ephemeral resource
     let consumed_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),

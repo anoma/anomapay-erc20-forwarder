@@ -25,6 +25,11 @@ pub fn user_with_private_key(config: &AnomaPayConfig) -> Keychain {
     )
 }
 
+/// Creates a keychain to represent a user.
+pub fn user_without_private_key() -> Keychain {
+    Keychain::bob(None)
+}
+
 /// Generates a random nonce. A nonce is an array of 32 8-byte integers.
 pub fn random_nonce() -> [u8; 32] {
     let mut rng = rand::thread_rng();
@@ -58,7 +63,6 @@ pub fn value_ref_ephemeral_consumed(user: &Keychain) -> Digest {
 pub fn value_ref_ephemeral_created(burner: &Keychain) -> Digest {
     value_ref(CallType::Unwrap, burner.evm_address.as_ref())
 }
-
 
 /// The value ref for a created resource in a mint transaction needs to hold the verifying key of
 /// the owner of the resource. This can be any persons' verifying key, but in this case we use

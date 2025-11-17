@@ -2,7 +2,7 @@
 //! to balance transactions. Resources used to balance transactions are called
 //! "padding resources."
 
-use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData};
+use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData, WitnessTypes};
 use crate::request::ProvingResult;
 use crate::AnomaPayConfig;
 use arm::merkle_path::MerklePath;
@@ -27,9 +27,7 @@ pub(crate) struct ConsumedEphemeral {}
 
 #[async_trait]
 impl ConsumedWitnessData for ConsumedEphemeral {
-    type WitnessType = TrivialLogicWitness;
-
-    fn clone_box(&self) -> Box<dyn ConsumedWitnessData<WitnessType = Self::WitnessType>> {
+    fn clone_box(&self) -> Box<dyn ConsumedWitnessData> {
         Box::new(self.clone())
     }
 
@@ -39,13 +37,9 @@ impl ConsumedWitnessData for ConsumedEphemeral {
         resource_path: MerklePath,
         nullifier_key: NullifierKey,
         _config: &AnomaPayConfig,
-    ) -> ProvingResult<Self::WitnessType> {
-        Ok(TrivialLogicWitness::new(
-            resource,
-            resource_path,
-            nullifier_key,
-            true,
-        ))
+    ) -> ProvingResult<WitnessTypes> {
+        let witness = TrivialLogicWitness::new(resource, resource_path, nullifier_key, true);
+        Ok(WitnessTypes::Trivial(witness))
     }
 
     async fn merkle_path(
@@ -55,7 +49,6 @@ impl ConsumedWitnessData for ConsumedEphemeral {
     ) -> ProvingResult<MerklePath> {
         Ok(MerklePath::empty())
     }
-
 }
 
 //----------------------------------------------------------------------------
@@ -75,12 +68,10 @@ impl ConsumedWitnessData for ConsumedEphemeral {
 ///
 /// These resources have no witness data associated with them, so the struct is
 /// empty.
-struct CreatedEphemeral {}
+pub(crate) struct CreatedEphemeral {}
 
 impl CreatedWitnessData for CreatedEphemeral {
-    type WitnessType = TrivialLogicWitness;
-
-    fn clone_box(&self) -> Box<dyn CreatedWitnessData<WitnessType = Self::WitnessType>> {
+    fn clone_box(&self) -> Box<dyn CreatedWitnessData> {
         Box::new(self.clone())
     }
 
@@ -89,12 +80,10 @@ impl CreatedWitnessData for CreatedEphemeral {
         resource: Resource,
         resource_path: MerklePath,
         _config: &AnomaPayConfig,
-    ) -> ProvingResult<Self::WitnessType> {
-        Ok(TrivialLogicWitness::new(
-            resource,
-            resource_path,
-            NullifierKey::default(),
-            false,
-        ))
+    ) -> ProvingResult<WitnessTypes> {
+        let witness =
+            TrivialLogicWitness::new(resource, resource_path, NullifierKey::default(), false);
+
+        Ok(WitnessTypes::Trivial(witness))
     }
 }

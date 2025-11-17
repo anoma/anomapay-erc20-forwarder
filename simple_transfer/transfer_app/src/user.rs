@@ -30,63 +30,63 @@ pub struct Keychain {
 impl Keychain {
     // these can be dead code because they're used for development.
     #[cfg(test)]
-    // pub fn bob(private_key: Option<PrivateKeySigner>) -> Keychain {
-    //     let evm_address = "0x44B73CbC3C2E902cD0768854c2ff914DD44a325F"
-    //         .parse::<Address>()
-    //         .unwrap();
-    //
-    //     let discovery_sk_bytes: [u8; 32] = [
-    //         80, 35, 79, 155, 117, 210, 75, 68, 253, 197, 65, 105, 156, 112, 246, 55, 104, 248, 233,
-    //         99, 118, 94, 175, 57, 215, 34, 142, 101, 221, 197, 125, 134,
-    //     ];
-    //     let discovery_sk: SecretKey = bincode::deserialize(discovery_sk_bytes.as_ref())
-    //         .expect("failed to decode discovery_sk");
-    //     let discovery_pk_bytes: [u8; 41] = [
-    //         33, 0, 0, 0, 0, 0, 0, 0, 3, 199, 253, 168, 54, 100, 229, 223, 178, 183, 122, 215, 44,
-    //         100, 12, 121, 62, 212, 135, 205, 169, 150, 92, 196, 142, 239, 58, 60, 109, 59, 71, 235,
-    //         96,
-    //     ];
-    //     let discovery_pk: AffinePoint = bincode::deserialize(discovery_pk_bytes.as_ref())
-    //         .expect("failed to decode discovery_pk");
-    //     let encryption_sk_bytes: [u8; 32] = [
-    //         3, 223, 24, 234, 86, 30, 71, 29, 67, 114, 113, 163, 192, 128, 27, 234, 123, 208, 82,
-    //         217, 194, 163, 241, 86, 160, 112, 213, 207, 232, 51, 171, 229,
-    //     ];
-    //     let encryption_sk: SecretKey = bincode::deserialize(encryption_sk_bytes.as_ref())
-    //         .expect("failed to decode encryption_sk");
-    //     let encryption_pk_bytes: [u8; 41] = [
-    //         33, 0, 0, 0, 0, 0, 0, 0, 3, 159, 175, 162, 159, 221, 40, 107, 190, 62, 187, 219, 251,
-    //         242, 146, 206, 50, 243, 224, 58, 172, 215, 162, 46, 37, 73, 32, 247, 248, 157, 181, 24,
-    //         190,
-    //     ];
-    //     let encryption_pk: AffinePoint = bincode::deserialize(encryption_pk_bytes.as_ref())
-    //         .expect("failed to decode encryption_pk");
-    //
-    //     let nf_key_bytes: [u8; 40] = [
-    //         32, 0, 0, 0, 0, 0, 0, 0, 4, 186, 116, 75, 43, 251, 203, 31, 218, 1, 102, 202, 204, 43,
-    //         45, 168, 74, 243, 55, 12, 108, 47, 50, 4, 222, 221, 250, 200, 98, 157, 11, 235,
-    //     ];
-    //     let nf_key = bincode::deserialize(nf_key_bytes.as_ref()).expect("failed to decode nf_key");
-    //
-    //     let auth_signing_key_bytes: [u8; 40] = [
-    //         32, 0, 0, 0, 0, 0, 0, 0, 193, 176, 17, 73, 49, 57, 37, 78, 14, 120, 53, 246, 36, 6, 77,
-    //         41, 156, 32, 253, 212, 35, 9, 1, 75, 129, 160, 122, 155, 169, 255, 236, 229,
-    //     ];
-    //     let auth_signing_key: AuthorizationSigningKey =
-    //         bincode::deserialize(auth_signing_key_bytes.as_ref())
-    //             .expect("failed to decode auth_signing_key");
-    //
-    //     Keychain {
-    //         auth_signing_key,
-    //         nf_key,
-    //         discovery_sk,
-    //         discovery_pk,
-    //         encryption_sk,
-    //         encryption_pk,
-    //         evm_address,
-    //         private_key,
-    //     }
-    // }
+    pub fn bob(private_key: Option<PrivateKeySigner>) -> Keychain {
+        let evm_address = "0x44B73CbC3C2E902cD0768854c2ff914DD44a325F"
+            .parse::<Address>()
+            .unwrap();
+
+        let discovery_sk_bytes: [u8; 32] = [
+            80, 35, 79, 155, 117, 210, 75, 68, 253, 197, 65, 105, 156, 112, 246, 55, 104, 248, 233,
+            99, 118, 94, 175, 57, 215, 34, 142, 101, 221, 197, 125, 134,
+        ];
+        let discovery_sk: SecretKey = bincode::deserialize(discovery_sk_bytes.as_ref())
+            .expect("failed to decode discovery_sk");
+        let discovery_pk_bytes: [u8; 41] = [
+            33, 0, 0, 0, 0, 0, 0, 0, 3, 199, 253, 168, 54, 100, 229, 223, 178, 183, 122, 215, 44,
+            100, 12, 121, 62, 212, 135, 205, 169, 150, 92, 196, 142, 239, 58, 60, 109, 59, 71, 235,
+            96,
+        ];
+        let discovery_pk: AffinePoint = bincode::deserialize(discovery_pk_bytes.as_ref())
+            .expect("failed to decode discovery_pk");
+        let encryption_sk_bytes: [u8; 32] = [
+            3, 223, 24, 234, 86, 30, 71, 29, 67, 114, 113, 163, 192, 128, 27, 234, 123, 208, 82,
+            217, 194, 163, 241, 86, 160, 112, 213, 207, 232, 51, 171, 229,
+        ];
+        let encryption_sk: SecretKey = bincode::deserialize(encryption_sk_bytes.as_ref())
+            .expect("failed to decode encryption_sk");
+        let encryption_pk_bytes: [u8; 41] = [
+            33, 0, 0, 0, 0, 0, 0, 0, 3, 159, 175, 162, 159, 221, 40, 107, 190, 62, 187, 219, 251,
+            242, 146, 206, 50, 243, 224, 58, 172, 215, 162, 46, 37, 73, 32, 247, 248, 157, 181, 24,
+            190,
+        ];
+        let encryption_pk: AffinePoint = bincode::deserialize(encryption_pk_bytes.as_ref())
+            .expect("failed to decode encryption_pk");
+
+        let nf_key_bytes: [u8; 40] = [
+            32, 0, 0, 0, 0, 0, 0, 0, 4, 186, 116, 75, 43, 251, 203, 31, 218, 1, 102, 202, 204, 43,
+            45, 168, 74, 243, 55, 12, 108, 47, 50, 4, 222, 221, 250, 200, 98, 157, 11, 235,
+        ];
+        let nf_key = bincode::deserialize(nf_key_bytes.as_ref()).expect("failed to decode nf_key");
+
+        let auth_signing_key_bytes: [u8; 40] = [
+            32, 0, 0, 0, 0, 0, 0, 0, 193, 176, 17, 73, 49, 57, 37, 78, 14, 120, 53, 246, 36, 6, 77,
+            41, 156, 32, 253, 212, 35, 9, 1, 75, 129, 160, 122, 155, 169, 255, 236, 229,
+        ];
+        let auth_signing_key: AuthorizationSigningKey =
+            bincode::deserialize(auth_signing_key_bytes.as_ref())
+                .expect("failed to decode auth_signing_key");
+
+        Keychain {
+            auth_signing_key,
+            nf_key,
+            discovery_sk,
+            discovery_pk,
+            encryption_sk,
+            encryption_pk,
+            evm_address,
+            private_key,
+        }
+    }
     // these can be dead code because they're used for development.
     #[cfg(test)]
     pub fn alice(address: String, private_key: Option<PrivateKeySigner>) -> Keychain {

@@ -17,27 +17,57 @@
 pub mod token_transfer;
 pub mod trivial;
 
+use log::info;
+use crate::request::ProvingError::LogicProofGenerationError;
 use crate::request::ProvingResult;
-use crate::AnomaPayConfig;
-use arm::logic_proof::LogicProver;
+use crate::{time_it, AnomaPayConfig};
+use arm::logic_proof::{LogicProver, LogicVerifier};
 use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
+use arm::resource_logic::TrivialLogicWitness;
 use arm::Digest;
 use async_trait::async_trait;
+use transfer_library::TransferLogic;
+
+/// This enum can hold all the possible witness types we expect to deal with within the application.
+/// The first type if the witness for trivial resources, the second for token transfer resources.
+#[derive(Clone)]
+pub enum WitnessTypes {
+    Trivial(TrivialLogicWitness),
+    Token(TransferLogic),
+}
+
+impl WitnessTypes {
+    pub fn prove(&self) -> ProvingResult<LogicVerifier> {
+        match self {
+            WitnessTypes::Trivial(witness) => {
+                time_it!(
+                    "logic proof",
+                    witness.prove().map_err(|_| LogicProofGenerationError)
+                )
+            }
+            WitnessTypes::Token(witness) => {
+                time_it!(
+                    "logic proof",
+                    witness.prove().map_err(|_| LogicProofGenerationError)
+                )
+            }
+        }
+    }
+}
 /// The `ConsumedWitnessData` trait implements the behavior that is required for
 /// all witnessdata for consumed resources.
 #[async_trait]
 pub trait ConsumedWitnessData {
-    type WitnessType: LogicProver + Send + 'static;
-    fn clone_box(&self) -> Box<dyn ConsumedWitnessData<WitnessType = Self::WitnessType>>;
+    fn clone_box(&self) -> Box<dyn ConsumedWitnessData>;
     fn logic_witness(
         &self,
         resource: Resource,
         resource_path: MerklePath,
         nullifier_key: NullifierKey,
         config: &AnomaPayConfig,
-    ) -> ProvingResult<Self::WitnessType>;
+    ) -> ProvingResult<WitnessTypes>;
 
     async fn merkle_path(
         &self,
@@ -50,14 +80,11 @@ pub trait ConsumedWitnessData {
 /// all witnessdata for created resources.
 #[async_trait]
 pub trait CreatedWitnessData {
-    type WitnessType: LogicProver + Send + 'static;
-    fn clone_box(&self) -> Box<dyn CreatedWitnessData<WitnessType = Self::WitnessType>>;
+    fn clone_box(&self) -> Box<dyn CreatedWitnessData>;
     fn logic_witness(
         &self,
         resource: Resource,
         resource_path: MerklePath,
         config: &AnomaPayConfig,
-    ) -> ProvingResult<Self::WitnessType>;
-
-
+    ) -> ProvingResult<WitnessTypes>;
 }

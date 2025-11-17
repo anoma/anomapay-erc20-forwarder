@@ -39,6 +39,8 @@ chrono = "0.4.42"
 thiserror = "2.0.17"
 alloy-contract = "1.0.41"
 async-trait = "0.1.89"
+interleave = "1.0.1"
+itertools = "0.10.5"
 
 [dev-dependencies]
 serial_test = "3.2.0"

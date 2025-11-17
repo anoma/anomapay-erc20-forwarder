@@ -1,15 +1,13 @@
-use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData};
+use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData, WitnessTypes};
 use crate::request::ProvingError::{
     ConsumedResourceNotInActionTree, CreatedResourceNotInActionTree, InvalidSenderNullifierKey,
 };
 use crate::request::ProvingResult;
 use crate::AnomaPayConfig;
 use arm::action_tree::MerkleTree;
-use arm::logic_proof::LogicProver;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::Digest;
-
 //----------------------------------------------------------------------------
 // Consumed Resource
 
@@ -18,16 +16,16 @@ use arm::Digest;
 /// nullifier key, and additional witness data to generate the proofs.
 ///
 /// The witness data depends on which kind of resource this is.
-pub struct Consumed<T> {
+pub struct Consumed {
     /// The resource that is being consumed.
     pub resource: Resource,
     /// The nullifier key belonging to this resource.
     pub nullifier_key: NullifierKey,
     /// The witness data that is necessary to consume this resource.
-    pub witness_data: Box<dyn ConsumedWitnessData<WitnessType = T>>,
+    pub witness_data: Box<dyn ConsumedWitnessData>,
 }
 
-impl<T: LogicProver + Send + 'static> Clone for Consumed<T> {
+impl Clone for Consumed {
     //! To clone a resource the `witness_data` has to be cloned as well. Because
     //! this is a box we can't derive the default `Clone` trait and have to
     //! implement it manually.
@@ -40,7 +38,7 @@ impl<T: LogicProver + Send + 'static> Clone for Consumed<T> {
     }
 }
 
-impl<T: LogicProver + Send + 'static> Consumed<T> {
+impl Consumed {
     /// Returns the nullifier for this consumed resource.
     ///
     /// The nullifier is computed using the resource and the nullifier key. If
@@ -57,7 +55,7 @@ impl<T: LogicProver + Send + 'static> Consumed<T> {
 
         action_tree: &MerkleTree,
         config: &AnomaPayConfig,
-    ) -> ProvingResult<T> {
+    ) -> ProvingResult<WitnessTypes> {
         let nullifier = self.nullifier()?;
         let resource_path = action_tree
             .generate_path(&nullifier)
@@ -77,14 +75,14 @@ impl<T: LogicProver + Send + 'static> Consumed<T> {
 ///
 /// To create a resource you need the ARM resource, as well as witness data. The
 /// witness data depends on which kind of resource this is.
-pub struct Created<T> {
+pub struct Created {
     /// The resource that is being created.
     pub resource: Resource,
     /// The witness data that is necessary to create this resource.
-    pub witness_data: Box<dyn CreatedWitnessData<WitnessType = T>>,
+    pub witness_data: Box<dyn CreatedWitnessData>,
 }
 
-impl<T: LogicProver + Send + 'static> Clone for Created<T> {
+impl Clone for Created {
     //! To clone a resource the `witness_data` has to be cloned as well. Because
     //! this is a box we can't derive the default `Clone` trait and have to
     //! implement it manually.
@@ -96,7 +94,7 @@ impl<T: LogicProver + Send + 'static> Clone for Created<T> {
     }
 }
 
-impl<T: LogicProver + Send + 'static> Created<T> {
+impl Created {
     /// The commitment of a created resource is the commitment of the underlying resource.
     pub fn commitment(&self) -> Digest {
         self.resource.commitment()
@@ -107,7 +105,7 @@ impl<T: LogicProver + Send + 'static> Created<T> {
         &self,
         action_tree: &MerkleTree,
         config: &AnomaPayConfig,
-    ) -> ProvingResult<T> {
+    ) -> ProvingResult<WitnessTypes> {
         let resource_path = action_tree
             .generate_path(&self.commitment())
             .map_err(|_| CreatedResourceNotInActionTree)?;

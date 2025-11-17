@@ -2,7 +2,7 @@
 //! resources that wrap these tokens and can be transferred within Anoma.
 
 use crate::indexer::pa_merkle_path;
-use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData};
+use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData, WitnessTypes};
 use crate::request::ProvingError::MerklePathNotFound;
 use crate::request::ProvingResult;
 use crate::AnomaPayConfig;
@@ -44,9 +44,8 @@ pub struct ConsumedPersistent {
 
 #[async_trait]
 impl ConsumedWitnessData for ConsumedPersistent {
-    type WitnessType = TransferLogic;
 
-    fn clone_box(&self) -> Box<dyn ConsumedWitnessData<WitnessType = Self::WitnessType>> {
+    fn clone_box(&self) -> Box<dyn ConsumedWitnessData> {
         Box::new(self.clone())
     }
 
@@ -56,14 +55,15 @@ impl ConsumedWitnessData for ConsumedPersistent {
         resource_path: MerklePath,
         nullifier_key: NullifierKey,
         _config: &AnomaPayConfig,
-    ) -> ProvingResult<Self::WitnessType> {
-        Ok(TransferLogic::consume_persistent_resource_logic(
+    ) -> ProvingResult<WitnessTypes> {
+        let witness = TransferLogic::consume_persistent_resource_logic(
             resource,
             resource_path,
             nullifier_key,
             self.sender_authorization_verifying_key,
             self.sender_authorization_signature,
-        ))
+        );
+        Ok(WitnessTypes::Token(witness))
     }
 
     async fn merkle_path(
@@ -96,9 +96,7 @@ pub struct CreatedPersistent {
 }
 
 impl CreatedWitnessData for CreatedPersistent {
-    type WitnessType = TransferLogic;
-
-    fn clone_box(&self) -> Box<dyn CreatedWitnessData<WitnessType = Self::WitnessType>> {
+    fn clone_box(&self) -> Box<dyn CreatedWitnessData> {
         Box::new(self.clone())
     }
 
@@ -107,13 +105,14 @@ impl CreatedWitnessData for CreatedPersistent {
         resource: Resource,
         resource_path: MerklePath,
         _config: &AnomaPayConfig,
-    ) -> ProvingResult<Self::WitnessType> {
-        Ok(TransferLogic::create_persistent_resource_logic(
+    ) -> ProvingResult<WitnessTypes> {
+        let witness = TransferLogic::create_persistent_resource_logic(
             resource,
             resource_path,
             &self.receiver_discovery_public_key,
             self.receiver_encryption_public_key,
-        ))
+        );
+        Ok(WitnessTypes::Token(witness))
     }
 }
 
@@ -139,9 +138,7 @@ pub struct ConsumedEphemeral {
 
 #[async_trait]
 impl ConsumedWitnessData for ConsumedEphemeral {
-    type WitnessType = TransferLogic;
-
-    fn clone_box(&self) -> Box<dyn ConsumedWitnessData<WitnessType = Self::WitnessType>> {
+    fn clone_box(&self) -> Box<dyn ConsumedWitnessData> {
         Box::new(self.clone())
     }
 
@@ -152,8 +149,8 @@ impl ConsumedWitnessData for ConsumedEphemeral {
         resource_path: MerklePath,
         nullifier_key: NullifierKey,
         config: &AnomaPayConfig,
-    ) -> ProvingResult<Self::WitnessType> {
-        Ok(TransferLogic::mint_resource_logic_with_permit(
+    ) -> ProvingResult<WitnessTypes> {
+        let witness = TransferLogic::mint_resource_logic_with_permit(
             resource,
             resource_path,
             nullifier_key,
@@ -163,7 +160,8 @@ impl ConsumedWitnessData for ConsumedEphemeral {
             self.permit2_data.nonce.clone(),
             U256::from(self.permit2_data.deadline).to_be_bytes_vec(),
             self.permit2_data.signature.clone(),
-        ))
+        );
+        Ok(WitnessTypes::Token(witness))
     }
 
     async fn merkle_path(
@@ -194,9 +192,7 @@ pub struct CreatedEphemeral {
 }
 
 impl CreatedWitnessData for CreatedEphemeral {
-    type WitnessType = TransferLogic;
-
-    fn clone_box(&self) -> Box<dyn CreatedWitnessData<WitnessType = Self::WitnessType>> {
+    fn clone_box(&self) -> Box<dyn CreatedWitnessData> {
         Box::new(self.clone())
     }
 
@@ -205,13 +201,14 @@ impl CreatedWitnessData for CreatedEphemeral {
         resource: Resource,
         resource_path: MerklePath,
         config: &AnomaPayConfig,
-    ) -> ProvingResult<Self::WitnessType> {
-        Ok(TransferLogic::burn_resource_logic(
+    ) -> ProvingResult<WitnessTypes> {
+        let witness = TransferLogic::burn_resource_logic(
             resource,
             resource_path,
             config.forwarder_address.to_vec(),
             self.token_contract_address.to_vec(),
             self.receiver_wallet_address.to_vec(),
-        ))
+        );
+        Ok(WitnessTypes::Token(witness))
     }
 }
