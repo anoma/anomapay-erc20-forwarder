@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Parsing} from "@anoma-evm-pa-testing/libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "@anoma-evm-pa-testing/script/DeployRiscZeroContracts.s.sol";
+import {IForwarder} from "@anoma-evm-pa/interfaces/IForwarder.sol";
 import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
 
 import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
@@ -21,7 +21,6 @@ import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 
 contract ERC20ForwarderTest is Test {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
-    using Parsing for Vm;
     using Permit2Signature for Vm;
 
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
@@ -36,7 +35,7 @@ contract ERC20ForwarderTest is Test {
     uint256 internal _alicePrivateKey;
 
     ProtocolAdapter internal _pa;
-    ERC20Forwarder internal _fwd;
+    IForwarder internal _fwd;
     IPermit2 internal _permit2;
     ERC20Example internal _erc20;
 
