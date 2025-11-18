@@ -44,7 +44,6 @@ pub struct ConsumedPersistent {
 
 #[async_trait]
 impl ConsumedWitnessData for ConsumedPersistent {
-
     fn clone_box(&self) -> Box<dyn ConsumedWitnessData> {
         Box::new(self.clone())
     }

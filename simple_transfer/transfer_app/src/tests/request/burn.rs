@@ -6,8 +6,8 @@ use crate::request::parameters::Parameters;
 use crate::request::resources::{Consumed, Created};
 use crate::request::witness_data::token_transfer::{ConsumedPersistent, CreatedEphemeral};
 use crate::tests::fixtures::{
-     label_ref, random_nonce, user_with_private_key,
-    value_ref_ephemeral_created, TOKEN_ADDRESS_SEPOLIA_USDC,
+    label_ref, random_nonce, user_with_private_key, value_ref_ephemeral_created,
+    TOKEN_ADDRESS_SEPOLIA_USDC,
 };
 use crate::tests::request::mint::example_mint_transaction_submit;
 use crate::user::Keychain;
@@ -31,7 +31,8 @@ async fn test_create_burn_transaction() {
     let user = user_with_private_key(&config);
 
     // Call the example submit function which submits a mint transaction.
-    let (parameters, _transaction, hash) = example_mint_transaction_submit(user.clone(), &config).await;
+    let (parameters, _transaction, hash) =
+        example_mint_transaction_submit(user.clone(), &config).await;
     println!("mint transaction hash: {}", hash);
 
     // Create a burn transaction for the just minted resource.
@@ -39,7 +40,9 @@ async fn test_create_burn_transaction() {
     let (_parameters, transaction) = example_burn_transaction(user, &config, minted_resource).await;
 
     // Make sure the transaction verifies.
-    transaction.verify().expect("failed to verify burn transaction")
+    transaction
+        .verify()
+        .expect("failed to verify burn transaction")
 }
 
 #[tokio::test]
@@ -52,14 +55,15 @@ pub async fn test_submit_burn_transaction() {
     let user = user_with_private_key(&config);
 
     // Call the example submit function which submits a mint transaction.
-    let (parameters, _transaction, _hash) = example_mint_transaction_submit(user.clone(), &config).await;
+    let (parameters, _transaction, _hash) =
+        example_mint_transaction_submit(user.clone(), &config).await;
 
     // Submit a burn transaction.
     let minted_resource = parameters.created_resources[0].resource;
-    let (_parameters, _transaction, hash) = example_burn_transaction_submit(user, &config, minted_resource).await;
+    let (_parameters, _transaction, hash) =
+        example_burn_transaction_submit(user, &config, minted_resource).await;
     println!("burn transaction hash: {}", hash)
 }
-
 
 /// Creates and submits a burning transaction for the given user.
 pub async fn example_burn_transaction_submit(

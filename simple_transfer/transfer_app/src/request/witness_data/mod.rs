@@ -17,7 +17,6 @@
 pub mod token_transfer;
 pub mod trivial;
 
-use log::info;
 use crate::request::ProvingError::LogicProofGenerationError;
 use crate::request::ProvingResult;
 use crate::{time_it, AnomaPayConfig};
@@ -28,6 +27,7 @@ use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
 use arm::Digest;
 use async_trait::async_trait;
+use log::info;
 use transfer_library::TransferLogic;
 
 /// This enum can hold all the possible witness types we expect to deal with within the application.

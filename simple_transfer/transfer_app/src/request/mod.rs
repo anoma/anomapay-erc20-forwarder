@@ -32,5 +32,5 @@ pub enum ProvingError {
     #[error("Failed to verify the split transaction.")]
     TransactionVerificationError,
     #[error("Failed to get the merkle path for a consumed resource")]
-    MerklePathNotFound
+    MerklePathNotFound,
 }

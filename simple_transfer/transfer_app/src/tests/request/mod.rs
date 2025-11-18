@@ -1,4 +1,4 @@
 #![cfg(test)]
-pub mod mint;
 pub mod burn;
+pub mod mint;
 mod transfer;
