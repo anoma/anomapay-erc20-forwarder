@@ -125,6 +125,15 @@ contract ERC20ForwarderTest is Test {
         }
     }
 
+    function test_forwardCall_reverts_on_invalid_calltype() public {
+        vm.prank(address(_pa));
+        vm.expectRevert(stdError.enumConversionError);
+        _fwd.forwardCall({
+            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            input: abi.encode(type(uint8).max)
+        });
+    }
+
     function test_unwrap_sends_funds_to_the_user() public {
         _erc20.mint({to: address(_fwd), value: _TRANSFER_AMOUNT});
         uint256 startBalanceAlice = _erc20.balanceOf(_alice);
