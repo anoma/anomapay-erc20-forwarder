@@ -39,7 +39,7 @@ impl ConsumedWitnessData for ConsumedEphemeral {
         _config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes> {
         let witness = TrivialLogicWitness::new(resource, resource_path, nullifier_key, true);
-        Ok(WitnessTypes::Trivial(witness))
+        Ok(WitnessTypes::Trivial(Box::new(witness)))
     }
 
     async fn merkle_path(
@@ -84,6 +84,6 @@ impl CreatedWitnessData for CreatedEphemeral {
         let witness =
             TrivialLogicWitness::new(resource, resource_path, NullifierKey::default(), false);
 
-        Ok(WitnessTypes::Trivial(witness))
+        Ok(WitnessTypes::Trivial(Box::new(witness)))
     }
 }

@@ -63,7 +63,7 @@ impl ConsumedWitnessData for ConsumedPersistent {
             self.sender_authorization_verifying_key,
             self.sender_authorization_signature,
         );
-        Ok(WitnessTypes::Token(witness))
+        Ok(WitnessTypes::Token(Box::new(witness)))
     }
 
     async fn merkle_path(
@@ -112,7 +112,7 @@ impl CreatedWitnessData for CreatedPersistent {
             &self.receiver_discovery_public_key,
             self.receiver_encryption_public_key,
         );
-        Ok(WitnessTypes::Token(witness))
+        Ok(WitnessTypes::Token(Box::new(witness)))
     }
 }
 
@@ -161,7 +161,7 @@ impl ConsumedWitnessData for ConsumedEphemeral {
             U256::from(self.permit2_data.deadline).to_be_bytes_vec(),
             self.permit2_data.signature.clone(),
         );
-        Ok(WitnessTypes::Token(witness))
+        Ok(WitnessTypes::Token(Box::new(witness)))
     }
 
     async fn merkle_path(
@@ -209,6 +209,6 @@ impl CreatedWitnessData for CreatedEphemeral {
             self.token_contract_address.to_vec(),
             self.receiver_wallet_address.to_vec(),
         );
-        Ok(WitnessTypes::Token(witness))
+        Ok(WitnessTypes::Token(Box::new(witness)))
     }
 }

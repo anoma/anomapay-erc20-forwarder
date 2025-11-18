@@ -32,10 +32,12 @@ use transfer_library::TransferLogic;
 
 /// This enum can hold all the possible witness types we expect to deal with within the application.
 /// The first type if the witness for trivial resources, the second for token transfer resources.
+///
+/// These types are boxed due to their size differences.
 #[derive(Clone)]
 pub enum WitnessTypes {
-    Trivial(TrivialLogicWitness),
-    Token(TransferLogic),
+    Trivial(Box<TrivialLogicWitness>),
+    Token(Box<TransferLogic>),
 }
 
 impl WitnessTypes {
