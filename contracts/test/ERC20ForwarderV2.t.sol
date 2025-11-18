@@ -4,9 +4,9 @@ pragma solidity ^0.8.30;
 import {TransactionExample} from "@anoma-evm-pa-testing/examples/transactions/Transaction.e.sol";
 import {NullifierSet} from "@anoma-evm-pa/state/NullifierSet.sol";
 import {Transaction} from "@anoma-evm-pa/Types.sol";
-
 import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
 
+import {ForwarderBase} from "../src/bases/ForwarderBase.sol";
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 
@@ -29,6 +29,32 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             protocolAdapterV1: address(_pa),
             erc20ForwarderV1: address(_fwdV1)
+        });
+    }
+
+    function test_constructor_reverts_if_the_protocol_adapter_v1_address_is_zero()
+        public
+    {
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
+        new ERC20ForwarderV2({
+            protocolAdapter: _PA_V2,
+            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            emergencyCommittee: _EMERGENCY_COMMITTEE,
+            protocolAdapterV1: address(0),
+            erc20ForwarderV1: address(_fwdV1)
+        });
+    }
+
+    function test_constructor_reverts_if_the_erc20_forwarder_v1_address_is_zero()
+        public
+    {
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
+        new ERC20ForwarderV2({
+            protocolAdapter: _PA_V2,
+            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            emergencyCommittee: _EMERGENCY_COMMITTEE,
+            protocolAdapterV1: address(_pa),
+            erc20ForwarderV1: address(0)
         });
     }
 
