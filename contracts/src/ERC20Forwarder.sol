@@ -10,7 +10,9 @@ import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025
-/// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources.
+/// @notice The ERC20 token forwarder contract allowing to
+/// - wrap ERC20 tokens into ERC20 resources using Uniswap's Permit2 and
+/// - unwrap ERC20 tokens from ERC20 resources.
 /// @custom:security-contact security@anoma.foundation
 contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
@@ -58,9 +60,10 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         )
     {}
 
-    // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
     /// @notice Forwards a call wrapping or unwrapping ERC20 tokens based on the provided input.
-    /// @param input Contains data to withdraw or send ERC20 tokens from or to a user, respectively.
+    /// @param input Contains data to
+    /// - wrap ERC20 tokens into resources using Uniswap Permit2 and
+    /// - unwrap ERC20 tokens from resources
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(
         bytes calldata input
@@ -78,28 +81,6 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         }
 
         output = "";
-    }
-
-    // slither-disable-end dead-code
-
-    /// @notice Unwraps an ERC20 token and transfers funds to the recipient using the `SafeERC20.safeTransfer`.
-    /// @param input The input bytes containing the encoded arguments for the unwrap call:
-    /// * `token`: The address of the token to be transferred.
-    /// * `to`: The address to transfer the funds to.
-    /// * `amount`: The amount to be transferred.
-    function _unwrap(bytes calldata input) internal {
-        // slither-disable-next-line unused-return
-        (
-            ,
-            // CallType
-            address token,
-            address to,
-            uint128 amount
-        ) = abi.decode(input, (CallType, address, address, uint128));
-
-        emit Unwrapped({token: token, to: to, amount: amount});
-
-        IERC20(token).safeTransfer({to: to, value: amount});
     }
 
     /// @notice Wraps an ERC20 token and transfers funds from the user that must have authorized the call using
@@ -159,6 +140,26 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             witnessTypeString: ERC20ForwarderPermit2._WITNESS_TYPE_STRING,
             signature: signature
         });
+    }
+
+    /// @notice Unwraps an ERC20 token and transfers funds to the recipient using the `SafeERC20.safeTransfer`.
+    /// @param input The input bytes containing the encoded arguments for the unwrap call:
+    /// * `token`: The address of the token to be transferred.
+    /// * `to`: The address to transfer the funds to.
+    /// * `amount`: The amount to be transferred.
+    function _unwrap(bytes calldata input) internal {
+        // slither-disable-next-line unused-return
+        (
+            ,
+            // CallType
+            address token,
+            address to,
+            uint128 amount
+        ) = abi.decode(input, (CallType, address, address, uint128));
+
+        emit Unwrapped({token: token, to: to, amount: amount});
+
+        IERC20(token).safeTransfer({to: to, value: amount});
     }
 
     /// @notice Forwards an emergency call wrapping or unwrapping ERC20 tokens based on the provided input.
