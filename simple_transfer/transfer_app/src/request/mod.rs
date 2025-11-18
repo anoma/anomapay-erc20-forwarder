@@ -2,11 +2,12 @@ mod compliance_proof;
 mod logic_proof;
 pub mod parameters;
 /// The request module contains all the logic to deal with a request to generate
-/// a transaction. Typically these requests come in via the REST api.
+/// a transaction. Typically these requests come in via the REST web.
 pub mod resources;
 pub mod witness_data;
 
 use arm::Digest;
+use serde::Serialize;
 use thiserror::Error;
 
 pub type ProvingResult<T> = Result<T, ProvingError>;

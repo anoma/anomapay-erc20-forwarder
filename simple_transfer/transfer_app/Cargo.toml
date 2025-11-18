@@ -20,28 +20,23 @@ transfer_library = { path = "../transfer_library" }
 arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.8.1", default-features = false, features = ["transaction",
     "groth16_prover",
 ] }
-bonsai-sdk = { version = "1.4.1", features = ["non_blocking"] }
 risc0-zkvm = { version = "3.0.3", default-features = false }
-
+utoipa = "5"
 rand = "0.8"
 evm_protocol_adapter_bindings = { git = "https://github.com/anoma/evm-protocol-adapter", branch = "main" }
 tokio = { version = "1.47.1", features = ["rt", "rt-multi-thread", "macros"] }
 alloy = { version = "1.0.23", features = ["full"] }
 k256 = { version = "0.13", features = ["serde"] }
-dotenv = "0.15"
 bincode = "1.3.3"
-
+typetag = "0.2.21"
 futures = { version = "0.3.31", features = ["thread-pool"] }
 rocket = { version = "0.5", features = ["json"] }
 reqwest = { version = "0.12", features = [] }
 log = "0.4.28"
 chrono = "0.4.42"
 thiserror = "2.0.17"
-alloy-contract = "1.0.41"
 async-trait = "0.1.89"
-interleave = "1.0.1"
 itertools = "0.14.0"
 
 [dev-dependencies]
-serial_test = "3.2.0"
 

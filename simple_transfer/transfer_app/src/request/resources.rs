@@ -3,11 +3,14 @@ use crate::request::ProvingError::{
     ConsumedResourceNotInActionTree, CreatedResourceNotInActionTree, InvalidNullifierKey,
 };
 use crate::request::ProvingResult;
+use crate::web;
 use crate::AnomaPayConfig;
 use arm::action_tree::MerkleTree;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::Digest;
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 //----------------------------------------------------------------------------
 // Consumed Resource
 
@@ -16,11 +19,15 @@ use arm::Digest;
 /// nullifier key, and additional witness data to generate the proofs.
 ///
 /// The witness data depends on which kind of resource this is.
+#[derive(ToSchema, Deserialize, Serialize)]
 pub struct Consumed {
+    #[serde(skip)]
     /// The resource that is being consumed.
     pub resource: Resource,
+    #[schema(value_type = String, format = Binary)]
     /// The nullifier key belonging to this resource.
     pub nullifier_key: NullifierKey,
+    #[schema(value_type = web::ConsumedWitnessDataSchema)]
     /// The witness data that is necessary to consume this resource.
     pub witness_data: Box<dyn ConsumedWitnessData>,
 }
@@ -75,9 +82,12 @@ impl Consumed {
 ///
 /// To create a resource you need the ARM resource, as well as witness data. The
 /// witness data depends on which kind of resource this is.
+#[derive(ToSchema, Deserialize, Serialize)]
 pub struct Created {
     /// The resource that is being created.
+    #[serde(skip)]
     pub resource: Resource,
+    #[schema(value_type = web::CreatedWitnessDataSchema)]
     /// The witness data that is necessary to create this resource.
     pub witness_data: Box<dyn CreatedWitnessData>,
 }

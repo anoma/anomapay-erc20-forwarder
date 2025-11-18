@@ -29,6 +29,7 @@ use arm::Digest;
 use async_trait::async_trait;
 use log::info;
 use transfer_library::TransferLogic;
+use typetag;
 
 /// This enum can hold all the possible witness types we expect to deal with within the application.
 /// The first type if the witness for trivial resources, the second for token transfer resources.
@@ -61,7 +62,8 @@ impl WitnessTypes {
 /// The `ConsumedWitnessData` trait implements the behavior that is required for
 /// all witnessdata for consumed resources.
 #[async_trait]
-pub trait ConsumedWitnessData {
+#[typetag::serde(tag = "type")]
+pub trait ConsumedWitnessData: Send + Sync {
     fn clone_box(&self) -> Box<dyn ConsumedWitnessData>;
     fn logic_witness(
         &self,
@@ -81,7 +83,8 @@ pub trait ConsumedWitnessData {
 /// The `CreatedWitnessData` trait implements the behavior that is required for
 /// all witnessdata for created resources.
 #[async_trait]
-pub trait CreatedWitnessData {
+#[typetag::serde(tag = "type")]
+pub trait CreatedWitnessData: Send + Sync {
     fn clone_box(&self) -> Box<dyn CreatedWitnessData>;
     fn logic_witness(
         &self,

@@ -22,10 +22,13 @@ use arm::transaction::{Delta, Transaction};
 use arm::Digest;
 use arm::{action::Action, action_tree::MerkleTree};
 use futures::future::try_join_all;
+use serde::{Deserialize, Serialize};
 use tokio::try_join;
+use utoipa::ToSchema;
 
 /// The `Parameters` struct holds all the necessary resources to generate a
 /// transaction.
+#[derive(ToSchema, Deserialize, Serialize, Clone)]
 pub struct Parameters {
     /// the list of resources the transaction is expected to create.
     pub created_resources: Vec<Created>,

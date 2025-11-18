@@ -1,0 +1,323 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "transfer_app",
+    "description": "",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/transfer": {
+      "post": {
+        "tags": [
+          "webserver"
+        ],
+        "summary": "Handles a request from the user to mint.",
+        "operationId": "transfer",
+        "responses": {
+          "200": {
+            "description": "Submit a transfer request to the backend.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Parameters"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Consumed": {
+        "type": "object",
+        "description": "`Consumed` holds all the data required to use a consumed resource in a\ntransaction. A `Consumed` struct contains the actual ARM resource, it's\nnullifier key, and additional witness data to generate the proofs.\n\nThe witness data depends on which kind of resource this is.",
+        "required": [
+          "nullifier_key",
+          "witness_data"
+        ],
+        "properties": {
+          "nullifier_key": {
+            "type": "string",
+            "format": "binary",
+            "description": "The nullifier key belonging to this resource."
+          },
+          "witness_data": {
+            "$ref": "#/components/schemas/ConsumedWitnessDataSchema",
+            "description": "The witness data that is necessary to consume this resource."
+          }
+        }
+      },
+      "ConsumedEphemeral": {
+        "type": "object",
+        "description": "The `ConsumedEphemeral` resource holds all the witness data to consume an\nephemeral resource.\n\nAn ephemeral resource is consumed in, for example, minting. The user wraps\nan ERC20 token and a new resource is created. To balance the transaction an\nephemeral resource is consumed.",
+        "required": [
+          "sender_wallet_address",
+          "token_contract_address",
+          "permit2_data"
+        ],
+        "properties": {
+          "permit2_data": {
+            "$ref": "#/components/schemas/Permit2Data",
+            "description": "The data required to create the permit2 signature."
+          },
+          "sender_wallet_address": {
+            "type": "string",
+            "format": "binary",
+            "description": "The Ethereum wallet address of the sender of the payment."
+          },
+          "token_contract_address": {
+            "type": "string",
+            "format": "binary",
+            "description": "The address of the ERC20 token to be deposited by wrap into an ERC20-R resource."
+          }
+        }
+      },
+      "ConsumedPersistent": {
+        "type": "object",
+        "description": "The `ConsumedPersistent` resource witness data holds all the information\nnecessary to consume a persistent resource.\n\nA persistent resource is consumed in, for example, transfer. The transferred\nresource is consumed from the sender.",
+        "required": [
+          "sender_authorization_verifying_key",
+          "sender_authorization_signature"
+        ],
+        "properties": {
+          "sender_authorization_signature": {
+            "type": "string",
+            "format": "binary",
+            "description": "The signature of the sender authorizing the consumption of the resource. This signature is over the entire action tree."
+          },
+          "sender_authorization_verifying_key": {
+            "type": "string",
+            "format": "binary",
+            "description": "TODO! Do we have to pass this via the open_api or not? Check with Yulia/Xuyang/Michael"
+          }
+        }
+      },
+      "ConsumedWitnessDataSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreatedEphemeral"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "TrivialCreatedEphemeral"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsumedEphemeral"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "TokenTransferCreatedEphemeral"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsumedPersistent"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "TokenTransferCreatedPersistent"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "description": "An enum type for all possible Consumed Resource witness to satisfy the OpenAPI schema generator."
+      },
+      "Created": {
+        "type": "object",
+        "description": "`Created` holds all the data require to use a created resource in a\ntransaction.\n\nTo create a resource you need the ARM resource, as well as witness data. The\nwitness data depends on which kind of resource this is.",
+        "required": [
+          "witness_data"
+        ],
+        "properties": {
+          "witness_data": {
+            "$ref": "#/components/schemas/CreatedWitnessDataSchema",
+            "description": "The witness data that is necessary to create this resource."
+          }
+        }
+      },
+      "CreatedEphemeral": {
+        "type": "object",
+        "description": "The `CreatedEphemeral` resource witness data holds all the information to\nconsume an ephemeral trivial resource.\n\nAn ephemeral trivial resource is consumed in, for example, a burn\ntransaction. If the user wants to withdraw 2 resources, 2 token transfer\nresources are consumed. There is only 1 token_transfer function generated\nwhich holds the total amount of withdrawn tokens. To balance the\ntransaction, a trivial created resource is added.\n\n\nThese resources have no witness data associated with them, so the struct is\nempty."
+      },
+      "CreatedPersistent": {
+        "type": "object",
+        "description": "The `CreatedPersistent` resource witness data holds all the information\nnecessary to create a persistent resource.\n\nA persistent resource is created in, for example, transfer. The transferred\nresource is created for the receiver of the resource.",
+        "required": [
+          "receiver_discovery_public_key",
+          "receiver_encryption_public_key"
+        ],
+        "properties": {
+          "receiver_discovery_public_key": {
+            "type": "string",
+            "format": "binary",
+            "description": "The discovery public key of the receiver (i.e., owner) of the resource."
+          },
+          "receiver_encryption_public_key": {
+            "type": "string",
+            "format": "binary",
+            "description": "The encryption public key of the receiver (i.e., owner) of the resource."
+          }
+        }
+      },
+      "CreatedWitnessDataSchema": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreatedEphemeral"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "TrivialCreatedEphemeral"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreatedEphemeral"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "TokenTransferCreatedEphemeral"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreatedPersistent"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "TokenTransferCreatedPersistent"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "description": "An enum type for all possible Created Resource witness to satisfy the OpenAPI schema generator."
+      },
+      "Parameters": {
+        "type": "object",
+        "description": "The `Parameters` struct holds all the necessary resources to generate a\ntransaction.",
+        "required": [
+          "created_resources",
+          "consumed_resources"
+        ],
+        "properties": {
+          "consumed_resources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Consumed"
+            },
+            "description": "The list of resources the transaction is expected to consume."
+          },
+          "created_resources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Created"
+            },
+            "description": "the list of resources the transaction is expected to create."
+          }
+        }
+      },
+      "Permit2Data": {
+        "type": "object",
+        "description": "Contains Permit2 parameters for use in consuming ephemeral erc20 resources.",
+        "required": [
+          "deadline",
+          "nonce",
+          "signature"
+        ],
+        "properties": {
+          "deadline": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "nonce": {
+            "type": "string",
+            "format": "binary"
+          },
+          "signature": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      }
+    }
+  }
+}

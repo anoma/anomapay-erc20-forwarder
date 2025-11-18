@@ -11,6 +11,8 @@ use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
 use arm::Digest;
 use async_trait::async_trait;
+use rocket::serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 //----------------------------------------------------------------------------
 // Consumed Ephemeral Resource
 
@@ -20,12 +22,12 @@ use async_trait::async_trait;
 /// An ephemeral resource is consumed in, for example, a split. The user splits
 /// 1 resource into 2 resources. To balance the transaction a trivial consumed
 /// ephemeral resource is created.
-#[derive(Clone)]
-#[allow(dead_code)]
+#[derive(ToSchema, Deserialize, Serialize, Clone)]
 /// The empty witness data for consumed ephemeral resources.
-pub(crate) struct ConsumedEphemeral {}
+pub struct ConsumedEphemeral {}
 
 #[async_trait]
+#[typetag::serde]
 impl ConsumedWitnessData for ConsumedEphemeral {
     fn clone_box(&self) -> Box<dyn ConsumedWitnessData> {
         Box::new(self.clone())
@@ -54,8 +56,6 @@ impl ConsumedWitnessData for ConsumedEphemeral {
 //----------------------------------------------------------------------------
 // Created Ephemeral Resource
 
-#[derive(Clone)]
-#[allow(dead_code)]
 /// The `CreatedEphemeral` resource witness data holds all the information to
 /// consume an ephemeral trivial resource.
 ///
@@ -68,8 +68,10 @@ impl ConsumedWitnessData for ConsumedEphemeral {
 ///
 /// These resources have no witness data associated with them, so the struct is
 /// empty.
-pub(crate) struct CreatedEphemeral {}
+#[derive(ToSchema, Deserialize, Serialize, Clone)]
+pub struct CreatedEphemeral {}
 
+#[typetag::serde]
 impl CreatedWitnessData for CreatedEphemeral {
     fn clone_box(&self) -> Box<dyn CreatedWitnessData> {
         Box::new(self.clone())

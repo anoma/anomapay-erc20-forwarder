@@ -4,25 +4,32 @@ mod request;
 mod rpc;
 mod tests;
 mod user;
+mod web;
 
+use crate::web::webserver::{all_options, default_error, health, transfer, unprocessable, Cors};
 use alloy::primitives::Address;
 use alloy::signers::local::PrivateKeySigner;
+use rocket::form::validate::Contains;
+use rocket::{catchers, launch, routes};
 use std::env;
 use std::error::Error;
+use utoipa::OpenApi;
 
-struct AnomaPayConfig {
-    // address of the anoma forwarder contract
+/// The `AnomaPayConfig` struct holds all necessary secret information about the Anomapay backend.
+/// It contains the private key for submitting transactions, the address for the indexer, etc.
+pub struct AnomaPayConfig {
+    /// address of the anoma forwarder contract
     forwarder_address: Address,
-    // url of the ethereum rpc
+    /// url of the ethereum rpc
     #[allow(dead_code)]
     ethereum_rpc: String,
-    // url of the anoma indexer
+    /// url of the anoma indexer
     #[allow(dead_code)]
     indexer_address: String,
-    // the address of the hot wallet
+    /// the address of the hot wallet
     #[allow(dead_code)]
     hot_wallet_address: Address,
-    // the private key of the hot wallet
+    /// the private key of the hot wallet
     #[allow(dead_code)]
     hot_wallet_private_key: PrivateKeySigner,
 }
@@ -57,30 +64,39 @@ fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
     })
 }
 
-#[tokio::main]
-async fn main() {}
-// #[launch]
-// async fn rocket() -> _ {
-//     // load the config
-//     let config: AnomaPayConfig = load_config().unwrap_or_else(|e| {
-//         eprintln!("Error loading config: {e}");
-//         std::process::exit(1);
-//     });
-//
-//     rocket::build()
-//         .manage(config)
-//         .attach(Cors)
-//         .mount(
-//             "/",
-//             routes![
-//                 health,
-//                 is_approved,
-//                 mint,
-//                 transfer,
-//                 burn,
-//                 split,
-//                 all_options
-//             ],
-//         )
-//         .register("/", catchers![default_error, unprocessable])
-// }
+fn print_api_spec() {
+    #[derive(OpenApi)]
+    #[openapi(
+        nest(
+            (path = "/", api = web::webserver::AnomaPayApi)
+        ),
+        tags(
+            (name = "AnomaPay Api", description = "JSON API for the AnomaPay backend")
+        ),
+    )]
+    struct ApiDoc;
+
+    println!("{}", ApiDoc::openapi().to_pretty_json().unwrap());
+}
+#[launch]
+async fn rocket() -> _ {
+    // Check for command-line arguments
+    let args: Vec<String> = std::env::args().collect();
+
+    if args.contains(&"--api-spec".to_string()) {
+        print_api_spec();
+        std::process::exit(0);
+    }
+
+    // load the config
+    let config: AnomaPayConfig = load_config().unwrap_or_else(|e| {
+        eprintln!("Error loading config: {e}");
+        std::process::exit(1);
+    });
+
+    rocket::build()
+        .manage(config)
+        .attach(Cors)
+        .mount("/", routes![health, transfer, all_options])
+        .register("/", catchers![default_error, unprocessable])
+}
