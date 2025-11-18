@@ -67,12 +67,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
             _unwrap(input);
         } else if (callType == CallTypeV2.Wrap) {
             _wrap(input);
-        } else if (callType == CallTypeV2.Migrate) {
-            _migrate(input);
         } else {
-            // This branch will never be reached. This is because the call will already panic when attempting to decode
-            // a non-existing `Calltype` enum value greater than `type(Calltype).max = 3`.
-            revert CallTypeInvalid();
+            _migrate(input);
         }
 
         output = "";

@@ -40,7 +40,6 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param amount The token amount being withdrawn from the ERC20 forwarder contract.
     event Unwrapped(address indexed token, address indexed to, uint128 amount);
 
-    error CallTypeInvalid();
     error TypeOverflow(uint256 limit, uint256 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
@@ -60,6 +59,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         )
     {}
 
+    // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
+
     /// @notice Forwards a call wrapping or unwrapping ERC20 tokens based on the provided input.
     /// @param input Contains data to
     /// - wrap ERC20 tokens into resources using Uniswap Permit2 and
@@ -70,18 +71,16 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     ) internal virtual override returns (bytes memory output) {
         CallType callType = CallType(uint8(input[31]));
 
-        if (callType == CallType.Unwrap) {
-            _unwrap(input);
-        } else if (callType == CallType.Wrap) {
+        if (callType == CallType.Wrap) {
             _wrap(input);
         } else {
-            // This branch will never be reached. This is because the call will already panic when attempting to decode
-            // a non-existing `Calltype` enum value greater than `type(Calltype).max = 2`.
-            revert CallTypeInvalid();
+            _unwrap(input);
         }
 
         output = "";
     }
+
+    // slither-disable-end dead-code
 
     /// @notice Wraps an ERC20 token and transfers funds from the user that must have authorized the call using
     /// `Permit2.permitWitnessTransferFrom`.
@@ -164,7 +163,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
     /// @notice Forwards an emergency call wrapping or unwrapping ERC20 tokens based on the provided input.
     /// @param input Contains data to withdraw or send ERC20 tokens from or to a user, respectively.
-    /// @return output The empty string signaling that the function call has succeeded.
+    /// @return output The output of the emergency call.
     /// @dev This function internally uses the `SafeERC20` library.
     function _forwardEmergencyCall(
         bytes calldata input
