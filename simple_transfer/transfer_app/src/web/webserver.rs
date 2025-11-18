@@ -1,5 +1,7 @@
 use crate::request::parameters::Parameters;
 use crate::web::handlers::handle_parameters;
+use crate::web::RequestError;
+use crate::web::RequestError::TransactionGeneration;
 use crate::AnomaPayConfig;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{Header, Status};
@@ -19,14 +21,18 @@ pub struct AnomaPayApi;
     get,
     path = "/health",
     responses(
-            (status = 200, description = "Service is healthy"),
-    )
+            (status = 200, description = "Service is healthy", body = inline(Object),
+            example = json!({
+                "ok": "live long and prosper",
+                "version": "1.0.0"
+            }))),
 )]
 pub fn health() -> Custom<Json<Value>> {
     Custom(
         Status::Ok,
         Json(json!({
-            "ok": "live long and prosper"
+            "ok": "live long and prosper",
+            "version": env!("CARGO_PKG_VERSION")
         })),
     )
 }
@@ -36,32 +42,29 @@ pub fn health() -> Custom<Json<Value>> {
 #[utoipa::path(
     post,
     path = "/transfer",
+    request_body = Parameters,
     responses(
             (status = 200, description = "Submit a transfer request to the backend.", body = Parameters),
+            (status = 400, description = "Todo already exists", body = RequestError, example = json!(RequestError::TransactionGeneration(String::from("failed to generate tx")))),
+            (status = 400, description = "Todo already exists", body = RequestError, example = json!(RequestError::Submit(String::from("failed to generate tx")))),
     )
 )]
+
 pub async fn transfer(
     payload: Json<Parameters>,
     config: &State<AnomaPayConfig>,
-) -> Custom<Json<Value>> {
+) -> Result<Custom<Json<Value>>, RequestError> {
     let config: &AnomaPayConfig = config.inner();
     let parameters = payload.into_inner();
 
-    let result = handle_parameters(parameters, config).await;
-    let tx_hash = match result {
-        Ok(tx_hash) => tx_hash,
-        Err(err) => {
-            return Custom(
-                Status::UnprocessableEntity,
-                Json(
-                    json!({"error": "failed to create transaction", "message": format!("{}", err)}),
-                ),
-            )
-        }
-    };
+    let tx_hash = handle_parameters(parameters, config)
+        .await
+        .map_err(|_| TransactionGeneration("kapot".to_string()))?;
 
-    // create the response
-    Custom(Status::Accepted, Json(json!({"transaction_hash": tx_hash})))
+    Ok(Custom(
+        Status::Accepted,
+        Json(json!({"transaction_hash": tx_hash})),
+    ))
 }
 
 #[catch(422)]

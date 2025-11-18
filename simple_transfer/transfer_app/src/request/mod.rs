@@ -12,7 +12,7 @@ use thiserror::Error;
 
 pub type ProvingResult<T> = Result<T, ProvingError>;
 
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug, Clone, Serialize)]
 pub enum ProvingError {
     #[error("The nullifier key was invalid for the consumed resource.")]
     InvalidNullifierKey,

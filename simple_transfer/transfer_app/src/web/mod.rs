@@ -1,10 +1,8 @@
-use crate::ethereum::EthError;
 use crate::request;
-use crate::request::ProvingError;
 use request::witness_data::token_transfer;
 use request::witness_data::trivial;
+use rocket::Responder;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 use utoipa::ToSchema;
 
 mod handlers;
@@ -12,12 +10,16 @@ pub mod webserver;
 
 pub type ReqResult<T> = Result<T, RequestError>;
 
-#[derive(Error, Debug)]
+#[derive(Serialize, ToSchema, Responder, Debug)]
 pub enum RequestError {
-    #[error("Failed to generate a transaction for the given parameters: {0}")]
-    TransactionGeneration(ProvingError),
-    #[error("Failed to submit transaction to Ethereum: {0}")]
-    Submit(EthError),
+    /// An error occurred trying to generate a transaction.
+    /// Chances are there is something wrong with the passed resources.
+    #[response(status = 400)]
+    TransactionGeneration(String),
+    /// An error occurred submitting the transaction.
+    /// The transaction was generated successfully, but submitting it to the PA failed.
+    #[response(status = 400)]
+    Submit(String),
 }
 
 /// An enum type for all possible Created Resource witness to satisfy the OpenAPI schema generator.

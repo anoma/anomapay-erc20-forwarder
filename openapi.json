@@ -9,13 +9,48 @@
     "version": "0.1.0"
   },
   "paths": {
-    "/transfer": {
+    "//health": {
+      "get": {
+        "tags": [
+          "web::webserver"
+        ],
+        "summary": "Return the health status",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": "live long and prosper",
+                  "version": "1.0.0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "//transfer": {
       "post": {
         "tags": [
-          "webserver"
+          "web::webserver"
         ],
         "summary": "Handles a request from the user to mint.",
         "operationId": "transfer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Parameters"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Submit a transfer request to the backend.",
@@ -23,6 +58,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Parameters"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Todo already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestError"
+                },
+                "example": {
+                  "Submit": "failed to generate tx"
                 }
               }
             }
@@ -93,7 +141,7 @@
           "sender_authorization_verifying_key": {
             "type": "string",
             "format": "binary",
-            "description": "TODO! Do we have to pass this via the open_api or not? Check with Yulia/Xuyang/Michael"
+            "description": "TODO! Do we have to pass this via the web or not? Check with Yulia/Xuyang/Michael"
           }
         }
       },
@@ -317,7 +365,43 @@
             "format": "binary"
           }
         }
+      },
+      "RequestError": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "An error occurred trying to generate a transaction.\nChances are there is something wrong with the passed resources.",
+            "required": [
+              "TransactionGeneration"
+            ],
+            "properties": {
+              "TransactionGeneration": {
+                "type": "string",
+                "description": "An error occurred trying to generate a transaction.\nChances are there is something wrong with the passed resources."
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "An error occurred submitting the transaction.\nThe transaction was generated successfully, but submitting it to the PA failed.",
+            "required": [
+              "Submit"
+            ],
+            "properties": {
+              "Submit": {
+                "type": "string",
+                "description": "An error occurred submitting the transaction.\nThe transaction was generated successfully, but submitting it to the PA failed."
+              }
+            }
+          }
+        ]
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "AnomaPay Api",
+      "description": "JSON API for the AnomaPay backend"
+    }
+  ]
 }
