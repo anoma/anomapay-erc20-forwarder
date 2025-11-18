@@ -56,6 +56,16 @@ jobs:
         working-directory: ./contracts
         id: solhint-script
 
+      - name: Install Slither
+        run: pip install slither-analyzer
+
+      - name: Show Slither version
+        run: slither --version
+
+      - name: Run Slither
+        run: slither .
+        id: slither
+
       - name: Run Forge build
         run: forge build --sizes --ast
         working-directory: ./contracts
