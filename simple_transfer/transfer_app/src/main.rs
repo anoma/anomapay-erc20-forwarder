@@ -1,12 +1,4 @@
 //! Backend application for the Anomapay application.
-//!
-//! The backend serves a JSON api to handle requests.
-//! The following api's are available:
-//!  - minting
-//!  - transferring
-//!  - splitting
-//!  - burning
-
 mod ethereum;
 mod indexer;
 mod request;
