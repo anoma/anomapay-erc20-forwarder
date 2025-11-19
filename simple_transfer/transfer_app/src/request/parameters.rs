@@ -35,7 +35,7 @@ pub struct Parameters {
 
 impl Parameters {
     #[allow(dead_code)]
-    /// Creates a new `Parameters` struct with the given lists of resources and commitment tree root.
+    /// Creates a new `Parameters` struct with the given lists of resources.
     /// The function asserts that both lists are equal in length or fails.
     pub fn new(
         created_resources: Vec<Created>,
