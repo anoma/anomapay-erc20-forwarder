@@ -38,6 +38,10 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
+
+      - name: force rebuild of evm_protocol_adapter_bindings
+        run: cargo clean -p evm_protocol_adapter_bindings
+
       - name: run rustfmt
         run: cargo fmt -- --check
 

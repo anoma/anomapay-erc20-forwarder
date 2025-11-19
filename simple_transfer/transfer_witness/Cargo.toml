@@ -7,9 +7,3 @@ edition = "2021"
 serde = "1.0"
 arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.8.1", default-features = false }
 rand = "0.8"
-rustler = { version = "0.36.2", optional = true }
-
-
-[features]
-default = []
-nif = ["arm/nif", "dep:rustler"]

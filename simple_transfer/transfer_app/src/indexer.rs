@@ -1,8 +1,7 @@
-use crate::evm::IndexerError::{
+use crate::indexer::IndexerError::{
     IndexerOverloaded, InvalidIndexerUrl, InvalidResponse, MerklePathNotFound, NeighbourValueError,
     Recoverable, Unrecoverable,
 };
-use crate::evm::IndexerResult;
 use crate::AnomaPayConfig;
 use arm::merkle_path::MerklePath;
 use arm::Digest;
@@ -13,6 +12,26 @@ use serde_with::hex::Hex;
 use serde_with::serde_as;
 use std::time::Duration;
 use tokio::time::sleep;
+
+pub type IndexerResult<T> = Result<T, IndexerError>;
+
+#[derive(thiserror::Error, Debug)]
+pub enum IndexerError {
+    #[error("The indexer returned an invalid neighbour value: {0:?}")]
+    NeighbourValueError(Vec<u8>),
+    #[error("The indexer has rate-limited us")]
+    IndexerOverloaded,
+    #[error("The request failed, but can be attempted again.")]
+    Recoverable(reqwest::Error),
+    #[error("The request failed, and cannot be attempted again.")]
+    Unrecoverable(reqwest::Error),
+    #[error("The requested merkle path was not found in the indexer.")]
+    MerklePathNotFound,
+    #[error("Invalid indexer url created")]
+    InvalidIndexerUrl,
+    #[error("The indexer returned a result, but it could ont be parsed. Is the JSON valid?")]
+    InvalidResponse,
+}
 
 #[serde_as]
 #[derive(Deserialize, Debug, PartialEq)]
@@ -134,20 +153,4 @@ pub async fn pa_merkle_path(
 
     let indexer_response = try_get_merkle_path(&client, &url, 5).await?;
     parse_merkle_path(indexer_response)
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::evm::indexer::pa_merkle_path;
-    use crate::load_config;
-    use arm::Digest;
-
-    #[tokio::test]
-    async fn fails_with_internal_server_error_on_non_existent_commitment() {
-        let config = load_config().expect("failed to load config in test");
-        let cm = Digest::new([0u32; 8]);
-
-        let result = pa_merkle_path(&config, cm).await;
-        assert!(result.is_err());
-    }
 }
