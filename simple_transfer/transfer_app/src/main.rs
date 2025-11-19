@@ -12,7 +12,6 @@ mod indexer;
 mod request;
 mod tests;
 mod user;
-mod webserver;
 
 use alloy::primitives::Address;
 use alloy::signers::local::PrivateKeySigner;
