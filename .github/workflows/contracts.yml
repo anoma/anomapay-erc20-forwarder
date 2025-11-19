@@ -77,7 +77,7 @@ jobs:
         working-directory: ./contracts
 
       - name: Run Forge coverage
-        run: forge coverage --no-match-coverage "(script|test|draft|forwarder)" --report summary
+        run: forge coverage --no-match-coverage "(script|test)" --report summary
         env:
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
         working-directory: ./contracts
