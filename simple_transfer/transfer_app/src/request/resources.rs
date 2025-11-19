@@ -1,6 +1,6 @@
 use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData, WitnessTypes};
 use crate::request::ProvingError::{
-    ConsumedResourceNotInActionTree, CreatedResourceNotInActionTree, InvalidSenderNullifierKey,
+    ConsumedResourceNotInActionTree, CreatedResourceNotInActionTree, InvalidNullifierKey,
 };
 use crate::request::ProvingResult;
 use crate::AnomaPayConfig;
@@ -46,7 +46,7 @@ impl Consumed {
     pub fn nullifier(&self) -> ProvingResult<Digest> {
         self.resource
             .nullifier(&self.nullifier_key)
-            .map_err(|_e| InvalidSenderNullifierKey)
+            .map_err(|_e| InvalidNullifierKey)
     }
 
     /// Compute the logic witness for this resource.

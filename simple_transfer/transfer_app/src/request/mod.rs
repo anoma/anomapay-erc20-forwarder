@@ -13,7 +13,7 @@ pub type ProvingResult<T> = Result<T, ProvingError>;
 #[derive(Error, Debug, Clone)]
 pub enum ProvingError {
     #[error("The nullifier key was invalid for the consumed resource.")]
-    InvalidSenderNullifierKey,
+    InvalidNullifierKey,
     #[error("The commitment of the created resource was not found in the action tree.")]
     CreatedResourceNotInActionTree,
     #[error("The nullifier for the consumed resource was not found in the action tree.")]
