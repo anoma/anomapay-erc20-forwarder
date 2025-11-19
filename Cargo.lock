@@ -7556,7 +7556,7 @@ dependencies = [
  "evm_protocol_adapter_bindings",
  "futures",
  "interleave",
- "itertools 0.10.5",
+ "itertools 0.14.0",
  "k256",
  "log",
  "rand 0.8.5",
