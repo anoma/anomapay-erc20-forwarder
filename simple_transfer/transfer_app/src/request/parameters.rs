@@ -182,7 +182,6 @@ impl Parameters {
             compliance_proofs_async(compliance_witnesses.clone()),
             logic_proofs_async(logic_witnesses)
         )?;
-        // let (compliance_units, logic_proofs) = (compliance_units?, logic_proofs?);
 
         // Create the action based on the compliance units and logic proofs.
         let action: Action = Action::new(compliance_units, logic_proofs).unwrap();
