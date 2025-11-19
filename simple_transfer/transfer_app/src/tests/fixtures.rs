@@ -32,8 +32,8 @@ pub fn user_without_private_key() -> Keychain {
 
 /// Generates a random nonce. A nonce is an array of 32 8-byte integers.
 pub fn random_nonce() -> [u8; 32] {
-    let mut rng = rand::thread_rng();
-    let nonce: [u8; 32] = rng.gen();
+    let mut rng = rand::rng();
+    let nonce: [u8; 32] = rng.random();
     nonce
 }
 
