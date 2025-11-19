@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Parsing} from "@anoma-evm-pa-testing/libs/Parsing.sol";
 
-import {DeployRiscZeroContracts} from "@anoma-evm-pa-testing/script/DeployRiscZeroContracts.s.sol"; // TODO use deploy pa script
+import {DeployRiscZeroContracts} from "@anoma-evm-pa-testing/script/DeployRiscZeroContracts.s.sol";
 import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
 import {Transaction} from "@anoma-evm-pa/Types.sol";
 
@@ -57,7 +57,7 @@ contract ERC20ForwarderE2ETest is Test {
             router,
             verifier.SELECTOR(),
             _EMERGENCY_COMMITTEE
-        ); // TODO use new DeployProtocolAdapter script
+        );
 
         // Deploy the ERC20 forwarder
         _fwd = new ERC20Forwarder({
