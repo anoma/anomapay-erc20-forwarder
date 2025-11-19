@@ -1,10 +1,10 @@
 #![cfg(test)]
 //! Test the behavior of minting a resource.
 
-use crate::ethereum::pa_submit_transaction;
 use crate::request::parameters::Parameters;
 use crate::request::resources::{Consumed, Created};
 use crate::request::witness_data::{token_transfer, trivial};
+use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
     label_ref, random_nonce, user_with_private_key, user_without_private_key, value_ref_created,
     TOKEN_ADDRESS_SEPOLIA_USDC,

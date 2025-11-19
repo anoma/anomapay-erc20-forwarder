@@ -1,16 +1,16 @@
 //! Defines functions to communicate with the protocol adapter on Ethereum.
-use crate::ethereum::EthError::{FetchReceiptError, SubmitTransactionError};
+use crate::rpc::RpcError::{FetchReceiptError, SubmitTransactionError};
 use alloy::hex::ToHexExt;
 use alloy::network::ReceiptResponse;
 use arm::transaction::Transaction;
 use evm_protocol_adapter_bindings::call::protocol_adapter;
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
 
-pub type EthResult<T> = Result<T, EthError>;
+pub type RpcResult<T> = Result<T, RpcError>;
 
 /// EthError represents all error states for calls to the Protocol Adapter.
 #[derive(thiserror::Error, Debug)]
-pub enum EthError {
+pub enum RpcError {
     #[error("Failed to submit a transaction to the protocol adapter: {0}")]
     SubmitTransactionError(alloy::contract::Error),
     #[error("Failed to fetch the receipt from the submitted transaction: {0}")]
@@ -19,7 +19,7 @@ pub enum EthError {
 
 #[allow(dead_code)]
 /// Submit a transaction to the protocol adapter and wait for the receipt.
-pub async fn pa_submit_transaction(transaction: Transaction) -> EthResult<String> {
+pub async fn pa_submit_transaction(transaction: Transaction) -> RpcResult<String> {
     // Convert the transaction to an EVM transaction struct.
     let tx = ProtocolAdapter::Transaction::from(transaction);
 

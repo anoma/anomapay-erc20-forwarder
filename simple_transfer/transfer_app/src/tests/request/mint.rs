@@ -1,12 +1,12 @@
 #![cfg(test)]
 //! Test the behavior of minting a resource.
 
-use crate::ethereum::pa_submit_transaction;
 use crate::request::parameters::Parameters;
 use crate::request::resources::{Consumed, Created};
 use crate::request::witness_data::token_transfer::{
     ConsumedEphemeral, CreatedPersistent, Permit2Data,
 };
+use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
     create_permit_signature, label_ref, random_nonce, user_with_private_key, value_ref_created,
     value_ref_ephemeral_consumed, DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC,

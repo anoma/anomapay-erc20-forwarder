@@ -1,7 +1,7 @@
 //! Backend application for the Anomapay application.
-mod ethereum;
 mod indexer;
 mod request;
+mod rpc;
 mod tests;
 mod user;
 
