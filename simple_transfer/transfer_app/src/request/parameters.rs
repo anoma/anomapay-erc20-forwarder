@@ -2,8 +2,8 @@
 //!
 //! The `Parameters` struct holds all the information required to generate a
 //! transaction for a user. To generate a transaction all that is required is a
-//! list of consumed resource and their meta data, and a list of created
-//! resources and their meta data.
+//! list of consumed and created resources with their associated,
+//! application-specific witness data.
 
 use crate::request::compliance_proof::compliance_proofs_async;
 use crate::request::logic_proof::logic_proofs_async;
@@ -21,6 +21,7 @@ use arm::merkle_path::MerklePath;
 use arm::transaction::{Delta, Transaction};
 use arm::Digest;
 use arm::{action::Action, action_tree::MerkleTree};
+use futures::future::try_join_all;
 use tokio::try_join;
 
 /// The `Parameters` struct holds all the necessary resources to generate a
@@ -54,16 +55,12 @@ impl Parameters {
 
     /// Fetches the merkle proof for all the consumed resources.
     async fn merkle_proofs(&self, config: &AnomaPayConfig) -> ProvingResult<Vec<MerklePath>> {
-        let mut merkle_proofs: Vec<MerklePath> = vec![];
-
-        for consumed in self.consumed_resources.iter() {
+        let futures = self.consumed_resources.iter().map(|consumed| {
             let commitment = consumed.resource.commitment();
-            let merkle_path = consumed
-                .witness_data
-                .merkle_path(config, commitment)
-                .await?;
-            merkle_proofs.push(merkle_path)
-        }
+            consumed.witness_data.merkle_path(config, commitment)
+        });
+        let merkle_proofs = try_join_all(futures).await?;
+
         Ok(merkle_proofs)
     }
     /// Create the compliance witnesses for the `Parameters`. Compliance
