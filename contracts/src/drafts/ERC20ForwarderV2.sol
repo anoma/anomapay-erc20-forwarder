@@ -63,10 +63,10 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     ) internal override returns (bytes memory output) {
         CallTypeV2 callType = CallTypeV2(uint8(input[31]));
 
-        if (callType == CallTypeV2.Unwrap) {
-            _unwrap(input);
-        } else if (callType == CallTypeV2.Wrap) {
+        if (callType == CallTypeV2.Wrap) {
             _wrap(input);
+        } else if (callType == CallTypeV2.Unwrap) {
+            _unwrap(input);
         } else {
             _migrate(input);
         }
