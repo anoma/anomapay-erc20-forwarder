@@ -89,7 +89,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
             bytes32 nullifier
         ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32));
 
-        // Check that the resource being upgraded has not been consumed in the protocol adapter nullifier set.
+        // Check that the resource being upgraded is not in the previous protocol adapter's nullifier set.
         if (
             NullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)
         ) {
