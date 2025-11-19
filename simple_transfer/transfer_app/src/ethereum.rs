@@ -15,16 +15,12 @@ pub enum EthError {
     SubmitTransactionError(alloy::contract::Error),
     #[error("Failed to fetch the receipt from the submitted transaction: {0}")]
     FetchReceiptError(alloy::providers::PendingTransactionError),
-    // #[error("Invalid Ethereum RPC URL")]
-    // InvalidEthereumRPC,
-    // #[error("Failed to call Ethereum contract {0}")]
-    // ContractCallError(alloy::contract::Error),
 }
 
 #[allow(dead_code)]
 /// Submit a transaction to the protocol adapter and wait for the receipt.
 pub async fn pa_submit_transaction(transaction: Transaction) -> EthResult<String> {
-    // convert the transaction to an EVM transaction struct.
+    // Convert the transaction to an EVM transaction struct.
     let tx = ProtocolAdapter::Transaction::from(transaction);
 
     // Submit the transaction to the ethereum chain.
