@@ -67,8 +67,6 @@ impl Parameters {
     /// witnesses are built using pairs of consumed and created resources. For
     /// each consumed resource a created resource is taken, and that pair is
     /// used to create a compliance witness.
-    ///
-    /// In total there will be len(created_resources) / 2 compliance witnesses.
     fn compliance_witnesses(
         &self,
         merkle_proofs: Vec<MerklePath>,
@@ -152,7 +150,7 @@ impl Parameters {
 
         // The action tree expects a list of tags, but the leaves have to be
         // interleaved as consumed, created, consumed, created, etc. To achieve
-        // this interleaving, zip the two lists and flaten them again.
+        // this interleaving, zip the two lists and flatten them again.
         let action_tags = consumed_tags
             .into_iter()
             .zip(created_tags)
