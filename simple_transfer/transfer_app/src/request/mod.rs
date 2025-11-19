@@ -12,20 +12,17 @@ pub type ProvingResult<T> = Result<T, ProvingError>;
 
 #[derive(Error, Debug, Clone)]
 pub enum ProvingError {
-    #[error("The sender's nullifier key given for burn was invalid.")]
+    #[error("The nullifier key was invalid for the consumed resource.")]
     InvalidSenderNullifierKey,
     #[error("The commitment of the created resource was not found in the action tree.")]
     CreatedResourceNotInActionTree,
     #[error("The nullifier for the consumed resource was not found in the action tree.")]
     ConsumedResourceNotInActionTree,
     #[error("The number of consumed and created resources are not equal.")]
-    #[allow(dead_code)]
     ConsumedAndCreatedResourceCountMismatch,
     #[error("Failed to generate the resource logic proof for a resource.")]
-    #[allow(dead_code)]
     LogicProofGenerationError,
     #[error("Failed to generate the compliance proof.")]
-    #[allow(dead_code)]
     ComplianceProofGenerationError,
     #[error("Failed to generate the delta proof.")]
     DeltaProofGenerationError,
