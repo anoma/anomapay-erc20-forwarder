@@ -59,7 +59,7 @@ impl Consumed {
         let nullifier = self.nullifier()?;
         let resource_path = action_tree
             .generate_path(&nullifier)
-            .map_err(|_| ConsumedResourceNotInActionTree)?;
+            .map_err(|_| ConsumedResourceNotInActionTree(nullifier))?;
 
         let nullifier_key = NullifierKey::new(self.nullifier_key.inner());
         self.witness_data
@@ -108,7 +108,7 @@ impl Created {
     ) -> ProvingResult<WitnessTypes> {
         let resource_path = action_tree
             .generate_path(&self.commitment())
-            .map_err(|_| CreatedResourceNotInActionTree)?;
+            .map_err(|_| CreatedResourceNotInActionTree(self.commitment()))?;
 
         self.witness_data
             .logic_witness(self.resource, resource_path, config)

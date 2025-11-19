@@ -6,6 +6,7 @@ pub mod parameters;
 pub mod resources;
 pub mod witness_data;
 
+use arm::Digest;
 use thiserror::Error;
 
 pub type ProvingResult<T> = Result<T, ProvingError>;
@@ -14,10 +15,10 @@ pub type ProvingResult<T> = Result<T, ProvingError>;
 pub enum ProvingError {
     #[error("The nullifier key was invalid for the consumed resource.")]
     InvalidNullifierKey,
-    #[error("The commitment of the created resource was not found in the action tree.")]
-    CreatedResourceNotInActionTree,
-    #[error("The nullifier for the consumed resource was not found in the action tree.")]
-    ConsumedResourceNotInActionTree,
+    #[error("The commitment of the created resource was not found in the action tree {0}")]
+    CreatedResourceNotInActionTree(Digest),
+    #[error("The nullifier for the consumed resource was not found in the action tree. {0}")]
+    ConsumedResourceNotInActionTree(Digest),
     #[error("The number of consumed and created resources are not equal.")]
     ConsumedAndCreatedResourceCountMismatch,
     #[error("Failed to generate the resource logic proof for a resource.")]
