@@ -68,7 +68,7 @@ To run the application, some parameters need to be passed via the environment.
 |---------------------------|------------------------------------------------------|--------------------------------------|
 | `HOT_WALLET_PRIVATE_KEY`  | The hex encoded private key for the account          | 00                                   |
 | `HOT_WALLET_USER_ADDRESS` | The hex encoded address belonging to the private key | 0x00                                 |
-| `RPC_URL`                 | URL for blockchain communication                     | https://eth-sepolia.g.alchemy.com/v2 |
+| `ETHEREUM_RPC_URL`        | URL for blockchain communication                     | https://eth-sepolia.g.alchemy.com/v2 |
 | `FORWARDER_ADDRESS`       | The hex encoded address of the forwarder contract    | 0x00                                 |
 | `INDEXER_ADDRESS`         | URL for the anoma indexer                            | http://example.com                   |
 
