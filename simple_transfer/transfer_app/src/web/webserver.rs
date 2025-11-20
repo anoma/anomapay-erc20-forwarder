@@ -36,7 +36,7 @@ pub fn health() -> Custom<Json<Value>> {
     )
 }
 
-/// Proves and executes an AnomaPay transaction on returns the Ethereum transaction hash.
+/// Proves and executes an AnomaPay transaction and returns the Ethereum transaction hash.
 #[post("/web/send_transaction", data = "<payload>")]
 #[utoipa::path(
     post,
