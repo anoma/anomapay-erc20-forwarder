@@ -44,6 +44,17 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         _tgt = ForwarderTargetExample(_fwd.TARGET());
     }
 
+    function test_constructor_reverts_if_the_emergency_committe_address_is_zero()
+        public
+    {
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        new EmergencyMigratableForwarderExample({
+            protocolAdapter: _pa,
+            emergencyCommittee: address(0),
+            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+        });
+    }
+
     function test_setEmergencyCaller_reverts_if_the_caller_is_not_the_emergency_committee()
         public
     {

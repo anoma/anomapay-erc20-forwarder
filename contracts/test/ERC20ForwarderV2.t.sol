@@ -2,33 +2,151 @@
 pragma solidity ^0.8.30;
 
 import {TransactionExample} from "@anoma-evm-pa-testing/examples/transactions/Transaction.e.sol";
+import {DeployRiscZeroContracts} from "@anoma-evm-pa-testing/script/DeployRiscZeroContracts.s.sol";
+
+import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
 import {NullifierSet} from "@anoma-evm-pa/state/NullifierSet.sol";
 import {Transaction} from "@anoma-evm-pa/Types.sol";
 
 import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
+import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
+import {ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
+import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
+import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {Vm} from "forge-std/Test.sol";
 
+import {ForwarderBase} from "../src/bases/ForwarderBase.sol";
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
-
+import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
+import {ERC20Example} from "../test/examples/ERC20.e.sol";
 import {ERC20ForwarderTest} from "./ERC20Forwarder.t.sol";
+import {Permit2Signature} from "./libs/Permit2Signature.sol";
 
 contract ERC20ForwarderV2Test is ERC20ForwarderTest {
-    address internal constant _PA_V2 = address(uint160(2));
+    using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
+    using Permit2Signature for Vm;
+
+    bytes32 internal constant _NULLIFIER = bytes32(type(uint256).max);
+
+    ProtocolAdapter internal _paV1;
+    ProtocolAdapter internal _paV2;
 
     ERC20Forwarder internal _fwdV1;
     ERC20ForwarderV2 internal _fwdV2;
 
+    bytes internal _defaultMigrateInput;
+
     function setUp() public override {
-        super.setUp();
+        _alicePrivateKey = 0xc522337787f3037e9d0dcba4dc4c0e3d4eb7b1c65598d51c425574e8ce64d140;
+        _alice = vm.addr(_alicePrivateKey);
 
-        _fwdV1 = _fwd;
+        // Deploy token and mint for alice
+        _erc20 = new ERC20Example();
 
+        // Get the Permit2 contract
+        _permit2 = _permit2Contract();
+
+        // Deploy RISC Zero contracts
+        (
+            RiscZeroVerifierRouter router,
+            ,
+            RiscZeroGroth16Verifier verifier
+        ) = new DeployRiscZeroContracts().run();
+
+        // Deploy the protocol adapter
+        _paV1 = new ProtocolAdapter(
+            router,
+            verifier.SELECTOR(),
+            _EMERGENCY_COMMITTEE
+        );
+
+        _paV2 = new ProtocolAdapter(
+            router,
+            verifier.SELECTOR(),
+            _EMERGENCY_COMMITTEE
+        );
+
+        _fwdV1 = new ERC20Forwarder({
+            protocolAdapter: address(_paV1),
+            emergencyCommittee: _EMERGENCY_COMMITTEE,
+            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+        });
+        _pa = _paV2;
+
+        // Deploy the ERC20 forwarder
         _fwdV2 = new ERC20ForwarderV2({
-            protocolAdapter: _PA_V2,
+            protocolAdapter: address(_paV2),
+            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            emergencyCommittee: _EMERGENCY_COMMITTEE,
+            protocolAdapterV1: address(_paV1),
+            erc20ForwarderV1: address(_fwdV1)
+        });
+        _fwd = _fwdV2;
+
+        _defaultPermit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({
+                token: address(_erc20),
+                amount: _TRANSFER_AMOUNT
+            }),
+            nonce: 123,
+            deadline: Time.timestamp() + 5 minutes
+        });
+
+        _defaultPermitSig = vm.permitWitnessTransferFromSignature({
+            domainSeparator: _permit2.DOMAIN_SEPARATOR(),
+            permit: _defaultPermit,
+            privateKey: _alicePrivateKey,
+            spender: address(_fwd),
+            witness: ERC20ForwarderPermit2.Witness(_ACTION_TREE_ROOT).hash()
+        });
+
+        _defaultWrapInput = abi.encode(
+            /*       callType */ ERC20ForwarderV2.CallTypeV2.Wrap,
+            /*           from */ _alice,
+            /*         permit */ _defaultPermit,
+            /* actionTreeRoot */ _ACTION_TREE_ROOT,
+            /*      signature */ _defaultPermitSig
+        );
+
+        _defaultUnwrapInput = abi.encode(
+            /* callType */ ERC20ForwarderV2.CallTypeV2.Unwrap,
+            /*    token */ address(_erc20),
+            /*       to */ _alice,
+            /*   amount */ _TRANSFER_AMOUNT
+        );
+
+        _defaultMigrateInput = abi.encode(
+            /*  callType */ ERC20ForwarderV2.CallTypeV2.Migrate,
+            /*     token */ address(_erc20),
+            /*    amount */ _TRANSFER_AMOUNT,
+            /* nullifier */ _NULLIFIER
+        );
+    }
+
+    function test_constructor_reverts_if_the_protocol_adapter_v1_address_is_zero()
+        public
+    {
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
+        new ERC20ForwarderV2({
+            protocolAdapter: address(_paV2),
+            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            emergencyCommittee: _EMERGENCY_COMMITTEE,
+            protocolAdapterV1: address(0),
+            erc20ForwarderV1: address(_fwdV1)
+        });
+    }
+
+    function test_constructor_reverts_if_the_erc20_forwarder_v1_address_is_zero()
+        public
+    {
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
+        new ERC20ForwarderV2({
+            protocolAdapter: address(_paV2),
             calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             protocolAdapterV1: address(_pa),
-            erc20ForwarderV1: address(_fwdV1)
+            erc20ForwarderV1: address(0)
         });
     }
 
@@ -43,13 +161,13 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             .consumed
             .nullifier;
 
-        assertEq(_pa.isNullifierContained(nullifier), false);
-        _pa.execute(txn);
-        assertEq(_pa.isNullifierContained(nullifier), true);
+        assertEq(_paV1.isNullifierContained(nullifier), false);
+        _paV1.execute(txn);
+        assertEq(_paV1.isNullifierContained(nullifier), true);
 
         // Stop the PA.
-        vm.prank(address(_pa.owner()));
-        _pa.emergencyStop();
+        vm.prank(_paV1.owner());
+        _paV1.emergencyStop();
 
         // Set the ERC20ForwarderV2 as the emergency caller of ERC20ForwarderV1.
         vm.prank(_EMERGENCY_COMMITTEE);
@@ -62,7 +180,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             nullifier
         );
 
-        vm.prank(_PA_V2);
+        vm.prank(address(_paV2));
         vm.expectRevert(
             abi.encodeWithSelector(
                 ERC20ForwarderV2.NullifierAlreadyMigrated.selector,
@@ -83,40 +201,29 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
         // Stop the PA.
-        vm.prank(address(_pa.owner()));
-        _pa.emergencyStop();
+        vm.prank(_paV1.owner());
+        _paV1.emergencyStop();
 
         // Set the ERC20ForwarderV2 as the emergency caller of ERC20ForwarderV1.
         vm.prank(_EMERGENCY_COMMITTEE);
         _fwdV1.setEmergencyCaller(address(_fwdV2));
 
-        address token = address(_erc20);
-        uint128 amount = _TRANSFER_AMOUNT;
-        bytes32 nullifier = bytes32(type(uint256).max);
-
-        bytes memory input = abi.encode(
-            ERC20ForwarderV2.CallTypeV2.Migrate,
-            token,
-            amount,
-            nullifier
-        );
-
-        vm.startPrank(_PA_V2);
+        vm.startPrank(address(_paV2));
         _fwdV2.forwardCall({
             logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: input
+            input: _defaultMigrateInput
         });
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 NullifierSet.PreExistingNullifier.selector,
-                nullifier
+                _NULLIFIER
             ),
             address(_fwdV2)
         );
         _fwdV2.forwardCall({
             logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: input
+            input: _defaultMigrateInput
         });
     }
 
@@ -128,25 +235,14 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         assertEq(_erc20.balanceOf(address(_fwdV2)), 0);
 
         // Stop the PA.
-        vm.prank(address(_pa.owner()));
-        _pa.emergencyStop();
+        vm.prank(_paV1.owner());
+        _paV1.emergencyStop();
 
         // Set the ERC20ForwarderV2 as the emergency caller of ERC20ForwarderV1.
         vm.prank(_EMERGENCY_COMMITTEE);
         _fwdV1.setEmergencyCaller(address(_fwdV2));
 
-        address token = address(_erc20);
-        uint128 amount = _TRANSFER_AMOUNT;
-        bytes32 nullifier = bytes32(type(uint256).max);
-
-        bytes memory input = abi.encode(
-            ERC20ForwarderV2.CallTypeV2.Migrate,
-            token,
-            amount,
-            nullifier
-        );
-
-        vm.prank(_PA_V2);
+        vm.prank(address(_paV2));
 
         vm.expectEmit(address(_fwdV2));
         emit ERC20Forwarder.Wrapped({
@@ -171,7 +267,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         _fwdV2.forwardCall({
             logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: input
+            input: _defaultMigrateInput
         });
 
         assertEq(_erc20.balanceOf(address(_fwdV1)), 0);

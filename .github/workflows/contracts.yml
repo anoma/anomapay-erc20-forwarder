@@ -56,6 +56,16 @@ jobs:
         working-directory: ./contracts
         id: solhint-script
 
+      - name: Install Slither
+        run: pip install slither-analyzer
+
+      - name: Show Slither version
+        run: slither --version
+
+      - name: Run Slither
+        run: slither .
+        id: slither
+
       - name: Run Forge build
         run: forge build --sizes --ast
         working-directory: ./contracts
@@ -67,7 +77,7 @@ jobs:
         working-directory: ./contracts
 
       - name: Run Forge coverage
-        run: forge coverage --no-match-coverage "(script|test|draft|forwarder)" --report summary
+        run: forge coverage --no-match-coverage "(script|test)" --report summary
         env:
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
         working-directory: ./contracts

@@ -50,6 +50,26 @@ contract ForwarderBaseTest is Test {
         _tgt = ForwarderTargetExample(_fwd.TARGET());
     }
 
+    function test_constructor_reverts_if_the_protocol_adapter_address_is_zero()
+        public
+    {
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        new ForwarderExample({
+            protocolAdapter: address(0),
+            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+        });
+    }
+
+    function test_constructor_reverts_if_the_calldata_carrier_logic_ref_is_zero()
+        public
+    {
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        new ForwarderExample({
+            protocolAdapter: _pa,
+            calldataCarrierLogicRef: bytes32(0)
+        });
+    }
+
     function test_forwardCall_reverts_if_the_pa_is_not_the_caller() public {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(
@@ -57,7 +77,8 @@ contract ForwarderBaseTest is Test {
                 ForwarderBase.UnauthorizedCaller.selector,
                 _pa,
                 _UNAUTHORIZED_CALLER
-            )
+            ),
+            address(_fwd)
         );
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
     }
@@ -73,7 +94,8 @@ contract ForwarderBaseTest is Test {
                 ForwarderBase.UnauthorizedLogicRef.selector,
                 _CALLDATA_CARRIER_LOGIC_REF,
                 wrongLogicRef
-            )
+            ),
+            address(_fwd)
         );
         _fwd.forwardCall({logicRef: wrongLogicRef, input: INPUT});
     }
