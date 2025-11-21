@@ -30,6 +30,9 @@ use async_trait::async_trait;
 use log::info;
 use transfer_library::TransferLogic;
 use typetag;
+use enum_dispatch::enum_dispatch;
+use crate::request::resources::ConsumedWitnessDataEnum;
+use crate::request::resources::CreatedWitnessDataEnum;
 
 /// This enum can hold all the possible witness types we expect to deal with within the application.
 /// The first type if the witness for trivial resources, the second for token transfer resources.
@@ -63,8 +66,8 @@ impl WitnessTypes {
 /// all witnessdata for consumed resources.
 #[async_trait]
 #[typetag::serde(tag = "type")]
+#[enum_dispatch]
 pub trait ConsumedWitnessData: Send + Sync {
-    fn clone_box(&self) -> Box<dyn ConsumedWitnessData>;
     fn logic_witness(
         &self,
         resource: Resource,
@@ -84,8 +87,8 @@ pub trait ConsumedWitnessData: Send + Sync {
 /// all witnessdata for created resources.
 #[async_trait]
 #[typetag::serde(tag = "type")]
+#[enum_dispatch]
 pub trait CreatedWitnessData: Send + Sync {
-    fn clone_box(&self) -> Box<dyn CreatedWitnessData>;
     fn logic_witness(
         &self,
         resource: Resource,

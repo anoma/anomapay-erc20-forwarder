@@ -2,7 +2,7 @@
 //! Test the behavior of minting a resource.
 
 use crate::request::parameters::Parameters;
-use crate::request::resources::{Consumed, Created};
+use crate::request::resources::{Consumed, ConsumedWitnessDataEnum, Created, CreatedWitnessDataEnum};
 use crate::request::witness_data::token_transfer::{ConsumedPersistent, CreatedEphemeral};
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
@@ -150,7 +150,7 @@ async fn example_burn_parameters(
 
     let created_resource = Created {
         resource: created_resource,
-        witness_data: Box::new(created_witness_data),
+        witness_data: CreatedWitnessDataEnum::Ephemeral(created_witness_data),
     };
 
     // Create the ConsumedResource
@@ -162,7 +162,7 @@ async fn example_burn_parameters(
     let consumed_resource = Consumed {
         resource: to_burn_resource,
         nullifier_key: burner.nf_key,
-        witness_data: Box::new(consumed_witness_data),
+        witness_data: ConsumedWitnessDataEnum::Persistent(consumed_witness_data),
     };
 
     // get the latest commitment tree path.

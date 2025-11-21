@@ -2,7 +2,7 @@
 //! Test the behavior of minting a resource.
 
 use crate::request::parameters::Parameters;
-use crate::request::resources::{Consumed, Created};
+use crate::request::resources::{Consumed, ConsumedWitnessDataEnum, Created, CreatedWitnessDataEnum};
 use crate::request::witness_data::token_transfer::{
     ConsumedEphemeral, CreatedPersistent, Permit2Data,
 };
@@ -88,7 +88,7 @@ async fn example_mint_transaction(
 }
 
 /// Creates an example value of `Parameters` that represents a mint transaction.
-async fn example_mint_parameters(
+pub async fn example_mint_parameters(
     minter: Keychain,
     config: &AnomaPayConfig,
     amount: u128,
@@ -160,7 +160,7 @@ async fn example_mint_parameters(
     let consumed_resource = Consumed {
         resource: consumed_resource,
         nullifier_key: minter.nf_key,
-        witness_data: Box::new(consumed_witness_data),
+        witness_data: ConsumedWitnessDataEnum::Ephemeral(consumed_witness_data),
     };
 
     let created_witness_data = CreatedPersistent {
@@ -170,7 +170,7 @@ async fn example_mint_parameters(
 
     let created_resource = Created {
         resource: created_resource,
-        witness_data: Box::new(created_witness_data),
+        witness_data: CreatedWitnessDataEnum::Persistent(created_witness_data),
     };
 
     Parameters {

@@ -8,7 +8,7 @@
 use crate::request::compliance_proof::compliance_proofs_async;
 use crate::request::logic_proof::logic_proofs_async;
 use crate::request::resources::{Consumed, Created};
-use crate::request::witness_data::WitnessTypes;
+use crate::request::witness_data::{ConsumedWitnessData, WitnessTypes};
 use crate::request::ProvingError::ConsumedAndCreatedResourceCountMismatch;
 use crate::request::{
     ProvingError::{DeltaProofGenerationError, TransactionVerificationError},

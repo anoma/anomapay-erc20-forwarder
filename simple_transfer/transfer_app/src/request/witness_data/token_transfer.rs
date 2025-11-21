@@ -59,10 +59,6 @@ pub struct CreatedPersistent {
 
 #[typetag::serde]
 impl CreatedWitnessData for CreatedPersistent {
-    fn clone_box(&self) -> Box<dyn CreatedWitnessData> {
-        Box::new(self.clone())
-    }
-
     fn logic_witness(
         &self,
         resource: Resource,
@@ -101,10 +97,6 @@ pub struct CreatedEphemeral {
 
 #[typetag::serde]
 impl CreatedWitnessData for CreatedEphemeral {
-    fn clone_box(&self) -> Box<dyn CreatedWitnessData> {
-        Box::new(self.clone())
-    }
-
     fn logic_witness(
         &self,
         resource: Resource,
@@ -147,10 +139,6 @@ pub struct ConsumedEphemeral {
 #[async_trait]
 #[typetag::serde]
 impl ConsumedWitnessData for ConsumedEphemeral {
-    fn clone_box(&self) -> Box<dyn ConsumedWitnessData> {
-        Box::new(self.clone())
-    }
-
     #[allow(dead_code)]
     fn logic_witness(
         &self,
@@ -206,10 +194,6 @@ pub struct ConsumedPersistent {
 #[async_trait]
 #[typetag::serde]
 impl ConsumedWitnessData for ConsumedPersistent {
-    fn clone_box(&self) -> Box<dyn ConsumedWitnessData> {
-        Box::new(self.clone())
-    }
-
     fn logic_witness(
         &self,
         resource: Resource,

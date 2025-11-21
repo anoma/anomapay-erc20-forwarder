@@ -30,10 +30,6 @@ pub struct ConsumedEphemeral {}
 #[async_trait]
 #[typetag::serde]
 impl ConsumedWitnessData for ConsumedEphemeral {
-    fn clone_box(&self) -> Box<dyn ConsumedWitnessData> {
-        Box::new(self.clone())
-    }
-
     fn logic_witness(
         &self,
         resource: Resource,
@@ -75,10 +71,6 @@ pub struct CreatedEphemeral {}
 
 #[typetag::serde]
 impl CreatedWitnessData for CreatedEphemeral {
-    fn clone_box(&self) -> Box<dyn CreatedWitnessData> {
-        Box::new(self.clone())
-    }
-
     fn logic_witness(
         &self,
         resource: Resource,
