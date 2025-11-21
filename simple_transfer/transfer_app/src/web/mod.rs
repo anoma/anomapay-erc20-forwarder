@@ -41,7 +41,7 @@ pub enum CreatedWitnessDataSchema {
 /// An enum type for all possible Consumed Resource witness to satisfy the OpenAPI schema generator.
 #[derive(ToSchema, Serialize, Deserialize)]
 pub enum ConsumedWitnessDataSchema {
-    #[schema(value_type = trivial::CreatedEphemeral)]
+    #[schema(value_type = trivial::ConsumedEphemeral)]
     TrivialCreatedEphemeral(trivial::ConsumedEphemeral),
 
     #[schema(value_type = token_transfer::ConsumedEphemeral)]
