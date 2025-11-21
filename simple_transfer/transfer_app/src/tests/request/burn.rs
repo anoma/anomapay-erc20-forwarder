@@ -2,7 +2,9 @@
 //! Test the behavior of minting a resource.
 
 use crate::request::parameters::Parameters;
-use crate::request::resources::{Consumed, ConsumedWitnessDataEnum, Created, CreatedWitnessDataEnum};
+use crate::request::resources::{
+    Consumed, ConsumedWitnessDataEnum, Created, CreatedWitnessDataEnum,
+};
 use crate::request::witness_data::token_transfer::{ConsumedPersistent, CreatedEphemeral};
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{

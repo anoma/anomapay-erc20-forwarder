@@ -1,7 +1,9 @@
 #![cfg(test)]
 
 use crate::request::parameters::Parameters;
-use crate::request::resources::{Consumed, ConsumedWitnessDataEnum, Created, CreatedWitnessDataEnum};
+use crate::request::resources::{
+    Consumed, ConsumedWitnessDataEnum, Created, CreatedWitnessDataEnum,
+};
 use crate::request::witness_data::token_transfer::{ConsumedPersistent, CreatedPersistent};
 use crate::request::witness_data::trivial;
 use crate::rpc::pa_submit_transaction;
