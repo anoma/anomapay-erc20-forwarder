@@ -45,6 +45,7 @@ pub struct Permit2Data {
 /// A persistent resource is created in, for example, transfer. The transferred
 /// resource is created for the receiver of the resource.
 #[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[schema(as=TokenTransferCreatedPersistent)]
 pub struct CreatedPersistent {
     #[schema(value_type = String, format = Binary)]
     #[serde(with = "serialize_affine_point")]
@@ -88,6 +89,7 @@ impl CreatedWitnessData for CreatedPersistent {
 /// an ERC20 token and the resource that held it is consumed. To balance the
 /// transaction an ephemeral resource is created.
 #[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[schema(as=TokenTransferCreatedEphemeral)]
 pub struct CreatedEphemeral {
     #[schema(value_type = String, format = Binary)]
     /// The address of the ERC20 token to be withdrawn by unwrapping the ERC20-R resource.
@@ -130,6 +132,7 @@ impl CreatedWitnessData for CreatedEphemeral {
 /// an ERC20 token and a new resource is created. To balance the transaction an
 /// ephemeral resource is consumed.
 #[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[schema(as=TokenTransferConsumedEphemeral)]
 pub struct ConsumedEphemeral {
     #[schema(value_type = String, format = Binary)]
     /// The Ethereum wallet address of the sender of the payment.
@@ -188,6 +191,7 @@ impl ConsumedWitnessData for ConsumedEphemeral {
 /// A persistent resource is consumed in, for example, transfer. The transferred
 /// resource is consumed from the sender.
 #[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[schema(as=TokenTransferConsumedPersistent)]
 pub struct ConsumedPersistent {
     #[schema(value_type = String, format = Binary)]
     #[serde(with = "serialize_auth_verifying_key")]

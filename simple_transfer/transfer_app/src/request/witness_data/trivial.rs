@@ -23,6 +23,7 @@ use utoipa::ToSchema;
 /// 1 resource into 2 resources. To balance the transaction a trivial consumed
 /// ephemeral resource is created.
 #[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[schema(as=TrivialConsumedEphemeral)]
 /// The empty witness data for consumed ephemeral resources.
 pub struct ConsumedEphemeral {}
 
@@ -69,6 +70,7 @@ impl ConsumedWitnessData for ConsumedEphemeral {
 /// These resources have no witness data associated with them, so the struct is
 /// empty.
 #[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[schema(as=TrivialCreatedEphemeral)]
 pub struct CreatedEphemeral {}
 
 #[typetag::serde]
