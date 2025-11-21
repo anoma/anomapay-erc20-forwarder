@@ -5,6 +5,9 @@ use crate::indexer::pa_merkle_path;
 use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData, WitnessTypes};
 use crate::request::ProvingError::MerklePathNotFound;
 use crate::request::ProvingResult;
+use crate::web::serializer::serialize_affine_point;
+use crate::web::serializer::serialize_auth_verifying_key;
+use crate::web::serializer::serialize_authorization_signature;
 use crate::AnomaPayConfig;
 use alloy::primitives::{Address, U256};
 use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
@@ -15,16 +18,21 @@ use arm::Digest;
 use async_trait::async_trait;
 use k256::AffinePoint;
 use rocket::serde::{Deserialize, Serialize};
+use serde_with::base64::Base64;
+use serde_with::serde_as;
 use transfer_library::TransferLogic;
 use utoipa::ToSchema;
 
 /// Contains Permit2 parameters for use in consuming ephemeral erc20 resources.
+#[serde_as]
 #[derive(ToSchema, Deserialize, Serialize, Clone)]
 pub struct Permit2Data {
     pub(crate) deadline: u64,
     #[schema(value_type = String, format = Binary)]
+    #[serde_as(as = "Base64")]
     pub(crate) nonce: Vec<u8>,
     #[schema(value_type = String, format = Binary)]
+    #[serde_as(as = "Base64")]
     pub(crate) signature: Vec<u8>,
 }
 
@@ -39,9 +47,11 @@ pub struct Permit2Data {
 #[derive(ToSchema, Deserialize, Serialize, Clone)]
 pub struct CreatedPersistent {
     #[schema(value_type = String, format = Binary)]
+    #[serde(with = "serialize_affine_point")]
     /// The discovery public key of the receiver (i.e., owner) of the resource.
     pub receiver_discovery_public_key: AffinePoint,
     #[schema(value_type = String, format = Binary)]
+    #[serde(with = "serialize_affine_point")]
     /// The encryption public key of the receiver (i.e., owner) of the resource.
     pub receiver_encryption_public_key: AffinePoint,
 }
@@ -180,9 +190,11 @@ impl ConsumedWitnessData for ConsumedEphemeral {
 #[derive(ToSchema, Deserialize, Serialize, Clone)]
 pub struct ConsumedPersistent {
     #[schema(value_type = String, format = Binary)]
+    #[serde(with = "serialize_auth_verifying_key")]
     /// TODO! Do we have to pass this via the web or not? Check with Yulia/Xuyang/Michael
     pub(crate) sender_authorization_verifying_key: AuthorizationVerifyingKey,
     #[schema(value_type = String, format = Binary)]
+    #[serde(with = "serialize_authorization_signature")]
     /// The signature of the sender authorizing the consumption of the resource. This signature is over the entire action tree.
     pub(crate) sender_authorization_signature: AuthorizationSignature,
 }

@@ -4,6 +4,9 @@ use crate::request::ProvingError::{
 };
 use crate::request::ProvingResult;
 use crate::web;
+use crate::web::serializer::serialize_nullifier_key;
+use crate::web::serializer::serialize_resource;
+use crate::web::serializer::SerializedResource;
 use crate::AnomaPayConfig;
 use arm::action_tree::MerkleTree;
 use arm::nullifier_key::NullifierKey;
@@ -21,10 +24,12 @@ use utoipa::ToSchema;
 /// The witness data depends on which kind of resource this is.
 #[derive(ToSchema, Deserialize, Serialize)]
 pub struct Consumed {
-    #[serde(skip)]
+    #[serde(with = "serialize_resource")]
+    #[schema(value_type = SerializedResource)]
     /// The resource that is being consumed.
     pub resource: Resource,
     #[schema(value_type = String, format = Binary)]
+    #[serde(with = "serialize_nullifier_key")]
     /// The nullifier key belonging to this resource.
     pub nullifier_key: NullifierKey,
     #[schema(value_type = web::ConsumedWitnessDataSchema)]
@@ -32,7 +37,7 @@ pub struct Consumed {
     pub witness_data: Box<dyn ConsumedWitnessData>,
 }
 
-impl Clone for Consumed {
+impl std::clone::Clone for Consumed {
     //! To clone a resource the `witness_data` has to be cloned as well. Because
     //! this is a box we can't derive the default `Clone` trait and have to
     //! implement it manually.
@@ -85,14 +90,15 @@ impl Consumed {
 #[derive(ToSchema, Deserialize, Serialize)]
 pub struct Created {
     /// The resource that is being created.
-    #[serde(skip)]
+    #[serde(with = "serialize_resource")]
+    #[schema(value_type = SerializedResource)]
     pub resource: Resource,
     #[schema(value_type = web::CreatedWitnessDataSchema)]
     /// The witness data that is necessary to create this resource.
     pub witness_data: Box<dyn CreatedWitnessData>,
 }
 
-impl Clone for Created {
+impl std::clone::Clone for Created {
     //! To clone a resource the `witness_data` has to be cloned as well. Because
     //! this is a box we can't derive the default `Clone` trait and have to
     //! implement it manually.

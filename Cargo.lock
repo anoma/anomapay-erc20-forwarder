@@ -7469,6 +7469,7 @@ dependencies = [
  "alloy",
  "arm",
  "async-trait",
+ "base64",
  "bincode",
  "chrono",
  "evm_protocol_adapter_bindings",

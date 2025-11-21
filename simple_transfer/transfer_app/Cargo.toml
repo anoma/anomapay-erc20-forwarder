@@ -35,5 +35,6 @@ tokio = { version = "1.47.1", features = ["rt", "rt-multi-thread", "macros"] }
 transfer_library = { path = "../transfer_library" }
 typetag = "0.2.21"
 utoipa = "5"
+base64 = "0.22.1"
 
 [dev-dependencies]

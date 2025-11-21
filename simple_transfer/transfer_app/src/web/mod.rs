@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 mod handlers;
+pub mod serializer;
 pub mod webserver;
 
 pub type ReqResult<T> = Result<T, RequestError>;
