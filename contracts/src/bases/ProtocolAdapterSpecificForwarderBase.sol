@@ -3,11 +3,16 @@ pragma solidity ^0.8.30;
 
 import {IForwarder} from "@anoma-evm-pa/interfaces/IForwarder.sol";
 
-/// @title ForwarderBase
+import {IProtocolAdapterSpecific} from "../interfaces/IProtocolAdapterSpecific.sol";
+
+/// @title ProtocolAdapterSpecificForwarderBase
 /// @author Anoma Foundation, 2025
 /// @notice The base contract to inherit from to create a forwarder contracts owning EVM state and executing EVM calls.
 /// @custom:security-contact security@anoma.foundation
-abstract contract ForwarderBase is IForwarder {
+abstract contract ProtocolAdapterSpecificForwarderBase is
+    IForwarder,
+    IProtocolAdapterSpecific
+{
     /// @notice The protocol adapter contract that can forward calls.
     address internal immutable _PROTOCOL_ADAPTER;
 
@@ -49,6 +54,16 @@ abstract contract ForwarderBase is IForwarder {
         }
 
         output = _forwardCall(input);
+    }
+
+    /// @inheritdoc IProtocolAdapterSpecific
+    function getProtocolAdapter()
+        external
+        view
+        override
+        returns (address protocolAdapter)
+    {
+        protocolAdapter = _PROTOCOL_ADAPTER;
     }
 
     // slither-disable-start unimplemented-functions

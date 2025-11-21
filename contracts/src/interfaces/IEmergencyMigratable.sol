@@ -3,13 +3,15 @@ pragma solidity ^0.8.30;
 
 /// @title IEmergencyMigratable
 /// @author Anoma Foundation, 2025
-/// @notice The interface of the forwarder base contract.
+/// @notice The interface of the emergency migratable forwarder contract.
 interface IEmergencyMigratable {
     /// @notice Forwards an external call to read or write EVM state. This function can only be called by the address
     /// set by emergency committee if the RISC Zero emergency stop is active.
     /// @param input The `bytes` encoded calldata (including the `bytes4` function selector).
     /// @return output The `bytes` encoded output of the call.
-    function forwardEmergencyCall(bytes memory input) external returns (bytes memory output);
+    function forwardEmergencyCall(
+        bytes memory input
+    ) external returns (bytes memory output);
 
     /// @notice Sets the emergency caller. This function can only be called by the address
     /// set by emergency committee if the RISC Zero emergency stop is active.
@@ -18,5 +20,5 @@ interface IEmergencyMigratable {
 
     /// @notice Returns the emergency caller.
     /// @return caller The emergency caller.
-    function emergencyCaller() external view returns (address caller);
+    function getEmergencyCaller() external view returns (address caller);
 }
