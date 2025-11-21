@@ -18,7 +18,7 @@ pub struct AnomaPayApi;
 #[get("/health")]
 #[utoipa::path(
     get,
-    path = "/health",
+    path = "health",
     responses(
             (status = 200, description = "Service is healthy", body = inline(Object),
             example = json!({
