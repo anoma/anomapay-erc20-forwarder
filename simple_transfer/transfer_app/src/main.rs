@@ -9,12 +9,12 @@ mod web;
 use crate::web::webserver::{
     all_options, default_error, health, send_transaction, unprocessable, Cors,
 };
+use crate::web::ApiDoc;
 use alloy::primitives::Address;
 use alloy::signers::local::PrivateKeySigner;
-use rocket::form::validate::Contains;
 use rocket::{catchers, launch, routes};
+use std::env;
 use std::error::Error;
-use std::{env, fs};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 /// The `AnomaPayConfig` struct holds all necessary secret information about the Anomapay backend.
@@ -66,33 +66,8 @@ fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
     })
 }
 
-#[derive(OpenApi)]
-#[openapi(
-        nest(
-            (path = "/", api = web::webserver::AnomaPayApi)
-        ),
-        tags(
-            (name = "AnomaPay Api", description = "JSON API for the AnomaPay backend")
-        ),
-    )]
-struct ApiDoc;
-
-/// Generate the OpenAPI spec into a String.
-fn gen_api_spec() -> String {
-    ApiDoc::openapi().to_pretty_json().unwrap()
-}
-
 #[launch]
 async fn rocket() -> _ {
-    // Check for command-line arguments
-    let args: Vec<String> = std::env::args().collect();
-
-    if args.contains(&"--api-spec".to_string()) {
-        let doc = gen_api_spec();
-        fs::write("openapi.json", doc).expect("failed to write spec to file");
-        std::process::exit(0);
-    }
-
     // load the config
     let config: AnomaPayConfig = load_config().unwrap_or_else(|e| {
         eprintln!("Error loading config: {e}");
