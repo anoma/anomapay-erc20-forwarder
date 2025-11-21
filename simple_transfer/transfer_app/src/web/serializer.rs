@@ -45,9 +45,9 @@ pub mod serialize_nullifier_key {
     where
         S: Serializer,
     {
-        // Convert to something serializable
-        // For example, if CustomType has a method to get a string representation:
+        // NullifierKey to slice
         let inner_bytes = value.inner();
+        // Slice to base64 string
         serializer.serialize_str(STANDARD.encode(inner_bytes).as_str())
     }
 
@@ -55,8 +55,9 @@ pub mod serialize_nullifier_key {
     where
         D: Deserializer<'de>,
     {
-        // Deserialize from the format you chose above
+        // Deserialize String
         let s = String::deserialize(deserializer)?;
+        // Base64 encoded String to Vec<u8>
         let bytes = STANDARD.decode(&s).map_err(serde::de::Error::custom)?;
 
         Ok(NullifierKey::from_bytes(bytes.as_ref()))
@@ -77,6 +78,7 @@ pub mod serialize_affine_point {
     where
         S: Serializer,
     {
+        // Base64 encoded String to Vec<u8>
         let bytes = serde_json::to_vec(value).map_err(serde::ser::Error::custom)?;
         let base64_str = general_purpose::STANDARD.encode(&bytes);
         serializer.serialize_str(base64_str.as_str())
@@ -86,10 +88,13 @@ pub mod serialize_affine_point {
     where
         D: Deserializer<'de>,
     {
+        // Deserialize String
         let s = String::deserialize(deserializer)?;
+        // Base64 encoded String to Vec<u8>
         let bytes = general_purpose::STANDARD
             .decode(&s)
             .map_err(serde::de::Error::custom)?;
+        // Vec<u8> into AffinePoint
         serde_json::from_slice(&bytes).map_err(serde::de::Error::custom)
     }
 }
@@ -99,33 +104,27 @@ pub mod serialize_affine_point {
 /// Serializes it by converting it to an affinepoint and then converting that to
 /// base64.
 pub mod serialize_auth_verifying_key {
+    use crate::web::serializer::serialize_affine_point;
     use arm::authorization::AuthorizationVerifyingKey;
-    use base64::engine::general_purpose;
-    use base64::Engine;
     use k256::AffinePoint;
-    use serde::{Deserialize, Deserializer, Serializer};
+    use serde::{Deserializer, Serializer};
 
     pub fn serialize<S>(value: &AuthorizationVerifyingKey, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let value = value.as_affine();
-        let bytes = serde_json::to_vec(value).map_err(serde::ser::Error::custom)?;
-        let base64_str = general_purpose::STANDARD.encode(&bytes);
-        serializer.serialize_str(base64_str.as_str())
+        // Serialize the AffinePoint from the AuthorizationVerifyingKey
+        serialize_affine_point::serialize(value.as_affine(), serializer)
     }
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<AuthorizationVerifyingKey, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let s = String::deserialize(deserializer)?;
-        let bytes = general_purpose::STANDARD
-            .decode(&s)
-            .map_err(serde::de::Error::custom)?;
-        let affine_point: AffinePoint =
-            serde_json::from_slice(&bytes).map_err(serde::de::Error::custom)?;
-        Ok(AuthorizationVerifyingKey::from_affine(affine_point))
+        // Deserialize an AffinePoint
+        let affine: AffinePoint = serialize_affine_point::deserialize(deserializer)?;
+        // Affinepoint to AuthorizationVerifyingKey
+        Ok(AuthorizationVerifyingKey::from_affine(affine))
     }
 }
 
@@ -139,8 +138,13 @@ pub mod serialize_authorization_signature {
     where
         S: Serializer,
     {
-        let bytes = serde_json::to_vec(value).map_err(serde::ser::Error::custom)?;
-        let base64_str = general_purpose::STANDARD.encode(&bytes);
+        // AuthorizationSignature -> Signature
+        let signature = value.inner();
+        // Signature to Vec<u8>
+        let vec = signature.to_vec();
+        // Base64 encode Vec<u8>
+        let base64_str = general_purpose::STANDARD.encode(&vec);
+        // Serialize string
         serializer.serialize_str(base64_str.as_str())
     }
 
@@ -148,13 +152,22 @@ pub mod serialize_authorization_signature {
     where
         D: Deserializer<'de>,
     {
-        let s = String::deserialize(deserializer)?;
-        let bytes = general_purpose::STANDARD
-            .decode(&s)
+        // Deserialize String
+        let base64_str = String::deserialize(deserializer)?;
+        // Base64 to Vec<u8>
+        let vec = general_purpose::STANDARD
+            .decode(&base64_str)
             .map_err(serde::de::Error::custom)?;
-        let signature = AuthorizationSignature::from_bytes(bytes.as_slice()).map_err(|e| {
-            serde::de::Error::custom(format!("Invalid base64 for signature: {}", e))
-        })?;
+
+        // Vec<u8> to AuthorizationSignature
+        let signature: AuthorizationSignature = AuthorizationSignature::from_bytes(vec.as_slice())
+            .map_err(|e| {
+                serde::de::Error::custom(format!(
+                    "Invalid base64 for AuthorizationSignature: {}",
+                    e
+                ))
+            })?;
+
         Ok(signature)
     }
 }
