@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[schema(as=Resource)]
 /// This resource represents the way a Resource is serialized and deserialized.
 /// It is only used internally by the serializer and deserializer, and to generate the OpenAPI schema.
 pub struct SerializedResource {

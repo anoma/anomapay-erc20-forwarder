@@ -91,7 +91,7 @@ impl Consumed {
 pub struct Created {
     /// The resource that is being created.
     #[serde(with = "serialize_resource")]
-    #[schema(value_type = SerializedResource)]
+    #[schema(value_type = SerializedResource, rename="Resource")]
     pub resource: Resource,
     #[schema(value_type = web::CreatedWitnessDataSchema)]
     /// The witness data that is necessary to create this resource.
