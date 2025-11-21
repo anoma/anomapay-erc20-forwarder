@@ -22,7 +22,8 @@ async fn serialize_mint() {
     let parameters = example_mint_parameters(user.clone(), &config, 1).await;
 
     let json_string = serde_json::to_string(&parameters).expect("failed to serialize Parameters");
-    let parameters_deserialized: Parameters = serde_json::from_str(&json_string).expect("failed to deserialize Parameters");
+    let parameters_deserialized: Parameters =
+        serde_json::from_str(&json_string).expect("failed to deserialize Parameters");
 
-    // assert_eq!(parameters, parameters_deserialized);
+    assert!(parameters == parameters_deserialized);
 }
