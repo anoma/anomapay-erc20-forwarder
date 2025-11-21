@@ -25,7 +25,6 @@ pub enum RequestError {
 
 /// An enum type for all possible Created Resource witness to satisfy the OpenAPI schema generator.
 #[derive(ToSchema, Serialize, Deserialize)]
-#[serde(tag = "type")]
 pub enum CreatedWitnessDataSchema {
     #[schema(value_type = trivial::CreatedEphemeral)]
     TrivialCreatedEphemeral(trivial::CreatedEphemeral),
@@ -39,7 +38,6 @@ pub enum CreatedWitnessDataSchema {
 
 /// An enum type for all possible Consumed Resource witness to satisfy the OpenAPI schema generator.
 #[derive(ToSchema, Serialize, Deserialize)]
-#[serde(tag = "type")]
 pub enum ConsumedWitnessDataSchema {
     #[schema(value_type = trivial::CreatedEphemeral)]
     TrivialCreatedEphemeral(trivial::ConsumedEphemeral),
