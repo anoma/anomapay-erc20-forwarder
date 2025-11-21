@@ -1,5 +1,5 @@
 #![cfg(test)]
 pub mod burn;
 pub mod mint;
-mod split;
-mod transfer;
+pub mod split;
+pub mod transfer;

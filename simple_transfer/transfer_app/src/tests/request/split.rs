@@ -114,7 +114,7 @@ pub async fn example_split_transaction(
     (parameters, transaction)
 }
 /// Creates example split parameters.
-async fn example_split_parameters(
+pub async fn example_split_parameters(
     sender: Keychain,
     receiver: Keychain,
     config: &AnomaPayConfig,

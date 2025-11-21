@@ -105,7 +105,7 @@ pub async fn example_burn_transaction(
 }
 
 /// Creates an example value of `Parameters` that represents a burn transaction.
-async fn example_burn_parameters(
+pub async fn example_burn_parameters(
     burner: Keychain,
     config: &AnomaPayConfig,
     to_burn_resource: Resource,
