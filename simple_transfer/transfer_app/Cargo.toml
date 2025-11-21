@@ -36,5 +36,6 @@ transfer_library = { path = "../transfer_library" }
 typetag = "0.2.21"
 utoipa = "5"
 base64 = "0.22.1"
+utoipa-swagger-ui = { version = "9", features = ["rocket"]}
 
 [dev-dependencies]

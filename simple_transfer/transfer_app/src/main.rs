@@ -16,7 +16,7 @@ use rocket::{catchers, launch, routes};
 use std::error::Error;
 use std::{env, fs};
 use utoipa::OpenApi;
-
+use utoipa_swagger_ui::SwaggerUi;
 /// The `AnomaPayConfig` struct holds all necessary secret information about the Anomapay backend.
 /// It contains the private key for submitting transactions, the address for the indexer, etc.
 pub struct AnomaPayConfig {
@@ -66,10 +66,8 @@ fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
     })
 }
 
-/// Generate the OpenAPI spec into a String.
-fn gen_api_spec() -> String {
-    #[derive(OpenApi)]
-    #[openapi(
+#[derive(OpenApi)]
+#[openapi(
         nest(
             (path = "/", api = web::webserver::AnomaPayApi)
         ),
@@ -77,8 +75,10 @@ fn gen_api_spec() -> String {
             (name = "AnomaPay Api", description = "JSON API for the AnomaPay backend")
         ),
     )]
-    struct ApiDoc;
+struct ApiDoc;
 
+/// Generate the OpenAPI spec into a String.
+fn gen_api_spec() -> String {
     ApiDoc::openapi().to_pretty_json().unwrap()
 }
 
@@ -102,6 +102,10 @@ async fn rocket() -> _ {
     rocket::build()
         .manage(config)
         .attach(Cors)
+        .mount(
+            "/",
+            SwaggerUi::new("/swagger-ui/<_..>").url("/api-docs/openapi.json", ApiDoc::openapi()),
+        )
         .mount("/", routes![health, send_transaction, all_options])
         .register("/", catchers![default_error, unprocessable])
 }
