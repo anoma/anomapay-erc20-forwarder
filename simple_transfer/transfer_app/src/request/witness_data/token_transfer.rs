@@ -25,7 +25,7 @@ use utoipa::ToSchema;
 
 /// Contains Permit2 parameters for use in consuming ephemeral erc20 resources.
 #[serde_as]
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Permit2Data {
     pub(crate) deadline: u64,
     #[schema(value_type = String, format = Binary)]
@@ -44,7 +44,7 @@ pub struct Permit2Data {
 ///
 /// A persistent resource is created in, for example, transfer. The transferred
 /// resource is created for the receiver of the resource.
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[schema(as=TokenTransferCreatedPersistent)]
 pub struct CreatedPersistent {
     #[schema(value_type = String, format = Binary)]
@@ -84,7 +84,7 @@ impl CreatedWitnessData for CreatedPersistent {
 /// An ephemeral resource is created in, for example, burning. The user unwraps
 /// an ERC20 token and the resource that held it is consumed. To balance the
 /// transaction an ephemeral resource is created.
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[schema(as=TokenTransferCreatedEphemeral)]
 pub struct CreatedEphemeral {
     #[schema(value_type = String, format = Binary)]
@@ -123,7 +123,7 @@ impl CreatedWitnessData for CreatedEphemeral {
 /// An ephemeral resource is consumed in, for example, minting. The user wraps
 /// an ERC20 token and a new resource is created. To balance the transaction an
 /// ephemeral resource is consumed.
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[schema(as=TokenTransferConsumedEphemeral)]
 pub struct ConsumedEphemeral {
     #[schema(value_type = String, format = Binary)]
@@ -178,7 +178,7 @@ impl ConsumedWitnessData for ConsumedEphemeral {
 ///
 /// A persistent resource is consumed in, for example, transfer. The transferred
 /// resource is consumed from the sender.
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[schema(as=TokenTransferConsumedPersistent)]
 pub struct ConsumedPersistent {
     #[schema(value_type = String, format = Binary)]

@@ -28,7 +28,7 @@ use utoipa::ToSchema;
 
 /// The `Parameters` struct holds all the necessary resources to generate a
 /// transaction.
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Parameters {
     /// the list of resources the transaction is expected to create.
     pub created_resources: Vec<Created>,

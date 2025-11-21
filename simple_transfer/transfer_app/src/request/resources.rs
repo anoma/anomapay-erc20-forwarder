@@ -16,7 +16,10 @@ use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+<<<<<<< HEAD
 /// This enum holds all the possible structs for created resource witnesses.
+=======
+>>>>>>> 86f0fb4 (PartialEq for structs)
 #[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[enum_dispatch(CreatedWitnessData)]
 pub enum CreatedWitnessDataEnum {
@@ -25,7 +28,10 @@ pub enum CreatedWitnessDataEnum {
     TrivialEphemeral(crate::request::witness_data::trivial::CreatedEphemeral),
 }
 
+<<<<<<< HEAD
 /// This enum holds all the possible values for consumed resource witnesses.
+=======
+>>>>>>> 86f0fb4 (PartialEq for structs)
 #[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[enum_dispatch(ConsumedWitnessData)]
 pub enum ConsumedWitnessDataEnum {
@@ -42,7 +48,7 @@ pub enum ConsumedWitnessDataEnum {
 /// nullifier key, and additional witness data to generate the proofs.
 ///
 /// The witness data depends on which kind of resource this is.
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Consumed {
     #[serde(with = "serialize_resource")]
     #[schema(value_type = SerializedResource)]
@@ -107,7 +113,7 @@ impl Consumed {
 ///
 /// To create a resource you need the ARM resource, as well as witness data. The
 /// witness data depends on which kind of resource this is.
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Created {
     /// The resource that is being created.
     #[serde(with = "serialize_resource")]
