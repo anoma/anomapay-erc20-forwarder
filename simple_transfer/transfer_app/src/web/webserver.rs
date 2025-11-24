@@ -1,5 +1,7 @@
-use crate::request::fee_estimation::estimation::estimate_fee_unit_quantity;
-use crate::request::fee_estimation::token::FeeCompatibleERC20Token;
+use crate::request::fee_estimation::estimation::{
+    estimate_fee_unit_quantity, FeeEstimationPayload,
+};
+
 use crate::request::parameters::Parameters;
 use crate::web::handlers::handle_parameters;
 use crate::web::RequestError;
@@ -77,22 +79,22 @@ pub async fn send_transaction(
 #[utoipa::path(
     post,
     path = "/estimate_fee",
-    request_body = Parameters,
+    request_body = FeeEstimationPayload,
     responses(
-            (status = 200, description = "Submit a fee estimation request to the backend.", body = Parameters),
+            (status = 200, description = "Submit a fee estimation request to the backend.", body = FeeEstimationPayload),
             (status = 400, description = "Fee estimation failed.", body = RequestError, example = json!(RequestError::FeeEstimation(String::from("failed to estimate fee")))),
     )
 )]
 
 pub async fn estimate_fee(
-    payload: Json<Parameters>,
+    payload: Json<FeeEstimationPayload>,
     config: &State<AnomaPayConfig>,
 ) -> Result<Custom<Json<Value>>, RequestError> {
-    let token = FeeCompatibleERC20Token::USDC;
     let provider = protocol_adapter().provider().clone().erased(); // TODO refactor
-    let fee = estimate_fee_unit_quantity(config, &provider, token, payload.into_inner())
-        .await
-        .map_err(|err| RequestError::FeeEstimation(err.to_string()))?;
+    let fee =
+        estimate_fee_unit_quantity(config, &provider, &payload.fee_token, &payload.transaction)
+            .await
+            .map_err(|err| RequestError::FeeEstimation(err.to_string()))?;
 
     Ok(Custom(Status::Accepted, Json(json!({"fee": fee}))))
 }

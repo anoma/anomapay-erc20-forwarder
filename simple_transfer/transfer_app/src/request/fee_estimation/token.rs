@@ -1,4 +1,6 @@
+use serde::Deserialize;
 use strum::EnumIter;
+use utoipa::ToSchema;
 
 #[derive(Debug)]
 pub struct TokenMetadata {
@@ -14,7 +16,7 @@ pub enum Token {
     Native(NativeToken),
 }
 
-#[derive(Debug, Clone, EnumIter)]
+#[derive(Debug, Clone, EnumIter, Deserialize, ToSchema)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum FeeCompatibleERC20Token {
     WETH,
@@ -22,7 +24,7 @@ pub enum FeeCompatibleERC20Token {
     XAN,
 }
 
-#[derive(Debug, Clone, EnumIter)]
+#[derive(Debug, Clone, EnumIter, Deserialize)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum NativeToken {
     ETH,

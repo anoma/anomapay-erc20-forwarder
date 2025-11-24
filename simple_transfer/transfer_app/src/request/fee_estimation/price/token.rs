@@ -67,7 +67,7 @@ impl PriceResponse {
 /// * `fee_token` The fee compatible token to get the price in ether for.
 pub async fn get_token_price_in_ether(
     config: &AnomaPayConfig,
-    fee_token: FeeCompatibleERC20Token,
+    fee_token: &FeeCompatibleERC20Token,
 ) -> FeeEstimationResult<f64> {
     let price_response = get_token_prices(
         config,

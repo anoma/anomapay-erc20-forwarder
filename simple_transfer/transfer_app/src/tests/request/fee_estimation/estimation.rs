@@ -3,7 +3,9 @@
 
 extern crate dotenv;
 use crate::load_config;
-use crate::request::fee_estimation::estimation::estimate_fee_unit_quantity_by_resource_count;
+use crate::request::fee_estimation::estimation::{
+    estimate_fee_unit_quantity_by_resource_count, FeeEstimationPayload,
+};
 use crate::request::fee_estimation::price::token::get_token_price_in_ether;
 use crate::request::fee_estimation::token::FeeCompatibleERC20Token;
 use crate::tests::fixtures::user_with_private_key;
@@ -19,9 +21,13 @@ async fn test_estimate_fee() {
 
     let config = load_config().expect("failed to load config in test");
     let user = user_with_private_key(&config);
-    let parameters = example_mint_parameters(user, &config, 10).await;
 
-    assert!(estimate_fee(parameters.into(), State::from(&config))
+    let payload = FeeEstimationPayload {
+        transaction: example_mint_parameters(user, &config, 10).await,
+        fee_token: FeeCompatibleERC20Token::USDC,
+    };
+
+    assert!(estimate_fee(payload.into(), State::from(&config))
         .await
         .is_ok());
 }
@@ -36,7 +42,7 @@ async fn test_estimate_fee_unit_quantity() {
     let res = estimate_fee_unit_quantity_by_resource_count(
         &config,
         &provider,
-        FeeCompatibleERC20Token::USDC,
+        &FeeCompatibleERC20Token::USDC,
         2,
     )
     .await
@@ -50,7 +56,7 @@ async fn test_get_token_price_in_ether() {
 
     let config = load_config().expect("failed to load config in test");
 
-    let res = get_token_price_in_ether(&config, FeeCompatibleERC20Token::USDC)
+    let res = get_token_price_in_ether(&config, &FeeCompatibleERC20Token::USDC)
         .await
         .expect("failed to get price");
     println!("price: {res}");

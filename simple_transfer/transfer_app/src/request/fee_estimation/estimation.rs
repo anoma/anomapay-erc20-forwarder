@@ -4,7 +4,9 @@ use crate::request::fee_estimation::FeeEstimationResult;
 use crate::request::parameters::Parameters;
 use crate::AnomaPayConfig;
 use alloy::providers::DynProvider;
+use rocket::serde::Deserialize;
 use std::ops::{Add, Mul};
+use utoipa::ToSchema;
 
 /// The transaction base fee.
 /// Based on the empty transaction execution cost.
@@ -13,11 +15,17 @@ const BASE_FEE: u128 = 30_000;
 /// The fee per resource.
 const RESOURCE_FEE: u128 = 500_000;
 
+#[derive(ToSchema, Deserialize)]
+pub struct FeeEstimationPayload {
+    pub fee_token: FeeCompatibleERC20Token,
+    pub transaction: Parameters,
+}
+
 pub async fn estimate_fee_unit_quantity(
     config: &AnomaPayConfig,
     provider: &DynProvider,
-    fee_token: FeeCompatibleERC20Token,
-    transaction: Parameters,
+    fee_token: &FeeCompatibleERC20Token,
+    transaction: &Parameters,
 ) -> FeeEstimationResult<u128> {
     let resource_count = transaction.consumed_resources.len() + transaction.created_resources.len();
 
@@ -27,7 +35,7 @@ pub async fn estimate_fee_unit_quantity(
 pub(crate) async fn estimate_fee_unit_quantity_by_resource_count(
     config: &AnomaPayConfig,
     provider: &DynProvider,
-    fee_token: FeeCompatibleERC20Token,
+    fee_token: &FeeCompatibleERC20Token,
     resource_count: usize,
 ) -> FeeEstimationResult<u128> {
     let gas_units = BASE_FEE.add(RESOURCE_FEE.mul(resource_count as u128));
