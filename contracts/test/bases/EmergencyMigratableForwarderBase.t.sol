@@ -6,15 +6,17 @@ import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
 import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 
 import {EmergencyMigratableForwarderBase} from "../../src/bases/EmergencyMigratableForwarderBase.sol";
-import {ForwarderBase} from "../../src/bases/ForwarderBase.sol";
+import {ProtocolAdapterSpecificForwarderBase} from "../../src/bases/ProtocolAdapterSpecificForwarderBase.sol";
 
 import {EmergencyMigratableForwarderExample} from "../examples/EmergencyMigratableForwarder.e.sol";
 import {ForwarderExample} from "../examples/Forwarder.e.sol";
 import {ForwarderTargetExample, INPUT_VALUE, OUTPUT_VALUE, INPUT, EXPECTED_OUTPUT} from "../examples/ForwarderTarget.e.sol";
 
-import {ForwarderBaseTest} from "./ForwarderBase.t.sol";
+import {ProtocolAdapterSpecificForwarderBaseTest} from "./ProtocolAdapterSpecificForwarderBase.t.sol";
 
-contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
+contract EmergencyMigratableForwarderBaseTest is
+    ProtocolAdapterSpecificForwarderBaseTest
+{
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(3));
 
     EmergencyMigratableForwarderExample internal _emrgFwd;
@@ -47,7 +49,10 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
     function test_constructor_reverts_if_the_emergency_committe_address_is_zero()
         public
     {
-        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        vm.expectRevert(
+            ProtocolAdapterSpecificForwarderBase.ZeroNotAllowed.selector,
+            address(_fwd)
+        );
         new EmergencyMigratableForwarderExample({
             protocolAdapter: _pa,
             emergencyCommittee: address(0),
@@ -61,7 +66,9 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ForwarderBase.UnauthorizedCaller.selector,
+                ProtocolAdapterSpecificForwarderBase
+                    .UnauthorizedCaller
+                    .selector,
                 _EMERGENCY_COMMITTEE,
                 _UNAUTHORIZED_CALLER
             ),
@@ -74,7 +81,10 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         public
     {
         vm.prank(_EMERGENCY_COMMITTEE);
-        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        vm.expectRevert(
+            ProtocolAdapterSpecificForwarderBase.ZeroNotAllowed.selector,
+            address(_fwd)
+        );
 
         _emrgFwd.setEmergencyCaller(address(0));
     }
@@ -111,7 +121,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         _stopProtocolAdapter();
         _setEmergencyCaller();
 
-        assertEq(_emrgFwd.emergencyCaller(), _EMERGENCY_CALLER);
+        assertEq(_emrgFwd.getEmergencyCaller(), _EMERGENCY_CALLER);
     }
 
     function test_forwardEmergencyCall_reverts_if_the_pa_is_stopped_but_the_emergency_caller_is_not_set()
@@ -134,7 +144,9 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ForwarderBase.UnauthorizedCaller.selector,
+                ProtocolAdapterSpecificForwarderBase
+                    .UnauthorizedCaller
+                    .selector,
                 _EMERGENCY_CALLER,
                 _UNAUTHORIZED_CALLER
             )
@@ -183,14 +195,14 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         _stopProtocolAdapter();
         _setEmergencyCaller();
 
-        assertEq(_emrgFwd.emergencyCaller(), _EMERGENCY_CALLER);
+        assertEq(_emrgFwd.getEmergencyCaller(), _EMERGENCY_CALLER);
     }
 
     function test_emergencyCaller_returns_zero_if_the_emergency_caller_has_not_been_set()
         public
         view
     {
-        assertEq(_emrgFwd.emergencyCaller(), address(0));
+        assertEq(_emrgFwd.getEmergencyCaller(), address(0));
     }
 
     function _setEmergencyCaller() private {

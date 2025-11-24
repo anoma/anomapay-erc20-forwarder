@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
 
 import {IEmergencyMigratable} from "../interfaces/IEmergencyMigratable.sol";
-import {ForwarderBase} from "./ForwarderBase.sol";
+import {ProtocolAdapterSpecificForwarderBase} from "./ProtocolAdapterSpecificForwarderBase.sol";
 
 /// @title EmergencyMigratableForwarderBase
 /// @author Anoma Foundation, 2025
@@ -13,7 +13,7 @@ import {ForwarderBase} from "./ForwarderBase.sol";
 /// @custom:security-contact security@anoma.foundation
 abstract contract EmergencyMigratableForwarderBase is
     IEmergencyMigratable,
-    ForwarderBase
+    ProtocolAdapterSpecificForwarderBase
 {
     /// @notice The emergency committee address allowed to set an emergency caller in case the RISC Zero has caused
     /// the protocol adapter to stop.
@@ -35,7 +35,12 @@ abstract contract EmergencyMigratableForwarderBase is
         address protocolAdapter,
         bytes32 calldataCarrierLogicRef,
         address emergencyCommittee
-    ) ForwarderBase(protocolAdapter, calldataCarrierLogicRef) {
+    )
+        ProtocolAdapterSpecificForwarderBase(
+            protocolAdapter,
+            calldataCarrierLogicRef
+        )
+    {
         if (emergencyCommittee == address(0)) {
             revert ZeroNotAllowed();
         }
@@ -76,7 +81,7 @@ abstract contract EmergencyMigratableForwarderBase is
     }
 
     /// @inheritdoc IEmergencyMigratable
-    function emergencyCaller() external view returns (address caller) {
+    function getEmergencyCaller() external view returns (address caller) {
         caller = _emergencyCaller;
     }
 
