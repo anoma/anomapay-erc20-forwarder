@@ -44,8 +44,7 @@ pub fn health() -> Custom<Json<Value>> {
     request_body = Parameters,
     responses(
             (status = 200, description = "Submit a transaction proving and execution request to the backend.", body = Parameters),
-            (status = 400, description = "Todo already exists", body = RequestError, example = json!(RequestError::TransactionGeneration(String::from("failed to generate tx")))),
-            (status = 400, description = "Todo already exists", body = RequestError, example = json!(RequestError::Submit(String::from("failed to generate tx")))),
+            (status = 400, description = "Error occurred submitting transaction", body = RequestError, example = json!(RequestError::TransactionGeneration(String::from("failed to generate tx")))),
     )
 )]
 
