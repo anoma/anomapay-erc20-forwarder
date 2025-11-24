@@ -16,10 +16,7 @@ use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-<<<<<<< HEAD
 /// This enum holds all the possible structs for created resource witnesses.
-=======
->>>>>>> 86f0fb4 (PartialEq for structs)
 #[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[enum_dispatch(CreatedWitnessData)]
 pub enum CreatedWitnessDataEnum {
@@ -28,10 +25,7 @@ pub enum CreatedWitnessDataEnum {
     TrivialEphemeral(crate::request::witness_data::trivial::CreatedEphemeral),
 }
 
-<<<<<<< HEAD
 /// This enum holds all the possible values for consumed resource witnesses.
-=======
->>>>>>> 86f0fb4 (PartialEq for structs)
 #[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[enum_dispatch(ConsumedWitnessData)]
 pub enum ConsumedWitnessDataEnum {
