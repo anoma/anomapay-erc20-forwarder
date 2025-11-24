@@ -57,19 +57,6 @@ pub struct Consumed {
     pub witness_data: ConsumedWitnessDataEnum,
 }
 
-// impl std::clone::Clone for Consumed {
-//     //! To clone a resource the `witness_data` has to be cloned as well. Because
-//     //! this is a box we can't derive the default `Clone` trait and have to
-//     //! implement it manually.
-//     fn clone(&self) -> Self {
-//         Consumed {
-//             resource: self.resource,
-//             witness_data: self.witness_data.clone_box(),
-//             nullifier_key: self.nullifier_key.clone(),
-//         }
-//     }
-// }
-
 impl Consumed {
     /// Returns the nullifier for this consumed resource.
     ///
