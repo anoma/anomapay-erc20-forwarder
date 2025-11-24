@@ -34,10 +34,11 @@ pub struct AnomaPayConfig {
     /// the private key of the hot wallet
     #[allow(dead_code)]
     hot_wallet_private_key: PrivateKeySigner,
+    /// The Alchemy API key
+    alchemy_api_key: String,
 }
 
 /// Reads the environment for required values and sets them into the config.
-#[allow(dead_code)]
 fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
     let forwarder_address =
         env::var("FORWARDER_ADDRESS").map_err(|_| "FORWARDER_ADDRESS not set")?;
@@ -57,12 +58,16 @@ fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
         env::var("HOT_WALLET_USER_ADDRESS").map_err(|_| "HOT_WALLET_USER_ADDRESS not set")?;
     let hot_wallet_address: Address = hot_wallet_address.parse()?;
 
+    let alchemy_api_key: String =
+        env::var("ALCHEMY_API_KEY").map_err(|_| "ALCHEMY_API_KEY not set")?;
+
     Ok(AnomaPayConfig {
         forwarder_address,
         ethereum_rpc,
         indexer_address,
         hot_wallet_private_key,
         hot_wallet_address,
+        alchemy_api_key,
     })
 }
 

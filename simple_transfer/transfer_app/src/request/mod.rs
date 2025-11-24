@@ -1,4 +1,5 @@
 mod compliance_proof;
+pub mod fee_estimation;
 mod logic_proof;
 pub mod parameters;
 /// The request module contains all the logic to deal with a request to generate

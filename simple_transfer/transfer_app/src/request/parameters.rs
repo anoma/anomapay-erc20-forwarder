@@ -39,9 +39,9 @@ pub struct Parameters {
 }
 
 impl Parameters {
-    #[allow(dead_code)]
     /// Creates a new `Parameters` struct with the given lists of resources.
     /// The function asserts that both lists are equal in length or fails.
+    #[allow(dead_code)]
     pub fn new(
         created_resources: Vec<Created>,
         consumed_resources: Vec<Consumed>,
@@ -167,7 +167,6 @@ impl Parameters {
     }
 
     /// Generates a transaction for the given `Parameters` struct.
-    #[allow(dead_code)]
     pub async fn generate_transaction(
         &self,
         config: &AnomaPayConfig,

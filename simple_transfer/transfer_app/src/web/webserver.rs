@@ -1,7 +1,11 @@
+use crate::request::fee_estimation::estimation::estimate_fee_unit_quantity;
+use crate::request::fee_estimation::token::FeeCompatibleERC20Token;
 use crate::request::parameters::Parameters;
 use crate::web::handlers::handle_parameters;
 use crate::web::RequestError;
 use crate::AnomaPayConfig;
+use alloy::providers::Provider;
+use evm_protocol_adapter_bindings::call::protocol_adapter;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{Header, Status};
 use rocket::response::status::Custom;
@@ -66,6 +70,31 @@ pub async fn send_transaction(
         Status::Accepted,
         Json(json!({"transaction_hash": tx_hash})),
     ))
+}
+
+/// Estimates a fee for a transaction request.
+#[post("/estimate_fee", data = "<payload>")]
+#[utoipa::path(
+    post,
+    path = "/estimate_fee",
+    request_body = Parameters,
+    responses(
+            (status = 200, description = "Submit a fee estimation request to the backend.", body = Parameters),
+            (status = 400, description = "Fee estimation failed.", body = RequestError, example = json!(RequestError::FeeEstimation(String::from("failed to estimate fee")))),
+    )
+)]
+
+pub async fn estimate_fee(
+    payload: Json<Parameters>,
+    config: &State<AnomaPayConfig>,
+) -> Result<Custom<Json<Value>>, RequestError> {
+    let token = FeeCompatibleERC20Token::USDC;
+    let provider = protocol_adapter().provider().clone().erased(); // TODO refactor
+    let fee = estimate_fee_unit_quantity(config, &provider, token, payload.into_inner())
+        .await
+        .map_err(|err| RequestError::FeeEstimation(err.to_string()))?;
+
+    Ok(Custom(Status::Accepted, Json(json!({"fee": fee}))))
 }
 
 #[catch(422)]

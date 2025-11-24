@@ -33,7 +33,6 @@ async fn create_provider(config: &AnomaPayConfig) -> RpcResult<DynProvider> {
     Ok(provider)
 }
 
-#[allow(dead_code)]
 /// Submit a transaction to the protocol adapter and wait for the receipt.
 pub async fn pa_submit_transaction(
     config: &AnomaPayConfig,
