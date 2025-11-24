@@ -6,7 +6,9 @@ mod tests;
 mod user;
 mod web;
 
-use crate::web::webserver::{all_options, default_error, health, transfer, unprocessable, Cors};
+use crate::web::webserver::{
+    all_options, default_error, health, send_transaction, unprocessable, Cors,
+};
 use alloy::primitives::Address;
 use alloy::signers::local::PrivateKeySigner;
 use rocket::form::validate::Contains;
@@ -100,6 +102,6 @@ async fn rocket() -> _ {
     rocket::build()
         .manage(config)
         .attach(Cors)
-        .mount("/", routes![health, transfer, all_options])
+        .mount("/", routes![health, send_transaction, all_options])
         .register("/", catchers![default_error, unprocessable])
 }

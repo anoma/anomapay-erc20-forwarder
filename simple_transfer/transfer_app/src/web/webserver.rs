@@ -1,7 +1,6 @@
 use crate::request::parameters::Parameters;
 use crate::web::handlers::handle_parameters;
 use crate::web::RequestError;
-use crate::web::RequestError::TransactionGeneration;
 use crate::AnomaPayConfig;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{Header, Status};
@@ -12,7 +11,7 @@ use serde_json::Value;
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
-#[openapi(paths(health, transfer))]
+#[openapi(paths(health, send_transaction))]
 pub struct AnomaPayApi;
 
 /// Return the health status
@@ -37,20 +36,20 @@ pub fn health() -> Custom<Json<Value>> {
     )
 }
 
-/// Handles a request from the user to mint.
-#[post("/web/transfer", data = "<payload>")]
+/// Proves and executes an AnomaPay transaction and returns the Ethereum transaction hash.
+#[post("/web/send_transaction", data = "<payload>")]
 #[utoipa::path(
     post,
-    path = "/transfer",
+    path = "/send_transaction",
     request_body = Parameters,
     responses(
-            (status = 200, description = "Submit a transfer request to the backend.", body = Parameters),
+            (status = 200, description = "Submit a transaction proving and execution request to the backend.", body = Parameters),
             (status = 400, description = "Todo already exists", body = RequestError, example = json!(RequestError::TransactionGeneration(String::from("failed to generate tx")))),
             (status = 400, description = "Todo already exists", body = RequestError, example = json!(RequestError::Submit(String::from("failed to generate tx")))),
     )
 )]
 
-pub async fn transfer(
+pub async fn send_transaction(
     payload: Json<Parameters>,
     config: &State<AnomaPayConfig>,
 ) -> Result<Custom<Json<Value>>, RequestError> {
@@ -59,7 +58,7 @@ pub async fn transfer(
 
     let tx_hash = handle_parameters(parameters, config)
         .await
-        .map_err(|_| TransactionGeneration("kapot".to_string()))?;
+        .map_err(|_| RequestError::TransactionGeneration("kapot".to_string()))?;
 
     Ok(Custom(
         Status::Accepted,
