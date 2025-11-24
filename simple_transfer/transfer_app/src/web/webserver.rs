@@ -43,7 +43,10 @@ pub fn health() -> Custom<Json<Value>> {
     path = "/send_transaction",
     request_body = Parameters,
     responses(
-            (status = 200, description = "Submit a transaction proving and execution request to the backend.", body = Parameters),
+            (status = 200, description = "Submit a transaction proving and execution request to the backend.", body = inline(Object),
+            example = json!({
+                "transaction_hash": "0xDEADBEEF",
+            })),
             (status = 400, description = "Error occurred submitting transaction", body = RequestError, example = json!(RequestError::TransactionGeneration(String::from("failed to generate tx")))),
     )
 )]
