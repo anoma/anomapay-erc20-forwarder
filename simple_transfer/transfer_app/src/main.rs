@@ -7,7 +7,7 @@ mod user;
 mod web;
 
 use crate::web::webserver::{
-    all_options, default_error, health, send_transaction, unprocessable, Cors,
+    all_options, default_error, estimate_fee, health, send_transaction, unprocessable, Cors,
 };
 use crate::web::ApiDoc;
 use alloy::primitives::Address;
@@ -86,6 +86,9 @@ async fn rocket() -> _ {
             "/",
             SwaggerUi::new("/swagger-ui/<_..>").url("/api-docs/openapi.json", ApiDoc::openapi()),
         )
-        .mount("/", routes![health, send_transaction, all_options])
+        .mount(
+            "/",
+            routes![health, send_transaction, estimate_fee, all_options],
+        )
         .register("/", catchers![default_error, unprocessable])
 }
