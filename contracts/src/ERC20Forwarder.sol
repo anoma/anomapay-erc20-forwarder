@@ -85,6 +85,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @notice Wraps an ERC20 token and transfers funds from the user that must have authorized the call using
     /// `Permit2.permitWitnessTransferFrom`.
     /// @param input The input bytes containing the encoded arguments for the wrap call:
+    /// * The `CallType.Wrap` enum value that has been checked already and is therefore unused.
     /// * `from`: The signer of the Permit2 message from which the funds a transferred from.
     /// * `permit`: The permit data that was signed constituted by:
     /// * * `token`: The address of the token to be transferred.
@@ -97,7 +98,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         // slither-disable-next-line unused-return
         (
             ,
-            // CallType
+            // CallType.Wrap
             address from,
             ISignatureTransfer.PermitTransferFrom memory permit,
             bytes32 actionTreeRoot,
@@ -143,6 +144,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
     /// @notice Unwraps an ERC20 token and transfers funds to the recipient using the `SafeERC20.safeTransfer`.
     /// @param input The input bytes containing the encoded arguments for the unwrap call:
+    /// * The `CallType.Unwrap` enum value that has been checked already and is therefore unused.
     /// * `token`: The address of the token to be transferred.
     /// * `to`: The address to transfer the funds to.
     /// * `amount`: The amount to be transferred.
@@ -150,7 +152,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         // slither-disable-next-line unused-return
         (
             ,
-            // CallType
+            // CallType.Unwrap
             address token,
             address to,
             uint128 amount
