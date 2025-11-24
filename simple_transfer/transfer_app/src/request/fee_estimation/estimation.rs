@@ -24,7 +24,7 @@ pub async fn estimate_fee_unit_quantity(
     estimate_fee_unit_quantity_by_resource_count(config, provider, fee_token, resource_count).await
 }
 
-async fn estimate_fee_unit_quantity_by_resource_count(
+pub(crate) async fn estimate_fee_unit_quantity_by_resource_count(
     config: &AnomaPayConfig,
     provider: &DynProvider,
     fee_token: FeeCompatibleERC20Token,
@@ -46,47 +46,4 @@ async fn estimate_fee_unit_quantity_by_resource_count(
     let gas_fees_in_token_units = gas_fees_in_token_units.ceil() as u128;
 
     Ok(gas_fees_in_token_units)
-}
-
-#[cfg(test)]
-mod tests {
-    extern crate dotenv;
-
-    use super::*;
-    use alloy::providers::Provider;
-
-    use crate::load_config;
-    use crate::request::fee_estimation::estimation::FeeCompatibleERC20Token;
-    use crate::request::fee_estimation::price::token::get_token_price_in_ether;
-    use evm_protocol_adapter_bindings::call::protocol_adapter;
-
-    #[tokio::test]
-    async fn test_get_token_price_in_ether() {
-        dotenv::dotenv().ok();
-
-        let config = load_config().expect("failed to load config in test");
-
-        let res = get_token_price_in_ether(&config, FeeCompatibleERC20Token::USDC)
-            .await
-            .expect("failed to get price");
-        println!("price: {res}");
-    }
-
-    #[tokio::test]
-    async fn test_estimate_fee_unit_quantity() {
-        dotenv::dotenv().ok();
-
-        let config = load_config().expect("failed to load config in test");
-        let provider = protocol_adapter().provider().clone().erased(); // TODO refactor
-
-        let res = estimate_fee_unit_quantity_by_resource_count(
-            &config,
-            &provider,
-            FeeCompatibleERC20Token::USDC,
-            2,
-        )
-        .await
-        .expect("failed to get price");
-        println!("price: {res}");
-    }
 }
