@@ -15,6 +15,8 @@ pub enum PriceError {
     PriceError(Response),
     #[error("The token symbol was not found in the response.")]
     TokenSymbolNotFound,
+    #[error("The token query returned an error: {0}.")]
+    TokenSymbolError(String),
     #[error("The USD price could not be found in the response.")]
     UsdPriceNotFound,
     #[error("The price could not be parsed.")]
@@ -30,8 +32,7 @@ pub struct PriceResponse {
 pub struct TokenData {
     pub symbol: String,
     pub prices: Vec<PriceEntry>,
-    #[allow(unused)]
-    pub error: String,
+    pub error: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -119,5 +120,13 @@ pub async fn get_token_prices(
         return Err(PriceError::PriceError(resp));
     }
 
-    resp.json().await.map_err(PriceError::RequestError)
+    let price_response: PriceResponse = resp.json().await.map_err(PriceError::RequestError)?;
+
+    for data in &price_response.data {
+        if let Some(error_message) = data.error.clone() {
+            return Err(PriceError::TokenSymbolError(error_message));
+        }
+    }
+
+    Ok(price_response)
 }
