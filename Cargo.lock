@@ -9732,7 +9732,7 @@ dependencies = [
  "bincode",
  "chrono",
  "enum_dispatch",
- "evm_protocol_adapter_bindings",
+ "evm_protocol_adapter_bindings 1.0.0-rc.3",
  "futures",
  "itertools 0.14.0",
  "k256",
