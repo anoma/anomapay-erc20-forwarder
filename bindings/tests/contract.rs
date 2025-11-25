@@ -3,16 +3,16 @@ extern crate dotenv;
 
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy_chains::NamedChain;
-use erc20_forwarder_bindings::addresses::forwarder_deployments_map;
-use erc20_forwarder_bindings::contract::erc20_forwarder;
+use erc20_forwarder_bindings::addresses::erc20_forwarder_deployments_map;
 use erc20_forwarder_bindings::contract::ERC20Forwarder::ERC20ForwarderInstance;
+use erc20_forwarder_bindings::contract::erc20_forwarder;
 use evm_protocol_adapter_bindings::addresses::protocol_adapter_address;
 use evm_protocol_adapter_bindings::helpers::alchemy_url;
 
 #[tokio::test]
 async fn versions_of_deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
     // Iterate over all supported chains
-    for chain in forwarder_deployments_map().keys() {
+    for chain in erc20_forwarder_deployments_map().keys() {
         let fwd_referenced_protocol_adapter: alloy::primitives::Address = fwd_instance(chain)
             .await
             .getProtocolAdapter()
