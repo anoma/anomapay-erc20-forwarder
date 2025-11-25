@@ -1,4 +1,4 @@
-use alloy::primitives::{address, Address};
+use alloy::primitives::{Address, address};
 use alloy_chains::NamedChain;
 use std::collections::HashMap;
 
