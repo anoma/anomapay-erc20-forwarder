@@ -37,15 +37,15 @@ pub fn health() -> Custom<Json<Value>> {
 }
 
 /// Proves and executes an AnomaPay transaction and returns the Ethereum transaction hash.
-#[post("/web/send_transaction", data = "<payload>")]
+#[post("/send_transaction", data = "<payload>")]
 #[utoipa::path(
     post,
-    path = "/send_transaction",
+    path = "send_transaction",
     request_body = Parameters,
     responses(
             (status = 200, description = "Submit a transaction proving and execution request to the backend.", body = inline(Object),
             example = json!({
-                "transaction_hash": "0xDEADBEEF",
+                "transaction_hash": "0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF",
             })),
             (status = 400, description = "Error occurred submitting transaction", body = RequestError, example = json!(RequestError::TransactionGeneration(String::from("failed to generate tx")))),
     )
