@@ -1,4 +1,4 @@
-use arm::resource_logic::LogicCircuit;
+use transfer_witness::LogicCircuit;
 use transfer_witness::SimpleTransferWitness;
 use risc0_zkvm::guest::env;
 
