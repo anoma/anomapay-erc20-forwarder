@@ -86,7 +86,9 @@ pub async fn create_permit_signature(
     token_address: Address,
     deadline: u64,
 ) -> Signature {
-    let action_tree_root: Digest = action_tree.root();
+    let action_tree_root: Digest = action_tree
+        .root()
+        .expect("failed to create action tree root");
     let action_tree_encoded: &[u8] = action_tree_root.as_ref();
 
     let x = Permit2Data {

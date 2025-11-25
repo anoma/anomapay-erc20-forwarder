@@ -23,6 +23,7 @@ use arm::resource_logic::TrivialLogicWitness;
 use arm::transaction::Transaction;
 use risc0_zkvm::Digest;
 use transfer_library::TransferLogic;
+use transfer_witness::AUTH_SIGNATURE_DOMAIN;
 
 #[tokio::test]
 /// Test creation of a burn transaction.
@@ -87,7 +88,7 @@ pub async fn example_split_transaction_submit(
         example_split_transaction(sender, receiver, config, to_split_resource).await;
 
     // Submit the transaction.
-    let tx_hash = pa_submit_transaction(transaction.clone())
+    let tx_hash = pa_submit_transaction(config, transaction.clone())
         .await
         .expect("failed to submit ethereum transaction");
 
@@ -195,9 +196,10 @@ pub async fn example_split_parameters(
     ////////////////////////////////////////////////////////////////////////////
     // Create the permit signature
 
-    let action_tree_root: Digest = action_tree.root();
-    let auth_signature: AuthorizationSignature =
-        sender.auth_signing_key.sign(action_tree_root.as_bytes());
+    let action_tree_root: Digest = action_tree.root().expect("failed to get action tree root");
+    let auth_signature: AuthorizationSignature = sender
+        .auth_signing_key
+        .sign(AUTH_SIGNATURE_DOMAIN, action_tree_root.as_bytes());
 
     ////////////////////////////////////////////////////////////////////////////
     // Create the parameters

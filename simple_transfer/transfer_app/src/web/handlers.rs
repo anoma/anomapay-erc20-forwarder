@@ -18,7 +18,7 @@ pub async fn handle_parameters(
         .map_err(|_| TransactionGeneration("kapot".to_string()))?;
 
     // Submit the transaction.
-    let tx_hash = pa_submit_transaction(transaction)
+    let tx_hash = pa_submit_transaction(config, transaction)
         .await
         .map_err(|_| Submit("kapot".to_string()))?;
 

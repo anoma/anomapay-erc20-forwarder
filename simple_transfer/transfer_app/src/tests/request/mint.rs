@@ -63,7 +63,7 @@ pub async fn example_mint_transaction_submit(
     let (parameters, transaction) = example_mint_transaction(user, config).await;
 
     // Submit the transaction.
-    let tx_hash = pa_submit_transaction(transaction.clone())
+    let tx_hash = pa_submit_transaction(config, transaction.clone())
         .await
         .expect("failed to submit ethereum transaction");
 
