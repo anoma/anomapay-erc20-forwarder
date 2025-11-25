@@ -77,13 +77,14 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// @notice Migrates ERC20 resources by transferring ERC20 tokens from the ERC20 forwarder v1 and storing the
     /// associated nullifier.
     /// @param input The input bytes containing the encoded arguments for the migration call:
+    /// * The `CallTypeV2.Migrate` enum value that has been checked already and is therefore unused.
     /// * `nullifier`: The nullifier of the resource to be migrated.
     /// * `token`: The address of the token to migrated.
     /// * `amount`: The amount to be migrated.
     function _migrate(bytes calldata input) internal {
         (
             ,
-            // CallType
+            // CallTypeV2.Migrate
             address token,
             uint128 amount,
             bytes32 nullifier
