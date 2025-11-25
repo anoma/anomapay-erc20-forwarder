@@ -1,7 +1,7 @@
 # Directories
 cache/
 out/
-/target/
+target/
 node_modules/
 
 # Environment and secret files

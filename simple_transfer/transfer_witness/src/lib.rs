@@ -19,9 +19,11 @@ use arm::{
 };
 use serde::{Deserialize, Serialize};
 
+pub const AUTH_SIGNATURE_DOMAIN: &[u8] = b"SimpleTransferAuthorization";
+
 /// The SimpleTransferWitness holds all the information necessary to generate a proof of the
 /// resource logic of a given resource.
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct SimpleTransferWitness {
     /// Resource this witness is about.
     pub resource: Resource,
@@ -50,7 +52,7 @@ pub struct AuthorizationInfo {
 
 /// The EncryptionInfo struct holds information about the encryption keys for the
 /// recipient/sender of a resource in a transaction.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct EncryptionInfo {
     /// Public key. Obtain from the receiver for persistent resource_ciphertext
     pub encryption_pk: AffinePoint,
@@ -184,7 +186,9 @@ impl LogicCircuit for SimpleTransferWitness {
                     calculate_value_ref_from_auth(&auth_pk)
                 );
                 // Verify the authorization signature
-                assert!(auth_pk.verify(root_bytes, &auth_info.auth_sig).is_ok());
+                assert!(auth_pk
+                    .verify(AUTH_SIGNATURE_DOMAIN, root_bytes, &auth_info.auth_sig)
+                    .is_ok());
 
                 // empty payloads for consumed persistent resource
                 (vec![], vec![], vec![])
@@ -194,7 +198,7 @@ impl LogicCircuit for SimpleTransferWitness {
                     .encryption_info
                     .as_ref()
                     .ok_or(ArmError::MissingField("Encryption info"))?;
-                let cipher = Ciphertext::encrypt(
+                let cipher = Ciphertext::encrypt_with_nonce(
                     &self.resource.to_bytes()?,
                     &encryption_info.encryption_pk,
                     &encryption_info.sender_sk,
@@ -286,7 +290,7 @@ impl EncryptionInfo {
     pub fn new(encryption_pk: AffinePoint, discovery_pk: &AffinePoint) -> Self {
         let discovery_nonce: [u8; 12] = rand::random();
         let discovery_sk = SecretKey::random();
-        let discovery_cipher = Ciphertext::encrypt(
+        let discovery_cipher = Ciphertext::encrypt_with_nonce(
             &vec![0u8],
             discovery_pk,
             &discovery_sk,

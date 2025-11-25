@@ -80,9 +80,12 @@ impl Consumed {
             .generate_path(&nullifier)
             .map_err(|_| ConsumedResourceNotInActionTree(nullifier))?;
 
-        let nullifier_key = NullifierKey::new(self.nullifier_key.inner());
-        self.witness_data
-            .logic_witness(self.resource, resource_path, nullifier_key, config)
+        self.witness_data.logic_witness(
+            self.resource,
+            resource_path,
+            self.nullifier_key.clone(),
+            config,
+        )
     }
 }
 

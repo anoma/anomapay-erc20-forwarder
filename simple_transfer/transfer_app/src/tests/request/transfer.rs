@@ -23,6 +23,7 @@ use arm::transaction::Transaction;
 use arm::Digest;
 use itertools::Itertools;
 use transfer_library::TransferLogic;
+use transfer_witness::AUTH_SIGNATURE_DOMAIN;
 
 #[tokio::test]
 /// Test creation of a burn transaction.
@@ -85,7 +86,7 @@ pub async fn example_transfer_transaction_submit(
         example_transfer_transaction(sender, receiver, config, resources_to_transfer).await;
 
     // Submit the transaction.
-    let tx_hash = pa_submit_transaction(transaction.clone())
+    let tx_hash = pa_submit_transaction(config, transaction.clone())
         .await
         .expect("failed to submit ethereum transaction");
 
@@ -202,7 +203,9 @@ pub async fn example_transfer_parameters(
         )
         .collect();
     let action_tree: MerkleTree = MerkleTree::new(resources);
-    let action_tree_root: Digest = action_tree.root();
+    let action_tree_root: Digest = action_tree
+        .root()
+        .expect("failed to create action tree root");
 
     // Construct the created resources with witness data.
     let mut consumed_resources_with_witness_data: Vec<Consumed> = vec![];
@@ -210,7 +213,7 @@ pub async fn example_transfer_parameters(
         let consumed_witness_data = ConsumedPersistent {
             sender_authorization_signature: sender
                 .auth_signing_key
-                .sign(action_tree_root.as_bytes()),
+                .sign(AUTH_SIGNATURE_DOMAIN, action_tree_root.as_bytes()),
             sender_authorization_verifying_key: sender.clone().auth_verifying_key(),
         };
 

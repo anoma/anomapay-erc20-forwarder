@@ -60,7 +60,10 @@ pub mod serialize_nullifier_key {
         // Base64 encoded String to Vec<u8>
         let bytes = STANDARD.decode(&s).map_err(serde::de::Error::custom)?;
 
-        Ok(NullifierKey::from_bytes(bytes.as_ref()))
+        let arr: [u8; 32] = bytes
+            .try_into()
+            .map_err(|_| serde::de::Error::custom("nullifier key is not 32 bytes"))?;
+        Ok(NullifierKey::from_bytes(arr))
     }
 }
 
