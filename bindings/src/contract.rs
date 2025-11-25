@@ -39,7 +39,7 @@ pub async fn erc20_forwarder(
     )
     .map_err(|_| BindingsError::ChainIdUnkown)?;
 
-    match forwarder_address(named_chain) {
+    match forwarder_address(&named_chain) {
         Some(address) => Ok(ERC20ForwarderInstance::new(address, provider)),
         None => Err(BindingsError::UnsupportedChain(named_chain)),
     }

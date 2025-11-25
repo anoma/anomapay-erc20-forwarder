@@ -10,7 +10,7 @@ arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.11.0", p
     "bonsai",
     "test",
 ] }
-evm_protocol_adapter_bindings = { git = "https://github.com/anoma/evm-protocol-adapter", ref = "5c38afb9aa128e2881dca276c416c13d9d4096da" }
+evm_protocol_adapter_bindings = { git = "https://github.com/anoma/evm-protocol-adapter", rev = "beffbe0ffc96fc16f1bd7e7d60db03048786769e" }
 alloy = { version = "1.1.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.18"
 
