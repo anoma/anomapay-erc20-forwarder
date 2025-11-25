@@ -12,5 +12,8 @@ opt-level = 3
 debug = 1
 lto = true
 
+[workspace.metadata.patch]
+crates = ["arm"]
+
 [patch."https://github.com/anoma/arm-risc0"]
-arm = { version = "0.8.1", path = "./target/patch/arm" }
+arm = { path = "./target/patch/arm" }
