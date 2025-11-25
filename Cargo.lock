@@ -1425,7 +1425,7 @@ dependencies = [
 
 [[package]]
 name = "arm"
-version = "0.11.0"
+version = "0.8.1"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",
@@ -1443,31 +1443,6 @@ dependencies = [
  "slab",
  "thiserror 2.0.17",
  "tracing-subscriber 0.3.20",
- "zeroize",
-]
-
-[[package]]
-name = "arm"
-version = "0.11.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.11.0#087e7d05f6b7f5a961ea4197d6be5615aea85343"
-dependencies = [
- "aes-gcm",
- "alloy-primitives",
- "alloy-sol-types",
- "bincode",
- "bytemuck",
- "hex",
- "k256",
- "lazy_static",
- "rand 0.8.5",
- "risc0-zkvm",
- "serde",
- "serde_with",
- "sha3",
- "slab",
- "thiserror 2.0.17",
- "tracing-subscriber 0.3.20",
- "zeroize",
 ]
 
 [[package]]
@@ -1996,7 +1971,7 @@ dependencies = [
  "bitflags 2.10.0",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools 0.12.1",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -3572,9 +3547,9 @@ version = "1.0.0-rc.1"
 dependencies = [
  "alloy",
  "alloy-chains",
- "arm 0.11.0",
+ "arm",
  "dotenv",
- "evm_protocol_adapter_bindings 1.0.0-rc.5",
+ "evm_protocol_adapter_bindings 1.0.0-rc.5 (git+https://github.com/anoma/evm-protocol-adapter?rev=beffbe0ffc96fc16f1bd7e7d60db03048786769e)",
  "serde",
  "thiserror 2.0.17",
  "tokio",
@@ -3611,7 +3586,7 @@ source = "git+https://github.com/anoma/evm-protocol-adapter?rev=beffbe0ffc96fc16
 dependencies = [
  "alloy",
  "alloy-chains",
- "arm 0.11.0",
+ "arm",
  "dotenv",
  "serde",
  "thiserror 2.0.17",
@@ -5309,7 +5284,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.6.1",
+ "socket2 0.5.10",
  "system-configuration",
  "tokio",
  "tower-service",
@@ -7344,7 +7319,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
  "heck",
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "log",
  "multimap",
  "once_cell",
@@ -7377,7 +7352,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "proc-macro2",
  "quote",
  "syn 2.0.111",
@@ -7390,7 +7365,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9120690fafc389a67ba3803df527d0ec9cbbc9cc45e4cc20b332996dfb672425"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "proc-macro2",
  "quote",
  "syn 2.0.111",
@@ -7456,7 +7431,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls",
- "socket2 0.6.1",
+ "socket2 0.5.10",
  "thiserror 2.0.17",
  "tokio",
  "tracing",
@@ -7493,7 +7468,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.6.1",
+ "socket2 0.5.10",
  "tracing",
  "windows-sys 0.60.2",
 ]
@@ -9732,7 +9707,7 @@ dependencies = [
  "bincode",
  "chrono",
  "enum_dispatch",
- "evm_protocol_adapter_bindings 1.0.0-rc.3",
+ "evm_protocol_adapter_bindings 1.0.0-rc.5 (git+https://github.com/anoma/evm-protocol-adapter?tag=contracts%2Fv1.0.0-rc.5)",
  "futures",
  "itertools 0.14.0",
  "k256",
@@ -9758,7 +9733,7 @@ dependencies = [
 name = "transfer_library"
 version = "0.1.0"
 dependencies = [
- "arm 0.8.1",
+ "arm",
  "hex",
  "lazy_static",
  "serde",
@@ -9769,7 +9744,7 @@ dependencies = [
 name = "transfer_witness"
 version = "0.1.0"
 dependencies = [
- "arm 0.8.1",
+ "arm",
  "rand 0.8.5",
  "serde",
 ]
