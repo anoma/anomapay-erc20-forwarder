@@ -1,7 +1,9 @@
 #![cfg(test)]
 
 use crate::request::parameters::Parameters;
-use crate::request::resources::{Consumed, Created};
+use crate::request::resources::{
+    Consumed, ConsumedWitnessDataEnum, Created, CreatedWitnessDataEnum,
+};
 use crate::request::witness_data::token_transfer::{ConsumedPersistent, CreatedPersistent};
 use crate::request::witness_data::trivial;
 use crate::rpc::pa_submit_transaction;
@@ -215,7 +217,7 @@ pub async fn example_transfer_parameters(
         let consumed_resource: Consumed = Consumed {
             resource,
             nullifier_key: sender.clone().nf_key,
-            witness_data: Box::new(consumed_witness_data),
+            witness_data: ConsumedWitnessDataEnum::Persistent(consumed_witness_data),
         };
 
         consumed_resources_with_witness_data.push(consumed_resource);
@@ -231,7 +233,7 @@ pub async fn example_transfer_parameters(
 
     let created_resource = Created {
         resource: created_resource,
-        witness_data: Box::new(created_witness_data),
+        witness_data: CreatedWitnessDataEnum::Persistent(created_witness_data),
     };
     created_resources_with_witness_data.push(created_resource);
 
@@ -241,7 +243,7 @@ pub async fn example_transfer_parameters(
 
         let created_resource = Created {
             resource,
-            witness_data: Box::new(created_witness_data),
+            witness_data: CreatedWitnessDataEnum::TrivialEphemeral(created_witness_data),
         };
         created_resources_with_witness_data.push(created_resource);
     }

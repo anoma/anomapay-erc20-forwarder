@@ -22,17 +22,14 @@ use utoipa::ToSchema;
 /// An ephemeral resource is consumed in, for example, a split. The user splits
 /// 1 resource into 2 resources. To balance the transaction a trivial consumed
 /// ephemeral resource is created.
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
+#[schema(as=TrivialConsumedEphemeral)]
 /// The empty witness data for consumed ephemeral resources.
 pub struct ConsumedEphemeral {}
 
 #[async_trait]
 #[typetag::serde]
 impl ConsumedWitnessData for ConsumedEphemeral {
-    fn clone_box(&self) -> Box<dyn ConsumedWitnessData> {
-        Box::new(self.clone())
-    }
-
     fn logic_witness(
         &self,
         resource: Resource,
@@ -68,15 +65,12 @@ impl ConsumedWitnessData for ConsumedEphemeral {
 ///
 /// These resources have no witness data associated with them, so the struct is
 /// empty.
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
+#[schema(as=TrivialCreatedEphemeral)]
 pub struct CreatedEphemeral {}
 
 #[typetag::serde]
 impl CreatedWitnessData for CreatedEphemeral {
-    fn clone_box(&self) -> Box<dyn CreatedWitnessData> {
-        Box::new(self.clone())
-    }
-
     fn logic_witness(
         &self,
         resource: Resource,

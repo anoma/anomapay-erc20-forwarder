@@ -4,13 +4,36 @@ use crate::request::ProvingError::{
 };
 use crate::request::ProvingResult;
 use crate::web;
+use crate::web::serializer::serialize_nullifier_key;
+use crate::web::serializer::serialize_resource;
+use crate::web::serializer::SerializedResource;
 use crate::AnomaPayConfig;
 use arm::action_tree::MerkleTree;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::Digest;
+use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+
+/// This enum holds all the possible structs for created resource witnesses.
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
+#[enum_dispatch(CreatedWitnessData)]
+pub enum CreatedWitnessDataEnum {
+    Persistent(crate::request::witness_data::token_transfer::CreatedPersistent),
+    Ephemeral(crate::request::witness_data::token_transfer::CreatedEphemeral),
+    TrivialEphemeral(crate::request::witness_data::trivial::CreatedEphemeral),
+}
+
+/// This enum holds all the possible values for consumed resource witnesses.
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
+#[enum_dispatch(ConsumedWitnessData)]
+pub enum ConsumedWitnessDataEnum {
+    Persistent(crate::request::witness_data::token_transfer::ConsumedPersistent),
+    Ephemeral(crate::request::witness_data::token_transfer::ConsumedEphemeral),
+    TrivialEphemeral(crate::request::witness_data::trivial::ConsumedEphemeral),
+}
+
 //----------------------------------------------------------------------------
 // Consumed Resource
 
@@ -19,30 +42,19 @@ use utoipa::ToSchema;
 /// nullifier key, and additional witness data to generate the proofs.
 ///
 /// The witness data depends on which kind of resource this is.
-#[derive(ToSchema, Deserialize, Serialize)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Consumed {
-    #[serde(skip)]
+    #[serde(with = "serialize_resource")]
+    #[schema(value_type = SerializedResource)]
     /// The resource that is being consumed.
     pub resource: Resource,
     #[schema(value_type = String, format = Binary)]
+    #[serde(with = "serialize_nullifier_key")]
     /// The nullifier key belonging to this resource.
     pub nullifier_key: NullifierKey,
     #[schema(value_type = web::ConsumedWitnessDataSchema)]
     /// The witness data that is necessary to consume this resource.
-    pub witness_data: Box<dyn ConsumedWitnessData>,
-}
-
-impl Clone for Consumed {
-    //! To clone a resource the `witness_data` has to be cloned as well. Because
-    //! this is a box we can't derive the default `Clone` trait and have to
-    //! implement it manually.
-    fn clone(&self) -> Self {
-        Consumed {
-            resource: self.resource,
-            witness_data: self.witness_data.clone_box(),
-            nullifier_key: self.nullifier_key.clone(),
-        }
-    }
+    pub witness_data: ConsumedWitnessDataEnum,
 }
 
 impl Consumed {
@@ -82,26 +94,15 @@ impl Consumed {
 ///
 /// To create a resource you need the ARM resource, as well as witness data. The
 /// witness data depends on which kind of resource this is.
-#[derive(ToSchema, Deserialize, Serialize)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Created {
     /// The resource that is being created.
-    #[serde(skip)]
+    #[serde(with = "serialize_resource")]
+    #[schema(value_type = SerializedResource, rename="Resource")]
     pub resource: Resource,
     #[schema(value_type = web::CreatedWitnessDataSchema)]
     /// The witness data that is necessary to create this resource.
-    pub witness_data: Box<dyn CreatedWitnessData>,
-}
-
-impl Clone for Created {
-    //! To clone a resource the `witness_data` has to be cloned as well. Because
-    //! this is a box we can't derive the default `Clone` trait and have to
-    //! implement it manually.
-    fn clone(&self) -> Self {
-        Created {
-            resource: self.resource,
-            witness_data: self.witness_data.clone_box(),
-        }
-    }
+    pub witness_data: CreatedWitnessDataEnum,
 }
 
 impl Created {

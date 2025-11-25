@@ -17,6 +17,8 @@
 pub mod token_transfer;
 pub mod trivial;
 
+use crate::request::resources::ConsumedWitnessDataEnum;
+use crate::request::resources::CreatedWitnessDataEnum;
 use crate::request::ProvingError::LogicProofGenerationError;
 use crate::request::ProvingResult;
 use crate::{time_it, AnomaPayConfig};
@@ -27,6 +29,7 @@ use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
 use arm::Digest;
 use async_trait::async_trait;
+use enum_dispatch::enum_dispatch;
 use log::info;
 use transfer_library::TransferLogic;
 use typetag;
@@ -63,8 +66,8 @@ impl WitnessTypes {
 /// all witnessdata for consumed resources.
 #[async_trait]
 #[typetag::serde(tag = "type")]
+#[enum_dispatch]
 pub trait ConsumedWitnessData: Send + Sync {
-    fn clone_box(&self) -> Box<dyn ConsumedWitnessData>;
     fn logic_witness(
         &self,
         resource: Resource,
@@ -84,8 +87,8 @@ pub trait ConsumedWitnessData: Send + Sync {
 /// all witnessdata for created resources.
 #[async_trait]
 #[typetag::serde(tag = "type")]
+#[enum_dispatch]
 pub trait CreatedWitnessData: Send + Sync {
-    fn clone_box(&self) -> Box<dyn CreatedWitnessData>;
     fn logic_witness(
         &self,
         resource: Resource,

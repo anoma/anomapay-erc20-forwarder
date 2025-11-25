@@ -2,7 +2,9 @@
 //! Test the behavior of minting a resource.
 
 use crate::request::parameters::Parameters;
-use crate::request::resources::{Consumed, Created};
+use crate::request::resources::{
+    Consumed, ConsumedWitnessDataEnum, Created, CreatedWitnessDataEnum,
+};
 use crate::request::witness_data::{token_transfer, trivial};
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
@@ -112,7 +114,7 @@ pub async fn example_split_transaction(
     (parameters, transaction)
 }
 /// Creates example split parameters.
-async fn example_split_parameters(
+pub async fn example_split_parameters(
     sender: Keychain,
     receiver: Keychain,
     config: &AnomaPayConfig,
@@ -205,7 +207,7 @@ async fn example_split_parameters(
     let padding = Consumed {
         resource: padding_resource,
         nullifier_key: NullifierKey::default(),
-        witness_data: Box::new(padding_witness_data),
+        witness_data: ConsumedWitnessDataEnum::TrivialEphemeral(padding_witness_data),
     };
 
     // To split resource
@@ -216,7 +218,7 @@ async fn example_split_parameters(
     let to_split = Consumed {
         resource: to_split_resource,
         nullifier_key: sender.nf_key,
-        witness_data: Box::new(to_split_witness_data),
+        witness_data: ConsumedWitnessDataEnum::Persistent(to_split_witness_data),
     };
 
     // Created resource
@@ -226,7 +228,7 @@ async fn example_split_parameters(
     };
     let created = Created {
         resource: created_resource,
-        witness_data: Box::new(created_witness_data),
+        witness_data: CreatedWitnessDataEnum::Persistent(created_witness_data),
     };
 
     // Remainder resource
@@ -236,7 +238,7 @@ async fn example_split_parameters(
     };
     let remainder = Created {
         resource: remainder_resource,
-        witness_data: Box::new(remainder_witness_data),
+        witness_data: CreatedWitnessDataEnum::Persistent(remainder_witness_data),
     };
 
     Parameters {

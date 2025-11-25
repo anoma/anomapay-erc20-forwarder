@@ -18,7 +18,7 @@ pub struct AnomaPayApi;
 #[get("/health")]
 #[utoipa::path(
     get,
-    path = "/health",
+    path = "health",
     responses(
             (status = 200, description = "Service is healthy", body = inline(Object),
             example = json!({
@@ -37,15 +37,17 @@ pub fn health() -> Custom<Json<Value>> {
 }
 
 /// Proves and executes an AnomaPay transaction and returns the Ethereum transaction hash.
-#[post("/web/send_transaction", data = "<payload>")]
+#[post("/send_transaction", data = "<payload>")]
 #[utoipa::path(
     post,
-    path = "/send_transaction",
+    path = "send_transaction",
     request_body = Parameters,
     responses(
-            (status = 200, description = "Submit a transaction proving and execution request to the backend.", body = Parameters),
-            (status = 400, description = "Todo already exists", body = RequestError, example = json!(RequestError::TransactionGeneration(String::from("failed to generate tx")))),
-            (status = 400, description = "Todo already exists", body = RequestError, example = json!(RequestError::Submit(String::from("failed to generate tx")))),
+            (status = 200, description = "Submit a transaction proving and execution request to the backend.", body = inline(Object),
+            example = json!({
+                "transaction_hash": "0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF",
+            })),
+            (status = 400, description = "Error occurred submitting transaction", body = RequestError, example = json!(RequestError::TransactionGeneration(String::from("failed to generate tx")))),
     )
 )]
 

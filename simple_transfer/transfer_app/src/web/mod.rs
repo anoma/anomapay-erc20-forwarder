@@ -1,11 +1,14 @@
 use crate::request;
+use crate::web;
 use request::witness_data::token_transfer;
 use request::witness_data::trivial;
 use rocket::Responder;
 use serde::{Deserialize, Serialize};
+use utoipa::OpenApi;
 use utoipa::ToSchema;
 
 mod handlers;
+pub mod serializer;
 pub mod webserver;
 
 pub type ReqResult<T> = Result<T, RequestError>;
@@ -24,7 +27,6 @@ pub enum RequestError {
 
 /// An enum type for all possible Created Resource witness to satisfy the OpenAPI schema generator.
 #[derive(ToSchema, Serialize, Deserialize)]
-#[serde(tag = "type")]
 pub enum CreatedWitnessDataSchema {
     #[schema(value_type = trivial::CreatedEphemeral)]
     TrivialCreatedEphemeral(trivial::CreatedEphemeral),
@@ -38,9 +40,8 @@ pub enum CreatedWitnessDataSchema {
 
 /// An enum type for all possible Consumed Resource witness to satisfy the OpenAPI schema generator.
 #[derive(ToSchema, Serialize, Deserialize)]
-#[serde(tag = "type")]
 pub enum ConsumedWitnessDataSchema {
-    #[schema(value_type = trivial::CreatedEphemeral)]
+    #[schema(value_type = trivial::ConsumedEphemeral)]
     TrivialCreatedEphemeral(trivial::ConsumedEphemeral),
 
     #[schema(value_type = token_transfer::ConsumedEphemeral)]
@@ -49,3 +50,16 @@ pub enum ConsumedWitnessDataSchema {
     #[schema(value_type = token_transfer::ConsumedPersistent)]
     TokenTransferCreatedPersistent(token_transfer::ConsumedPersistent),
 }
+
+/// Struct that represents the OpenAPI specification.
+/// Used to render it to json and serve up via the endpoint.
+#[derive(OpenApi)]
+#[openapi(
+        nest(
+            (path = "/", api = web::webserver::AnomaPayApi)
+        ),
+        tags(
+            (name = "AnomaPay Api", description = "JSON API for the AnomaPay backend")
+        ),
+    )]
+pub struct ApiDoc;

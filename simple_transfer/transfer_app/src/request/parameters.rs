@@ -8,7 +8,7 @@
 use crate::request::compliance_proof::compliance_proofs_async;
 use crate::request::logic_proof::logic_proofs_async;
 use crate::request::resources::{Consumed, Created};
-use crate::request::witness_data::WitnessTypes;
+use crate::request::witness_data::{ConsumedWitnessData, WitnessTypes};
 use crate::request::ProvingError::ConsumedAndCreatedResourceCountMismatch;
 use crate::request::{
     ProvingError::{DeltaProofGenerationError, TransactionVerificationError},
@@ -28,7 +28,7 @@ use utoipa::ToSchema;
 
 /// The `Parameters` struct holds all the necessary resources to generate a
 /// transaction.
-#[derive(ToSchema, Deserialize, Serialize, Clone)]
+#[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Parameters {
     /// the list of resources the transaction is expected to create.
     pub created_resources: Vec<Created>,
