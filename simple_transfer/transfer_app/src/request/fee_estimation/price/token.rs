@@ -1,4 +1,4 @@
-use crate::request::fee_estimation::token::{Data, FeeCompatibleERC20Token, NativeToken, Token};
+use crate::request::fee_estimation::token::{Data, NativeToken, Token};
 use crate::request::fee_estimation::{FeeEstimationError, FeeEstimationResult};
 use crate::AnomaPayConfig;
 use reqwest::{Client, Response};
@@ -61,33 +61,27 @@ impl PriceResponse {
     }
 }
 
-/// Returns the price of the given token in ether.
+/// Returns the price of a token in ether.
 /// # Arguments
 /// * `config` The AnomaPay config.
 /// * `fee_token` The fee compatible token to get the price in ether for.
 pub async fn get_token_price_in_ether(
     config: &AnomaPayConfig,
-    fee_token: &FeeCompatibleERC20Token,
+    fee_token: &Token,
 ) -> FeeEstimationResult<f64> {
-    let price_response = get_token_prices(
-        config,
-        vec![
-            Token::FeeCompatibleERC20(fee_token.clone()),
-            Token::Native(NativeToken::ETH),
-        ],
-    )
-    .await
-    .map_err(FeeEstimationError::TokenPriceError)?;
+    let price_response = get_token_prices(config, vec![fee_token.clone(), NativeToken::ETH.into()])
+        .await
+        .map_err(FeeEstimationError::TokenPriceError)?;
 
-    let token_usd_price = price_response
+    let token_price_in_usd = price_response
         .find_usd_price(fee_token.symbol())
         .map_err(FeeEstimationError::TokenPriceError)?;
 
-    let eth_usd_price = price_response
+    let ether_price_in_usd = price_response
         .find_usd_price(NativeToken::ETH.symbol())
         .map_err(FeeEstimationError::TokenPriceError)?;
 
-    Ok(eth_usd_price / token_usd_price)
+    Ok(token_price_in_usd / ether_price_in_usd)
 }
 
 /// Returns the price of the given token in ether.
