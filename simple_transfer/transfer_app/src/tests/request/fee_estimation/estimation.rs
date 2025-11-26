@@ -8,11 +8,10 @@ use crate::request::fee_estimation::estimation::{
 };
 use crate::request::fee_estimation::price::token::get_token_price_in_ether;
 use crate::request::fee_estimation::token::FeeCompatibleERC20Token;
+use crate::rpc::create_provider;
 use crate::tests::fixtures::user_with_private_key;
 use crate::tests::request::mint::example_mint_parameters;
 use crate::web::webserver::estimate_fee;
-use alloy::providers::Provider;
-use evm_protocol_adapter_bindings::call::protocol_adapter;
 use rocket::State;
 
 #[tokio::test]
@@ -36,8 +35,10 @@ async fn test_estimate_fee() {
 async fn test_estimate_fee_unit_quantity() {
     dotenv::dotenv().ok();
 
-    let config = load_config().expect("failed to load config in test");
-    let provider = protocol_adapter().provider().clone().erased();
+    let config = load_config().expect("failed to load config");
+    let provider = create_provider(&config)
+        .await
+        .expect("failed to create provider");
 
     let res = estimate_fee_unit_quantity_by_resource_count(
         &config,

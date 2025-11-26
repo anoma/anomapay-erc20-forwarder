@@ -3,11 +3,10 @@ use crate::request::fee_estimation::estimation::{
 };
 
 use crate::request::parameters::Parameters;
+use crate::rpc::create_provider;
 use crate::web::handlers::handle_parameters;
 use crate::web::RequestError;
 use crate::AnomaPayConfig;
-use alloy::providers::Provider;
-use evm_protocol_adapter_bindings::call::protocol_adapter;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{Header, Status};
 use rocket::response::status::Custom;
@@ -90,7 +89,10 @@ pub async fn estimate_fee(
     payload: Json<FeeEstimationPayload>,
     config: &State<AnomaPayConfig>,
 ) -> Result<Custom<Json<Value>>, RequestError> {
-    let provider = protocol_adapter().provider().clone().erased(); // TODO refactor
+    let provider = create_provider(config)
+        .await
+        .map_err(|err| RequestError::ProviderError(err.to_string()))?;
+
     let fee =
         estimate_fee_unit_quantity(config, &provider, &payload.fee_token, &payload.transaction)
             .await

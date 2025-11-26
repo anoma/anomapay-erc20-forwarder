@@ -26,6 +26,8 @@ pub enum RequestError {
     /// An error occurred during fee estimation.
     #[response(status = 400)]
     FeeEstimation(String),
+    #[response(status = 400)]
+    ProviderError(String),
 }
 
 /// An enum type for all possible Created Resource witness to satisfy the OpenAPI schema generator.
