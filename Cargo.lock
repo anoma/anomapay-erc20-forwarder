@@ -1450,7 +1450,7 @@ dependencies = [
 [[package]]
 name = "arm"
 version = "0.13.0"
-source = "git+https://github.com/anoma/arm-risc0?branch=develop#cde4e1b7bdda25f8a9cc003fc7ff94263bcdd2b3"
+source = "git+https://github.com/anoma/arm-risc0?tag=v0.13.0#cde4e1b7bdda25f8a9cc003fc7ff94263bcdd2b3"
 dependencies = [
  "bincode",
  "bytemuck",
@@ -1470,7 +1470,7 @@ dependencies = [
 [[package]]
 name = "arm-gadgets"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0?branch=develop#cde4e1b7bdda25f8a9cc003fc7ff94263bcdd2b3"
+source = "git+https://github.com/anoma/arm-risc0?tag=v0.13.0#cde4e1b7bdda25f8a9cc003fc7ff94263bcdd2b3"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",

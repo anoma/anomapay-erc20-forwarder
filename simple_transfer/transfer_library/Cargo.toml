@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-arm = { git = "https://github.com/anoma/arm-risc0", branch = "develop", default-features = true }
-arm-gadgets = { git = "https://github.com/anoma/arm-risc0", branch = "develop" }
+arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = true }
+arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
 transfer_witness = { path = "../transfer_witness" }
 serde = { version = "1.0.219", features = ["derive"] }
 lazy_static = "1.5.0"
