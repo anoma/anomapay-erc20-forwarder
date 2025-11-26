@@ -3,6 +3,7 @@ use crate::request::ProvingError::ComplianceProofGenerationError;
 use crate::request::ProvingResult;
 use arm::compliance::ComplianceWitness;
 use arm::compliance_unit::ComplianceUnit;
+use arm::proving_system::ProofType;
 use tokio::task::JoinHandle;
 
 #[cfg(not(test))]
@@ -36,7 +37,7 @@ macro_rules! time_it {
 pub fn compliance_proof(compliance_witness: &ComplianceWitness) -> ProvingResult<ComplianceUnit> {
     time_it!(
         "compliance proof",
-        ComplianceUnit::create(compliance_witness).map_err(|_| ComplianceProofGenerationError)
+        ComplianceUnit::create(compliance_witness, ProofType::Groth16).map_err(|_| ComplianceProofGenerationError)
     )
 }
 

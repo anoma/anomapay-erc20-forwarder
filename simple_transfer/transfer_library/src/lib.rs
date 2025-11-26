@@ -4,14 +4,14 @@
 //! Of particular interest are the TransferLogic struct, and the SimpleTransferWitness structs.
 
 use arm::{
-    authorization::{AuthorizationSignature, AuthorizationVerifyingKey},
-    encryption::AffinePoint,
-    evm::CallType,
     logic_proof::LogicProver,
-    merkle_path::MerklePath,
     nullifier_key::NullifierKey,
     resource::Resource,
     Digest,
+};
+use k256::AffinePoint;
+use arm_gadgets::{
+    authorization::{AuthorizationSignature, AuthorizationVerifyingKey},
 };
 use hex::FromHex;
 use lazy_static::lazy_static;
@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use transfer_witness::{
     AuthorizationInfo, EncryptionInfo, ForwarderInfo, PermitInfo, SimpleTransferWitness,
+    call_type::CallType,
 };
 
 /// The binary program that is executed in the zkvm to generate proofs.
@@ -45,7 +46,7 @@ impl TransferLogic {
     fn new(
         resource: Resource,
         is_consumed: bool,
-        existence_path: MerklePath,
+        action_tree_root: Digest,
         nf_key: Option<NullifierKey>,
         auth_info: Option<AuthorizationInfo>,
         encryption_info: Option<EncryptionInfo>,
@@ -55,7 +56,7 @@ impl TransferLogic {
             witness: SimpleTransferWitness::new(
                 resource,
                 is_consumed,
-                existence_path,
+                action_tree_root,
                 nf_key,
                 auth_info,
                 encryption_info,
@@ -67,7 +68,7 @@ impl TransferLogic {
     /// Creates resource logic for a created resource.
     pub fn consume_persistent_resource_logic(
         resource: Resource,
-        existence_path: MerklePath,
+        action_tree_root: Digest,
         nf_key: NullifierKey,
         auth_pk: AuthorizationVerifyingKey,
         auth_sig: AuthorizationSignature,
@@ -76,7 +77,7 @@ impl TransferLogic {
         Self::new(
             resource,
             true,
-            existence_path,
+            action_tree_root,
             Some(nf_key),
             Some(auth_info),
             None,
@@ -86,7 +87,7 @@ impl TransferLogic {
     /// Creates a resource logic for a resource that is created during minting, transfer, etc.
     pub fn create_persistent_resource_logic(
         resource: Resource,
-        existence_path: MerklePath,
+        action_tree_root: Digest,
         discovery_pk: &AffinePoint,
         encryption_pk: AffinePoint,
     ) -> Self {
@@ -94,7 +95,7 @@ impl TransferLogic {
         Self::new(
             resource,
             false,
-            existence_path,
+            action_tree_root,
             None,
             None,
             Some(encryption_info),
@@ -106,7 +107,7 @@ impl TransferLogic {
     #[allow(clippy::too_many_arguments)]
     pub fn mint_resource_logic_with_permit(
         resource: Resource,
-        existence_path: MerklePath,
+        action_tree_root: Digest,
         nf_key: NullifierKey,
         forwarder_addr: Vec<u8>,
         token_addr: Vec<u8>,
@@ -131,7 +132,7 @@ impl TransferLogic {
         Self::new(
             resource,
             true,
-            existence_path,
+            action_tree_root,
             Some(nf_key),
             None,
             None,
@@ -142,7 +143,7 @@ impl TransferLogic {
     /// Creates a resource logic for a resource that is created when burning a resource.
     pub fn burn_resource_logic(
         resource: Resource,
-        existence_path: MerklePath,
+        action_tree_root: Digest,
         forwarder_addr: Vec<u8>,
         token_addr: Vec<u8>,
         user_addr: Vec<u8>,
@@ -158,7 +159,7 @@ impl TransferLogic {
         Self::new(
             resource,
             false,
-            existence_path,
+            action_tree_root,
             None,
             None,
             None,

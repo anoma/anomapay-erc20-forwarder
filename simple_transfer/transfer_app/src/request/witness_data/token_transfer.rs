@@ -10,7 +10,7 @@ use crate::web::serializer::serialize_auth_verifying_key;
 use crate::web::serializer::serialize_authorization_signature;
 use crate::AnomaPayConfig;
 use alloy::primitives::{Address, U256};
-use arm::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
+use arm_gadgets::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
@@ -62,12 +62,12 @@ impl CreatedWitnessData for CreatedPersistent {
     fn logic_witness(
         &self,
         resource: Resource,
-        resource_path: MerklePath,
+        action_tree_root: Digest,
         _config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes> {
         let witness = TransferLogic::create_persistent_resource_logic(
             resource,
-            resource_path,
+            action_tree_root,
             &self.receiver_discovery_public_key,
             self.receiver_encryption_public_key,
         );
@@ -100,12 +100,12 @@ impl CreatedWitnessData for CreatedEphemeral {
     fn logic_witness(
         &self,
         resource: Resource,
-        resource_path: MerklePath,
+        action_tree_root: Digest,
         config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes> {
         let witness = TransferLogic::burn_resource_logic(
             resource,
-            resource_path,
+            action_tree_root,
             config.forwarder_address.to_vec(),
             self.token_contract_address.to_vec(),
             self.receiver_wallet_address.to_vec(),
@@ -143,13 +143,13 @@ impl ConsumedWitnessData for ConsumedEphemeral {
     fn logic_witness(
         &self,
         resource: Resource,
-        resource_path: MerklePath,
+        action_tree_root: Digest,
         nullifier_key: NullifierKey,
         config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes> {
         let witness = TransferLogic::mint_resource_logic_with_permit(
             resource,
-            resource_path,
+            action_tree_root,
             nullifier_key,
             config.forwarder_address.to_vec(),
             self.token_contract_address.to_vec(),
@@ -197,13 +197,13 @@ impl ConsumedWitnessData for ConsumedPersistent {
     fn logic_witness(
         &self,
         resource: Resource,
-        resource_path: MerklePath,
+        action_tree_root: Digest,
         nullifier_key: NullifierKey,
         _config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes> {
         let witness = TransferLogic::consume_persistent_resource_logic(
             resource,
-            resource_path,
+            action_tree_root,
             nullifier_key,
             self.sender_authorization_verifying_key,
             self.sender_authorization_signature,

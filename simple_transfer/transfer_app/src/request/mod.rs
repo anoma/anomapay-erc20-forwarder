@@ -32,4 +32,6 @@ pub enum ProvingError {
     TransactionVerificationError,
     #[error("Failed to get the merkle path for a consumed resource")]
     MerklePathNotFound,
+    #[error("The action tree root is invalid.")]
+    InvalidActionTreeRoot,
 }

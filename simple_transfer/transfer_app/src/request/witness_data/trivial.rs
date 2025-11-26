@@ -33,11 +33,11 @@ impl ConsumedWitnessData for ConsumedEphemeral {
     fn logic_witness(
         &self,
         resource: Resource,
-        resource_path: MerklePath,
+        action_tree_root: Digest,
         nullifier_key: NullifierKey,
         _config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes> {
-        let witness = TrivialLogicWitness::new(resource, resource_path, nullifier_key, true);
+        let witness = TrivialLogicWitness::new(resource, action_tree_root, nullifier_key, true);
         Ok(WitnessTypes::Trivial(Box::new(witness)))
     }
 
@@ -74,11 +74,11 @@ impl CreatedWitnessData for CreatedEphemeral {
     fn logic_witness(
         &self,
         resource: Resource,
-        resource_path: MerklePath,
+        action_tree_root: Digest,
         _config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes> {
         let witness =
-            TrivialLogicWitness::new(resource, resource_path, NullifierKey::default(), false);
+            TrivialLogicWitness::new(resource, action_tree_root, NullifierKey::default(), false);
 
         Ok(WitnessTypes::Trivial(Box::new(witness)))
     }

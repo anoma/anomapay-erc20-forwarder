@@ -11,7 +11,7 @@ use crate::request::resources::{Consumed, Created};
 use crate::request::witness_data::{ConsumedWitnessData, WitnessTypes};
 use crate::request::ProvingError::ConsumedAndCreatedResourceCountMismatch;
 use crate::request::{
-    ProvingError::{DeltaProofGenerationError, TransactionVerificationError},
+    ProvingError::{DeltaProofGenerationError, TransactionVerificationError, InvalidActionTreeRoot},
     ProvingResult,
 };
 use crate::AnomaPayConfig;
@@ -111,19 +111,20 @@ impl Parameters {
     /// logic witnesses.
     fn logic_witnesses(&self, config: &AnomaPayConfig) -> ProvingResult<Vec<WitnessTypes>> {
         let action_tree = self.action_tree()?;
+        let action_tree_root = action_tree.root().map_err(|_| InvalidActionTreeRoot)?;
 
         // Create all the logic witnesses for the created resources.
         let mut created_logic_witnesses: Vec<WitnessTypes> = self
             .created_resources
             .iter()
-            .map(|resource| resource.logic_witness(&action_tree, config))
+            .map(|resource| resource.logic_witness(action_tree_root, config))
             .collect::<ProvingResult<Vec<WitnessTypes>>>()?;
 
         // Create the logic witnesses for all the consumed resources.
         let mut consumed_logic_witnesses: Vec<WitnessTypes> = self
             .consumed_resources
             .iter()
-            .map(|r| r.logic_witness(&action_tree, config))
+            .map(|r| r.logic_witness(action_tree_root, config))
             .collect::<ProvingResult<Vec<WitnessTypes>>>()?;
 
         // Append the created and consumed logic witnesses.

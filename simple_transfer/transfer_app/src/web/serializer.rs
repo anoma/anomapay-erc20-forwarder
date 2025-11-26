@@ -108,7 +108,7 @@ pub mod serialize_affine_point {
 /// base64.
 pub mod serialize_auth_verifying_key {
     use crate::web::serializer::serialize_affine_point;
-    use arm::authorization::AuthorizationVerifyingKey;
+    use arm_gadgets::authorization::AuthorizationVerifyingKey;
     use k256::AffinePoint;
     use serde::{Deserializer, Serializer};
 
@@ -132,7 +132,7 @@ pub mod serialize_auth_verifying_key {
 }
 
 pub mod serialize_authorization_signature {
-    use arm::authorization::AuthorizationSignature;
+    use arm_gadgets::authorization::AuthorizationSignature;
     use base64::engine::general_purpose;
     use base64::Engine;
     use serde::{Deserialize, Deserializer, Serializer};

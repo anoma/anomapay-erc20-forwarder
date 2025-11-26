@@ -11,9 +11,3 @@ opt-level = 3
 [profile.release]
 debug = 1
 lto = true
-
-[workspace.metadata.patch]
-crates = ["arm"]
-
-[patch."https://github.com/anoma/arm-risc0"]
-arm = { path = "./target/patch/arm" }

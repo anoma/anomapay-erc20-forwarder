@@ -1,21 +1,24 @@
 //! The transfer witness library holds the struct to generate proofs over resource logics for
 //! simple transfer resources in the Anoma Pay application.
 //!
+pub mod call_type;
 pub use arm::resource_logic::LogicCircuit;
 use arm::{
-    authorization::{AuthorizationSignature, AuthorizationVerifyingKey},
-    encryption::{AffinePoint, Ciphertext, SecretKey},
     error::ArmError,
-    evm::{
-        encode_permit_witness_transfer_from, encode_transfer, CallType, ForwarderCalldata,
-        PermitTransferFrom,
-    },
     logic_instance::{AppData, ExpirableBlob, LogicInstance},
-    merkle_path::MerklePath,
     nullifier_key::NullifierKey,
     resource::Resource,
     utils::{bytes_to_words, hash_bytes},
     Digest,
+};
+use arm_gadgets::{
+    authorization::{AuthorizationSignature, AuthorizationVerifyingKey},
+    encryption::{Ciphertext, SecretKey}, evm::ForwarderCalldata,
+};
+use k256::AffinePoint;
+use crate::call_type::{
+    encode_permit_witness_transfer_from, encode_transfer, CallType,
+    PermitTransferFrom,
 };
 use serde::{Deserialize, Serialize};
 
@@ -29,8 +32,8 @@ pub struct SimpleTransferWitness {
     pub resource: Resource,
     /// Is this a consumed or created resource.
     pub is_consumed: bool,
-    /// Existence path in the action tree for the resource.
-    pub existence_path: MerklePath,
+    /// Action tree root
+    pub action_tree_root: Digest,
     /// Nullifier key for the resource.
     pub nf_key: Option<NullifierKey>,
     /// See AuthorizationInfo struct.
@@ -105,9 +108,7 @@ impl LogicCircuit for SimpleTransferWitness {
             cm
         };
 
-        // Check the existence path
-        let root = self.existence_path.root(&tag);
-        let root_bytes = root.as_bytes();
+        let root_bytes = self.action_tree_root.as_bytes();
 
         // Generate resource_payload and external_payload
         let (discovery_payload, resource_payload, external_payload) = if self.resource.is_ephemeral
@@ -123,42 +124,33 @@ impl LogicCircuit for SimpleTransferWitness {
             let label_ref = calculate_label_ref(forwarder_addr, erc20_addr);
             assert_eq!(self.resource.label_ref, label_ref);
 
-            // Check resource value_ref: value_ref = sha2(call_type, user_addr)
-            let call_type = forwarder_info.call_type;
-            let value_ref = calculate_value_ref_calltype_user(call_type, user_addr);
+            // Check resource value_ref: value_ref[0..20] = user_addr
+            let value_ref = calculate_value_ref_from_user_addr(user_addr);
             assert_eq!(self.resource.value_ref, value_ref);
 
-            if self.is_consumed {
+            let input = if self.is_consumed {
                 // Minting
-                assert_eq!(call_type, CallType::Wrap);
+                assert_eq!(forwarder_info.call_type, CallType::Wrap);
+                let permit_info = forwarder_info
+                    .permit_info
+                    .as_ref()
+                    .ok_or(ArmError::MissingField("Permit info"))?;
+                let permit = PermitTransferFrom::from_bytes(
+                    erc20_addr,
+                    self.resource.quantity,
+                    permit_info.permit_nonce.as_ref(),
+                    permit_info.permit_deadline.as_ref(),
+                );
+                encode_permit_witness_transfer_from(
+                    user_addr,
+                    permit,
+                    root_bytes,
+                    permit_info.permit_sig.as_ref(),
+                )
             } else {
                 // Burning
-                assert_eq!(call_type, CallType::Unwrap);
-            };
-
-            let input = match call_type {
-                CallType::Unwrap => encode_transfer(erc20_addr, user_addr, self.resource.quantity),
-                CallType::Wrap => {
-                    let permit_info = forwarder_info
-                        .permit_info
-                        .as_ref()
-                        .ok_or(ArmError::MissingField("Permit info"))?;
-                    let permit = PermitTransferFrom::from_bytes(
-                        erc20_addr,
-                        self.resource.quantity,
-                        permit_info.permit_nonce.as_ref(),
-                        permit_info.permit_deadline.as_ref(),
-                    );
-                    encode_permit_witness_transfer_from(
-                        user_addr,
-                        permit,
-                        root_bytes,
-                        permit_info.permit_sig.as_ref(),
-                    )
-                }
-                _ => {
-                    panic!("Unsupported call type");
-                }
+                assert_eq!(forwarder_info.call_type, CallType::Unwrap);
+                encode_transfer(erc20_addr, user_addr, self.resource.quantity)
             };
 
             let forwarder_call_data = ForwarderCalldata::from_bytes(forwarder_addr, input, vec![]);
@@ -238,7 +230,7 @@ impl LogicCircuit for SimpleTransferWitness {
         Ok(LogicInstance {
             tag,
             is_consumed: self.is_consumed,
-            root,
+            root: self.action_tree_root,
             app_data,
         })
     }
@@ -250,7 +242,7 @@ impl SimpleTransferWitness {
     pub fn new(
         resource: Resource,
         is_consumed: bool,
-        existence_path: MerklePath,
+        action_tree_root: Digest,
         nf_key: Option<NullifierKey>,
         auth_info: Option<AuthorizationInfo>,
         encryption_info: Option<EncryptionInfo>,
@@ -259,7 +251,7 @@ impl SimpleTransferWitness {
         Self {
             is_consumed,
             resource,
-            existence_path,
+            action_tree_root,
             nf_key,
             auth_info,
             encryption_info,
@@ -273,11 +265,19 @@ pub fn calculate_value_ref_from_auth(auth_pk: &AuthorizationVerifyingKey) -> Dig
     hash_bytes(&auth_pk.to_bytes())
 }
 
-/// Create the value_ref for a resource based on a calltype and the user address.
-pub fn calculate_value_ref_calltype_user(call_type: CallType, user_addr: &[u8]) -> Digest {
-    let mut data = vec![call_type as u8];
-    data.extend_from_slice(user_addr);
-    hash_bytes(&data)
+/// Create the value_ref for the user address.
+pub fn calculate_value_ref_from_user_addr(user_addr: &[u8]) -> Digest {
+    let mut addr_padded = [0u8; 32];
+    addr_padded[0..20].copy_from_slice(user_addr);
+    Digest::from_bytes(addr_padded)
+}
+
+/// Extract the user address from a value_ref.
+pub fn get_user_addr(value_ref: &Digest) -> [u8; 20] {
+    let bytes = value_ref.as_bytes();
+    let mut addr = [0u8; 20];
+    addr.copy_from_slice(&bytes[0..20]);
+    addr
 }
 
 /// Calculate the label ref based on the forwarded and token address for resources.

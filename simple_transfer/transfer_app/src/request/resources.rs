@@ -1,14 +1,11 @@
 use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData, WitnessTypes};
-use crate::request::ProvingError::{
-    ConsumedResourceNotInActionTree, CreatedResourceNotInActionTree, InvalidNullifierKey,
-};
+use crate::request::ProvingError::InvalidNullifierKey;
 use crate::request::ProvingResult;
 use crate::web;
 use crate::web::serializer::serialize_nullifier_key;
 use crate::web::serializer::serialize_resource;
 use crate::web::serializer::SerializedResource;
 use crate::AnomaPayConfig;
-use arm::action_tree::MerkleTree;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::Digest;
@@ -71,18 +68,12 @@ impl Consumed {
     /// Compute the logic witness for this resource.
     pub fn logic_witness(
         &self,
-
-        action_tree: &MerkleTree,
+        action_tree_root: Digest,
         config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes> {
-        let nullifier = self.nullifier()?;
-        let resource_path = action_tree
-            .generate_path(&nullifier)
-            .map_err(|_| ConsumedResourceNotInActionTree(nullifier))?;
-
         self.witness_data.logic_witness(
             self.resource,
-            resource_path,
+            action_tree_root,
             self.nullifier_key.clone(),
             config,
         )
@@ -117,14 +108,10 @@ impl Created {
     /// Compute the logic witness for this resource.
     pub fn logic_witness(
         &self,
-        action_tree: &MerkleTree,
+        action_tree_root: Digest,
         config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes> {
-        let resource_path = action_tree
-            .generate_path(&self.commitment())
-            .map_err(|_| CreatedResourceNotInActionTree(self.commitment()))?;
-
         self.witness_data
-            .logic_witness(self.resource, resource_path, config)
+            .logic_witness(self.resource, action_tree_root, config)
     }
 }

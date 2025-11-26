@@ -2,10 +2,10 @@
 
 use alloy::primitives::Address;
 use alloy::signers::local::PrivateKeySigner;
-use arm::authorization::AuthorizationSigningKey;
+use arm_gadgets::authorization::AuthorizationSigningKey;
 #[cfg(test)]
-use arm::authorization::AuthorizationVerifyingKey;
-use arm::encryption::SecretKey;
+use arm_gadgets::authorization::AuthorizationVerifyingKey;
+use arm_gadgets::encryption::SecretKey;
 use arm::nullifier_key::NullifierKey;
 use k256::AffinePoint;
 use serde::{Deserialize, Serialize};
