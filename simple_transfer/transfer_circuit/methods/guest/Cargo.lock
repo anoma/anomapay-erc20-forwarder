@@ -3535,6 +3535,7 @@ dependencies = [
 name = "simple-transfer-guest"
 version = "0.1.0"
 dependencies = [
+ "arm",
  "risc0-zkvm",
  "transfer_witness",
 ]
