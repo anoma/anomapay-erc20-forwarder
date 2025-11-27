@@ -64,7 +64,10 @@ contract ERC20ForwarderTest is Test {
             RiscZeroVerifierRouter router,
             ,
             RiscZeroGroth16Verifier verifier
-        ) = new DeployRiscZeroContracts().run();
+        ) = new DeployRiscZeroContracts().run({
+                admin: msg.sender,
+                guardian: msg.sender
+            });
 
         // Deploy the protocol adapter
         _pa = new ProtocolAdapter(

@@ -15,11 +15,11 @@ use crate::tests::request::mint::example_mint_transaction_submit;
 use crate::user::Keychain;
 use crate::{load_config, AnomaPayConfig};
 use arm::action_tree::MerkleTree;
-use arm::authorization::AuthorizationSignature;
 use arm::logic_proof::LogicProver;
 use arm::resource::Resource;
 use arm::transaction::Transaction;
 use arm::Digest;
+use arm_gadgets::authorization::AuthorizationSignature;
 use transfer_library::TransferLogic;
 use transfer_witness::AUTH_SIGNATURE_DOMAIN;
 

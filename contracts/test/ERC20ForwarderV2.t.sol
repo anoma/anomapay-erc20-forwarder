@@ -52,7 +52,10 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             RiscZeroVerifierRouter router,
             ,
             RiscZeroGroth16Verifier verifier
-        ) = new DeployRiscZeroContracts().run();
+        ) = new DeployRiscZeroContracts().run({
+                admin: msg.sender,
+                guardian: msg.sender
+            });
 
         // Deploy the protocol adapter
         _paV1 = new ProtocolAdapter(

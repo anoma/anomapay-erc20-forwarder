@@ -37,7 +37,6 @@ WORKDIR /app
 COPY . .
 
 # build the rust projects
-RUN cargo install patch-crate && cargo patch-crate
 RUN cargo fetch
 RUN cargo build --release ${RUST_FEATURES}
 RUN cp /app/target/release/transfer_app /app/

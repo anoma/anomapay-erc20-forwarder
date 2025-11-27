@@ -8,9 +8,9 @@ use alloy::hex::ToHexExt;
 use alloy::primitives::{address, Address, Signature, B256, U256};
 use alloy::signers::local::PrivateKeySigner;
 use arm::action_tree::MerkleTree;
-use arm::evm::CallType;
 use rand::Rng;
 use risc0_zkvm::sha::{Digest, Impl, Sha256};
+use transfer_witness::call_type::CallType;
 
 pub const TOKEN_ADDRESS_SEPOLIA_USDC: Address =
     address!("0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238");

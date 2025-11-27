@@ -25,6 +25,7 @@ use crate::{time_it, AnomaPayConfig};
 use arm::logic_proof::{LogicProver, LogicVerifier};
 use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
+use arm::proving_system::ProofType;
 use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
 use arm::Digest;
@@ -50,13 +51,17 @@ impl WitnessTypes {
             WitnessTypes::Trivial(witness) => {
                 time_it!(
                     "logic proof",
-                    witness.prove().map_err(|_| LogicProofGenerationError)
+                    witness
+                        .prove(ProofType::Groth16)
+                        .map_err(|_| LogicProofGenerationError)
                 )
             }
             WitnessTypes::Token(witness) => {
                 time_it!(
                     "logic proof",
-                    witness.prove().map_err(|_| LogicProofGenerationError)
+                    witness
+                        .prove(ProofType::Groth16)
+                        .map_err(|_| LogicProofGenerationError)
                 )
             }
         }
@@ -71,7 +76,7 @@ pub trait ConsumedWitnessData: Send + Sync {
     fn logic_witness(
         &self,
         resource: Resource,
-        resource_path: MerklePath,
+        action_tree_root: Digest,
         nullifier_key: NullifierKey,
         config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes>;
@@ -92,7 +97,7 @@ pub trait CreatedWitnessData: Send + Sync {
     fn logic_witness(
         &self,
         resource: Resource,
-        resource_path: MerklePath,
+        action_tree_root: Digest,
         config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes>;
 }
