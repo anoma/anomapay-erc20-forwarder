@@ -3532,12 +3532,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "simple-transfer-guest"
+name = "simple-transfer-guest-v2"
 version = "0.1.0"
 dependencies = [
  "arm",
  "risc0-zkvm",
- "transfer_witness",
+ "transfer_witness_v2",
 ]
 
 [[package]]
@@ -4004,6 +4004,23 @@ dependencies = [
  "k256",
  "rand 0.8.5",
  "serde",
+]
+
+[[package]]
+name = "transfer_witness_v2"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "arm",
+ "arm-gadgets",
+ "bincode",
+ "hex",
+ "k256",
+ "lazy_static",
+ "rand 0.8.5",
+ "serde",
+ "transfer_witness",
 ]
 
 [[package]]
