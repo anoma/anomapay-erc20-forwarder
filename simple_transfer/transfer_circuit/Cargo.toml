@@ -8,4 +8,3 @@ edition = "2021"
 [dependencies]
 simple-transfer-methods = { path = "methods" }
 risc0-zkvm = "3.0.3"
-arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.11.0", default-features = false }

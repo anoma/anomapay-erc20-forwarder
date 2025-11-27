@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 # If you want to try (experimental) std support, add `features = [ "std" ]` to risc0-zkvm
 risc0-zkvm = { version = "3.0.3", features = ["std", "unstable"] }
-arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.11.0", default-features = false }
 transfer_witness = { path = "../../../transfer_witness" }
 
 [patch.crates-io]
