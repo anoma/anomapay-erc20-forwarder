@@ -43,7 +43,7 @@ pub async fn pa_submit_transaction(
     // Convert the transaction to an EVM transaction struct.
     let tx = ProtocolAdapter::Transaction::from(transaction);
 
-    let pa = protocol_adapter(provider).await.expect("foo");
+    let pa = protocol_adapter(&provider).await.expect("foo");
 
     // Submit the transaction to the ethereum chain.
     let transaction_builder = pa
