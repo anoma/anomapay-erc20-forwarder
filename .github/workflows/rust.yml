@@ -21,6 +21,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: |
+            ~/.cargo
             target/*
             !target/patch
             ${{ runner.temp }}/.buildx-cache
