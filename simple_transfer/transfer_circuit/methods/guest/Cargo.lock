@@ -553,28 +553,6 @@ dependencies = [
 
 [[package]]
 name = "arm"
-version = "0.8.1"
-source = "git+https://github.com/anoma/arm-risc0?tag=v0.8.1#a0cca9cdc8e87508b97f6afc65a3b7582aa3e59d"
-dependencies = [
- "aes-gcm",
- "alloy-primitives",
- "alloy-sol-types",
- "bincode",
- "bytemuck",
- "hex",
- "k256",
- "lazy_static",
- "rand 0.8.5",
- "risc0-zkvm",
- "serde",
- "serde_with",
- "slab",
- "thiserror",
- "tracing-subscriber 0.3.20",
-]
-
-[[package]]
-name = "arm"
 version = "0.11.0"
 source = "git+https://github.com/anoma/arm-risc0?tag=v0.11.0#087e7d05f6b7f5a961ea4197d6be5615aea85343"
 dependencies = [
@@ -3544,7 +3522,7 @@ dependencies = [
 name = "simple-transfer-guest"
 version = "0.1.0"
 dependencies = [
- "arm 0.8.1",
+ "arm",
  "risc0-zkvm",
  "transfer_witness",
 ]
@@ -4005,7 +3983,7 @@ dependencies = [
 name = "transfer_witness"
 version = "0.1.0"
 dependencies = [
- "arm 0.11.0",
+ "arm",
  "rand 0.8.5",
  "serde",
 ]
