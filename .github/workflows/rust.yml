@@ -31,9 +31,6 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - run: cargo install patch-crate
-      - run: cargo patch-crate
-
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable

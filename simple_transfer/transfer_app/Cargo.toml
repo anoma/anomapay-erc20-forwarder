@@ -41,6 +41,3 @@ base64 = "0.22.1"
 utoipa-swagger-ui = { version = "9", features = ["rocket"]}
 enum_dispatch = "0.3"
 [dev-dependencies]
-
-[build-dependencies]
-patch-crate = "0.1.3"

@@ -41,7 +41,6 @@ Please do not use the issue tracker for security issues. We welcome working with
 To build the entire workspace:
 
 ```shell
-cargo patch-crate
 cargo build
 ```
 
