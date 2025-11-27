@@ -28,7 +28,6 @@ jobs:
             !target/patch
             ${{ runner.temp }}/.buildx-cache
           key: rust-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: rust-
 
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@stable
