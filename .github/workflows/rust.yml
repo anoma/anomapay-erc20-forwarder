@@ -25,7 +25,7 @@ jobs:
             target/*
             !target/patch
             ${{ runner.temp }}/.buildx-cache
-          key: rust-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          key: rust-new-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
       - uses: dtolnay/rust-toolchain@stable
         with:
