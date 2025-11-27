@@ -35,7 +35,7 @@ contract ProtocolAdapterSpecificForwarderBaseTest is Test {
     function setUp() public virtual {
         RiscZeroGroth16Verifier verifier;
         (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts()
-            .run();
+            .run({admin: msg.sender, guardian: msg.sender});
 
         _riscZeroAdmin = _emergencyStop.owner();
 

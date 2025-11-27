@@ -24,7 +24,7 @@ contract EmergencyMigratableForwarderBaseTest is
     function setUp() public override {
         RiscZeroGroth16Verifier verifier;
         (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts()
-            .run();
+            .run({admin: msg.sender, guardian: msg.sender});
         _riscZeroAdmin = _emergencyStop.owner();
 
         _pa = address(
