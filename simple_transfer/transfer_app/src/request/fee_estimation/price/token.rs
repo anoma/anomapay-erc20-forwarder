@@ -65,7 +65,7 @@ impl PriceResponse {
 /// # Arguments
 /// * `config` The AnomaPay config.
 /// * `fee_token` The fee compatible token to get the price in ether for.
-pub async fn get_token_price_in_ether(
+pub async fn get_ether_price_in_tokens(
     config: &AnomaPayConfig,
     fee_token: &Token,
 ) -> FeeEstimationResult<f64> {
@@ -81,7 +81,7 @@ pub async fn get_token_price_in_ether(
         .find_usd_price(NativeToken::ETH.symbol())
         .map_err(FeeEstimationError::TokenPriceError)?;
 
-    Ok(token_price_in_usd / ether_price_in_usd)
+    Ok(ether_price_in_usd / token_price_in_usd)
 }
 
 /// Returns the price of the given token in ether.
