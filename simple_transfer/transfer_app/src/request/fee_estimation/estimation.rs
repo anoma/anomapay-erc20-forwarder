@@ -52,10 +52,11 @@ pub(crate) async fn estimate_fee_resource_quantity_by_resource_count(
         token::get_ether_price_in_tokens(config, &Token::FeeCompatibleERC20(fee_token.clone()))
             .await?;
 
-    let gas_fees_in_token_units: u128 =
-        (gas_fees_in_ether * ether_price_in_tokens * 10f64.powi(NativeToken::ETH.decimals() as i32))
-            .ceil()
-            .as_u128();
+    let gas_fees_in_token_units: u128 = (gas_fees_in_ether
+        * ether_price_in_tokens
+        * 10f64.powi(NativeToken::ETH.decimals() as i32))
+    .ceil()
+    .as_u128();
 
     Ok(gas_fees_in_token_units)
 }
