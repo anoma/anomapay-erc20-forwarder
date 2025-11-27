@@ -3548,7 +3548,6 @@ version = "1.0.0-rc.1"
 dependencies = [
  "alloy",
  "alloy-chains",
- "arm",
  "dotenv",
  "evm_protocol_adapter_bindings 1.0.0-rc.5 (git+https://github.com/anoma/evm-protocol-adapter?rev=beffbe0ffc96fc16f1bd7e7d60db03048786769e)",
  "serde",
