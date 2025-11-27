@@ -11,7 +11,7 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
 use transfer_witness::{
-    call_type::CallType, AuthorizationInfo, EncryptionInfo, ForwarderInfo, PermitInfo,
+    call_type::CallType, AuthorizationInfo, EncryptionInfo, ForwarderInfo, LabelInfo, PermitInfo,
     SimpleTransferWitness,
 };
 
@@ -44,6 +44,7 @@ impl TransferLogic {
         auth_info: Option<AuthorizationInfo>,
         encryption_info: Option<EncryptionInfo>,
         forwarder_info: Option<ForwarderInfo>,
+        label_info: Option<LabelInfo>,
     ) -> Self {
         Self {
             witness: SimpleTransferWitness::new(
@@ -54,6 +55,7 @@ impl TransferLogic {
                 auth_info,
                 encryption_info,
                 forwarder_info,
+                label_info,
             ),
         }
     }
@@ -75,6 +77,7 @@ impl TransferLogic {
             Some(auth_info),
             None,
             None,
+            None,
         )
     }
     /// Creates a resource logic for a resource that is created during minting, transfer, etc.
@@ -83,8 +86,14 @@ impl TransferLogic {
         action_tree_root: Digest,
         discovery_pk: &AffinePoint,
         encryption_pk: AffinePoint,
+        forwarder_address: Vec<u8>,
+        token_address: Vec<u8>,
     ) -> Self {
         let encryption_info = EncryptionInfo::new(encryption_pk, discovery_pk);
+        let label_info = LabelInfo {
+            forwarder_addr: forwarder_address,
+            token_addr: token_address,
+        };
         Self::new(
             resource,
             false,
@@ -93,6 +102,7 @@ impl TransferLogic {
             None,
             Some(encryption_info),
             None,
+            Some(label_info),
         )
     }
 
@@ -116,10 +126,12 @@ impl TransferLogic {
         };
         let forwarder_info = ForwarderInfo {
             call_type: CallType::Wrap,
-            forwarder_addr,
-            token_addr,
             user_addr,
             permit_info: Some(permit_info),
+        };
+        let label_info = LabelInfo {
+            forwarder_addr,
+            token_addr,
         };
 
         Self::new(
@@ -130,6 +142,7 @@ impl TransferLogic {
             None,
             None,
             Some(forwarder_info),
+            Some(label_info),
         )
     }
 
@@ -143,10 +156,12 @@ impl TransferLogic {
     ) -> Self {
         let forwarder_info = ForwarderInfo {
             call_type: CallType::Unwrap,
-            forwarder_addr,
-            token_addr,
             user_addr,
             permit_info: None,
+        };
+        let label_info = LabelInfo {
+            forwarder_addr,
+            token_addr,
         };
 
         Self::new(
@@ -157,6 +172,7 @@ impl TransferLogic {
             None,
             None,
             Some(forwarder_info),
+            Some(label_info),
         )
     }
 }

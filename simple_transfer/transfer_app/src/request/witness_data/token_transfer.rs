@@ -55,6 +55,9 @@ pub struct CreatedPersistent {
     #[serde(with = "serialize_affine_point")]
     /// The encryption public key of the receiver (i.e., owner) of the resource.
     pub receiver_encryption_public_key: AffinePoint,
+    /// The address of the ERC20 token that the resource wraps.
+    #[schema(value_type = String, format = Binary)]
+    pub(crate) token_contract_address: Address,
 }
 
 #[typetag::serde]
@@ -63,13 +66,15 @@ impl CreatedWitnessData for CreatedPersistent {
         &self,
         resource: Resource,
         action_tree_root: Digest,
-        _config: &AnomaPayConfig,
+        config: &AnomaPayConfig,
     ) -> ProvingResult<WitnessTypes> {
         let witness = TransferLogic::create_persistent_resource_logic(
             resource,
             action_tree_root,
             &self.receiver_discovery_public_key,
             self.receiver_encryption_public_key,
+            config.forwarder_address.to_vec(),
+            self.token_contract_address.to_vec(),
         );
         Ok(WitnessTypes::Token(Box::new(witness)))
     }

@@ -42,6 +42,8 @@ pub struct SimpleTransferWitness {
     pub encryption_info: Option<EncryptionInfo>,
     /// See ForwarderInfo struct.
     pub forwarder_info: Option<ForwarderInfo>,
+    /// See LabelInfo struct.
+    pub label_info: Option<LabelInfo>,
 }
 
 /// The AuthorizationInfo holds information about the resource being consumed.
@@ -72,14 +74,19 @@ pub struct EncryptionInfo {
 pub struct ForwarderInfo {
     /// Wrapping/Unwrapping of a resource (i.e., mint/burn).
     pub call_type: CallType,
-    /// Address of the forwarder contract for this resource.
-    pub forwarder_addr: Vec<u8>,
-    /// Address of the wrapped token within this resource (e.g., USDC).
-    pub token_addr: Vec<u8>,
     /// Address of the user
     pub user_addr: Vec<u8>,
     /// PermitInfo (see struct)
     pub permit_info: Option<PermitInfo>,
+}
+
+/// LabelInfo holds information about label plaintext.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LabelInfo {
+    /// Address of the forwarder contract for this resource.
+    pub forwarder_addr: Vec<u8>,
+    /// Address of the wrapped token within this resource (e.g. USDC).
+    pub token_addr: Vec<u8>,
 }
 
 /// The PermitInfo contains information about the permit2 signature that is used to generate
@@ -92,6 +99,14 @@ pub struct PermitInfo {
     pub permit_deadline: Vec<u8>,
     /// Signature
     pub permit_sig: Vec<u8>,
+}
+
+/// The struct encoded in the resource payload for persistent created resources.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ResourceWithLabel {
+    pub resource: Resource,
+    pub forwarder: Vec<u8>,
+    pub token: Vec<u8>,
 }
 
 impl LogicCircuit for SimpleTransferWitness {
@@ -117,9 +132,14 @@ impl LogicCircuit for SimpleTransferWitness {
                 .forwarder_info
                 .as_ref()
                 .ok_or(ArmError::MissingField("Forwarder info"))?;
+
+            let label_info = self
+                .label_info
+                .as_ref()
+                .ok_or(ArmError::MissingField("Label info"))?;
             // Check resource label: label = sha2(forwarder_addr, erc20_addr)
-            let forwarder_addr = forwarder_info.forwarder_addr.as_ref();
-            let erc20_addr = forwarder_info.token_addr.as_ref();
+            let forwarder_addr = label_info.forwarder_addr.as_ref();
+            let erc20_addr = label_info.token_addr.as_ref();
             let user_addr = forwarder_info.user_addr.as_ref();
             let label_ref = calculate_label_ref(forwarder_addr, erc20_addr);
             assert_eq!(self.resource.label_ref, label_ref);
@@ -185,13 +205,29 @@ impl LogicCircuit for SimpleTransferWitness {
                 // empty payloads for consumed persistent resource
                 (vec![], vec![], vec![])
             } else {
+                let label_info = self
+                    .label_info
+                    .as_ref()
+                    .ok_or(ArmError::MissingField("Label info"))?;
+                let label_ref = calculate_label_ref(
+                    label_info.forwarder_addr.as_ref(),
+                    label_info.token_addr.as_ref(),
+                );
+                assert_eq!(self.resource.label_ref, label_ref);
+
                 // Generate resource ciphertext
                 let encryption_info = self
                     .encryption_info
                     .as_ref()
                     .ok_or(ArmError::MissingField("Encryption info"))?;
+                let payload_plaintext = bincode::serialize(&ResourceWithLabel {
+                    resource: self.resource,
+                    forwarder: label_info.token_addr.clone(),
+                    token: label_info.token_addr.clone(),
+                })
+                .map_err(|_| ArmError::InvalidResourceSerialization);
                 let cipher = Ciphertext::encrypt_with_nonce(
-                    &self.resource.to_bytes()?,
+                    &payload_plaintext?,
                     &encryption_info.encryption_pk,
                     &encryption_info.sender_sk,
                     encryption_info
@@ -247,6 +283,7 @@ impl SimpleTransferWitness {
         auth_info: Option<AuthorizationInfo>,
         encryption_info: Option<EncryptionInfo>,
         forwarder_info: Option<ForwarderInfo>,
+        label_info: Option<LabelInfo>,
     ) -> Self {
         Self {
             is_consumed,
@@ -256,6 +293,7 @@ impl SimpleTransferWitness {
             auth_info,
             encryption_info,
             forwarder_info,
+            label_info,
         }
     }
 }
@@ -308,6 +346,16 @@ impl EncryptionInfo {
             sender_sk,
             encryption_nonce: encryption_nonce.to_vec(),
             discovery_cipher,
+        }
+    }
+}
+
+impl ResourceWithLabel {
+    pub fn new(resource: Resource, forwarder: Vec<u8>, token: Vec<u8>) -> Self {
+        Self {
+            resource,
+            forwarder,
+            token,
         }
     }
 }

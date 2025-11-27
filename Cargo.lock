@@ -7780,6 +7780,7 @@ dependencies = [
  "alloy-sol-types",
  "arm",
  "arm-gadgets",
+ "bincode",
  "hex",
  "k256",
  "rand 0.8.5",

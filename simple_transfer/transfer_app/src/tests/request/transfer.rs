@@ -232,6 +232,7 @@ pub async fn example_transfer_parameters(
     let created_witness_data = CreatedPersistent {
         receiver_discovery_public_key: receiver.discovery_pk,
         receiver_encryption_public_key: receiver.encryption_pk,
+        token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
     };
 
     let created_resource = Created {
