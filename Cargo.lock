@@ -3581,7 +3581,7 @@ dependencies = [
 
 [[package]]
 name = "erc20_forwarder_bindings"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "alloy",
  "alloy-chains",
