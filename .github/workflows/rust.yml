@@ -46,7 +46,7 @@ jobs:
       # - name: check for undocumented functions
       #   run: RUSTFLAGS="-W missing_docs" cargo check
   container-build: # only build container on main
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     name: Build Container
     needs: lint-rust
     runs-on: ubuntu-latest
