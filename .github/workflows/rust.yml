@@ -39,6 +39,8 @@ jobs:
           version: stable
 
       - run: cargo fmt -- --check
+      - uses: bnjbvr/cargo-machete@main
+        continue-on-error: true
 
       - run: cargo clippy -- -Dwarnings
 
