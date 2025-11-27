@@ -22,7 +22,7 @@ pub const SIMPLE_TRANSFER_ELF: &[u8] = include_bytes!("../elf/simple-transfer-gu
 lazy_static! {
     /// The identity of the binary that executes the proofs in the zkvm.
     pub static ref SIMPLE_TRANSFER_ID: Digest =
-        Digest::from_hex("3c2cc11caa1d508fdcbcea8b79fa7a62722b497798eb500a6808626fa86d5b66")
+        Digest::from_hex("f9b98a9b4e1f86160ff18f16346f8d47a1b36b4a83438b0b76fa33e0cd30c829")
             .unwrap();
 }
 
