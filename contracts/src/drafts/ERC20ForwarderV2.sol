@@ -14,8 +14,8 @@ import {ERC20Forwarder} from "../ERC20Forwarder.sol";
 /// @custom:security-contact security@anoma.foundation
 contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     enum CallTypeV2 {
-        Unwrap,
         Wrap,
+        Unwrap,
         Migrate
     }
 
