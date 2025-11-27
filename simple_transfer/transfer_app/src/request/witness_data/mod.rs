@@ -25,10 +25,10 @@ use crate::{time_it, AnomaPayConfig};
 use arm::logic_proof::{LogicProver, LogicVerifier};
 use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
+use arm::proving_system::ProofType;
 use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
 use arm::Digest;
-use arm::proving_system::ProofType;
 use async_trait::async_trait;
 use enum_dispatch::enum_dispatch;
 use log::info;
@@ -51,13 +51,17 @@ impl WitnessTypes {
             WitnessTypes::Trivial(witness) => {
                 time_it!(
                     "logic proof",
-                    witness.prove(ProofType::Groth16).map_err(|_| LogicProofGenerationError)
+                    witness
+                        .prove(ProofType::Groth16)
+                        .map_err(|_| LogicProofGenerationError)
                 )
             }
             WitnessTypes::Token(witness) => {
                 time_it!(
                     "logic proof",
-                    witness.prove(ProofType::Groth16).map_err(|_| LogicProofGenerationError)
+                    witness
+                        .prove(ProofType::Groth16)
+                        .map_err(|_| LogicProofGenerationError)
                 )
             }
         }

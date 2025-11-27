@@ -2,6 +2,9 @@
 //! simple transfer resources in the Anoma Pay application.
 //!
 pub mod call_type;
+use crate::call_type::{
+    encode_permit_witness_transfer_from, encode_transfer, CallType, PermitTransferFrom,
+};
 pub use arm::resource_logic::LogicCircuit;
 use arm::{
     error::ArmError,
@@ -13,13 +16,10 @@ use arm::{
 };
 use arm_gadgets::{
     authorization::{AuthorizationSignature, AuthorizationVerifyingKey},
-    encryption::{Ciphertext, SecretKey}, evm::ForwarderCalldata,
+    encryption::{Ciphertext, SecretKey},
+    evm::ForwarderCalldata,
 };
 use k256::AffinePoint;
-use crate::call_type::{
-    encode_permit_witness_transfer_from, encode_transfer, CallType,
-    PermitTransferFrom,
-};
 use serde::{Deserialize, Serialize};
 
 pub const AUTH_SIGNATURE_DOMAIN: &[u8] = b"SimpleTransferAuthorization";

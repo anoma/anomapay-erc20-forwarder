@@ -11,7 +11,9 @@ use crate::request::resources::{Consumed, Created};
 use crate::request::witness_data::{ConsumedWitnessData, WitnessTypes};
 use crate::request::ProvingError::ConsumedAndCreatedResourceCountMismatch;
 use crate::request::{
-    ProvingError::{DeltaProofGenerationError, TransactionVerificationError, InvalidActionTreeRoot},
+    ProvingError::{
+        DeltaProofGenerationError, InvalidActionTreeRoot, TransactionVerificationError,
+    },
     ProvingResult,
 };
 use crate::AnomaPayConfig;
