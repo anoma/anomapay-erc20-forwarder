@@ -86,7 +86,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// `Permit2.permitWitnessTransferFrom`.
     /// @param input The input bytes containing the encoded arguments for the wrap call:
     /// * The `CallType.Wrap` enum value that has been checked already and is therefore unused.
-    /// * `from`: The signer of the Permit2 message from which the funds a transferred from.
+    /// * `owner`: The owner from which the funds a transferred from and signer of the Permit2 message.
     /// * `permit`: The permit data that was signed constituted by:
     /// * * `token`: The address of the token to be transferred.
     /// * * `amount`: The amount to be transferred.
@@ -99,7 +99,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         (
             ,
             // CallType.Wrap
-            address from,
+            address owner,
             ISignatureTransfer.PermitTransferFrom memory permit,
             bytes32 actionTreeRoot,
             bytes memory signature
@@ -123,7 +123,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
         emit Wrapped({
             token: permit.permitted.token,
-            from: from,
+            from: owner,
             amount: uint128(permit.permitted.amount)
         });
 
@@ -133,7 +133,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                 to: address(this),
                 requestedAmount: permit.permitted.amount
             }),
-            owner: from,
+            owner: owner,
             witness: ERC20ForwarderPermit2
                 .Witness({actionTreeRoot: actionTreeRoot})
                 .hash(),
@@ -146,7 +146,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param input The input bytes containing the encoded arguments for the unwrap call:
     /// * The `CallType.Unwrap` enum value that has been checked already and is therefore unused.
     /// * `token`: The address of the token to be transferred.
-    /// * `to`: The address to transfer the funds to.
+    /// * `receiver`: The receiver address to transfer the funds to.
     /// * `amount`: The amount to be transferred.
     function _unwrap(bytes calldata input) internal {
         // slither-disable-next-line unused-return
@@ -154,13 +154,13 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             ,
             // CallType.Unwrap
             address token,
-            address to,
+            address receiver,
             uint128 amount
         ) = abi.decode(input, (CallType, address, address, uint128));
 
-        emit Unwrapped({token: token, to: to, amount: amount});
+        emit Unwrapped({token: token, to: receiver, amount: amount});
 
-        IERC20(token).safeTransfer({to: to, value: amount});
+        IERC20(token).safeTransfer({to: receiver, value: amount});
     }
 
     /// @notice Forwards an emergency call wrapping or unwrapping ERC20 tokens based on the provided input.
