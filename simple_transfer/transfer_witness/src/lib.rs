@@ -27,12 +27,12 @@ pub enum DeletionCriterion {
     Never = 1,
 }
 
-pub const AUTH_SIGNATURE_DOMAIN: &[u8] = b"SimpleTransferAuthorization";
+pub const AUTH_SIGNATURE_DOMAIN: &[u8] = b"TokenTransferAuthorization";
 
-/// The SimpleTransferWitness holds all the information necessary to generate a proof of the
+/// The TokenTransferWitness holds all the information necessary to generate a proof of the
 /// resource logic of a given resource.
 #[derive(Clone, Default, Serialize, Deserialize)]
-pub struct SimpleTransferWitness {
+pub struct TokenTransferWitness {
     /// Resource this witness is about.
     pub resource: Resource,
     /// Is this a consumed or created resource.
@@ -114,7 +114,7 @@ pub struct ResourceWithLabel {
     pub token: Vec<u8>,
 }
 
-impl LogicCircuit for SimpleTransferWitness {
+impl LogicCircuit for TokenTransferWitness {
     fn constrain(&self) -> Result<LogicInstance, ArmError> {
         // Load resources
         let cm = self.resource.commitment();
@@ -280,7 +280,7 @@ impl LogicCircuit for SimpleTransferWitness {
     }
 }
 
-impl SimpleTransferWitness {
+impl TokenTransferWitness {
     /// Create a new transfer witness.
     #[allow(clippy::too_many_arguments)]
     pub fn new(

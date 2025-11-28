@@ -1,5 +1,5 @@
 [package]
-name = "simple-transfer-guest"
+name = "token-transfer-guest"
 version = "0.1.0"
 edition = "2021"
 

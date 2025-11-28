@@ -1,7 +1,7 @@
 //! the transfer library contains the definition of the resource logics for the simple transfer
 //! application.
 //!
-//! Of particular interest are the TransferLogic struct, and the SimpleTransferWitness structs.
+//! Of particular interest are the TransferLogic struct, and the TokenTransferWitness structs.
 
 use arm::{logic_proof::LogicProver, nullifier_key::NullifierKey, resource::Resource, Digest};
 use arm_gadgets::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
@@ -12,16 +12,16 @@ use serde::{Deserialize, Serialize};
 
 use transfer_witness::{
     call_type::CallType, AuthorizationInfo, EncryptionInfo, ForwarderInfo, LabelInfo, PermitInfo,
-    SimpleTransferWitness,
+    TokenTransferWitness,
 };
 
 /// The binary program that is executed in the zkvm to generate proofs.
 /// This program takes in a witness as argument and runs the constraint function on it.
-pub const SIMPLE_TRANSFER_ELF: &[u8] = include_bytes!("../elf/simple-transfer-guest.bin");
+pub const TOKEN_TRANSFER_ELF: &[u8] = include_bytes!("../elf/token-transfer-guest.bin");
 
 lazy_static! {
     /// The identity of the binary that executes the proofs in the zkvm.
-    pub static ref SIMPLE_TRANSFER_ID: Digest =
+    pub static ref TOKEN_TRANSFER_ID: Digest =
         Digest::from_hex("f9b98a9b4e1f86160ff18f16346f8d47a1b36b4a83438b0b76fa33e0cd30c829")
             .unwrap();
 }
@@ -31,7 +31,7 @@ lazy_static! {
 /// that the resource logics held within it are actually correct.
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct TransferLogic {
-    witness: SimpleTransferWitness,
+    witness: TokenTransferWitness,
 }
 
 impl TransferLogic {
@@ -47,7 +47,7 @@ impl TransferLogic {
         label_info: Option<LabelInfo>,
     ) -> Self {
         Self {
-            witness: SimpleTransferWitness::new(
+            witness: TokenTransferWitness::new(
                 resource,
                 is_consumed,
                 action_tree_root,
@@ -178,13 +178,13 @@ impl TransferLogic {
 }
 
 impl LogicProver for TransferLogic {
-    type Witness = SimpleTransferWitness;
+    type Witness = TokenTransferWitness;
     fn proving_key() -> &'static [u8] {
-        SIMPLE_TRANSFER_ELF
+        TOKEN_TRANSFER_ELF
     }
 
     fn verifying_key() -> Digest {
-        *SIMPLE_TRANSFER_ID
+        *TOKEN_TRANSFER_ID
     }
 
     fn witness(&self) -> &Self::Witness {

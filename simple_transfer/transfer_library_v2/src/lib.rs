@@ -1,7 +1,7 @@
 //! the transfer library contains the definition of the resource logics for the simple transfer
 //! application.
 //!
-//! Of particular interest are the TransferLogicV2 struct, and the SimpleTransferWitnessV2 structs.
+//! Of particular interest are the TransferLogicV2 struct, and the TokenTransferWitnessV2 structs.
 
 pub mod migrate_tx;
 
@@ -16,18 +16,18 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
 use transfer_witness_v2::{
-    call_type_v2::CallTypeV2, ForwarderInfoV2, MigrateInfo, SimpleTransferWitnessV2,
+    call_type_v2::CallTypeV2, ForwarderInfoV2, MigrateInfo, TokenTransferWitnessV2,
 };
 
 use transfer_witness::{AuthorizationInfo, EncryptionInfo, LabelInfo, PermitInfo};
 
 /// The binary program that is executed in the zkvm to generate proofs.
 /// This program takes in a witness as argument and runs the constraint function on it.
-pub const SIMPLE_TRANSFER_V2_ELF: &[u8] = include_bytes!("../elf/simple-transfer-guest-v2.bin");
+pub const TOKEN_TRANSFER_V2_ELF: &[u8] = include_bytes!("../elf/token-transfer-guest-v2.bin");
 
 lazy_static! {
     /// The identity of the binary that executes the proofs in the zkvm.
-    pub static ref SIMPLE_TRANSFER_V2_ID: Digest =
+    pub static ref TOKEN_TRANSFER_V2_ID: Digest =
         Digest::from_hex("7db508e8c74727b8e9b5614d053fa39850ae87bb91a97fbff87a27428ff08bb4")
             .unwrap();
 }
@@ -37,7 +37,7 @@ lazy_static! {
 /// that the resource logics held within it are actually correct.
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct TransferLogicV2 {
-    witness: SimpleTransferWitnessV2,
+    witness: TokenTransferWitnessV2,
 }
 
 impl TransferLogicV2 {
@@ -53,7 +53,7 @@ impl TransferLogicV2 {
         label_info: Option<LabelInfo>,
     ) -> Self {
         Self {
-            witness: SimpleTransferWitnessV2::new(
+            witness: TokenTransferWitnessV2::new(
                 resource,
                 is_consumed,
                 action_tree_root,
@@ -236,13 +236,13 @@ impl TransferLogicV2 {
 }
 
 impl LogicProver for TransferLogicV2 {
-    type Witness = SimpleTransferWitnessV2;
+    type Witness = TokenTransferWitnessV2;
     fn proving_key() -> &'static [u8] {
-        SIMPLE_TRANSFER_V2_ELF
+        TOKEN_TRANSFER_V2_ELF
     }
 
     fn verifying_key() -> Digest {
-        *SIMPLE_TRANSFER_V2_ID
+        *TOKEN_TRANSFER_V2_ID
     }
 
     fn witness(&self) -> &Self::Witness {

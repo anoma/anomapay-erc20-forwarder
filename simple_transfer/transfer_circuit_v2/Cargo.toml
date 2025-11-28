@@ -1,11 +1,11 @@
 [package]
-name = "simple-transfer-v2"
+name = "token-transfer-v2"
 version = "0.1.0"
 edition = "2021"
 
 [workspace]
 
 [dependencies]
-simple-transfer-methods = { path = "methods" }
+token-transfer-methods = { path = "methods" }
 risc0-zkvm = "3.0.3"
 arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = false }

@@ -1,9 +1,9 @@
 use transfer_witness_v2::LogicCircuit;
-use transfer_witness_v2::SimpleTransferWitnessV2;
+use transfer_witness_v2::TokenTransferWitnessV2;
 use risc0_zkvm::guest::env;
 
 fn main() {
-    let witness: SimpleTransferWitnessV2 = env::read();
+    let witness: TokenTransferWitnessV2 = env::read();
 
     let instance = witness.constrain().unwrap();
 

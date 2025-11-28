@@ -23,7 +23,7 @@ use transfer_witness::{
     AuthorizationInfo, DeletionCriterion, EncryptionInfo, LabelInfo, PermitInfo, ResourceWithLabel,
 };
 
-pub const AUTH_SIGNATURE_DOMAIN_V2: &[u8] = b"SimpleTransferAuthorizationV2";
+pub const AUTH_SIGNATURE_DOMAIN_V2: &[u8] = b"TokenTransferAuthorizationV2";
 
 lazy_static! {
     pub static ref COMMITMENT_ROOT_V1: Digest =
@@ -37,10 +37,10 @@ lazy_static! {
             .unwrap();
 }
 
-/// The SimpleTransferWitnessV2 holds all the information necessary to generate a proof of the
+/// The TokenTransferWitnessV2 holds all the information necessary to generate a proof of the
 /// resource logic of a given resource.
 #[derive(Clone, Default, Serialize, Deserialize)]
-pub struct SimpleTransferWitnessV2 {
+pub struct TokenTransferWitnessV2 {
     /// Resource this witness is about.
     pub resource: Resource,
     /// Is this a consumed or created resource.
@@ -77,7 +77,7 @@ pub struct MigrateInfo {
     pub auth_info: AuthorizationInfo,
 }
 
-impl LogicCircuit for SimpleTransferWitnessV2 {
+impl LogicCircuit for TokenTransferWitnessV2 {
     fn constrain(&self) -> Result<LogicInstance, ArmError> {
         // Load resources
         let cm = self.resource.commitment();
@@ -302,7 +302,7 @@ impl LogicCircuit for SimpleTransferWitnessV2 {
     }
 }
 
-impl SimpleTransferWitnessV2 {
+impl TokenTransferWitnessV2 {
     /// Create a new transfer witness.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
