@@ -192,7 +192,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         vm.prank(address(_paV2));
         vm.expectRevert(
             abi.encodeWithSelector(
-                ERC20ForwarderV2.NullifierAlreadyMigrated.selector,
+                ERC20ForwarderV2.ResourceAlreadyConsumed.selector,
                 nullifier
             ),
             address(_fwdV2)
