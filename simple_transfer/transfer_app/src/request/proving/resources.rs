@@ -1,4 +1,6 @@
-use crate::request::proving::witness_data::{ConsumedWitnessData, CreatedWitnessData, WitnessTypes};
+use crate::request::proving::witness_data::{
+    ConsumedWitnessData, CreatedWitnessData, WitnessTypes,
+};
 use crate::request::proving::ProvingError::InvalidNullifierKey;
 use crate::request::proving::ProvingResult;
 use crate::web;

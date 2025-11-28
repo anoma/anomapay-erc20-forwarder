@@ -5,7 +5,6 @@ pub mod parameters;
 pub mod resources;
 pub mod witness_data;
 
-
 use arm::Digest;
 use serde::Serialize;
 use thiserror::Error;

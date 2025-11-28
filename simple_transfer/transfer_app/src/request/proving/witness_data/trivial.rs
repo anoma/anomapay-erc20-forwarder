@@ -2,7 +2,9 @@
 //! to balance transactions. Resources used to balance transactions are called
 //! "padding resources."
 
-use crate::request::proving::witness_data::{ConsumedWitnessData, CreatedWitnessData, WitnessTypes};
+use crate::request::proving::witness_data::{
+    ConsumedWitnessData, CreatedWitnessData, WitnessTypes,
+};
 use crate::request::proving::ProvingResult;
 use crate::AnomaPayConfig;
 use arm::merkle_path::MerklePath;

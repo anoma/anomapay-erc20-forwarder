@@ -1,15 +1,15 @@
 #![cfg(test)]
 //! Tests the serialize and deserialize functionality of the endpoint.
 
-use crate::{
-    load_config,
-    tests::fixtures::{user_with_private_key, user_without_private_key},
-};
 use crate::request::proving::parameters::Parameters;
 use crate::tests::request::proving::burn::example_burn_parameters;
 use crate::tests::request::proving::mint::example_mint_parameters;
 use crate::tests::request::proving::split::example_split_parameters;
 use crate::tests::request::proving::transfer::example_transfer_parameters;
+use crate::{
+    load_config,
+    tests::fixtures::{user_with_private_key, user_without_private_key},
+};
 
 #[tokio::test]
 /// Test serialization of a mint request.

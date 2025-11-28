@@ -4,7 +4,9 @@ use crate::request::proving::parameters::Parameters;
 use crate::request::proving::resources::{
     Consumed, ConsumedWitnessDataEnum, Created, CreatedWitnessDataEnum,
 };
-use crate::request::proving::witness_data::token_transfer::{ConsumedPersistent, CreatedPersistent};
+use crate::request::proving::witness_data::token_transfer::{
+    ConsumedPersistent, CreatedPersistent,
+};
 use crate::request::proving::witness_data::trivial;
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{

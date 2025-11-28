@@ -2,7 +2,9 @@
 //! resources that wrap these tokens and can be transferred within Anoma.
 
 use crate::indexer::pa_merkle_path;
-use crate::request::proving::witness_data::{ConsumedWitnessData, CreatedWitnessData, WitnessTypes};
+use crate::request::proving::witness_data::{
+    ConsumedWitnessData, CreatedWitnessData, WitnessTypes,
+};
 use crate::request::proving::ProvingError::MerklePathNotFound;
 use crate::request::proving::ProvingResult;
 use crate::web::serializer::serialize_affine_point;
