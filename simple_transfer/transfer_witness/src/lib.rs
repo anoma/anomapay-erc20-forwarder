@@ -3,7 +3,7 @@
 //!
 pub mod call_type;
 use crate::call_type::{
-    encode_permit_witness_transfer_from, encode_transfer, CallType, PermitTransferFrom,
+    encode_unwrap_forwarder_input, encode_wrap_forwarder_input, CallType, PermitTransferFrom,
 };
 pub use arm::resource_logic::LogicCircuit;
 use arm::{
@@ -21,6 +21,11 @@ use arm_gadgets::{
 };
 use k256::AffinePoint;
 use serde::{Deserialize, Serialize};
+
+pub enum DeletionCriterion {
+    Immediately = 0,
+    Never = 1,
+}
 
 pub const AUTH_SIGNATURE_DOMAIN: &[u8] = b"SimpleTransferAuthorization";
 
@@ -66,7 +71,7 @@ pub struct EncryptionInfo {
     /// randomly generated for persistent resource_ciphertext(12 bytes)
     pub encryption_nonce: Vec<u8>,
     /// The discovery ciphertext for the resource
-    pub discovery_cipher: Vec<u32>,
+    pub discovery_ciphertext: Vec<u32>,
 }
 
 /// ForwarderInfo holds information about the forwarder contract being used by a transaction.
@@ -145,11 +150,14 @@ impl LogicCircuit for SimpleTransferWitness {
             assert_eq!(self.resource.label_ref, label_ref);
 
             // Check resource value_ref: value_ref[0..20] = user_addr
+            // We need this check to ensure the permit2 signature covers
+            // the correct user address. It signs over the action tree root,
+            // and the tag containing the value_ref is directed to the tree root.
             let value_ref = calculate_value_ref_from_user_addr(user_addr);
             assert_eq!(self.resource.value_ref, value_ref);
 
-            let input = if self.is_consumed {
-                // Minting
+            let inputs = if self.is_consumed {
+                // Wrap
                 assert_eq!(forwarder_info.call_type, CallType::Wrap);
                 let permit_info = forwarder_info
                     .permit_info
@@ -161,23 +169,23 @@ impl LogicCircuit for SimpleTransferWitness {
                     permit_info.permit_nonce.as_ref(),
                     permit_info.permit_deadline.as_ref(),
                 );
-                encode_permit_witness_transfer_from(
+                encode_wrap_forwarder_input(
                     user_addr,
                     permit,
                     root_bytes,
                     permit_info.permit_sig.as_ref(),
                 )
             } else {
-                // Burning
+                // Unwrap
                 assert_eq!(forwarder_info.call_type, CallType::Unwrap);
-                encode_transfer(erc20_addr, user_addr, self.resource.quantity)
+                encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)
             };
 
-            let forwarder_call_data = ForwarderCalldata::from_bytes(forwarder_addr, input, vec![]);
+            let forwarder_call_data = ForwarderCalldata::from_bytes(forwarder_addr, inputs, vec![]);
             let external_payload = {
                 let call_data_expirable_blob = ExpirableBlob {
                     blob: bytes_to_words(&forwarder_call_data.encode()),
-                    deletion_criterion: 0,
+                    deletion_criterion: DeletionCriterion::Immediately as u32,
                 };
                 vec![call_data_expirable_blob]
             };
@@ -226,7 +234,7 @@ impl LogicCircuit for SimpleTransferWitness {
                     token: label_info.token_addr.clone(),
                 })
                 .map_err(|_| ArmError::InvalidResourceSerialization);
-                let cipher = Ciphertext::encrypt_with_nonce(
+                let ciphertext = Ciphertext::encrypt_with_nonce(
                     &payload_plaintext?,
                     &encryption_info.encryption_pk,
                     &encryption_info.sender_sk,
@@ -236,21 +244,21 @@ impl LogicCircuit for SimpleTransferWitness {
                         .try_into()
                         .map_err(|_| ArmError::InvalidEncryptionNonce)?,
                 )?;
-                let cipher_expirable_blob = ExpirableBlob {
-                    blob: cipher.as_words(),
-                    deletion_criterion: 1,
+                let ciphertext_expirable_blob = ExpirableBlob {
+                    blob: ciphertext.as_words(),
+                    deletion_criterion: DeletionCriterion::Never as u32,
                 };
 
                 // Generate discovery_payload
-                let cipher_discovery_blob = ExpirableBlob {
-                    blob: encryption_info.discovery_cipher.clone(),
-                    deletion_criterion: 1,
+                let ciphertext_discovery_blob = ExpirableBlob {
+                    blob: encryption_info.discovery_ciphertext.clone(),
+                    deletion_criterion: DeletionCriterion::Never as u32,
                 };
 
                 // return discovery_payload and resource_payload
                 (
-                    vec![cipher_discovery_blob],
-                    vec![cipher_expirable_blob],
+                    vec![ciphertext_discovery_blob],
+                    vec![ciphertext_expirable_blob],
                     vec![],
                 )
             }
@@ -328,7 +336,7 @@ impl EncryptionInfo {
     pub fn new(encryption_pk: AffinePoint, discovery_pk: &AffinePoint) -> Self {
         let discovery_nonce: [u8; 12] = rand::random();
         let discovery_sk = SecretKey::random();
-        let discovery_cipher = Ciphertext::encrypt_with_nonce(
+        let discovery_ciphertext = Ciphertext::encrypt_with_nonce(
             &vec![0u8],
             discovery_pk,
             &discovery_sk,
@@ -345,7 +353,7 @@ impl EncryptionInfo {
             encryption_pk,
             sender_sk,
             encryption_nonce: encryption_nonce.to_vec(),
-            discovery_cipher,
+            discovery_ciphertext,
         }
     }
 }

@@ -103,7 +103,7 @@ fn simple_migrate_test() {
     use transfer_witness::{
         calculate_label_ref, calculate_value_ref_from_auth, calculate_value_ref_from_user_addr,
     };
-    use transfer_witness_v2::{AUTH_SIGNATURE_DOMAIN_V2, FORWARDER_ADDRESS_V1, LOGIC_V1};
+    use transfer_witness_v2::{AUTH_SIGNATURE_DOMAIN_V2, FORWARDER_ADDRESS_V1, TRANSFER_LOGIC_V1};
 
     // Common parameters
     let forwarder_addr_v2 = vec![1u8; 20];
@@ -120,7 +120,7 @@ fn simple_migrate_test() {
     let migrated_nf_key = NullifierKey::default();
     let migrated_nf_cm = migrated_nf_key.commit();
     let migrated_resource = Resource {
-        logic_ref: *LOGIC_V1,
+        logic_ref: *TRANSFER_LOGIC_V1,
         nk_commitment: migrated_nf_cm,
         label_ref,
         value_ref: migrated_value_ref,

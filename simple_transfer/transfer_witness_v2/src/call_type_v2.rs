@@ -4,13 +4,13 @@ use alloy_sol_types::{sol, SolValue};
 sol! {
     #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
     enum CallTypeV2 {
-        Wrap, // mint with permit info
-        Unwrap, // burn
-        Migrate, // migrate to a new version
+        Wrap,
+        Unwrap,
+        Migrate,
     }
 }
 
-pub fn encode_migrate(token: &[u8], quantity: u128, nf: &[u8]) -> Vec<u8> {
+pub fn encode_migrate_forwarder_input(token: &[u8], quantity: u128, nf: &[u8]) -> Vec<u8> {
     let token: Address = token.try_into().expect("Invalid address bytes");
     let nf = B256::from_slice(nf);
     // NOTE: u128 is padded to u256, this can be fixed if we extend the value to 248 bits in ARM

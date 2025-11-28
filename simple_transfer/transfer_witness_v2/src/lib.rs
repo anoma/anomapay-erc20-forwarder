@@ -2,7 +2,7 @@
 //! simple transfer resources in the Anoma Pay application.
 //!
 pub mod call_type_v2;
-use crate::call_type_v2::{encode_migrate, CallTypeV2};
+use crate::call_type_v2::{encode_migrate_forwarder_input, CallTypeV2};
 pub use arm::resource_logic::LogicCircuit;
 use arm::{
     error::ArmError,
@@ -19,20 +19,20 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use transfer_witness::{
     calculate_label_ref, calculate_value_ref_from_auth, calculate_value_ref_from_user_addr,
-    call_type::{encode_permit_witness_transfer_from, encode_transfer, PermitTransferFrom},
-    AuthorizationInfo, EncryptionInfo, LabelInfo, PermitInfo, ResourceWithLabel,
+    call_type::{encode_unwrap_forwarder_input, encode_wrap_forwarder_input, PermitTransferFrom},
+    AuthorizationInfo, DeletionCriterion, EncryptionInfo, LabelInfo, PermitInfo, ResourceWithLabel,
 };
 
 pub const AUTH_SIGNATURE_DOMAIN_V2: &[u8] = b"SimpleTransferAuthorizationV2";
 
 lazy_static! {
-    pub static ref ROOT_V1: Digest =
+    pub static ref COMMITMENT_ROOT_V1: Digest =
         Digest::from_hex("62d05824eb22abb15d8505fe91bc5ecf56245f34f7d60137214e09af15275365")
             .unwrap();
     pub static ref FORWARDER_ADDRESS_V1: Digest =
         Digest::from_hex("cc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06")
             .unwrap();
-    pub static ref LOGIC_V1: Digest =
+    pub static ref TRANSFER_LOGIC_V1: Digest =
         Digest::from_hex("cc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06")
             .unwrap();
 }
@@ -72,6 +72,7 @@ pub struct ForwarderInfoV2 {
 pub struct MigrateInfo {
     pub resource: Resource,
     pub nf_key: NullifierKey,
+    // Merkle path from cm-tree v1 to prove existence of the migrate_resource
     pub path: MerklePath,
     pub auth_info: AuthorizationInfo,
 }
@@ -118,12 +119,10 @@ impl LogicCircuit for SimpleTransferWitnessV2 {
 
             let input = match forwarder_info_v2.call_type {
                 CallTypeV2::Unwrap => {
-                    // Burning
                     assert!(!self.is_consumed);
-                    encode_transfer(erc20_addr, user_addr, self.resource.quantity)
+                    encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)
                 }
                 CallTypeV2::Wrap => {
-                    // Minting
                     assert!(self.is_consumed);
                     let permit_info = forwarder_info_v2
                         .permit_info
@@ -135,7 +134,7 @@ impl LogicCircuit for SimpleTransferWitnessV2 {
                         permit_info.permit_nonce.as_ref(),
                         permit_info.permit_deadline.as_ref(),
                     );
-                    encode_permit_witness_transfer_from(
+                    encode_wrap_forwarder_input(
                         user_addr,
                         permit,
                         root_bytes,
@@ -153,7 +152,7 @@ impl LogicCircuit for SimpleTransferWitnessV2 {
                     // check existence of migrate_resource
                     let migrate_cm = migrate_info.resource.commitment();
                     let migrate_root = migrate_info.path.root(&migrate_cm);
-                    assert_eq!(*ROOT_V1, migrate_root);
+                    assert_eq!(*COMMITMENT_ROOT_V1, migrate_root);
 
                     // check migrate_resource is non-ephemeral
                     assert!(!migrate_info.resource.is_ephemeral);
@@ -175,7 +174,7 @@ impl LogicCircuit for SimpleTransferWitnessV2 {
                     // check migrate_resource logic_ref
                     assert_eq!(
                         migrate_info.resource.logic_ref.as_words(),
-                        LOGIC_V1.as_words()
+                        TRANSFER_LOGIC_V1.as_words()
                     );
 
                     // check migrate_resource label_ref_v1
@@ -191,7 +190,11 @@ impl LogicCircuit for SimpleTransferWitnessV2 {
                         .resource
                         .nullifier_from_commitment(&migrate_info.nf_key, &migrate_cm)?;
 
-                    encode_migrate(erc20_addr, self.resource.quantity, migrate_nf.as_bytes())
+                    encode_migrate_forwarder_input(
+                        erc20_addr,
+                        self.resource.quantity,
+                        migrate_nf.as_bytes(),
+                    )
                 }
                 _ => {
                     return Err(ArmError::MissingField(
@@ -204,7 +207,7 @@ impl LogicCircuit for SimpleTransferWitnessV2 {
             let external_payload = {
                 let call_data_expirable_blob = ExpirableBlob {
                     blob: bytes_to_words(&forwarder_call_data.encode()),
-                    deletion_criterion: 0,
+                    deletion_criterion: DeletionCriterion::Never as u32,
                 };
                 vec![call_data_expirable_blob]
             };
@@ -253,7 +256,7 @@ impl LogicCircuit for SimpleTransferWitnessV2 {
                     token: label_info.token_addr.clone(),
                 })
                 .map_err(|_| ArmError::InvalidResourceSerialization);
-                let cipher = Ciphertext::encrypt_with_nonce(
+                let ciphertext = Ciphertext::encrypt_with_nonce(
                     &payload_plaintext?,
                     &encryption_info.encryption_pk,
                     &encryption_info.sender_sk,
@@ -263,21 +266,21 @@ impl LogicCircuit for SimpleTransferWitnessV2 {
                         .try_into()
                         .map_err(|_| ArmError::InvalidEncryptionNonce)?,
                 )?;
-                let cipher_expirable_blob = ExpirableBlob {
-                    blob: cipher.as_words(),
-                    deletion_criterion: 1,
+                let ciphertext_expirable_blob = ExpirableBlob {
+                    blob: ciphertext.as_words(),
+                    deletion_criterion: DeletionCriterion::Never as u32,
                 };
 
                 // Generate discovery_payload
-                let cipher_discovery_blob = ExpirableBlob {
-                    blob: encryption_info.discovery_cipher.clone(),
-                    deletion_criterion: 1,
+                let ciphertext_discovery_blob = ExpirableBlob {
+                    blob: encryption_info.discovery_ciphertext.clone(),
+                    deletion_criterion: DeletionCriterion::Never as u32,
                 };
 
                 // return discovery_payload and resource_payload
                 (
-                    vec![cipher_discovery_blob],
-                    vec![cipher_expirable_blob],
+                    vec![ciphertext_discovery_blob],
+                    vec![ciphertext_expirable_blob],
                     vec![],
                 )
             }

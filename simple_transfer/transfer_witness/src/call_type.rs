@@ -4,8 +4,8 @@ use alloy_sol_types::{sol, SolValue};
 sol! {
     #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
     enum CallType {
-        Wrap, // mint with permit info
-        Unwrap // burn
+        Wrap,
+        Unwrap
     }
 
     /// @notice The token and amount details for a transfer signed in the permit transfer signature
@@ -42,7 +42,7 @@ impl PermitTransferFrom {
     }
 }
 
-pub fn encode_transfer(token: &[u8], to: &[u8], value: u128) -> Vec<u8> {
+pub fn encode_unwrap_forwarder_input(token: &[u8], to: &[u8], value: u128) -> Vec<u8> {
     // This is only used in circuits, just let it panic if the address is invalid
     // Encode as (CallType, token, to, value)
     let token: Address = token.try_into().expect("Invalid address bytes");
@@ -51,7 +51,7 @@ pub fn encode_transfer(token: &[u8], to: &[u8], value: u128) -> Vec<u8> {
     (CallType::Unwrap, token, to, value).abi_encode_params()
 }
 
-pub fn encode_permit_witness_transfer_from(
+pub fn encode_wrap_forwarder_input(
     from: &[u8],
     permit: PermitTransferFrom,
     witness: &[u8],
@@ -92,7 +92,7 @@ fn forward_call_data_test() {
 }
 
 #[test]
-fn encode_permit_witness_transfer_from_test() {
+fn encode_wrap_forwarder_input_test() {
     let token = hex::decode("2222222222222222222222222222222222222222").unwrap();
     let from = hex::decode("3333333333333333333333333333333333333333").unwrap();
     let value = 1000u128;
@@ -100,7 +100,7 @@ fn encode_permit_witness_transfer_from_test() {
     let witness = vec![3u8; 32];
     let signature = vec![4u8; 65];
 
-    let encoded = encode_permit_witness_transfer_from(&from, permit, &witness, &signature);
+    let encoded = encode_wrap_forwarder_input(&from, permit, &witness, &signature);
     println!("encode: {:?}", hex::encode(&encoded));
     println!("len: {}", encoded.len());
 }
