@@ -20,6 +20,8 @@ jobs:
   lints:
     name: ${{ matrix.command.step }}
     runs-on: ubuntu-latest
+    env:
+      CACHE_VERSION: v0
     strategy:
       fail-fast: false
       matrix:
@@ -27,12 +29,15 @@ jobs:
           - step: Format
             name: Run format
             cmd: just fmt check
+            cache_key: fmt
           - step: Clippy
             name: Run clippy
             cmd: just clippy
+            cache_key: clippy
           - step: Tests
             name: Run tests
             cmd: just test
+            cache_key: test
 
     steps:
       - uses: actions/checkout@v6
@@ -41,11 +46,22 @@ jobs:
       - uses: rui314/setup-mold@v1
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          components: rustfmt
-          cache: true
+          components: rustfmt, clippy
+          cache: false
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-${{ matrix.command.cache_key }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ env.CACHE_VERSION }}
       - name: Install just
         uses: extractions/setup-just@v3
       - name: Install foundry
         uses: foundry-rs/foundry-toolchain@v1
       - name: ${{ matrix.command.name }}
         run: ${{ matrix.command.cmd }}
+        env:
+          API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}

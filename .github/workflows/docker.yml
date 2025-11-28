@@ -4,13 +4,9 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'Dockerfile.webserver'
   push:
     branches:
       - main
-    paths:
-        - 'Dockerfile.webserver'
 
 concurrency:
   group: ${{ github.ref }}-docker
