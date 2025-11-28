@@ -1,6 +1,8 @@
-use crate::request::witness_data::{ConsumedWitnessData, CreatedWitnessData, WitnessTypes};
-use crate::request::ProvingError::InvalidNullifierKey;
-use crate::request::ProvingResult;
+use crate::request::proving::witness_data::{
+    ConsumedWitnessData, CreatedWitnessData, WitnessTypes,
+};
+use crate::request::proving::ProvingError::InvalidNullifierKey;
+use crate::request::proving::ProvingResult;
 use crate::web;
 use crate::web::serializer::serialize_nullifier_key;
 use crate::web::serializer::serialize_resource;
@@ -17,18 +19,18 @@ use utoipa::ToSchema;
 #[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[enum_dispatch(CreatedWitnessData)]
 pub enum CreatedWitnessDataEnum {
-    Persistent(crate::request::witness_data::token_transfer::CreatedPersistent),
-    Ephemeral(crate::request::witness_data::token_transfer::CreatedEphemeral),
-    TrivialEphemeral(crate::request::witness_data::trivial::CreatedEphemeral),
+    Persistent(crate::request::proving::witness_data::token_transfer::CreatedPersistent),
+    Ephemeral(crate::request::proving::witness_data::token_transfer::CreatedEphemeral),
+    TrivialEphemeral(crate::request::proving::witness_data::trivial::CreatedEphemeral),
 }
 
 /// This enum holds all the possible values for consumed resource witnesses.
 #[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[enum_dispatch(ConsumedWitnessData)]
 pub enum ConsumedWitnessDataEnum {
-    Persistent(crate::request::witness_data::token_transfer::ConsumedPersistent),
-    Ephemeral(crate::request::witness_data::token_transfer::ConsumedEphemeral),
-    TrivialEphemeral(crate::request::witness_data::trivial::ConsumedEphemeral),
+    Persistent(crate::request::proving::witness_data::token_transfer::ConsumedPersistent),
+    Ephemeral(crate::request::proving::witness_data::token_transfer::ConsumedEphemeral),
+    TrivialEphemeral(crate::request::proving::witness_data::trivial::ConsumedEphemeral),
 }
 
 //----------------------------------------------------------------------------

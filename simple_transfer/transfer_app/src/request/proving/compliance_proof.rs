@@ -1,6 +1,6 @@
 //! Contains logic to generate compliance proofs for compliance witnesses.
-use crate::request::ProvingError::ComplianceProofGenerationError;
-use crate::request::ProvingResult;
+use crate::request::proving::ProvingError::ComplianceProofGenerationError;
+use crate::request::proving::ProvingResult;
 use arm::compliance::ComplianceWitness;
 use arm::compliance_unit::ComplianceUnit;
 use arm::proving_system::ProofType;

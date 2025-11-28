@@ -2,7 +2,7 @@ use crate::request::fee_estimation::estimation::{
     estimate_fee_unit_quantity, FeeEstimationPayload,
 };
 
-use crate::request::parameters::Parameters;
+use crate::request::proving::parameters::Parameters;
 use crate::rpc::create_provider;
 use crate::web::handlers::handle_parameters;
 use crate::web::RequestError;

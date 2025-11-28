@@ -1,7 +1,7 @@
 use crate::request::fee_estimation::price::{gas, token};
 use crate::request::fee_estimation::token::{Data, FeeCompatibleERC20Token, NativeToken, Token};
 use crate::request::fee_estimation::FeeEstimationResult;
-use crate::request::parameters::Parameters;
+use crate::request::proving::parameters::Parameters;
 use crate::AnomaPayConfig;
 use alloy::providers::DynProvider;
 use k256::elliptic_curve::ff::derive::bitvec::macros::internal::funty::Fundamental;
