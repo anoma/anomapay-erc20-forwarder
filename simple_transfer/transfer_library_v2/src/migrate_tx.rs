@@ -38,7 +38,7 @@ pub fn construct_migrate_tx(
     // Parameters for the created resource
     created_resource: Resource,
     created_discovery_pk: AffinePoint,
-    created_encryption_pk: AffinePoint,
+    created_receiver_pk: AffinePoint,
 ) -> Result<Transaction, ArmError> {
     // Action tree
     let consumed_nf = consumed_resource.nullifier(&consumed_nf_key)?;
@@ -74,7 +74,7 @@ pub fn construct_migrate_tx(
         created_resource,
         action_tree_root,
         &created_discovery_pk,
-        created_encryption_pk,
+        created_receiver_pk,
         forwarder_addr,
         token_addr,
     );
@@ -153,7 +153,7 @@ fn simple_migrate_test() {
     let created_auth_sk = AuthorizationSigningKey::new();
     let created_auth_pk = AuthorizationVerifyingKey::from_signing_key(&created_auth_sk);
     let (_created_discovery_sk, created_discovery_pk) = random_keypair();
-    let (_created_encryption_sk, created_encryption_pk) = random_keypair();
+    let (_created_encryption_sk, created_receiver_pk) = random_keypair();
     let created_resource = Resource {
         logic_ref: TransferLogicV2::verifying_key(),
         nk_commitment: created_nf_cm,
@@ -190,7 +190,7 @@ fn simple_migrate_test() {
         migrated_auth_sig,
         created_resource,
         created_discovery_pk,
-        created_encryption_pk,
+        created_receiver_pk,
     )
     .unwrap();
     println!("Tx build duration time: {:?}", tx_start_timer.elapsed());

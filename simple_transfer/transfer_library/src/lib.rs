@@ -85,11 +85,11 @@ impl TransferLogic {
         resource: Resource,
         action_tree_root: Digest,
         discovery_pk: &AffinePoint,
-        encryption_pk: AffinePoint,
+        receiver_pk: AffinePoint,
         forwarder_address: Vec<u8>,
         token_address: Vec<u8>,
     ) -> Self {
-        let encryption_info = EncryptionInfo::new(encryption_pk, discovery_pk);
+        let encryption_info = EncryptionInfo::new(receiver_pk, discovery_pk);
         let label_info = LabelInfo {
             forwarder_addr: forwarder_address,
             token_addr: token_address,

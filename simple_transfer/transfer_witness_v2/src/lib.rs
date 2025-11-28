@@ -258,7 +258,7 @@ impl LogicCircuit for SimpleTransferWitnessV2 {
                 .map_err(|_| ArmError::InvalidResourceSerialization);
                 let ciphertext = Ciphertext::encrypt_with_nonce(
                     &payload_plaintext?,
-                    &encryption_info.encryption_pk,
+                    &encryption_info.receiver_pk,
                     &encryption_info.sender_sk,
                     encryption_info
                         .encryption_nonce

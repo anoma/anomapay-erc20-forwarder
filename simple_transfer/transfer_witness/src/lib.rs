@@ -65,7 +65,7 @@ pub struct AuthorizationInfo {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct EncryptionInfo {
     /// Public key. Obtain from the receiver for persistent resource_ciphertext
-    pub encryption_pk: AffinePoint,
+    pub receiver_pk: AffinePoint,
     /// Secret key. randomly generated for persistent resource_ciphertext
     pub sender_sk: SecretKey,
     /// randomly generated for persistent resource_ciphertext(12 bytes)
@@ -236,7 +236,7 @@ impl LogicCircuit for SimpleTransferWitness {
                 .map_err(|_| ArmError::InvalidResourceSerialization);
                 let ciphertext = Ciphertext::encrypt_with_nonce(
                     &payload_plaintext?,
-                    &encryption_info.encryption_pk,
+                    &encryption_info.receiver_pk,
                     &encryption_info.sender_sk,
                     encryption_info
                         .encryption_nonce
@@ -333,7 +333,7 @@ pub fn calculate_label_ref(forwarder_add: &[u8], erc20_add: &[u8]) -> Digest {
 
 impl EncryptionInfo {
     /// Create new encryption info based on encryption and discovery public keys.
-    pub fn new(encryption_pk: AffinePoint, discovery_pk: &AffinePoint) -> Self {
+    pub fn new(receiver_pk: AffinePoint, discovery_pk: &AffinePoint) -> Self {
         let discovery_nonce: [u8; 12] = rand::random();
         let discovery_sk = SecretKey::random();
         let discovery_ciphertext = Ciphertext::encrypt_with_nonce(
@@ -350,7 +350,7 @@ impl EncryptionInfo {
         let sender_sk = SecretKey::random();
         let encryption_nonce: [u8; 12] = rand::random();
         Self {
-            encryption_pk,
+            receiver_pk,
             sender_sk,
             encryption_nonce: encryption_nonce.to_vec(),
             discovery_ciphertext,
