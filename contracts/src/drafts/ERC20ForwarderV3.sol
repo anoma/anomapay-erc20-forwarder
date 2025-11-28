@@ -61,6 +61,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     /// - wrap ERC20 tokens into resources using Uniswap's Permit2,
     /// - unwrap ERC20 tokens from resources, and
     /// - migrate ERC20 resources from the ERC20 forwarder v1.
+    /// - migrate ERC20 resources from the ERC20 forwarder v2.
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
         CallTypeV3 callType = CallTypeV3(uint8(input[31]));
@@ -96,20 +97,18 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v2.
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V2), amount: amount});
 
-        // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v1 to the ERC20 forwarder v2 contract.
-        // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been withdrawn
-        // and the `Transfer` event on the ERC20 token.
+        // Forwards a call to migrate ERC20 v1 tokens via the ERC20 forwarder v1.
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallTypeV2.Migrate, token, amount, nullifier)});
 
-        // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
+        // Forwards a call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
         // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
     }
 
-    /// @notice Migrates ERC20 resources by transferring ERC20 tokens from the ERC20 forwarder v1 and storing the
+    /// @notice Migrates ERC20 v2 resources by transferring ERC20 tokens from the ERC20 forwarder v1 and storing the
     /// associated nullifier.
     /// @param input The input bytes containing the encoded arguments for the migration call:
     /// * The `CallTypeV3.Migrate` enum value that has been checked already and is therefore unused.
@@ -124,7 +123,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
             bytes32 nullifier
         ) = abi.decode(input, (CallTypeV3, address, uint128, bytes32));
 
-        // Check that the resource being upgraded is not in the previous protocol adapter's nullifier set.
+        // Check that the resource being upgraded is not in the protocol adapter v2 nullifier set.
         if (INullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(nullifier)) {
             revert ResourceAlreadyConsumed(nullifier);
         }
@@ -132,11 +131,11 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         // Add the nullifier to the this contract's nullifier set. The call will revert if the nullifier already exists.
         _addNullifier(nullifier);
 
-        // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v1.
+        // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v2.
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V2), amount: amount});
 
-        // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v1 to this contract.
-        // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been withdrawn
+        // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
+        // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
         // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});

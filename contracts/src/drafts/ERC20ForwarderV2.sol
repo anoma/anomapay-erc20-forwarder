@@ -85,7 +85,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
             bytes32 nullifier
         ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32));
 
-        // Check that the resource being migrated has not been consumed in the previous protocol adapter.
+        // Check that the resource being upgraded is not in the protocol adapter v1 nullifier set.
         if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
             revert ResourceAlreadyConsumed(nullifier);
         }
@@ -96,7 +96,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v1.
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V1), amount: amount});
 
-        // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v1 to this contract.
+        // Forwards a call to transfer the ERC20 tokens from the ERC20 forwarder v1 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been withdrawn
         // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
