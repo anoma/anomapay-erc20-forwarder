@@ -65,3 +65,4 @@ jobs:
         run: ${{ matrix.command.cmd }}
         env:
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+          FORWARDER_ADDRESS: ${{ secrets.FORWARDER_ADDRESS }}
