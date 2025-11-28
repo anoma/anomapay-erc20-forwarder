@@ -19,6 +19,7 @@ use arm_gadgets::{
     encryption::{Ciphertext, SecretKey},
     evm::ForwarderCalldata,
 };
+use k256::elliptic_curve::group::GroupEncoding;
 use k256::AffinePoint;
 use serde::{Deserialize, Serialize};
 
@@ -41,31 +42,22 @@ pub struct TokenTransferWitness {
     pub action_tree_root: Digest,
     /// Nullifier key for the resource.
     pub nf_key: Option<NullifierKey>,
-    /// See AuthorizationInfo struct.
-    pub auth_info: Option<AuthorizationInfo>,
+    /// A consumed persistent resource requires an authorization signature
+    pub auth_sig: Option<AuthorizationSignature>,
     /// See EncryptionInfo struct.
     pub encryption_info: Option<EncryptionInfo>,
     /// See ForwarderInfo struct.
     pub forwarder_info: Option<ForwarderInfo>,
     /// See LabelInfo struct.
     pub label_info: Option<LabelInfo>,
-}
-
-/// The AuthorizationInfo holds information about the resource being consumed.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct AuthorizationInfo {
-    /// The authorization verifying key corresponds to the resource.value.owner
-    pub auth_pk: AuthorizationVerifyingKey,
-    /// A consumed persistent resource requires an authorization signature
-    pub auth_sig: AuthorizationSignature,
+    /// See ValueInfo struct.
+    pub value_info: Option<ValueInfo>,
 }
 
 /// The EncryptionInfo struct holds information about the encryption keys for the
 /// recipient/sender of a resource in a transaction.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct EncryptionInfo {
-    /// Public key. Obtain from the receiver for persistent resource_ciphertext
-    pub receiver_pk: AffinePoint,
     /// Secret key. randomly generated for persistent resource_ciphertext
     pub sender_sk: SecretKey,
     /// randomly generated for persistent resource_ciphertext(12 bytes)
@@ -92,6 +84,15 @@ pub struct LabelInfo {
     pub forwarder_addr: Vec<u8>,
     /// Address of the wrapped token within this resource (e.g. USDC).
     pub token_addr: Vec<u8>,
+}
+
+/// ValueInfo holds information about value plaintext
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ValueInfo {
+    /// The authorization verifying key corresponds to the resource.value.owner
+    pub auth_pk: AuthorizationVerifyingKey,
+    /// Public key. Obtain from the receiver for persistent resource_ciphertext
+    pub encryption_pk: AffinePoint,
 }
 
 /// The PermitInfo contains information about the permit2 signature that is used to generate
@@ -126,6 +127,20 @@ impl TokenTransferWitness {
         } else {
             Ok(self.resource.commitment())
         }
+    }
+
+    // Check the value and reurn it unwrapped
+    pub fn value(&self) -> Result<&ValueInfo, ArmError> {
+        let value_info = self
+            .value_info
+            .as_ref()
+            .ok_or(ArmError::MissingField("Value info"))?;
+
+        if self.resource.value_ref != calculate_persistent_value_ref(&value_info) {
+            return Err(ArmError::InvalidResourceValueRef);
+        }
+
+        Ok(value_info)
     }
 
     // check on ephemeral resources and return external_payload
@@ -200,20 +215,17 @@ impl TokenTransferWitness {
 
     // check persistent resource consumption
     pub fn persistent_resource_consumption(&self, action_root: &[u8]) -> Result<(), ArmError> {
-        let auth_info = self
-            .auth_info
+        let auth_sig = self
+            .auth_sig
             .as_ref()
-            .ok_or(ArmError::MissingField("Auth info"))?;
+            .ok_or(ArmError::MissingField("Auth signature"))?;
 
-        // check value_ref
-        if self.resource.value_ref != calculate_value_ref_from_auth(&auth_info.auth_pk) {
-            return Err(ArmError::InvalidResourceValueRef);
-        }
+        let value_info = self.value()?;
 
         // Verify the authorization signature
-        if auth_info
+        if value_info
             .auth_pk
-            .verify(AUTH_SIGNATURE_DOMAIN, action_root, &auth_info.auth_sig)
+            .verify(AUTH_SIGNATURE_DOMAIN, action_root, &auth_sig)
             .is_err()
         {
             return Err(ArmError::InvalidSignature);
@@ -241,6 +253,8 @@ impl TokenTransferWitness {
             ));
         }
 
+        let value_info = self.value()?;
+
         // Generate resource ciphertext
         let encryption_info = self
             .encryption_info
@@ -254,7 +268,7 @@ impl TokenTransferWitness {
         .map_err(|_| ArmError::InvalidResourceSerialization);
         let ciphertext = Ciphertext::encrypt_with_nonce(
             &payload_plaintext?,
-            &encryption_info.receiver_pk,
+            &value_info.encryption_pk,
             &encryption_info.sender_sk,
             encryption_info
                 .encryption_nonce
@@ -335,27 +349,35 @@ impl TokenTransferWitness {
         is_consumed: bool,
         action_tree_root: Digest,
         nf_key: Option<NullifierKey>,
-        auth_info: Option<AuthorizationInfo>,
+        auth_sig: Option<AuthorizationSignature>,
         encryption_info: Option<EncryptionInfo>,
         forwarder_info: Option<ForwarderInfo>,
         label_info: Option<LabelInfo>,
+        value_info: Option<ValueInfo>,
     ) -> Self {
         Self {
             is_consumed,
             resource,
             action_tree_root,
             nf_key,
-            auth_info,
+            auth_sig,
             encryption_info,
             forwarder_info,
             label_info,
+            value_info,
         }
     }
 }
 
 /// Calculate the value ref based on an authorization key for a given user.
-pub fn calculate_value_ref_from_auth(auth_pk: &AuthorizationVerifyingKey) -> Digest {
-    hash_bytes(&auth_pk.to_bytes())
+pub fn calculate_persistent_value_ref(value: &ValueInfo) -> Digest {
+    hash_bytes(
+        &[
+            value.encryption_pk.to_bytes().to_vec(),
+            value.auth_pk.to_bytes(),
+        ]
+        .concat(),
+    )
 }
 
 /// Create the value_ref for the user address.
@@ -380,7 +402,7 @@ pub fn calculate_label_ref(forwarder_add: &[u8], erc20_add: &[u8]) -> Digest {
 
 impl EncryptionInfo {
     /// Create new encryption info based on encryption and discovery public keys.
-    pub fn new(receiver_pk: AffinePoint, discovery_pk: &AffinePoint) -> Self {
+    pub fn new(discovery_pk: &AffinePoint) -> Self {
         let discovery_nonce: [u8; 12] = rand::random();
         let discovery_sk = SecretKey::random();
         let discovery_ciphertext = Ciphertext::encrypt_with_nonce(
@@ -397,7 +419,6 @@ impl EncryptionInfo {
         let sender_sk = SecretKey::random();
         let encryption_nonce: [u8; 12] = rand::random();
         Self {
-            receiver_pk,
             sender_sk,
             encryption_nonce: encryption_nonce.to_vec(),
             discovery_ciphertext,
