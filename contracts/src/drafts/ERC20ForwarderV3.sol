@@ -93,14 +93,17 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
             bytes32 nullifier
         ) = abi.decode(input, (CallTypeV3, address, uint128, bytes32));
 
-        // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v1.
+        // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v2.
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V2), amount: amount});
 
+        // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v1 to the ERC20 forwarder v2 contract.
+        // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been withdrawn
+        // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallTypeV2.Migrate, token, amount, nullifier)});
 
         // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
-        // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been withdrawn
+        // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
         // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
