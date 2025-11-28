@@ -46,6 +46,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         _ERC20_FORWARDER_V1 = ERC20Forwarder(erc20ForwarderV1);
     }
 
+    // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
+
     /// @notice Forwards a call wrapping, unwrapping, or migrating ERC20 tokens based on the provided input.
     /// @param input Contains data to
     /// - wrap ERC20 tokens into resources using Uniswap's Permit2,
@@ -99,4 +101,6 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V1.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
     }
+
+    // slither-disable-end dead-code
 }

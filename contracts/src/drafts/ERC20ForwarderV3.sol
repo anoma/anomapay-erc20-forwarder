@@ -31,8 +31,10 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
-    /// @param protocolAdapterV1 The stopped protocol adapter address.
-    /// @param erc20ForwarderV1 The forwarder address connected to the stopped PA.
+    /// @param protocolAdapterV1 The stopped protocol adapter v1 address.
+    /// @param erc20ForwarderV1 The forwarder v1 address connected to the stopped PA v1.
+    /// @param protocolAdapterV2 The stopped protocol adapter v2 address.
+    /// @param erc20ForwarderV2 The forwarder v2 address connected to the stopped PA v2.
     constructor(
         address protocolAdapter,
         bytes32 calldataCarrierLogicRef,
@@ -91,11 +93,11 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
             bytes32 nullifier
         ) = abi.decode(input, (CallTypeV3, address, uint128, bytes32));
 
-        // slither-disable-next-line unused-return
-        _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallTypeV2.Migrate, token, amount, nullifier)});
-
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v1.
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V2), amount: amount});
+
+        // slither-disable-next-line unused-return
+        _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallTypeV2.Migrate, token, amount, nullifier)});
 
         // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been withdrawn
