@@ -10,11 +10,11 @@ use crate::request::proving::witness_data::token_transfer::{
 };
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    create_permit_signature, label_ref, random_nonce, user_with_private_key, value_ref_created,
-    value_ref_ephemeral_consumed, DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC,
+    DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC, create_permit_signature, label_ref, random_nonce,
+    user_with_private_key, value_ref_created, value_ref_ephemeral_consumed,
 };
 use crate::user::Keychain;
-use crate::{load_config, AnomaPayConfig};
+use crate::{AnomaPayConfig, load_config};
 use arm::action_tree::MerkleTree;
 use arm::logic_proof::LogicProver;
 use arm::resource::Resource;

@@ -1,8 +1,8 @@
+use crate::AnomaPayConfig;
 use crate::request::proving::parameters::Parameters;
 use crate::rpc::pa_submit_transaction;
 use crate::web::ReqResult;
 use crate::web::RequestError::{Submit, TransactionGeneration};
-use crate::AnomaPayConfig;
 use arm::transaction::Transaction;
 
 /// Given a `Parameters` struct, creates and submits a transaction.

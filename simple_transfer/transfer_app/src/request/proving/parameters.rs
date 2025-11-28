@@ -5,23 +5,23 @@
 //! list of consumed and created resources with their associated,
 //! application-specific witness data.
 
+use crate::AnomaPayConfig;
+use crate::request::proving::ProvingError::ConsumedAndCreatedResourceCountMismatch;
 use crate::request::proving::compliance_proof::compliance_proofs_async;
 use crate::request::proving::logic_proof::logic_proofs_async;
 use crate::request::proving::resources::{Consumed, Created};
 use crate::request::proving::witness_data::{ConsumedWitnessData, WitnessTypes};
-use crate::request::proving::ProvingError::ConsumedAndCreatedResourceCountMismatch;
 use crate::request::proving::{
     ProvingError::{
         DeltaProofGenerationError, InvalidActionTreeRoot, TransactionVerificationError,
     },
     ProvingResult,
 };
-use crate::AnomaPayConfig;
+use arm::Digest;
 use arm::compliance::ComplianceWitness;
 use arm::delta_proof::DeltaWitness;
 use arm::merkle_path::MerklePath;
 use arm::transaction::{Delta, Transaction};
-use arm::Digest;
 use arm::{action::Action, action_tree::MerkleTree};
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};

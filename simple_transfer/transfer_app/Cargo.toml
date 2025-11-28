@@ -1,6 +1,5 @@
 [package]
 name = "transfer_app"
-resolver = "3"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -26,7 +25,7 @@ chrono = { workspace = true }
 evm_protocol_adapter_bindings = { workspace = true }
 futures = { workspace = true, features = ["thread-pool"] }
 itertools = { workspace = true }
-k256 = { workspace = true, fatures = ["serde"] }
+k256 = { workspace = true, features = ["serde"] }
 log = { workspace = true }
 rand = { workspace = true }
 reqwest = { workspace = true }

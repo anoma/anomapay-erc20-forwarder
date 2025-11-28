@@ -26,13 +26,13 @@ jobs:
         command:
           - step: Format
             name: Run format
-            cmd: cargo fmt -- --check
+            cmd: just fmt check
           - step: Clippy
             name: Run clippy
-            cmd: cargo clippy -- -Dwarnings
+            cmd: just clippy
           - step: Tests
             name: Run tests
-            cmd: cargo clippy --tests -- -Dwarnings
+            cmd: just test
 
     steps:
       - uses: actions/checkout@v6
@@ -43,6 +43,8 @@ jobs:
         with:
           components: rustfmt
           cache: true
+      - name: Install just
+        uses: extractions/setup-just@v3
       - name: Install foundry
         uses: foundry-rs/foundry-toolchain@v1
       - name: ${{ matrix.command.name }}
