@@ -1,7 +1,6 @@
-use crate::request;
 use crate::web;
-use request::witness_data::token_transfer;
-use request::witness_data::trivial;
+use crate::request::proving::witness_data::token_transfer;
+use crate::request::proving::witness_data::trivial;
 use rocket::Responder;
 use serde::{Deserialize, Serialize};
 use utoipa::OpenApi;

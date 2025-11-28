@@ -10,7 +10,7 @@ use crate::request::fee_estimation::price::token::get_ether_price_in_tokens;
 use crate::request::fee_estimation::token::{FeeCompatibleERC20Token, Token};
 use crate::rpc::create_provider;
 use crate::tests::fixtures::user_with_private_key;
-use crate::tests::request::mint::example_mint_parameters;
+use crate::tests::request::proving::mint::example_mint_parameters;
 use crate::web::webserver::estimate_fee;
 use rocket::State;
 

@@ -5,12 +5,12 @@
 //! list of consumed and created resources with their associated,
 //! application-specific witness data.
 
-use crate::request::compliance_proof::compliance_proofs_async;
-use crate::request::logic_proof::logic_proofs_async;
-use crate::request::resources::{Consumed, Created};
-use crate::request::witness_data::{ConsumedWitnessData, WitnessTypes};
-use crate::request::ProvingError::ConsumedAndCreatedResourceCountMismatch;
-use crate::request::{
+use crate::request::proving::compliance_proof::compliance_proofs_async;
+use crate::request::proving::logic_proof::logic_proofs_async;
+use crate::request::proving::resources::{Consumed, Created};
+use crate::request::proving::witness_data::{ConsumedWitnessData, WitnessTypes};
+use crate::request::proving::ProvingError::ConsumedAndCreatedResourceCountMismatch;
+use crate::request::proving::{
     ProvingError::{
         DeltaProofGenerationError, InvalidActionTreeRoot, TransactionVerificationError,
     },

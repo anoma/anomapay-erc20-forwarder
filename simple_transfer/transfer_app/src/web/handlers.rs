@@ -1,4 +1,4 @@
-use crate::request::parameters::Parameters;
+use crate::request::proving::parameters::Parameters;
 use crate::rpc::pa_submit_transaction;
 use crate::web::ReqResult;
 use crate::web::RequestError::{Submit, TransactionGeneration};
