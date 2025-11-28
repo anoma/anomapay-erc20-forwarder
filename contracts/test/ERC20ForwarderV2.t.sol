@@ -174,7 +174,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateInput});
     }
 
-    function test_migrate_transfers_funds_from_forwarder_V1() public virtual {
+    function test_migrate_transfers_funds_from_forwarder_V1() public {
         // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
@@ -200,7 +200,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         assertEq(_erc20.balanceOf(address(_fwdV2)), _TRANSFER_AMOUNT);
     }
 
-    function _emergencyStopPaV1AndSetEmergencyCaller() internal virtual {
+    function _emergencyStopPaV1AndSetEmergencyCaller() internal {
         // Stop the PA.
         vm.prank(_paV1.owner());
         _paV1.emergencyStop();

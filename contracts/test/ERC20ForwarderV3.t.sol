@@ -191,6 +191,25 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
+    function test_migrate_reverts_if_the_v2_resource_to_migrate_has_already_been_consumed() public {
+        Transaction memory txn = TransactionExample.transaction();
+        bytes32 nullifier = txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
+
+        assertEq(_paV2.isNullifierContained(nullifier), false);
+        _paV2.execute(txn);
+        assertEq(_paV2.isNullifierContained(nullifier), true);
+
+        _emergencyStopPaV2AndSetEmergencyCaller();
+
+        bytes memory input = abi.encode(ERC20ForwarderV3.CallTypeV3.MigrateV2, address(0), uint128(0), nullifier);
+
+        vm.prank(address(_paV3));
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC20ForwarderV2.ResourceAlreadyConsumed.selector, nullifier), address(_fwdV3)
+        );
+        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
+    }
+
     function test_migrate_reverts_if_the_v1_resource_has_already_been_migrated() public {
         // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
@@ -203,6 +222,19 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _NULLIFIER), address(_fwdV2));
         _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV1Input});
+    }
+
+    function test_migrate_reverts_if_the_v2_resource_has_already_been_migrated() public {
+        // Fund the forwarder v1.
+        _erc20.mint({to: address(_fwdV2), value: _TRANSFER_AMOUNT});
+
+        _emergencyStopPaV2AndSetEmergencyCaller();
+
+        vm.startPrank(address(_paV3));
+        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV2Input});
+
+        vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _NULLIFIER), address(_fwdV3));
+        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV2Input});
     }
 
     function test_migrate_transfers_funds_from_forwarder_V1() public {
@@ -243,7 +275,32 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         assertEq(_erc20.balanceOf(address(_fwdV3)), _TRANSFER_AMOUNT);
     }
 
-    function _emergencyStopPaV1AndSetEmergencyCaller() internal virtual {
+    function test_migrate_transfers_funds_from_forwarder_V2() public {
+        _erc20.mint({to: address(_fwdV2), value: _TRANSFER_AMOUNT});
+
+        assertEq(_erc20.balanceOf(address(_fwdV2)), _TRANSFER_AMOUNT);
+        assertEq(_erc20.balanceOf(address(_fwdV3)), 0);
+
+        _emergencyStopPaV2AndSetEmergencyCaller();
+
+        vm.prank(address(_paV3));
+
+        vm.expectEmit(address(_fwdV3));
+        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: address(_fwdV2), amount: _TRANSFER_AMOUNT});
+
+        vm.expectEmit(address(_fwdV2));
+        emit ERC20Forwarder.Unwrapped({token: address(_erc20), to: address(_fwdV3), amount: _TRANSFER_AMOUNT});
+
+        vm.expectEmit(address(_erc20));
+        emit IERC20.Transfer({from: address(_fwdV2), to: address(_fwdV3), value: _TRANSFER_AMOUNT});
+
+        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV2Input});
+
+        assertEq(_erc20.balanceOf(address(_fwdV2)), 0);
+        assertEq(_erc20.balanceOf(address(_fwdV3)), _TRANSFER_AMOUNT);
+    }
+
+    function _emergencyStopPaV1AndSetEmergencyCaller() internal {
         // Stop the PA.
         vm.prank(_paV1.owner());
         _paV1.emergencyStop();
@@ -253,7 +310,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         _fwdV1.setEmergencyCaller(address(_fwdV2));
     }
 
-    function _emergencyStopPaV2AndSetEmergencyCaller() internal virtual {
+    function _emergencyStopPaV2AndSetEmergencyCaller() internal {
         // Stop the PA.
         vm.prank(_paV2.owner());
         _paV2.emergencyStop();
