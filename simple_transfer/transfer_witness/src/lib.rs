@@ -114,154 +114,201 @@ pub struct ResourceWithLabel {
     pub token: Vec<u8>,
 }
 
-impl LogicCircuit for TokenTransferWitness {
-    fn constrain(&self) -> Result<LogicInstance, ArmError> {
-        // Load resources
-        let cm = self.resource.commitment();
-        let tag = if self.is_consumed {
+impl TokenTransferWitness {
+    // Compute the tag
+    pub fn tag(&self) -> Result<Digest, ArmError> {
+        if self.is_consumed {
             let nf_key = self
                 .nf_key
                 .as_ref()
                 .ok_or(ArmError::MissingField("Nullifier key"))?;
-            self.resource.nullifier_from_commitment(nf_key, &cm)?
+            self.resource.nullifier(nf_key)
         } else {
-            cm
+            Ok(self.resource.commitment())
+        }
+    }
+
+    // check on ephemeral resources and return external_payload
+    pub fn ephemeral_resource_check(
+        &self,
+        action_root: &[u8],
+    ) -> Result<Vec<ExpirableBlob>, ArmError> {
+        let forwarder_info = self
+            .forwarder_info
+            .as_ref()
+            .ok_or(ArmError::MissingField("Forwarder info"))?;
+
+        let label_info = self
+            .label_info
+            .as_ref()
+            .ok_or(ArmError::MissingField("Label info"))?;
+
+        // Check resource label: label = sha2(forwarder_addr, erc20_addr)
+        let forwarder_addr = label_info.forwarder_addr.as_ref();
+        let erc20_addr = label_info.token_addr.as_ref();
+        let label_ref = calculate_label_ref(forwarder_addr, erc20_addr);
+        if self.resource.label_ref != label_ref {
+            return Err(ArmError::ProveFailed(
+                "Invalid resource label_ref".to_string(),
+            ));
+        }
+
+        // Check resource value_ref: value_ref[0..20] = user_addr
+        // We need this check to ensure the permit2 signature covers
+        // the correct user address. It signs over the action tree root,
+        // and the tag containing the value_ref is directed to the tree root.
+        let user_addr = forwarder_info.user_addr.as_ref();
+        let value_ref = calculate_value_ref_from_user_addr(user_addr);
+        if self.resource.value_ref != value_ref {
+            return Err(ArmError::ProveFailed(
+                "Invalid resource value_ref".to_string(),
+            ));
+        }
+
+        let inputs = if self.is_consumed {
+            // Wrap
+            assert_eq!(forwarder_info.call_type, CallType::Wrap);
+            let permit_info = forwarder_info
+                .permit_info
+                .as_ref()
+                .ok_or(ArmError::MissingField("Permit info"))?;
+            let permit = PermitTransferFrom::from_bytes(
+                erc20_addr,
+                self.resource.quantity,
+                permit_info.permit_nonce.as_ref(),
+                permit_info.permit_deadline.as_ref(),
+            );
+            encode_wrap_forwarder_input(
+                user_addr,
+                permit,
+                action_root,
+                permit_info.permit_sig.as_ref(),
+            )
+        } else {
+            // Unwrap
+            assert_eq!(forwarder_info.call_type, CallType::Unwrap);
+            encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)
         };
+
+        let forwarder_call_data = ForwarderCalldata::from_bytes(forwarder_addr, inputs, vec![]);
+        let call_data_expirable_blob = ExpirableBlob {
+            blob: bytes_to_words(&forwarder_call_data.encode()),
+            deletion_criterion: DeletionCriterion::Immediately as u32,
+        };
+        Ok(vec![call_data_expirable_blob])
+    }
+
+    // check persistent resource consumption
+    pub fn persistent_resource_consumption(&self, action_root: &[u8]) -> Result<(), ArmError> {
+        let auth_info = self
+            .auth_info
+            .as_ref()
+            .ok_or(ArmError::MissingField("Auth info"))?;
+
+        // check value_ref
+        if self.resource.value_ref != calculate_value_ref_from_auth(&auth_info.auth_pk) {
+            return Err(ArmError::InvalidResourceValueRef);
+        }
+
+        // Verify the authorization signature
+        if auth_info
+            .auth_pk
+            .verify(AUTH_SIGNATURE_DOMAIN, action_root, &auth_info.auth_sig)
+            .is_err()
+        {
+            return Err(ArmError::InvalidSignature);
+        }
+
+        Ok(())
+    }
+
+    // check persistent resource creation and return discovery_payload and resource_payload
+    pub fn persistent_resource_creation(
+        &self,
+    ) -> Result<(Vec<ExpirableBlob>, Vec<ExpirableBlob>), ArmError> {
+        let label_info = self
+            .label_info
+            .as_ref()
+            .ok_or(ArmError::MissingField("Label info"))?;
+        let label_ref = calculate_label_ref(
+            label_info.forwarder_addr.as_ref(),
+            label_info.token_addr.as_ref(),
+        );
+
+        if self.resource.label_ref != label_ref {
+            return Err(ArmError::ProveFailed(
+                "Invalid resource label_ref".to_string(),
+            ));
+        }
+
+        // Generate resource ciphertext
+        let encryption_info = self
+            .encryption_info
+            .as_ref()
+            .ok_or(ArmError::MissingField("Encryption info"))?;
+        let payload_plaintext = bincode::serialize(&ResourceWithLabel {
+            resource: self.resource,
+            forwarder: label_info.token_addr.clone(),
+            token: label_info.token_addr.clone(),
+        })
+        .map_err(|_| ArmError::InvalidResourceSerialization);
+        let ciphertext = Ciphertext::encrypt_with_nonce(
+            &payload_plaintext?,
+            &encryption_info.receiver_pk,
+            &encryption_info.sender_sk,
+            encryption_info
+                .encryption_nonce
+                .clone()
+                .try_into()
+                .map_err(|_| ArmError::InvalidEncryptionNonce)?,
+        )?;
+
+        // Generate resource_payload
+        let ciphertext_expirable_blob = ExpirableBlob {
+            blob: ciphertext.as_words(),
+            deletion_criterion: DeletionCriterion::Never as u32,
+        };
+
+        // Generate discovery_payload
+        let ciphertext_discovery_blob = ExpirableBlob {
+            blob: encryption_info.discovery_ciphertext.clone(),
+            deletion_criterion: DeletionCriterion::Never as u32,
+        };
+
+        Ok((
+            vec![ciphertext_discovery_blob],
+            vec![ciphertext_expirable_blob],
+        ))
+    }
+}
+
+impl LogicCircuit for TokenTransferWitness {
+    fn constrain(&self) -> Result<LogicInstance, ArmError> {
+        // Load resources
+        let tag = self.tag()?;
 
         let root_bytes = self.action_tree_root.as_bytes();
 
-        // Generate resource_payload and external_payload
+        // Generate payloads
         let (discovery_payload, resource_payload, external_payload) = if self.resource.is_ephemeral
         {
-            let forwarder_info = self
-                .forwarder_info
-                .as_ref()
-                .ok_or(ArmError::MissingField("Forwarder info"))?;
-
-            let label_info = self
-                .label_info
-                .as_ref()
-                .ok_or(ArmError::MissingField("Label info"))?;
-            // Check resource label: label = sha2(forwarder_addr, erc20_addr)
-            let forwarder_addr = label_info.forwarder_addr.as_ref();
-            let erc20_addr = label_info.token_addr.as_ref();
-            let user_addr = forwarder_info.user_addr.as_ref();
-            let label_ref = calculate_label_ref(forwarder_addr, erc20_addr);
-            assert_eq!(self.resource.label_ref, label_ref);
-
-            // Check resource value_ref: value_ref[0..20] = user_addr
-            // We need this check to ensure the permit2 signature covers
-            // the correct user address. It signs over the action tree root,
-            // and the tag containing the value_ref is directed to the tree root.
-            let value_ref = calculate_value_ref_from_user_addr(user_addr);
-            assert_eq!(self.resource.value_ref, value_ref);
-
-            let inputs = if self.is_consumed {
-                // Wrap
-                assert_eq!(forwarder_info.call_type, CallType::Wrap);
-                let permit_info = forwarder_info
-                    .permit_info
-                    .as_ref()
-                    .ok_or(ArmError::MissingField("Permit info"))?;
-                let permit = PermitTransferFrom::from_bytes(
-                    erc20_addr,
-                    self.resource.quantity,
-                    permit_info.permit_nonce.as_ref(),
-                    permit_info.permit_deadline.as_ref(),
-                );
-                encode_wrap_forwarder_input(
-                    user_addr,
-                    permit,
-                    root_bytes,
-                    permit_info.permit_sig.as_ref(),
-                )
-            } else {
-                // Unwrap
-                assert_eq!(forwarder_info.call_type, CallType::Unwrap);
-                encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)
-            };
-
-            let forwarder_call_data = ForwarderCalldata::from_bytes(forwarder_addr, inputs, vec![]);
-            let external_payload = {
-                let call_data_expirable_blob = ExpirableBlob {
-                    blob: bytes_to_words(&forwarder_call_data.encode()),
-                    deletion_criterion: DeletionCriterion::Immediately as u32,
-                };
-                vec![call_data_expirable_blob]
-            };
+            // Generate external_payload for the ephemeral resource
+            let external_payload = self.ephemeral_resource_check(root_bytes)?;
 
             // Empty discovery_payload and resource_payload
             (vec![], vec![], external_payload)
-        } else {
+        } else if self.is_consumed {
             // Consume a persistent resource
-            if self.is_consumed {
-                let auth_info = self
-                    .auth_info
-                    .as_ref()
-                    .ok_or(ArmError::MissingField("Auth info"))?;
-                let auth_pk = auth_info.auth_pk;
-                // check value_ref
-                assert_eq!(
-                    self.resource.value_ref,
-                    calculate_value_ref_from_auth(&auth_pk)
-                );
-                // Verify the authorization signature
-                assert!(auth_pk
-                    .verify(AUTH_SIGNATURE_DOMAIN, root_bytes, &auth_info.auth_sig)
-                    .is_ok());
+            self.persistent_resource_consumption(root_bytes)?;
 
-                // empty payloads for consumed persistent resource
-                (vec![], vec![], vec![])
-            } else {
-                let label_info = self
-                    .label_info
-                    .as_ref()
-                    .ok_or(ArmError::MissingField("Label info"))?;
-                let label_ref = calculate_label_ref(
-                    label_info.forwarder_addr.as_ref(),
-                    label_info.token_addr.as_ref(),
-                );
-                assert_eq!(self.resource.label_ref, label_ref);
+            // empty payloads for consumed persistent resource
+            (vec![], vec![], vec![])
+        } else {
+            // Create a persistent resource
+            let (discovery_payload, resource_payload) = self.persistent_resource_creation()?;
 
-                // Generate resource ciphertext
-                let encryption_info = self
-                    .encryption_info
-                    .as_ref()
-                    .ok_or(ArmError::MissingField("Encryption info"))?;
-                let payload_plaintext = bincode::serialize(&ResourceWithLabel {
-                    resource: self.resource,
-                    forwarder: label_info.token_addr.clone(),
-                    token: label_info.token_addr.clone(),
-                })
-                .map_err(|_| ArmError::InvalidResourceSerialization);
-                let ciphertext = Ciphertext::encrypt_with_nonce(
-                    &payload_plaintext?,
-                    &encryption_info.receiver_pk,
-                    &encryption_info.sender_sk,
-                    encryption_info
-                        .encryption_nonce
-                        .clone()
-                        .try_into()
-                        .map_err(|_| ArmError::InvalidEncryptionNonce)?,
-                )?;
-                let ciphertext_expirable_blob = ExpirableBlob {
-                    blob: ciphertext.as_words(),
-                    deletion_criterion: DeletionCriterion::Never as u32,
-                };
-
-                // Generate discovery_payload
-                let ciphertext_discovery_blob = ExpirableBlob {
-                    blob: encryption_info.discovery_ciphertext.clone(),
-                    deletion_criterion: DeletionCriterion::Never as u32,
-                };
-
-                // return discovery_payload and resource_payload
-                (
-                    vec![ciphertext_discovery_blob],
-                    vec![ciphertext_expirable_blob],
-                    vec![],
-                )
-            }
+            // return discovery_payload and resource_payload
+            (discovery_payload, resource_payload, vec![])
         };
 
         let app_data = AppData {
