@@ -52,7 +52,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// - unwrap ERC20 tokens from resources, and
     /// - migrate ERC20 resources from the ERC20 forwarder v1.
     /// @return output The empty string signaling that the function call has succeeded.
-    function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
+    function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
         CallTypeV2 callType = CallTypeV2(uint8(input[31]));
 
         if (callType == CallTypeV2.Wrap) {
@@ -60,7 +60,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         } else if (callType == CallTypeV2.Unwrap) {
             _unwrap(input);
         } else {
-            _migrate(input);
+            _migrateV1(input);
         }
 
         output = "";
@@ -73,7 +73,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// * `nullifier`: The nullifier of the resource to be migrated.
     /// * `token`: The address of the token to migrated.
     /// * `amount`: The amount to be migrated.
-    function _migrate(bytes calldata input) internal {
+
+    function _migrateV1(bytes calldata input) internal virtual {
         (,
             // CallTypeV2.Migrate
             address token,
