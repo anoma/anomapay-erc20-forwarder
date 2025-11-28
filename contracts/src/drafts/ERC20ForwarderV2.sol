@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {INullifierSet} from "@anoma-evm-pa/interfaces/INullifierSet.sol";
 import {NullifierSet} from "@anoma-evm-pa/state/NullifierSet.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
@@ -85,7 +86,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32));
 
         // Check that the resource being migrated has not been consumed in the previous protocol adapter.
-        if (NullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
+        if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
             revert ResourceAlreadyConsumed(nullifier);
         }
 

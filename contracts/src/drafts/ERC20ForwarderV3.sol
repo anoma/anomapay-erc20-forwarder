@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {NullifierSet} from "@anoma-evm-pa/state/NullifierSet.sol";
+import {INullifierSet} from "@anoma-evm-pa/interfaces/INullifierSet.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
 import {ERC20ForwarderV2} from "./ERC20ForwarderV2.sol";
@@ -122,7 +122,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         ) = abi.decode(input, (CallTypeV3, address, uint128, bytes32));
 
         // Check that the resource being upgraded is not in the previous protocol adapter's nullifier set.
-        if (NullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(nullifier)) {
+        if (INullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(nullifier)) {
             revert ResourceAlreadyConsumed(nullifier);
         }
 
