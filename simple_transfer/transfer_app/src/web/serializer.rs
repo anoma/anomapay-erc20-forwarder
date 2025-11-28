@@ -36,8 +36,8 @@ pub struct SerializedResource {
 /// Serializes the nullifier key it's inner bytes as base64 encoded strings.
 pub mod serialize_nullifier_key {
     use arm::nullifier_key::NullifierKey;
-    use base64::engine::general_purpose;
     use base64::Engine;
+    use base64::engine::general_purpose;
     use general_purpose::STANDARD;
     use serde::{Deserialize, Deserializer, Serializer};
 
@@ -72,8 +72,8 @@ pub mod serialize_nullifier_key {
 /// Serializes by turning the affine point into a vector, and then base64
 /// encoding it.
 pub mod serialize_affine_point {
-    use base64::engine::general_purpose;
     use base64::Engine;
+    use base64::engine::general_purpose;
     use k256::AffinePoint;
     use serde::{Deserialize, Deserializer, Serializer};
 
@@ -133,8 +133,8 @@ pub mod serialize_auth_verifying_key {
 
 pub mod serialize_authorization_signature {
     use arm_gadgets::authorization::AuthorizationSignature;
-    use base64::engine::general_purpose;
     use base64::Engine;
+    use base64::engine::general_purpose;
     use serde::{Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S>(value: &AuthorizationSignature, serializer: S) -> Result<S::Ok, S::Error>
@@ -184,9 +184,9 @@ pub mod serialize_authorization_signature {
 /// Serializing is derived for that struct and is then punted there.
 pub mod serialize_resource {
     use crate::web::serializer::SerializedResource;
+    use arm::Digest;
     use arm::nullifier_key::NullifierKeyCommitment;
     use arm::resource::Resource;
-    use arm::Digest;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     /// Converts a Digest into a [u8;32] safely.

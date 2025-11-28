@@ -6,11 +6,9 @@ edition = "2021"
 [workspace]
 
 [dependencies]
-token-transfer-methods = { path = "methods" }
-risc0-zkvm = "3.0.3"
-arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = false }
-transfer_witness = { path = "../transfer_witness" }
-transfer_library = { path = "../transfer_library" }
-transfer_witness_v2 = { path = "../transfer_witness_v2" }
-transfer_library_v2 = { path = "../transfer_library_v2" }
-arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
+arm =  { workspace = true }
+transfer_witness = { workspace = true }
+transfer_library = { workspace = true }
+transfer_witness_v2 = { workspace = true }
+transfer_library_v2 = { workspace = true }
+arm-gadgets = { workspace = true }

@@ -1,7 +1,10 @@
 [package]
 name = "transfer_app"
-version = "0.1.0"
-edition = "2021"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+readme.workspace = true
+version.workspace = true
 
 [lints.rust]
 missing_docs = "warn"
@@ -13,36 +16,36 @@ default = ["arm/bonsai"]
 gpu = ["arm/cuda"]
 
 [dependencies]
-alloy = { version = "1.0.23", features = ["full"] }
-alloy-chains = "0.2.21"
-arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = false, features = ["transaction"] }
-arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
-async-trait = "0.1.89"
-bincode = "1.3.3"
-chrono = "0.4.42"
-evm_protocol_adapter_bindings = { git = "https://github.com/anoma/evm-protocol-adapter", tag = "bindings/v1.0.0-rc.6" }
-erc20_forwarder_bindings = { path = "../../bindings" }
-futures = { version = "0.3.31", features = ["thread-pool"] }
-itertools = "0.14.0"
-k256 = { version = "0.13", features = ["serde"] }
-log = "0.4.28"
-rand = "0.9.2"
-reqwest = { version = "0.12", features = [] }
-risc0-zkvm = { version = "3.0.3", default-features = false }
-rocket = { version = "0.5", features = ["json"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-serde_with = { version = "3.0", features = ["hex"] }
-thiserror = "2.0.17"
-tokio = { version = "1.47.1", features = ["rt", "rt-multi-thread", "macros"] }
-transfer_library = { path = "../transfer_library" }
-transfer_witness = { path = "../transfer_witness" }
-typetag = "0.2.21"
-utoipa = "5"
-base64 = "0.22.1"
-utoipa-swagger-ui = { version = "9", features = ["rocket"] }
-enum_dispatch = "0.3"
-strum = "0.27.2"
+alloy = { workspace = true }
+alloy-chains = { workspace = true }
+arm = { workspace = true, features = ["transaction"] }
+arm-gadgets = { workspace = true }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+bincode = { workspace = true }
+chrono = { workspace = true }
+evm_protocol_adapter_bindings = { workspace = true }
+erc20_forwarder_bindings = { workspace = true }
+futures = { workspace = true, features = ["thread-pool"] }
+itertools = { workspace = true }
+k256 = { workspace = true, features = ["serde"] }
+log = { workspace = true }
+rand = { workspace = true }
+reqwest = { workspace = true }
+risc0-zkvm = { workspace = true }
+rocket = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_with = { workspace = true }
+strum = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["rt", "macros"] }
+transfer_library = { workspace = true }
+transfer_witness = { workspace = true }
+typetag = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
+enum_dispatch = { workspace = true }
 
 [dev-dependencies]
-dotenv = "0.15.0"
+dotenv = { workspace = true }

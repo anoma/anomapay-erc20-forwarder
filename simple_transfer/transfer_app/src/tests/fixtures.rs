@@ -6,7 +6,7 @@ use crate::tests::permit2::{permit_witness_transfer_from_signature, Permit2Data}
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
 use alloy::hex::ToHexExt;
-use alloy::primitives::{address, Address, Signature, B256, U256};
+use alloy::primitives::{Address, B256, Signature, U256, address};
 use alloy::signers::local::PrivateKeySigner;
 use arm::action_tree::MerkleTree;
 use erc20_forwarder_bindings::addresses::erc20_forwarder_address;

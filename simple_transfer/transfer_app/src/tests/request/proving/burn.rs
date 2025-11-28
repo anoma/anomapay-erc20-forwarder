@@ -8,19 +8,19 @@ use crate::request::proving::resources::{
 use crate::request::proving::witness_data::token_transfer::{ConsumedPersistent, CreatedEphemeral};
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    label_ref, random_nonce, user_with_private_key, TOKEN_ADDRESS_SEPOLIA_USDC,
+    TOKEN_ADDRESS_SEPOLIA_USDC, label_ref, random_nonce, user_with_private_key,
 };
 use crate::tests::request::proving::mint::example_mint_transaction_submit;
 use crate::user::Keychain;
-use crate::{load_config, AnomaPayConfig};
+use crate::{AnomaPayConfig, load_config};
+use arm::Digest;
 use arm::action_tree::MerkleTree;
 use arm::logic_proof::LogicProver;
 use arm::resource::Resource;
 use arm::transaction::Transaction;
-use arm::Digest;
 use arm_gadgets::authorization::AuthorizationSignature;
 use transfer_library::TransferLogic;
-use transfer_witness::{calculate_value_ref_from_user_addr, AUTH_SIGNATURE_DOMAIN};
+use transfer_witness::{AUTH_SIGNATURE_DOMAIN, calculate_value_ref_from_user_addr};
 
 #[ignore]
 #[tokio::test]
