@@ -38,6 +38,9 @@ transfer_witness = { path = "../transfer_witness" }
 typetag = "0.2.21"
 utoipa = "5"
 base64 = "0.22.1"
-utoipa-swagger-ui = { version = "9", features = ["rocket"]}
+utoipa-swagger-ui = { version = "9", features = ["rocket"] }
 enum_dispatch = "0.3"
+strum = "0.27.2"
+
 [dev-dependencies]
+dotenv = "0.15.0"
