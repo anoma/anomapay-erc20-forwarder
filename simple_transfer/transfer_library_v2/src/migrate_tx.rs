@@ -103,14 +103,16 @@ fn simple_migrate_test() {
     use transfer_witness::{
         calculate_label_ref, calculate_value_ref_from_auth, calculate_value_ref_from_user_addr,
     };
-    use transfer_witness_v2::{AUTH_SIGNATURE_DOMAIN_V2, FORWARDER_ADDRESS_V1, TRANSFER_LOGIC_V1};
+    use transfer_witness_v2::AUTH_SIGNATURE_DOMAIN_V2;
 
     // Common parameters
+    let forwarder_addr_v1 = vec![0u8; 20];
+    let logic_ref_v1 = Digest::default();
     let forwarder_addr_v2 = vec![1u8; 20];
     let token_addr = vec![2u8; 20];
     let user_addr = vec![3u8; 20];
     let quantity = 100;
-    let label_ref = calculate_label_ref(FORWARDER_ADDRESS_V1.as_bytes(), &token_addr);
+    let label_ref = calculate_label_ref(&forwarder_addr_v1, &token_addr);
     let label_ref_v2 = calculate_label_ref(&forwarder_addr_v2, &token_addr);
 
     // Construct the migrated resource
@@ -120,7 +122,7 @@ fn simple_migrate_test() {
     let migrated_nf_key = NullifierKey::default();
     let migrated_nf_cm = migrated_nf_key.commit();
     let migrated_resource = Resource {
-        logic_ref: *TRANSFER_LOGIC_V1,
+        logic_ref: logic_ref_v1,
         nk_commitment: migrated_nf_cm,
         label_ref,
         value_ref: migrated_value_ref,

@@ -10,10 +10,27 @@ sol! {
     }
 }
 
-pub fn encode_migrate_forwarder_input(token: &[u8], quantity: u128, nf: &[u8]) -> Vec<u8> {
+pub fn encode_migrate_forwarder_input(
+    token: &[u8],
+    quantity: u128,
+    nf: &[u8],
+    commitment_tree_root: &[u8],
+    migrate_resource_logic_ref: &[u8],
+    migrate_resource_label_ref: &[u8],
+) -> Vec<u8> {
     let token: Address = token.try_into().expect("Invalid address bytes");
-    let nf = B256::from_slice(nf);
+
     // NOTE: u128 is padded to u256, this can be fixed if we extend the value to 248 bits in ARM
     let quantity_value = U256::from(quantity);
-    (CallTypeV2::Migrate, token, quantity_value, nf).abi_encode_params()
+
+    (
+        CallTypeV2::Migrate,
+        token,
+        quantity_value,
+        B256::from_slice(nf),
+        B256::from_slice(commitment_tree_root),
+        B256::from_slice(migrate_resource_logic_ref),
+        B256::from_slice(migrate_resource_label_ref),
+    )
+        .abi_encode_params()
 }

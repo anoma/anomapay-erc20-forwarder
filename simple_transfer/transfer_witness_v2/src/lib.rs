@@ -14,8 +14,6 @@ use arm::{
     Digest,
 };
 use arm_gadgets::{encryption::Ciphertext, evm::ForwarderCalldata};
-use hex::FromHex;
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use transfer_witness::{
     calculate_label_ref, calculate_value_ref_from_auth, calculate_value_ref_from_user_addr,
@@ -24,18 +22,6 @@ use transfer_witness::{
 };
 
 pub const AUTH_SIGNATURE_DOMAIN_V2: &[u8] = b"TokenTransferAuthorizationV2";
-
-lazy_static! {
-    pub static ref COMMITMENT_ROOT_V1: Digest =
-        Digest::from_hex("62d05824eb22abb15d8505fe91bc5ecf56245f34f7d60137214e09af15275365")
-            .unwrap();
-    pub static ref FORWARDER_ADDRESS_V1: Digest =
-        Digest::from_hex("cc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06")
-            .unwrap();
-    pub static ref TRANSFER_LOGIC_V1: Digest =
-        Digest::from_hex("cc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06")
-            .unwrap();
-}
 
 /// The TokenTransferWitnessV2 holds all the information necessary to generate a proof of the
 /// resource logic of a given resource.
@@ -149,10 +135,9 @@ impl LogicCircuit for TokenTransferWitnessV2 {
                         .as_ref()
                         .ok_or(ArmError::MissingField("Migrate info"))?;
 
-                    // check existence of migrate_resource
+                    // compute migrate resource commitment tree root
                     let migrate_cm = migrate_info.resource.commitment();
                     let migrate_root = migrate_info.path.root(&migrate_cm);
-                    assert_eq!(*COMMITMENT_ROOT_V1, migrate_root);
 
                     // check migrate_resource is non-ephemeral
                     assert!(!migrate_info.resource.is_ephemeral);
@@ -171,17 +156,6 @@ impl LogicCircuit for TokenTransferWitnessV2 {
                         )
                         .is_ok());
 
-                    // check migrate_resource logic_ref
-                    assert_eq!(
-                        migrate_info.resource.logic_ref.as_words(),
-                        TRANSFER_LOGIC_V1.as_words()
-                    );
-
-                    // check migrate_resource label_ref_v1
-                    let migrate_label_ref_v1 =
-                        calculate_label_ref(FORWARDER_ADDRESS_V1.as_bytes(), erc20_addr);
-                    assert_eq!(migrate_info.resource.label_ref, migrate_label_ref_v1);
-
                     // check migrate_resource quantity
                     assert_eq!(migrate_info.resource.quantity, self.resource.quantity);
 
@@ -194,6 +168,9 @@ impl LogicCircuit for TokenTransferWitnessV2 {
                         erc20_addr,
                         self.resource.quantity,
                         migrate_nf.as_bytes(),
+                        migrate_root.as_bytes(),
+                        migrate_info.resource.logic_ref.as_bytes(),
+                        migrate_info.resource.label_ref.as_bytes(),
                     )
                 }
                 _ => {
