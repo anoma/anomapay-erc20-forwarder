@@ -373,8 +373,8 @@ impl TokenTransferWitness {
 pub fn calculate_persistent_value_ref(value: &ValueInfo) -> Digest {
     hash_bytes(
         &[
-            value.encryption_pk.to_bytes().to_vec(),
             value.auth_pk.to_bytes(),
+            value.encryption_pk.to_bytes().to_vec(),
         ]
         .concat(),
     )
