@@ -17,7 +17,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     enum CallTypeV2 {
         Unwrap,
         Wrap,
-        Migrate
+        MigrateV1
     }
 
     address internal immutable _PROTOCOL_ADAPTER_V1;

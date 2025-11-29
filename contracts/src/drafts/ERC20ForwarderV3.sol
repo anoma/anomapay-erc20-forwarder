@@ -79,13 +79,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         output = "";
     }
 
-    /// @notice Migrates ERC20 v1 resources by transferring ERC20 tokens from the ERC20 forwarder v1 and storing the
-    /// associated nullifier.
-    /// @param input The input bytes containing the encoded arguments for the migration call:
-    /// * The `CallTypeV3.MigrateV1` enum value that has been checked already and is therefore unused.
-    /// * `nullifier`: The nullifier of the resource to be migrated.
-    /// * `token`: The address of the token to migrated.
-    /// * `amount`: The amount to be migrated.
+    /// @inheritdoc ERC20ForwarderV2
     function _migrateV1(bytes calldata input) internal virtual override {
         (,
             // CallTypeV3.MigrateV1
@@ -99,7 +93,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
 
         // Forwards a call to migrate ERC20 v1 tokens via the ERC20 forwarder v1.
         // slither-disable-next-line unused-return
-        _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallTypeV2.Migrate, token, amount, nullifier)});
+        _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallTypeV2.MigrateV1, token, amount, nullifier)});
 
         // Forwards a call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
@@ -111,7 +105,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     /// @notice Migrates ERC20 v2 resources by transferring ERC20 tokens from the ERC20 forwarder v1 and storing the
     /// associated nullifier.
     /// @param input The input bytes containing the encoded arguments for the migration call:
-    /// * The `CallTypeV3.Migrate` enum value that has been checked already and is therefore unused.
+    /// * The `CallTypeV3.MigrateV2` enum value that has been checked already and is therefore unused.
     /// * `nullifier`: The nullifier of the resource to be migrated.
     /// * `token`: The address of the token to migrated.
     /// * `amount`: The amount to be migrated.

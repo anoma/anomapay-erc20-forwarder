@@ -35,7 +35,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     ERC20Forwarder internal _fwdV1;
     ERC20ForwarderV2 internal _fwdV2;
 
-    bytes internal _defaultMigrateInput;
+    bytes internal _defaultMigrateV1Input;
 
     function setUp() public virtual override {
         _alicePrivateKey = 0xc522337787f3037e9d0dcba4dc4c0e3d4eb7b1c65598d51c425574e8ce64d140;
@@ -109,8 +109,8 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             _TRANSFER_AMOUNT
         );
 
-        _defaultMigrateInput = abi.encode( /*  callType */
-            ERC20ForwarderV2.CallTypeV2.Migrate,
+        _defaultMigrateV1Input = abi.encode( /*  callType */
+            ERC20ForwarderV2.CallTypeV2.MigrateV1,
             /*     token */
             address(_erc20),
             /*    amount */
@@ -152,7 +152,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         _emergencyStopPaV1AndSetEmergencyCaller();
 
-        bytes memory input = abi.encode(ERC20ForwarderV2.CallTypeV2.Migrate, address(0), uint128(0), nullifier);
+        bytes memory input = abi.encode(ERC20ForwarderV2.CallTypeV2.MigrateV1, address(0), uint128(0), nullifier);
 
         vm.prank(address(_paV2));
         vm.expectRevert(
@@ -168,10 +168,10 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _emergencyStopPaV1AndSetEmergencyCaller();
 
         vm.startPrank(address(_paV2));
-        _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateInput});
+        _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV1Input});
 
         vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _NULLIFIER), address(_fwdV2));
-        _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateInput});
+        _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV1Input});
     }
 
     function test_migrate_transfers_funds_from_forwarder_V1() public {
@@ -194,7 +194,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         vm.expectEmit(address(_erc20));
         emit IERC20.Transfer({from: address(_fwdV1), to: address(_fwdV2), value: _TRANSFER_AMOUNT});
 
-        _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateInput});
+        _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV1Input});
 
         assertEq(_erc20.balanceOf(address(_fwdV1)), 0);
         assertEq(_erc20.balanceOf(address(_fwdV2)), _TRANSFER_AMOUNT);
