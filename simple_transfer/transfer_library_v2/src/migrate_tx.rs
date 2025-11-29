@@ -1,3 +1,4 @@
+use crate::TransferLogicV2;
 use arm::{
     action::Action,
     action_tree::MerkleTree,
@@ -15,9 +16,6 @@ use arm::{
 };
 use arm_gadgets::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use k256::AffinePoint;
-use transfer_witness::ValueInfo;
-
-use crate::TransferLogicV2;
 
 #[allow(clippy::too_many_arguments)]
 pub fn construct_migrate_tx(
@@ -105,6 +103,7 @@ fn simple_migrate_test() {
         authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey},
         encryption::random_keypair,
     };
+    use transfer_witness::ValueInfo;
     use transfer_witness::{
         calculate_label_ref, calculate_persistent_value_ref, calculate_value_ref_from_user_addr,
     };

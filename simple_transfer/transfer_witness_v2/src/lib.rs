@@ -89,7 +89,7 @@ impl TokenTransferWitnessV2 {
             .as_ref()
             .ok_or(ArmError::MissingField("Value info"))?;
 
-        if self.resource.value_ref != calculate_persistent_value_ref(&value_info) {
+        if self.resource.value_ref != calculate_persistent_value_ref(value_info) {
             return Err(ArmError::InvalidResourceValueRef);
         }
 
@@ -242,7 +242,7 @@ impl TokenTransferWitnessV2 {
         // Verify the authorization signature
         if value_info
             .auth_pk
-            .verify(AUTH_SIGNATURE_DOMAIN_V2, action_root, &auth_sig)
+            .verify(AUTH_SIGNATURE_DOMAIN_V2, action_root, auth_sig)
             .is_err()
         {
             return Err(ArmError::InvalidSignature);

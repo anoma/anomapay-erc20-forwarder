@@ -215,6 +215,7 @@ pub async fn example_transfer_parameters(
                 .auth_signing_key
                 .sign(AUTH_SIGNATURE_DOMAIN, action_tree_root.as_bytes()),
             sender_authorization_verifying_key: sender.clone().auth_verifying_key(),
+            sender_encryption_public_key: sender.encryption_pk,
         };
 
         let consumed_resource: Consumed = Consumed {
@@ -231,6 +232,7 @@ pub async fn example_transfer_parameters(
 
     let created_witness_data = CreatedPersistent {
         receiver_discovery_public_key: receiver.discovery_pk,
+        receiver_authorization_verifying_key: receiver.auth_verifying_key(),
         receiver_encryption_public_key: receiver.encryption_pk,
         token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
     };

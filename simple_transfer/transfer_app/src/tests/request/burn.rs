@@ -163,6 +163,7 @@ pub async fn example_burn_parameters(
     let consumed_witness_data = ConsumedPersistent {
         sender_authorization_signature: auth_signature,
         sender_authorization_verifying_key: burner.clone().auth_verifying_key(),
+        sender_encryption_public_key: burner.encryption_pk,
     };
 
     let consumed_resource = Consumed {

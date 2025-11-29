@@ -219,7 +219,7 @@ impl TransferLogicV2 {
             token_addr,
         };
 
-        let value_info = ValueInfo {
+        let migrated_value_info = ValueInfo {
             auth_pk: migrated_auth_pk,
             encryption_pk: migrated_encryption_pk,
         };
@@ -229,7 +229,7 @@ impl TransferLogicV2 {
             nf_key: migrated_nf_key.clone(),
             path: migrated_resource_path,
             auth_sig: migrated_auth_sig,
-            value_info: value_info,
+            value_info: migrated_value_info,
         };
 
         let forwarder_info = ForwarderInfoV2 {

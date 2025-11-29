@@ -137,7 +137,7 @@ pub async fn example_mint_parameters(
     // Create the permit2 signature.
 
     let permit_signature = create_permit_signature(
-        &minter.private_key.unwrap(),
+        &minter.private_key.clone().unwrap(),
         action_tree.clone(),
         consumed_resource_nullifier.into(),
         amount,
@@ -161,12 +161,13 @@ pub async fn example_mint_parameters(
 
     let consumed_resource = Consumed {
         resource: consumed_resource,
-        nullifier_key: minter.nf_key,
+        nullifier_key: minter.clone().nf_key,
         witness_data: ConsumedWitnessDataEnum::Ephemeral(consumed_witness_data),
     };
 
     let created_witness_data = CreatedPersistent {
         receiver_discovery_public_key: minter.discovery_pk,
+        receiver_authorization_verifying_key: minter.clone().auth_verifying_key(),
         receiver_encryption_public_key: minter.encryption_pk,
         token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
     };

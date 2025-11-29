@@ -52,6 +52,9 @@ pub struct CreatedPersistent {
     /// The discovery public key of the receiver (i.e., owner) of the resource.
     pub receiver_discovery_public_key: AffinePoint,
     #[schema(value_type = String, format = Binary)]
+    #[serde(with = "serialize_auth_verifying_key")]
+    pub(crate) receiver_authorization_verifying_key: AuthorizationVerifyingKey,
+    #[schema(value_type = String, format = Binary)]
     #[serde(with = "serialize_affine_point")]
     /// The encryption public key of the receiver (i.e., owner) of the resource.
     pub receiver_encryption_public_key: AffinePoint,
@@ -72,6 +75,7 @@ impl CreatedWitnessData for CreatedPersistent {
             resource,
             action_tree_root,
             &self.receiver_discovery_public_key,
+            self.receiver_authorization_verifying_key,
             self.receiver_encryption_public_key,
             config.forwarder_address.to_vec(),
             self.token_contract_address.to_vec(),
@@ -191,6 +195,10 @@ pub struct ConsumedPersistent {
     /// TODO! Do we have to pass this via the web or not? Check with Yulia/Xuyang/Michael
     pub(crate) sender_authorization_verifying_key: AuthorizationVerifyingKey,
     #[schema(value_type = String, format = Binary)]
+    #[serde(with = "serialize_affine_point")]
+    /// The encryption public key of the sender.
+    pub sender_encryption_public_key: AffinePoint,
+    #[schema(value_type = String, format = Binary)]
     #[serde(with = "serialize_authorization_signature")]
     /// The signature of the sender authorizing the consumption of the resource. This signature is over the entire action tree.
     pub(crate) sender_authorization_signature: AuthorizationSignature,
@@ -211,6 +219,7 @@ impl ConsumedWitnessData for ConsumedPersistent {
             action_tree_root,
             nullifier_key,
             self.sender_authorization_verifying_key,
+            self.sender_encryption_public_key,
             self.sender_authorization_signature,
         );
         Ok(WitnessTypes::Token(Box::new(witness)))

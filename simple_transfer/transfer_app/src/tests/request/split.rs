@@ -215,17 +215,19 @@ pub async fn example_split_parameters(
     // To split resource
     let to_split_witness_data = token_transfer::ConsumedPersistent {
         sender_authorization_verifying_key: sender.auth_verifying_key(),
+        sender_encryption_public_key: sender.encryption_pk,
         sender_authorization_signature: auth_signature,
     };
     let to_split = Consumed {
         resource: to_split_resource,
-        nullifier_key: sender.nf_key,
+        nullifier_key: sender.clone().nf_key,
         witness_data: ConsumedWitnessDataEnum::Persistent(to_split_witness_data),
     };
 
     // Created resource
     let created_witness_data = token_transfer::CreatedPersistent {
         receiver_discovery_public_key: receiver.discovery_pk,
+        receiver_authorization_verifying_key: receiver.auth_verifying_key(),
         receiver_encryption_public_key: receiver.encryption_pk,
         token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
     };
@@ -237,6 +239,7 @@ pub async fn example_split_parameters(
     // Remainder resource
     let remainder_witness_data = token_transfer::CreatedPersistent {
         receiver_discovery_public_key: sender.discovery_pk,
+        receiver_authorization_verifying_key: sender.auth_verifying_key(),
         receiver_encryption_public_key: sender.encryption_pk,
         token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
     };
