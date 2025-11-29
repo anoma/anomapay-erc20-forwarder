@@ -24,7 +24,7 @@ pub enum RpcError {
 }
 
 /// Create a provider based on the private key from the configuration.
-async fn create_provider(config: &AnomaPayConfig) -> RpcResult<DynProvider> {
+pub async fn create_provider(config: &AnomaPayConfig) -> RpcResult<DynProvider> {
     let provider = ProviderBuilder::new()
         .wallet(config.hot_wallet_private_key.clone())
         .connect_http(config.ethereum_rpc.parse().map_err(|_e| InvalidRPCUrl)?)
@@ -33,7 +33,6 @@ async fn create_provider(config: &AnomaPayConfig) -> RpcResult<DynProvider> {
     Ok(provider)
 }
 
-#[allow(dead_code)]
 /// Submit a transaction to the protocol adapter and wait for the receipt.
 pub async fn pa_submit_transaction(
     config: &AnomaPayConfig,

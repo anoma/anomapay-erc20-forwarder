@@ -22,7 +22,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     address internal immutable _PROTOCOL_ADAPTER_V1;
     ERC20Forwarder internal immutable _ERC20_FORWARDER_V1;
 
-    error NullifierAlreadyMigrated(bytes32 nullifier);
+    error ResourceAlreadyConsumed(bytes32 nullifier);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
@@ -90,11 +90,11 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
             bytes32 nullifier
         ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32));
 
-        // Check that the resource being upgraded is not in the previous protocol adapter's nullifier set.
+        // Check that the resource being migrated has not been consumed in the previous protocol adapter.
         if (
             NullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)
         ) {
-            revert NullifierAlreadyMigrated(nullifier);
+            revert ResourceAlreadyConsumed(nullifier);
         }
 
         // Add the nullifier to the this contract's nullifier set. The call will revert if the nullifier already exists.

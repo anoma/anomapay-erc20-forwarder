@@ -1,11 +1,11 @@
 #![cfg(test)]
 //! Test the behavior of minting a resource.
 
-use crate::request::parameters::Parameters;
-use crate::request::resources::{
+use crate::request::proving::parameters::Parameters;
+use crate::request::proving::resources::{
     Consumed, ConsumedWitnessDataEnum, Created, CreatedWitnessDataEnum,
 };
-use crate::request::witness_data::token_transfer::{
+use crate::request::proving::witness_data::token_transfer::{
     ConsumedEphemeral, CreatedPersistent, Permit2Data,
 };
 use crate::rpc::pa_submit_transaction;

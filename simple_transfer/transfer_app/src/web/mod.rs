@@ -1,7 +1,6 @@
-use crate::request;
+use crate::request::proving::witness_data::token_transfer;
+use crate::request::proving::witness_data::trivial;
 use crate::web;
-use request::witness_data::token_transfer;
-use request::witness_data::trivial;
 use rocket::Responder;
 use serde::{Deserialize, Serialize};
 use utoipa::OpenApi;
@@ -23,6 +22,11 @@ pub enum RequestError {
     /// The transaction was generated successfully, but submitting it to the PA failed.
     #[response(status = 400)]
     Submit(String),
+    /// An error occurred during fee estimation.
+    #[response(status = 400)]
+    FeeEstimation(String),
+    #[response(status = 400)]
+    ProviderError(String),
 }
 
 /// An enum type for all possible Created Resource witness to satisfy the OpenAPI schema generator.

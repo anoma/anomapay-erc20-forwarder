@@ -1,7 +1,7 @@
 //! Defines helper functions to create resource logic proofs.
 
-use crate::request::witness_data::WitnessTypes;
-use crate::request::ProvingResult;
+use crate::request::proving::witness_data::WitnessTypes;
+use crate::request::proving::ProvingResult;
 use arm::logic_proof::LogicVerifier;
 use tokio::task::JoinHandle;
 

@@ -5,12 +5,12 @@
 //! list of consumed and created resources with their associated,
 //! application-specific witness data.
 
-use crate::request::compliance_proof::compliance_proofs_async;
-use crate::request::logic_proof::logic_proofs_async;
-use crate::request::resources::{Consumed, Created};
-use crate::request::witness_data::{ConsumedWitnessData, WitnessTypes};
-use crate::request::ProvingError::ConsumedAndCreatedResourceCountMismatch;
-use crate::request::{
+use crate::request::proving::compliance_proof::compliance_proofs_async;
+use crate::request::proving::logic_proof::logic_proofs_async;
+use crate::request::proving::resources::{Consumed, Created};
+use crate::request::proving::witness_data::{ConsumedWitnessData, WitnessTypes};
+use crate::request::proving::ProvingError::ConsumedAndCreatedResourceCountMismatch;
+use crate::request::proving::{
     ProvingError::{
         DeltaProofGenerationError, InvalidActionTreeRoot, TransactionVerificationError,
     },
@@ -39,9 +39,9 @@ pub struct Parameters {
 }
 
 impl Parameters {
-    #[allow(dead_code)]
     /// Creates a new `Parameters` struct with the given lists of resources.
     /// The function asserts that both lists are equal in length or fails.
+    #[allow(dead_code)]
     pub fn new(
         created_resources: Vec<Created>,
         consumed_resources: Vec<Consumed>,
@@ -167,7 +167,6 @@ impl Parameters {
     }
 
     /// Generates a transaction for the given `Parameters` struct.
-    #[allow(dead_code)]
     pub async fn generate_transaction(
         &self,
         config: &AnomaPayConfig,
