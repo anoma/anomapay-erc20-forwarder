@@ -11,8 +11,8 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
 use transfer_witness::{
-    call_type::CallType, AuthorizationInfo, EncryptionInfo, ForwarderInfo, LabelInfo, PermitInfo,
-    TokenTransferWitness,
+    call_type::CallType, EncryptionInfo, ForwarderInfo, LabelInfo, PermitInfo,
+    TokenTransferWitness, ValueInfo,
 };
 
 /// The binary program that is executed in the zkvm to generate proofs.
@@ -41,10 +41,11 @@ impl TransferLogic {
         is_consumed: bool,
         action_tree_root: Digest,
         nf_key: Option<NullifierKey>,
-        auth_info: Option<AuthorizationInfo>,
+        auth_sig: Option<AuthorizationSignature>,
         encryption_info: Option<EncryptionInfo>,
         forwarder_info: Option<ForwarderInfo>,
         label_info: Option<LabelInfo>,
+        value_info: Option<ValueInfo>,
     ) -> Self {
         Self {
             witness: TokenTransferWitness::new(
@@ -52,10 +53,11 @@ impl TransferLogic {
                 is_consumed,
                 action_tree_root,
                 nf_key,
-                auth_info,
+                auth_sig,
                 encryption_info,
                 forwarder_info,
                 label_info,
+                value_info,
             ),
         }
     }
@@ -66,18 +68,23 @@ impl TransferLogic {
         action_tree_root: Digest,
         nf_key: NullifierKey,
         auth_pk: AuthorizationVerifyingKey,
+        encryption_pk: AffinePoint,
         auth_sig: AuthorizationSignature,
     ) -> Self {
-        let auth_info = AuthorizationInfo { auth_pk, auth_sig };
+        let value_info = ValueInfo {
+            auth_pk,
+            encryption_pk,
+        };
         Self::new(
             resource,
             true,
             action_tree_root,
             Some(nf_key),
-            Some(auth_info),
+            Some(auth_sig),
             None,
             None,
             None,
+            Some(value_info),
         )
     }
     /// Creates a resource logic for a resource that is created during minting, transfer, etc.
@@ -85,14 +92,19 @@ impl TransferLogic {
         resource: Resource,
         action_tree_root: Digest,
         discovery_pk: &AffinePoint,
-        receiver_pk: AffinePoint,
+        auth_pk: AuthorizationVerifyingKey,
+        encryption_pk: AffinePoint,
         forwarder_address: Vec<u8>,
         token_address: Vec<u8>,
     ) -> Self {
-        let encryption_info = EncryptionInfo::new(receiver_pk, discovery_pk);
+        let encryption_info = EncryptionInfo::new(discovery_pk);
         let label_info = LabelInfo {
             forwarder_addr: forwarder_address,
             token_addr: token_address,
+        };
+        let value_info = ValueInfo {
+            auth_pk,
+            encryption_pk,
         };
         Self::new(
             resource,
@@ -103,6 +115,7 @@ impl TransferLogic {
             Some(encryption_info),
             None,
             Some(label_info),
+            Some(value_info),
         )
     }
 
@@ -143,6 +156,7 @@ impl TransferLogic {
             None,
             Some(forwarder_info),
             Some(label_info),
+            None,
         )
     }
 
@@ -173,6 +187,7 @@ impl TransferLogic {
             None,
             Some(forwarder_info),
             Some(label_info),
+            None,
         )
     }
 }
