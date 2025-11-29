@@ -15,6 +15,7 @@ use arm::{
 };
 use arm_gadgets::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use k256::AffinePoint;
+use transfer_witness::ValueInfo;
 
 use crate::TransferLogicV2;
 
@@ -33,12 +34,14 @@ pub fn construct_migrate_tx(
     migrated_nf_key: NullifierKey,
     migrated_resource_path: MerklePath,
     migrated_auth_pk: AuthorizationVerifyingKey,
+    migrated_encryption_pk: AffinePoint,
     migrated_auth_sig: AuthorizationSignature,
 
     // Parameters for the created resource
     created_resource: Resource,
     created_discovery_pk: AffinePoint,
-    created_receiver_pk: AffinePoint,
+    created_auth_pk: AuthorizationVerifyingKey,
+    created_encryption_pk: AffinePoint,
 ) -> Result<Transaction, ArmError> {
     // Action tree
     let consumed_nf = consumed_resource.nullifier(&consumed_nf_key)?;
@@ -66,6 +69,7 @@ pub fn construct_migrate_tx(
         migrated_nf_key,
         migrated_resource_path,
         migrated_auth_pk,
+        migrated_encryption_pk,
         migrated_auth_sig,
     );
     let consumed_logic_proof = consumed_resource_logic.prove(ProofType::Groth16)?;
@@ -74,7 +78,8 @@ pub fn construct_migrate_tx(
         created_resource,
         action_tree_root,
         &created_discovery_pk,
-        created_receiver_pk,
+        created_auth_pk,
+        created_encryption_pk,
         forwarder_addr,
         token_addr,
     );
@@ -101,7 +106,7 @@ fn simple_migrate_test() {
         encryption::random_keypair,
     };
     use transfer_witness::{
-        calculate_label_ref, calculate_value_ref_from_auth, calculate_value_ref_from_user_addr,
+        calculate_label_ref, calculate_persistent_value_ref, calculate_value_ref_from_user_addr,
     };
     use transfer_witness_v2::AUTH_SIGNATURE_DOMAIN_V2;
 
@@ -116,11 +121,16 @@ fn simple_migrate_test() {
     let label_ref_v2 = calculate_label_ref(&forwarder_addr_v2, &token_addr);
 
     // Construct the migrated resource
-    let migrated_resource_sk = AuthorizationSigningKey::from_bytes(&[9u8; 32]).unwrap();
-    let migrated_resource_pk = AuthorizationVerifyingKey::from_signing_key(&migrated_resource_sk);
-    let migrated_value_ref = calculate_value_ref_from_auth(&migrated_resource_pk);
+    let migrated_auth_sk = AuthorizationSigningKey::from_bytes(&[9u8; 32]).unwrap();
+    let migrated_auth_pk = AuthorizationVerifyingKey::from_signing_key(&migrated_auth_sk);
+    let (_migrated_encryption_sk, migrated_encryption_pk) = random_keypair();
     let migrated_nf_key = NullifierKey::default();
     let migrated_nf_cm = migrated_nf_key.commit();
+    let value_info = ValueInfo {
+        auth_pk: migrated_auth_pk,
+        encryption_pk: migrated_encryption_pk,
+    };
+    let migrated_value_ref = calculate_persistent_value_ref(&value_info);
     let migrated_resource = Resource {
         logic_ref: logic_ref_v1,
         nk_commitment: migrated_nf_cm,
@@ -155,12 +165,16 @@ fn simple_migrate_test() {
     let created_auth_sk = AuthorizationSigningKey::new();
     let created_auth_pk = AuthorizationVerifyingKey::from_signing_key(&created_auth_sk);
     let (_created_discovery_sk, created_discovery_pk) = random_keypair();
-    let (_created_encryption_sk, created_receiver_pk) = random_keypair();
+    let (_created_encryption_sk, created_encryption_pk) = random_keypair();
+    let value_info = ValueInfo {
+        auth_pk: created_auth_pk,
+        encryption_pk: created_encryption_pk,
+    };
     let created_resource = Resource {
         logic_ref: TransferLogicV2::verifying_key(),
         nk_commitment: created_nf_cm,
         label_ref: label_ref_v2,
-        value_ref: calculate_value_ref_from_auth(&created_auth_pk),
+        value_ref: calculate_persistent_value_ref(&value_info),
         quantity,
         is_ephemeral: false,
         nonce: consumed_nf.as_bytes().try_into().unwrap(),
@@ -171,7 +185,7 @@ fn simple_migrate_test() {
 
     // Generate the authorization signature
     let action_tree = MerkleTree::new(vec![consumed_nf, created_cm]);
-    let migrated_auth_sig = migrated_resource_sk.sign(
+    let migrated_auth_sig = migrated_auth_sk.sign(
         AUTH_SIGNATURE_DOMAIN_V2,
         action_tree.root().unwrap().as_bytes(),
     );
@@ -188,11 +202,13 @@ fn simple_migrate_test() {
         migrated_resource,
         migrated_nf_key,
         MerklePath::from_path(&[]), // dummy path
-        migrated_resource_pk,
+        migrated_auth_pk,
+        migrated_encryption_pk,
         migrated_auth_sig,
         created_resource,
         created_discovery_pk,
-        created_receiver_pk,
+        created_auth_pk,
+        created_encryption_pk,
     )
     .unwrap();
     println!("Tx build duration time: {:?}", tx_start_timer.elapsed());

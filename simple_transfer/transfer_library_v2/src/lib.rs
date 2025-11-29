@@ -19,7 +19,7 @@ use transfer_witness_v2::{
     call_type_v2::CallTypeV2, ForwarderInfoV2, MigrateInfo, TokenTransferWitnessV2,
 };
 
-use transfer_witness::{AuthorizationInfo, EncryptionInfo, LabelInfo, PermitInfo};
+use transfer_witness::{EncryptionInfo, LabelInfo, PermitInfo, ValueInfo};
 
 /// The binary program that is executed in the zkvm to generate proofs.
 /// This program takes in a witness as argument and runs the constraint function on it.
@@ -47,10 +47,11 @@ impl TransferLogicV2 {
         is_consumed: bool,
         action_tree_root: Digest,
         nf_key: Option<NullifierKey>,
-        auth_info: Option<AuthorizationInfo>,
+        auth_sig: Option<AuthorizationSignature>,
         encryption_info: Option<EncryptionInfo>,
         forwarder_info: Option<ForwarderInfoV2>,
         label_info: Option<LabelInfo>,
+        value_info: Option<ValueInfo>,
     ) -> Self {
         Self {
             witness: TokenTransferWitnessV2::new(
@@ -58,10 +59,11 @@ impl TransferLogicV2 {
                 is_consumed,
                 action_tree_root,
                 nf_key,
-                auth_info,
+                auth_sig,
                 encryption_info,
                 forwarder_info,
                 label_info,
+                value_info,
             ),
         }
     }
@@ -72,18 +74,23 @@ impl TransferLogicV2 {
         action_tree_root: Digest,
         nf_key: NullifierKey,
         auth_pk: AuthorizationVerifyingKey,
+        encryption_pk: AffinePoint,
         auth_sig: AuthorizationSignature,
     ) -> Self {
-        let auth_info = AuthorizationInfo { auth_pk, auth_sig };
+        let value_info = ValueInfo {
+            auth_pk,
+            encryption_pk,
+        };
         Self::new(
             resource,
             true,
             action_tree_root,
             Some(nf_key),
-            Some(auth_info),
+            Some(auth_sig),
             None,
             None,
             None,
+            Some(value_info),
         )
     }
     /// Creates a resource logic for a resource that is created during minting, transfer, etc.
@@ -91,14 +98,19 @@ impl TransferLogicV2 {
         resource: Resource,
         action_tree_root: Digest,
         discovery_pk: &AffinePoint,
-        receiver_pk: AffinePoint,
+        auth_pk: AuthorizationVerifyingKey,
+        encryption_pk: AffinePoint,
         forwarder_address: Vec<u8>,
         token_address: Vec<u8>,
     ) -> Self {
-        let encryption_info = EncryptionInfo::new(receiver_pk, discovery_pk);
+        let encryption_info = EncryptionInfo::new(discovery_pk);
         let label_info = LabelInfo {
             forwarder_addr: forwarder_address,
             token_addr: token_address,
+        };
+        let value_info = ValueInfo {
+            auth_pk,
+            encryption_pk,
         };
         Self::new(
             resource,
@@ -109,6 +121,7 @@ impl TransferLogicV2 {
             Some(encryption_info),
             None,
             Some(label_info),
+            Some(value_info),
         )
     }
 
@@ -150,6 +163,7 @@ impl TransferLogicV2 {
             None,
             Some(forwarder_info),
             Some(label_info),
+            None,
         )
     }
 
@@ -181,6 +195,7 @@ impl TransferLogicV2 {
             None,
             Some(forwarder_info),
             Some(label_info),
+            None,
         )
     }
 
@@ -196,6 +211,7 @@ impl TransferLogicV2 {
         migrated_nf_key: NullifierKey,
         migrated_resource_path: MerklePath,
         migrated_auth_pk: AuthorizationVerifyingKey,
+        migrated_encryption_pk: AffinePoint,
         migrated_auth_sig: AuthorizationSignature,
     ) -> Self {
         let label_info = LabelInfo {
@@ -203,16 +219,17 @@ impl TransferLogicV2 {
             token_addr,
         };
 
-        let migrate_auto_info = AuthorizationInfo {
+        let value_info = ValueInfo {
             auth_pk: migrated_auth_pk,
-            auth_sig: migrated_auth_sig,
+            encryption_pk: migrated_encryption_pk,
         };
 
         let migrate_info = MigrateInfo {
             resource: migrated_resource,
             nf_key: migrated_nf_key.clone(),
             path: migrated_resource_path,
-            auth_info: migrate_auto_info,
+            auth_sig: migrated_auth_sig,
+            value_info: value_info,
         };
 
         let forwarder_info = ForwarderInfoV2 {
@@ -231,6 +248,7 @@ impl TransferLogicV2 {
             None,
             Some(forwarder_info),
             Some(label_info),
+            None,
         )
     }
 }
