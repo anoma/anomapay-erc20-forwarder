@@ -26,6 +26,7 @@ pub enum RequestError {
 }
 
 /// An enum type for all possible Created Resource witness to satisfy the OpenAPI schema generator.
+#[allow(clippy::large_enum_variant)]
 #[derive(ToSchema, Serialize, Deserialize)]
 pub enum CreatedWitnessDataSchema {
     #[schema(value_type = trivial::CreatedEphemeral)]
