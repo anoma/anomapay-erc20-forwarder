@@ -129,7 +129,7 @@ impl TokenTransferWitness {
         }
     }
 
-    // Check the value and reurn it unwrapped
+    // Check the value and return it unwrapped
     pub fn value(&self) -> Result<&ValueInfo, ArmError> {
         let value_info = self
             .value_info
