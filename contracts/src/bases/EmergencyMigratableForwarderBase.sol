@@ -23,7 +23,7 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Prot
     error EmergencyCallerAlreadySet(address emergencyCaller);
     error ProtocolAdapterNotStopped();
 
-    /// @notice Initializes the ERC-20 forwarder contract.
+    /// @notice Initializes the contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the

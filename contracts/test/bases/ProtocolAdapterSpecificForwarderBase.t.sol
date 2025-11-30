@@ -110,8 +110,12 @@ contract ProtocolAdapterSpecificForwarderBaseTest is Test {
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
     }
 
-    function test_protocolAdapter_returns_the_protocol_adapter_address() public view {
+    function test_getProtocolAdapter_returns_the_protocol_adapter_address() public view {
         assertEq(_fwd.getProtocolAdapter(), _pa);
+    }
+
+    function test_getLogicRef_returns_the_logic_ref() public view {
+        assertEq(_fwd.getLogicRef(), _CALLDATA_CARRIER_LOGIC_REF);
     }
 
     function _stopProtocolAdapter() internal {
