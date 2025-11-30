@@ -20,31 +20,26 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         MigrateV1
     }
 
-    address internal immutable _PROTOCOL_ADAPTER_V1;
     ERC20Forwarder internal immutable _ERC20_FORWARDER_V1;
 
     error ResourceAlreadyConsumed(bytes32 nullifier);
 
     /// @notice Initializes the ERC-20 forwarder contract.
-    /// @param protocolAdapter The protocol adapter contract that can forward calls.
-    /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
+    /// @param protocolAdapterV2 The protocol adapter v2 that can forward calls.
+    /// @param logicRefV2 The reference to the logic function of the resource v2 triggering the forward calls.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
-    /// @param protocolAdapterV1 The stopped protocol adapter address.
-    /// @param erc20ForwarderV1 The forwarder address connected to the stopped PA.
+    /// @param erc20ForwarderV1 The ERC20 forwarder v1 connected to the protocol adapter v1 that has been stopped.
     constructor(
-        address protocolAdapter,
-        bytes32 logicRef,
+        address protocolAdapterV2,
+        bytes32 logicRefV2,
         address emergencyCommittee,
-        address protocolAdapterV1,
-        address erc20ForwarderV1
-    ) ERC20Forwarder(protocolAdapter, logicRef, emergencyCommittee) {
-        if (protocolAdapterV1 == address(0) || erc20ForwarderV1 == address(0)) {
+        ERC20Forwarder erc20ForwarderV1
+    ) ERC20Forwarder(protocolAdapterV2, logicRefV2, emergencyCommittee) {
+        if (address(erc20ForwarderV1) == address(0)) {
             revert ZeroNotAllowed();
         }
-
-        _PROTOCOL_ADAPTER_V1 = protocolAdapterV1;
-        _ERC20_FORWARDER_V1 = ERC20Forwarder(erc20ForwarderV1);
+        _ERC20_FORWARDER_V1 = erc20ForwarderV1;
     }
 
     // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
@@ -85,7 +80,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32));
 
         // Check that the resource being upgraded is not in the protocol adapter v1 nullifier set.
-        if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
+        if (INullifierSet(_ERC20_FORWARDER_V1.getProtocolAdapter()).isNullifierContained(nullifier)) {
             revert ResourceAlreadyConsumed(nullifier);
         }
 
