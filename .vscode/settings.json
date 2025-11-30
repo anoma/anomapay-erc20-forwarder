@@ -1,0 +1,6 @@
+{
+  "[solidity]": {
+    "editor.formatOnSave": true
+  },
+  "solidity.formatter": "forge"
+}
