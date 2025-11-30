@@ -18,12 +18,7 @@ contract DeployERC20Forwarder is Script {
         if (isTestDeployment) {
             salt = bytes32(block.prevrandao);
         } else {
-            salt = keccak256(
-                abi.encode(
-                    "ERC20Forwarder",
-                    Versioning._PROTOCOL_ADAPTER_VERSION
-                )
-            );
+            salt = keccak256(abi.encode("ERC20Forwarder", Versioning._PROTOCOL_ADAPTER_VERSION));
         }
 
         vm.startBroadcast();
