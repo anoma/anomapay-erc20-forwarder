@@ -22,6 +22,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     }
 
     ERC20ForwarderV2 internal immutable _ERC20_FORWARDER_V2;
+    address internal immutable _PROTOCOL_ADAPTER_V2;
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapterV3 The protocol adapter v3 that can forward calls.
@@ -40,7 +41,8 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         if (address(erc20ForwarderV2) == address(0)) {
             revert ZeroNotAllowed();
         }
-        _ERC20_FORWARDER_V2 = ERC20ForwarderV2(erc20ForwarderV2);
+        _ERC20_FORWARDER_V2 = erc20ForwarderV2;
+        _PROTOCOL_ADAPTER_V2 = erc20ForwarderV2.getProtocolAdapter();
     }
 
     /// @notice Forwards a call wrapping, unwrapping, or migrating ERC20 tokens based on the provided input.
@@ -111,7 +113,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         ) = abi.decode(input, (CallTypeV3, address, uint128, bytes32));
 
         // Check that the resource being upgraded is not in the protocol adapter v2 nullifier set.
-        if (INullifierSet(_ERC20_FORWARDER_V2.getProtocolAdapter()).isNullifierContained(nullifier)) {
+        if (INullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(nullifier)) {
             revert ResourceAlreadyConsumed(nullifier);
         }
 

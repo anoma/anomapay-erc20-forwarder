@@ -21,6 +21,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     }
 
     ERC20Forwarder internal immutable _ERC20_FORWARDER_V1;
+    address internal immutable _PROTOCOL_ADAPTER_V1;
 
     error ResourceAlreadyConsumed(bytes32 nullifier);
 
@@ -39,7 +40,9 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         if (address(erc20ForwarderV1) == address(0)) {
             revert ZeroNotAllowed();
         }
+
         _ERC20_FORWARDER_V1 = erc20ForwarderV1;
+        _PROTOCOL_ADAPTER_V1 = erc20ForwarderV1.getProtocolAdapter();
     }
 
     // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
@@ -80,7 +83,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32));
 
         // Check that the resource being upgraded is not in the protocol adapter v1 nullifier set.
-        if (INullifierSet(_ERC20_FORWARDER_V1.getProtocolAdapter()).isNullifierContained(nullifier)) {
+        if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
             revert ResourceAlreadyConsumed(nullifier);
         }
 
