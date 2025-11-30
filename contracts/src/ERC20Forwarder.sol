@@ -42,12 +42,12 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     error TypeOverflow(uint256 limit, uint256 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
-    /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
-    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
+    /// @param protocolAdapter The protocol adapter contract that can forward calls.
+    /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
-    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef, address emergencyCommittee)
-        EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
+    constructor(address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
+        EmergencyMigratableForwarderBase(protocolAdapter, logicRef, emergencyCommittee)
     {}
 
     // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */

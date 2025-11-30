@@ -15,7 +15,7 @@ import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Ve
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 import {Vm} from "forge-std/Test.sol";
 
-import {ProtocolAdapterSpecificForwarderBase} from "../src/bases/ProtocolAdapterSpecificForwarderBase.sol";
+import {ForwarderBase} from "../src/bases/ForwarderBase.sol";
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
@@ -58,15 +58,13 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _pa = _paV2;
 
         _fwdV1 = new ERC20Forwarder({
-            protocolAdapter: address(_paV1),
-            emergencyCommittee: _EMERGENCY_COMMITTEE,
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+            protocolAdapter: address(_paV1), emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _LOGIC_REF
         });
 
         // Deploy the ERC20 forwarder
         _fwdV2 = new ERC20ForwarderV2({
             protocolAdapter: address(_paV2),
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            logicRef: _LOGIC_REF,
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             protocolAdapterV1: address(_paV1),
             erc20ForwarderV1: address(_fwdV1)
@@ -121,10 +119,10 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     }
 
     function test_constructor_reverts_if_the_protocol_adapter_v1_address_is_zero() public {
-        vm.expectRevert(ProtocolAdapterSpecificForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
         new ERC20ForwarderV2({
             protocolAdapter: address(_paV2),
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            logicRef: _LOGIC_REF,
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             protocolAdapterV1: address(0),
             erc20ForwarderV1: address(_fwdV1)
@@ -132,10 +130,10 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     }
 
     function test_constructor_reverts_if_the_erc20_forwarder_v1_address_is_zero() public {
-        vm.expectRevert(ProtocolAdapterSpecificForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
         new ERC20ForwarderV2({
             protocolAdapter: address(_paV2),
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            logicRef: _LOGIC_REF,
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             protocolAdapterV1: address(_pa),
             erc20ForwarderV1: address(0)
@@ -158,7 +156,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         vm.expectRevert(
             abi.encodeWithSelector(ERC20ForwarderV2.ResourceAlreadyConsumed.selector, nullifier), address(_fwdV2)
         );
-        _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
+        _fwdV2.forwardCall({logicRef: _LOGIC_REF, input: input});
     }
 
     function test_migrate_reverts_if_the_v1_resource_has_already_been_migrated() public virtual {
@@ -168,10 +166,10 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _emergencyStopPaV1AndSetEmergencyCaller();
 
         vm.startPrank(address(_paV2));
-        _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV1Input});
+        _fwdV2.forwardCall({logicRef: _LOGIC_REF, input: _defaultMigrateV1Input});
 
         vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _NULLIFIER), address(_fwdV2));
-        _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV1Input});
+        _fwdV2.forwardCall({logicRef: _LOGIC_REF, input: _defaultMigrateV1Input});
     }
 
     function test_migrate_transfers_funds_from_forwarder_V1() public {
@@ -194,7 +192,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         vm.expectEmit(address(_erc20));
         emit IERC20.Transfer({from: address(_fwdV1), to: address(_fwdV2), value: _TRANSFER_AMOUNT});
 
-        _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV1Input});
+        _fwdV2.forwardCall({logicRef: _LOGIC_REF, input: _defaultMigrateV1Input});
 
         assertEq(_erc20.balanceOf(address(_fwdV1)), 0);
         assertEq(_erc20.balanceOf(address(_fwdV2)), _TRANSFER_AMOUNT);

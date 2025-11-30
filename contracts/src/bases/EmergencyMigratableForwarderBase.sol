@@ -4,14 +4,14 @@ pragma solidity ^0.8.30;
 import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
 
 import {IEmergencyMigratable} from "../interfaces/IEmergencyMigratable.sol";
-import {ProtocolAdapterSpecificForwarderBase} from "./ProtocolAdapterSpecificForwarderBase.sol";
+import {ForwarderBase} from "./ForwarderBase.sol";
 
 /// @title EmergencyMigratableForwarderBase
 /// @author Anoma Foundation, 2025
 /// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources that
 /// supports emergency migration to a future protocol adapter version.
 /// @custom:security-contact security@anoma.foundation
-abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, ProtocolAdapterSpecificForwarderBase {
+abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, ForwarderBase {
     /// @notice The emergency committee address allowed to set an emergency caller in case the RISC Zero has caused
     /// the protocol adapter to stop.
     address internal immutable _EMERGENCY_COMMITTEE;
@@ -23,13 +23,13 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Prot
     error EmergencyCallerAlreadySet(address emergencyCaller);
     error ProtocolAdapterNotStopped();
 
-    /// @notice Initializes the ERC-20 forwarder contract.
-    /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
-    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
+    /// @notice Initializes the contract.
+    /// @param protocolAdapter The protocol adapter contract that can forward calls.
+    /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
-    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef, address emergencyCommittee)
-        ProtocolAdapterSpecificForwarderBase(protocolAdapter, calldataCarrierLogicRef)
+    constructor(address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
+        ForwarderBase(protocolAdapter, logicRef)
     {
         if (emergencyCommittee == address(0)) {
             revert ZeroNotAllowed();

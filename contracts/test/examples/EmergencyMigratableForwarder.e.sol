@@ -15,8 +15,8 @@ contract EmergencyMigratableForwarderExample is EmergencyMigratableForwarderBase
     event CallForwarded(bytes input, bytes output);
     event EmergencyCallForwarded(bytes input, bytes output);
 
-    constructor(address protocolAdapter, address emergencyCommittee, bytes32 calldataCarrierLogicRef)
-        EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
+    constructor(address protocolAdapter, address emergencyCommittee, bytes32 logicRef)
+        EmergencyMigratableForwarderBase(protocolAdapter, logicRef, emergencyCommittee)
     {
         TARGET = address(new ForwarderTargetExample());
     }
