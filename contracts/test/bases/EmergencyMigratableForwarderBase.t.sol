@@ -6,7 +6,7 @@ import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
 import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 
 import {EmergencyMigratableForwarderBase} from "../../src/bases/EmergencyMigratableForwarderBase.sol";
-import {ProtocolAdapterSpecificForwarderBase} from "../../src/bases/ProtocolAdapterSpecificForwarderBase.sol";
+import {ForwarderBase} from "../../src/bases/ForwarderBase.sol";
 
 import {EmergencyMigratableForwarderExample} from "../examples/EmergencyMigratableForwarder.e.sol";
 import {ForwarderExample} from "../examples/Forwarder.e.sol";
@@ -18,9 +18,9 @@ import {
     EXPECTED_OUTPUT
 } from "../examples/ForwarderTarget.e.sol";
 
-import {ProtocolAdapterSpecificForwarderBaseTest} from "./ProtocolAdapterSpecificForwarderBase.t.sol";
+import {ForwarderBaseTest} from "./ForwarderBase.t.sol";
 
-contract EmergencyMigratableForwarderBaseTest is ProtocolAdapterSpecificForwarderBaseTest {
+contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(3));
 
     EmergencyMigratableForwarderExample internal _emrgFwd;
@@ -45,7 +45,7 @@ contract EmergencyMigratableForwarderBaseTest is ProtocolAdapterSpecificForwarde
     }
 
     function test_constructor_reverts_if_the_emergency_committe_address_is_zero() public {
-        vm.expectRevert(ProtocolAdapterSpecificForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
         new EmergencyMigratableForwarderExample({
             protocolAdapter: _pa, emergencyCommittee: address(0), calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
         });
@@ -55,9 +55,7 @@ contract EmergencyMigratableForwarderBaseTest is ProtocolAdapterSpecificForwarde
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapterSpecificForwarderBase.UnauthorizedCaller.selector,
-                _EMERGENCY_COMMITTEE,
-                _UNAUTHORIZED_CALLER
+                ForwarderBase.UnauthorizedCaller.selector, _EMERGENCY_COMMITTEE, _UNAUTHORIZED_CALLER
             ),
             address(_fwd)
         );
@@ -66,7 +64,7 @@ contract EmergencyMigratableForwarderBaseTest is ProtocolAdapterSpecificForwarde
 
     function test_setEmergencyCaller_reverts_if_the_new_emergency_caller_is_the_zero_address() public {
         vm.prank(_EMERGENCY_COMMITTEE);
-        vm.expectRevert(ProtocolAdapterSpecificForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
 
         _emrgFwd.setEmergencyCaller(address(0));
     }
@@ -113,11 +111,7 @@ contract EmergencyMigratableForwarderBaseTest is ProtocolAdapterSpecificForwarde
 
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                ProtocolAdapterSpecificForwarderBase.UnauthorizedCaller.selector,
-                _EMERGENCY_CALLER,
-                _UNAUTHORIZED_CALLER
-            )
+            abi.encodeWithSelector(ForwarderBase.UnauthorizedCaller.selector, _EMERGENCY_CALLER, _UNAUTHORIZED_CALLER)
         );
         _emrgFwd.forwardEmergencyCall({input: INPUT});
     }

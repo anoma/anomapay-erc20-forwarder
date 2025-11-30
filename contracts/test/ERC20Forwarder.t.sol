@@ -145,18 +145,19 @@ contract ERC20ForwarderTest is Test {
         uint256 startBalanceAlice = _erc20.balanceOf(_alice);
         uint256 startBalanceForwarder = _erc20.balanceOf(address(_fwd));
 
-        bytes memory unwrapInputWithZeroAmount = abi.encode(
-            /* callType */ ERC20Forwarder.CallType.Unwrap,
-            /*    token */ address(_erc20),
-            /*       to */ _alice,
-            /*   amount */ 0
+        bytes memory unwrapInputWithZeroAmount = abi.encode( /* callType */
+            ERC20Forwarder.CallType.Unwrap,
+            /*    token */
+            address(_erc20),
+            /*       to */
+            _alice,
+            /*   amount */
+            0
         );
 
         vm.prank(address(_pa));
-        bytes memory output = _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: unwrapInputWithZeroAmount
-        });
+        bytes memory output =
+            _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: unwrapInputWithZeroAmount});
 
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
         assertEq(_erc20.balanceOf(_alice), startBalanceAlice);
@@ -264,39 +265,34 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
 
-        ISignatureTransfer.PermitTransferFrom
-            memory permitWithZeroAmount = ISignatureTransfer
-                .PermitTransferFrom({
-                    permitted: ISignatureTransfer.TokenPermissions({
-                        token: address(_erc20),
-                        amount: 0
-                    }),
-                    nonce: 123,
-                    deadline: Time.timestamp() + 5 minutes
-                });
+        ISignatureTransfer.PermitTransferFrom memory permitWithZeroAmount = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: 0}),
+            nonce: 123,
+            deadline: Time.timestamp() + 5 minutes
+        });
 
-        bytes memory permitSigForZeroAmount = vm
-            .permitWitnessTransferFromSignature({
-                domainSeparator: _permit2.DOMAIN_SEPARATOR(),
-                permit: permitWithZeroAmount,
-                privateKey: _alicePrivateKey,
-                spender: address(_fwd),
-                witness: ERC20ForwarderPermit2.Witness(_ACTION_TREE_ROOT).hash()
-            });
+        bytes memory permitSigForZeroAmount = vm.permitWitnessTransferFromSignature({
+            domainSeparator: _permit2.DOMAIN_SEPARATOR(),
+            permit: permitWithZeroAmount,
+            privateKey: _alicePrivateKey,
+            spender: address(_fwd),
+            witness: ERC20ForwarderPermit2.Witness(_ACTION_TREE_ROOT).hash()
+        });
 
-        bytes memory wrapInputWithZeroAmount = abi.encode(
-            /*       callType */ ERC20Forwarder.CallType.Wrap,
-            /*           from */ _alice,
-            /*         permit */ permitWithZeroAmount,
-            /* actionTreeRoot */ _ACTION_TREE_ROOT,
-            /*      signature */ permitSigForZeroAmount
+        bytes memory wrapInputWithZeroAmount = abi.encode( /*       callType */
+            ERC20Forwarder.CallType.Wrap,
+            /*           from */
+            _alice,
+            /*         permit */
+            permitWithZeroAmount,
+            /* actionTreeRoot */
+            _ACTION_TREE_ROOT,
+            /*      signature */
+            permitSigForZeroAmount
         );
 
         vm.prank(address(_pa));
-        bytes memory output = _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: wrapInputWithZeroAmount
-        });
+        bytes memory output = _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: wrapInputWithZeroAmount});
 
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
         assertEq(_erc20.balanceOf(_alice), startBalanceAlice);

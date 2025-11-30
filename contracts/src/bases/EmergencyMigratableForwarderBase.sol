@@ -4,14 +4,14 @@ pragma solidity ^0.8.30;
 import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
 
 import {IEmergencyMigratable} from "../interfaces/IEmergencyMigratable.sol";
-import {ProtocolAdapterSpecificForwarderBase} from "./ProtocolAdapterSpecificForwarderBase.sol";
+import {ForwarderBase} from "./ForwarderBase.sol";
 
 /// @title EmergencyMigratableForwarderBase
 /// @author Anoma Foundation, 2025
 /// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources that
 /// supports emergency migration to a future protocol adapter version.
 /// @custom:security-contact security@anoma.foundation
-abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, ProtocolAdapterSpecificForwarderBase {
+abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, ForwarderBase {
     /// @notice The emergency committee address allowed to set an emergency caller in case the RISC Zero has caused
     /// the protocol adapter to stop.
     address internal immutable _EMERGENCY_COMMITTEE;
@@ -29,7 +29,7 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Prot
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef, address emergencyCommittee)
-        ProtocolAdapterSpecificForwarderBase(protocolAdapter, calldataCarrierLogicRef)
+        ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
     {
         if (emergencyCommittee == address(0)) {
             revert ZeroNotAllowed();

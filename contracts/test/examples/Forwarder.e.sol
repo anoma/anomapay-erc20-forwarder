@@ -3,10 +3,10 @@ pragma solidity ^0.8.30;
 
 import {Address} from "@openzeppelin-contracts/utils/Address.sol";
 
-import {ProtocolAdapterSpecificForwarderBase} from "../../src/bases/ProtocolAdapterSpecificForwarderBase.sol";
+import {ForwarderBase} from "../../src/bases/ForwarderBase.sol";
 import {ForwarderTargetExample} from "./ForwarderTarget.e.sol";
 
-contract ForwarderExample is ProtocolAdapterSpecificForwarderBase {
+contract ForwarderExample is ForwarderBase {
     using Address for address;
 
     address public immutable TARGET;
@@ -15,7 +15,7 @@ contract ForwarderExample is ProtocolAdapterSpecificForwarderBase {
     event EmergencyCallForwarded(bytes input, bytes output);
 
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef)
-        ProtocolAdapterSpecificForwarderBase(protocolAdapter, calldataCarrierLogicRef)
+        ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
     {
         TARGET = address(new ForwarderTargetExample());
     }

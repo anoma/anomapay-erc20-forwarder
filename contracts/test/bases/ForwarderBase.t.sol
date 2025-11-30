@@ -10,7 +10,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test} from "forge-std/Test.sol";
 
-import {ProtocolAdapterSpecificForwarderBase} from "../../src/bases/ProtocolAdapterSpecificForwarderBase.sol";
+import {ForwarderBase} from "../../src/bases/ForwarderBase.sol";
 
 import {ForwarderExample} from "../examples/Forwarder.e.sol";
 import {
@@ -21,7 +21,7 @@ import {
     EXPECTED_OUTPUT
 } from "../examples/ForwarderTarget.e.sol";
 
-contract ProtocolAdapterSpecificForwarderBaseTest is Test {
+contract ForwarderBaseTest is Test {
     address internal constant _EMERGENCY_CALLER = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
     address internal constant _PA_OWNER = address(uint160(3));
@@ -51,22 +51,19 @@ contract ProtocolAdapterSpecificForwarderBaseTest is Test {
     }
 
     function test_constructor_reverts_if_the_protocol_adapter_address_is_zero() public {
-        vm.expectRevert(ProtocolAdapterSpecificForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
         new ForwarderExample({protocolAdapter: address(0), calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
     }
 
     function test_constructor_reverts_if_the_calldata_carrier_logic_ref_is_zero() public {
-        vm.expectRevert(ProtocolAdapterSpecificForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
         new ForwarderExample({protocolAdapter: _pa, calldataCarrierLogicRef: bytes32(0)});
     }
 
     function test_forwardCall_reverts_if_the_pa_is_not_the_caller() public {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                ProtocolAdapterSpecificForwarderBase.UnauthorizedCaller.selector, _pa, _UNAUTHORIZED_CALLER
-            ),
-            address(_fwd)
+            abi.encodeWithSelector(ForwarderBase.UnauthorizedCaller.selector, _pa, _UNAUTHORIZED_CALLER), address(_fwd)
         );
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
     }
@@ -79,9 +76,7 @@ contract ProtocolAdapterSpecificForwarderBaseTest is Test {
         vm.prank(_pa);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapterSpecificForwarderBase.UnauthorizedLogicRef.selector,
-                _CALLDATA_CARRIER_LOGIC_REF,
-                wrongLogicRef
+                ForwarderBase.UnauthorizedLogicRef.selector, _CALLDATA_CARRIER_LOGIC_REF, wrongLogicRef
             ),
             address(_fwd)
         );

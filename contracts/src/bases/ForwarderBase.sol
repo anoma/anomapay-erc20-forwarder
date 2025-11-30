@@ -6,11 +6,11 @@ import {IForwarder} from "@anoma-evm-pa/interfaces/IForwarder.sol";
 import {ILogicRefSpecific} from "../interfaces/ILogicRefSpecific.sol";
 import {IProtocolAdapterSpecific} from "../interfaces/IProtocolAdapterSpecific.sol";
 
-/// @title ProtocolAdapterSpecificForwarderBase
+/// @title ForwarderBase
 /// @author Anoma Foundation, 2025
-/// @notice The base contract to inherit from to create a forwarder contracts owning EVM state and executing EVM calls.
+/// @notice A base contract for a protocol-adapter- and logic-reference-specific forwarder contract.
 /// @custom:security-contact security@anoma.foundation
-abstract contract ProtocolAdapterSpecificForwarderBase is IForwarder, IProtocolAdapterSpecific, ILogicRefSpecific {
+abstract contract ForwarderBase is IForwarder, IProtocolAdapterSpecific, ILogicRefSpecific {
     /// @notice The protocol adapter contract that can forward calls.
     address internal immutable _PROTOCOL_ADAPTER;
 

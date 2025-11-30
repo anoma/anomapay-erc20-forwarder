@@ -15,7 +15,7 @@ import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Ve
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 import {Vm} from "forge-std/Test.sol";
 
-import {ProtocolAdapterSpecificForwarderBase} from "../src/bases/ProtocolAdapterSpecificForwarderBase.sol";
+import {ForwarderBase} from "../src/bases/ForwarderBase.sol";
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
@@ -121,7 +121,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     }
 
     function test_constructor_reverts_if_the_protocol_adapter_v1_address_is_zero() public {
-        vm.expectRevert(ProtocolAdapterSpecificForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
         new ERC20ForwarderV2({
             protocolAdapter: address(_paV2),
             calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
@@ -132,7 +132,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     }
 
     function test_constructor_reverts_if_the_erc20_forwarder_v1_address_is_zero() public {
-        vm.expectRevert(ProtocolAdapterSpecificForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV2));
         new ERC20ForwarderV2({
             protocolAdapter: address(_paV2),
             calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
