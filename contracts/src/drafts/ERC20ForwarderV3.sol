@@ -79,7 +79,13 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         output = "";
     }
 
-    /// @inheritdoc ERC20ForwarderV2
+    /// @notice Migrates ERC20 resources by transferring ERC20 tokens from the ERC20 forwarder v2 and storing the
+    /// associated nullifier.
+    /// @param input The input bytes containing the encoded arguments for the migration call:
+    /// * The `CallTypeV2.MigrateV1` enum value that has been checked already and is therefore unused.
+    /// * `nullifier`: The nullifier of the resource to be migrated.
+    /// * `token`: The address of the token to migrated.
+    /// * `amount`: The amount to be migrated.
     function _migrateV1(bytes calldata input) internal virtual override {
         (,
             // CallTypeV3.MigrateV1
