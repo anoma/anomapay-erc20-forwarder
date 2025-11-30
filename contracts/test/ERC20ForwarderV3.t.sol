@@ -64,14 +64,12 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         _pa = _paV3;
 
         _fwdV1 = new ERC20Forwarder({
-            protocolAdapter: address(_paV1),
-            emergencyCommittee: _EMERGENCY_COMMITTEE,
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+            protocolAdapter: address(_paV1), emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _LOGIC_REF
         });
 
         _fwdV2 = new ERC20ForwarderV2({
             protocolAdapter: address(_paV2),
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            logicRef: _LOGIC_REF,
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             protocolAdapterV1: address(_paV1),
             erc20ForwarderV1: address(_fwdV1)
@@ -79,7 +77,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         _fwdV3 = new ERC20ForwarderV3({
             protocolAdapter: address(_paV3),
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            logicRef: _LOGIC_REF,
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             protocolAdapterV1: address(_paV1),
             erc20ForwarderV1: address(_fwdV1),
@@ -149,7 +147,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV3));
         new ERC20ForwarderV3({
             protocolAdapter: address(_paV3),
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            logicRef: _LOGIC_REF,
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             protocolAdapterV1: address(_paV1),
             erc20ForwarderV1: address(_fwdV1),
@@ -162,7 +160,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV3));
         new ERC20ForwarderV3({
             protocolAdapter: address(_paV3),
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            logicRef: _LOGIC_REF,
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             protocolAdapterV1: address(_paV1),
             erc20ForwarderV1: address(_fwdV1),
@@ -188,7 +186,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         vm.expectRevert(
             abi.encodeWithSelector(ERC20ForwarderV2.ResourceAlreadyConsumed.selector, nullifier), address(_fwdV2)
         );
-        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
+        _fwdV3.forwardCall({logicRef: _LOGIC_REF, input: input});
     }
 
     function test_migrate_reverts_if_the_v2_resource_to_migrate_has_already_been_consumed() public {
@@ -207,7 +205,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         vm.expectRevert(
             abi.encodeWithSelector(ERC20ForwarderV2.ResourceAlreadyConsumed.selector, nullifier), address(_fwdV3)
         );
-        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
+        _fwdV3.forwardCall({logicRef: _LOGIC_REF, input: input});
     }
 
     function test_migrate_reverts_if_the_v1_resource_has_already_been_migrated() public {
@@ -218,10 +216,10 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         _emergencyStopPaV2AndSetEmergencyCaller();
 
         vm.startPrank(address(_paV3));
-        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV1Input});
+        _fwdV3.forwardCall({logicRef: _LOGIC_REF, input: _defaultMigrateV1Input});
 
         vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _NULLIFIER), address(_fwdV2));
-        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV1Input});
+        _fwdV3.forwardCall({logicRef: _LOGIC_REF, input: _defaultMigrateV1Input});
     }
 
     function test_migrate_reverts_if_the_v2_resource_has_already_been_migrated() public {
@@ -231,10 +229,10 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         _emergencyStopPaV2AndSetEmergencyCaller();
 
         vm.startPrank(address(_paV3));
-        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV2Input});
+        _fwdV3.forwardCall({logicRef: _LOGIC_REF, input: _defaultMigrateV2Input});
 
         vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _NULLIFIER), address(_fwdV3));
-        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV2Input});
+        _fwdV3.forwardCall({logicRef: _LOGIC_REF, input: _defaultMigrateV2Input});
     }
 
     function test_migrate_transfers_funds_from_forwarder_V1() public {
@@ -268,7 +266,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         vm.expectEmit(address(_erc20));
         emit IERC20.Transfer({from: address(_fwdV2), to: address(_fwdV3), value: _TRANSFER_AMOUNT});
 
-        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV1Input});
+        _fwdV3.forwardCall({logicRef: _LOGIC_REF, input: _defaultMigrateV1Input});
 
         assertEq(_erc20.balanceOf(address(_fwdV1)), 0);
         assertEq(_erc20.balanceOf(address(_fwdV2)), 0);
@@ -294,7 +292,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         vm.expectEmit(address(_erc20));
         emit IERC20.Transfer({from: address(_fwdV2), to: address(_fwdV3), value: _TRANSFER_AMOUNT});
 
-        _fwdV3.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultMigrateV2Input});
+        _fwdV3.forwardCall({logicRef: _LOGIC_REF, input: _defaultMigrateV2Input});
 
         assertEq(_erc20.balanceOf(address(_fwdV2)), 0);
         assertEq(_erc20.balanceOf(address(_fwdV3)), _TRANSFER_AMOUNT);

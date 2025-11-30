@@ -8,12 +8,7 @@ import {Script} from "forge-std/Script.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 
 contract DeployERC20Forwarder is Script {
-    function run(
-        bool isTestDeployment,
-        address protocolAdapter,
-        bytes32 calldataCarrierLogicRef,
-        address emergencyCommittee
-    ) public {
+    function run(bool isTestDeployment, address protocolAdapter, bytes32 logicRef, address emergencyCommittee) public {
         bytes32 salt;
         if (isTestDeployment) {
             salt = bytes32(block.prevrandao);
@@ -23,9 +18,7 @@ contract DeployERC20Forwarder is Script {
 
         vm.startBroadcast();
         new ERC20Forwarder{salt: salt}({
-            protocolAdapter: protocolAdapter,
-            calldataCarrierLogicRef: calldataCarrierLogicRef,
-            emergencyCommittee: emergencyCommittee
+            protocolAdapter: protocolAdapter, logicRef: logicRef, emergencyCommittee: emergencyCommittee
         });
         vm.stopBroadcast();
     }

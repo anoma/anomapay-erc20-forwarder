@@ -26,7 +26,7 @@ contract ForwarderBaseTest is Test {
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
     address internal constant _PA_OWNER = address(uint160(3));
 
-    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
+    bytes32 internal constant _LOGIC_REF = bytes32(type(uint256).max);
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
@@ -46,18 +46,18 @@ contract ForwarderBaseTest is Test {
 
         _pa = address(new ProtocolAdapter(_router, verifier.SELECTOR(), _PA_OWNER));
 
-        _fwd = new ForwarderExample({protocolAdapter: _pa, calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
+        _fwd = new ForwarderExample({protocolAdapter: _pa, logicRef: _LOGIC_REF});
         _tgt = ForwarderTargetExample(_fwd.TARGET());
     }
 
     function test_constructor_reverts_if_the_protocol_adapter_address_is_zero() public {
         vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
-        new ForwarderExample({protocolAdapter: address(0), calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
+        new ForwarderExample({protocolAdapter: address(0), logicRef: _LOGIC_REF});
     }
 
-    function test_constructor_reverts_if_the_calldata_carrier_logic_ref_is_zero() public {
+    function test_constructor_reverts_if_the_LOGIC_REF_is_zero() public {
         vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
-        new ForwarderExample({protocolAdapter: _pa, calldataCarrierLogicRef: bytes32(0)});
+        new ForwarderExample({protocolAdapter: _pa, logicRef: bytes32(0)});
     }
 
     function test_forwardCall_reverts_if_the_pa_is_not_the_caller() public {
@@ -65,19 +65,17 @@ contract ForwarderBaseTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(ForwarderBase.UnauthorizedCaller.selector, _pa, _UNAUTHORIZED_CALLER), address(_fwd)
         );
-        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
+        _fwd.forwardCall({logicRef: _LOGIC_REF, input: INPUT});
     }
 
     function test_forwardCall_reverts_if_the_logic_ref_mismatches() public {
         bytes32 wrongLogicRef = bytes32(uint256(123));
 
-        assertNotEq(wrongLogicRef, _CALLDATA_CARRIER_LOGIC_REF);
+        assertNotEq(wrongLogicRef, _LOGIC_REF);
 
         vm.prank(_pa);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                ForwarderBase.UnauthorizedLogicRef.selector, _CALLDATA_CARRIER_LOGIC_REF, wrongLogicRef
-            ),
+            abi.encodeWithSelector(ForwarderBase.UnauthorizedLogicRef.selector, _LOGIC_REF, wrongLogicRef),
             address(_fwd)
         );
         _fwd.forwardCall({logicRef: wrongLogicRef, input: INPUT});
@@ -85,7 +83,7 @@ contract ForwarderBaseTest is Test {
 
     function test_forwardCall_forwards_calls_if_the_pa_is_the_caller() public {
         vm.prank(_pa);
-        bytes memory output = _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
+        bytes memory output = _fwd.forwardCall({logicRef: _LOGIC_REF, input: INPUT});
         assertEq(keccak256(output), keccak256(EXPECTED_OUTPUT));
     }
 
@@ -94,7 +92,7 @@ contract ForwarderBaseTest is Test {
 
         vm.expectEmit(address(_fwd));
         emit ForwarderExample.CallForwarded(INPUT, EXPECTED_OUTPUT);
-        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
+        _fwd.forwardCall({logicRef: _LOGIC_REF, input: INPUT});
     }
 
     function test_forwardCall_calls_the_function_in_the_target_contract() public {
@@ -102,7 +100,7 @@ contract ForwarderBaseTest is Test {
 
         vm.expectEmit(address(_tgt));
         emit ForwarderTargetExample.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
-        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
+        _fwd.forwardCall({logicRef: _LOGIC_REF, input: INPUT});
     }
 
     function test_getProtocolAdapter_returns_the_protocol_adapter_address() public view {
@@ -110,7 +108,7 @@ contract ForwarderBaseTest is Test {
     }
 
     function test_getLogicRef_returns_the_logic_ref() public view {
-        assertEq(_fwd.getLogicRef(), _CALLDATA_CARRIER_LOGIC_REF);
+        assertEq(_fwd.getLogicRef(), _LOGIC_REF);
     }
 
     function _stopProtocolAdapter() internal {

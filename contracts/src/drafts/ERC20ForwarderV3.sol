@@ -27,8 +27,8 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     error NullifierAlreadyMigrated(bytes32 nullifier);
 
     /// @notice Initializes the ERC-20 forwarder contract.
-    /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
-    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
+    /// @param protocolAdapter The protocol adapter contract that can forward calls.
+    /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
     /// @param protocolAdapterV1 The stopped protocol adapter v1 address.
@@ -37,17 +37,13 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     /// @param erc20ForwarderV2 The forwarder v2 address connected to the stopped PA v2.
     constructor(
         address protocolAdapter,
-        bytes32 calldataCarrierLogicRef,
+        bytes32 logicRef,
         address emergencyCommittee,
         address protocolAdapterV1,
         address erc20ForwarderV1,
         address protocolAdapterV2,
         address erc20ForwarderV2
-    )
-        ERC20ForwarderV2(
-            protocolAdapter, calldataCarrierLogicRef, emergencyCommittee, protocolAdapterV1, erc20ForwarderV1
-        )
-    {
+    ) ERC20ForwarderV2(protocolAdapter, logicRef, emergencyCommittee, protocolAdapterV1, erc20ForwarderV1) {
         if (protocolAdapterV2 == address(0) || erc20ForwarderV2 == address(0)) {
             revert ZeroNotAllowed();
         }

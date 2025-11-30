@@ -14,9 +14,7 @@ contract ForwarderExample is ForwarderBase {
     event CallForwarded(bytes input, bytes output);
     event EmergencyCallForwarded(bytes input, bytes output);
 
-    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef)
-        ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
-    {
+    constructor(address protocolAdapter, bytes32 logicRef) ForwarderBase(protocolAdapter, logicRef) {
         TARGET = address(new ForwarderTargetExample());
     }
 

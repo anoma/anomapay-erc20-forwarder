@@ -14,32 +14,32 @@ abstract contract ForwarderBase is IForwarder, IProtocolAdapterSpecific, ILogicR
     /// @notice The protocol adapter contract that can forward calls.
     address internal immutable _PROTOCOL_ADAPTER;
 
-    /// @notice The calldata carrier resource logic reference.
-    bytes32 internal immutable _CALLDATA_CARRIER_LOGIC_REF;
+    /// @notice The reference to the logic function of the resource kind triggering the forward calls.
+    bytes32 internal immutable _LOGIC_REF;
 
     error ZeroNotAllowed();
     error UnauthorizedCaller(address expected, address actual);
     error UnauthorizedLogicRef(bytes32 expected, bytes32 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
-    /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
-    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
-    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) {
-        if (protocolAdapter == address(0) || calldataCarrierLogicRef == bytes32(0)) {
+    /// @param protocolAdapter The protocol adapter contract that can forward calls.
+    /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
+    constructor(address protocolAdapter, bytes32 logicRef) {
+        if (protocolAdapter == address(0) || logicRef == bytes32(0)) {
             revert ZeroNotAllowed();
         }
 
         _PROTOCOL_ADAPTER = protocolAdapter;
 
-        _CALLDATA_CARRIER_LOGIC_REF = calldataCarrierLogicRef;
+        _LOGIC_REF = logicRef;
     }
 
     /// @inheritdoc IForwarder
     function forwardCall(bytes32 logicRef, bytes calldata input) external returns (bytes memory output) {
         _checkCaller(_PROTOCOL_ADAPTER);
 
-        if (_CALLDATA_CARRIER_LOGIC_REF != logicRef) {
-            revert UnauthorizedLogicRef({expected: _CALLDATA_CARRIER_LOGIC_REF, actual: logicRef});
+        if (_LOGIC_REF != logicRef) {
+            revert UnauthorizedLogicRef({expected: _LOGIC_REF, actual: logicRef});
         }
 
         output = _forwardCall(input);
@@ -52,7 +52,7 @@ abstract contract ForwarderBase is IForwarder, IProtocolAdapterSpecific, ILogicR
 
     /// @inheritdoc ILogicRefSpecific
     function getLogicRef() external view override returns (bytes32 logicRef) {
-        logicRef = _CALLDATA_CARRIER_LOGIC_REF;
+        logicRef = _LOGIC_REF;
     }
 
     // slither-disable-start unimplemented-functions

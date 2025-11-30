@@ -34,9 +34,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         _pa = address(new ProtocolAdapter(_router, verifier.SELECTOR(), _EMERGENCY_COMMITTEE));
 
         _emrgFwd = new EmergencyMigratableForwarderExample({
-            protocolAdapter: _pa,
-            emergencyCommittee: _EMERGENCY_COMMITTEE,
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+            protocolAdapter: _pa, emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _LOGIC_REF
         });
 
         _fwd = ForwarderExample(address(_emrgFwd));
@@ -47,7 +45,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
     function test_constructor_reverts_if_the_emergency_committe_address_is_zero() public {
         vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
         new EmergencyMigratableForwarderExample({
-            protocolAdapter: _pa, emergencyCommittee: address(0), calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+            protocolAdapter: _pa, emergencyCommittee: address(0), logicRef: _LOGIC_REF
         });
     }
 

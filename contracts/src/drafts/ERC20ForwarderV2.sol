@@ -26,19 +26,19 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     error ResourceAlreadyConsumed(bytes32 nullifier);
 
     /// @notice Initializes the ERC-20 forwarder contract.
-    /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
-    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
+    /// @param protocolAdapter The protocol adapter contract that can forward calls.
+    /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
     /// @param protocolAdapterV1 The stopped protocol adapter address.
     /// @param erc20ForwarderV1 The forwarder address connected to the stopped PA.
     constructor(
         address protocolAdapter,
-        bytes32 calldataCarrierLogicRef,
+        bytes32 logicRef,
         address emergencyCommittee,
         address protocolAdapterV1,
         address erc20ForwarderV1
-    ) ERC20Forwarder(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee) {
+    ) ERC20Forwarder(protocolAdapter, logicRef, emergencyCommittee) {
         if (protocolAdapterV1 == address(0) || erc20ForwarderV1 == address(0)) {
             revert ZeroNotAllowed();
         }
