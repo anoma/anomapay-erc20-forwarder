@@ -21,35 +21,28 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         MigrateV2
     }
 
-    address internal immutable _PROTOCOL_ADAPTER_V2;
     ERC20ForwarderV2 internal immutable _ERC20_FORWARDER_V2;
-
-    error NullifierAlreadyMigrated(bytes32 nullifier);
+    address internal immutable _PROTOCOL_ADAPTER_V2;
 
     /// @notice Initializes the ERC-20 forwarder contract.
-    /// @param protocolAdapter The protocol adapter contract that can forward calls.
-    /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
+    /// @param protocolAdapterV3 The protocol adapter v3 that can forward calls.
+    /// @param logicRefV3 The reference to the logic function of the resource v3 triggering the forward calls.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
-    /// @param protocolAdapterV1 The stopped protocol adapter v1 address.
-    /// @param erc20ForwarderV1 The forwarder v1 address connected to the stopped PA v1.
-    /// @param protocolAdapterV2 The stopped protocol adapter v2 address.
-    /// @param erc20ForwarderV2 The forwarder v2 address connected to the stopped PA v2.
+    /// @param erc20ForwarderV1 The ERC20 forwarder v1 connected to the protocol adapter v1 that has been stopped.
+    /// @param erc20ForwarderV2 The ERC20 forwarder v2 connected to the protocol adapter v2 that has been stopped.
     constructor(
-        address protocolAdapter,
-        bytes32 logicRef,
+        address protocolAdapterV3,
+        bytes32 logicRefV3,
         address emergencyCommittee,
-        address protocolAdapterV1,
-        address erc20ForwarderV1,
-        address protocolAdapterV2,
-        address erc20ForwarderV2
-    ) ERC20ForwarderV2(protocolAdapter, logicRef, emergencyCommittee, protocolAdapterV1, erc20ForwarderV1) {
-        if (protocolAdapterV2 == address(0) || erc20ForwarderV2 == address(0)) {
+        ERC20Forwarder erc20ForwarderV1,
+        ERC20ForwarderV2 erc20ForwarderV2
+    ) ERC20ForwarderV2(protocolAdapterV3, logicRefV3, emergencyCommittee, erc20ForwarderV1) {
+        if (address(erc20ForwarderV2) == address(0)) {
             revert ZeroNotAllowed();
         }
-
-        _PROTOCOL_ADAPTER_V2 = protocolAdapterV2;
-        _ERC20_FORWARDER_V2 = ERC20ForwarderV2(erc20ForwarderV2);
+        _ERC20_FORWARDER_V2 = erc20ForwarderV2;
+        _PROTOCOL_ADAPTER_V2 = erc20ForwarderV2.getProtocolAdapter();
     }
 
     /// @notice Forwards a call wrapping, unwrapping, or migrating ERC20 tokens based on the provided input.
