@@ -7,8 +7,5 @@ pragma solidity ^0.8.30;
 interface IProtocolAdapterSpecific {
     /// @notice Returns the protocol adapter contract address this contract is associated with.
     /// @return protocolAdapter The protocol adapter version.
-    function getProtocolAdapter()
-        external
-        view
-        returns (address protocolAdapter);
+    function getProtocolAdapter() external view returns (address protocolAdapter);
 }

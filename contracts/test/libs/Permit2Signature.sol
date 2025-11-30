@@ -20,10 +20,7 @@ library Permit2Signature {
         bytes32 witness
     ) internal pure returns (bytes memory signature) {
         bytes32 digest = permitWitnessTransferFromDigest({
-            domainSeparator: domainSeparator,
-            permit: permit,
-            spender: spender,
-            witness: witness
+            domainSeparator: domainSeparator, permit: permit, spender: spender, witness: witness
         });
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
@@ -51,13 +48,8 @@ library Permit2Signature {
         digest = hashTypedData(domainSeparator, dataHash);
     }
 
-    function hashTypedData(
-        bytes32 domainSeparator,
-        bytes32 dataHash
-    ) internal pure returns (bytes32 hash) {
-        hash = keccak256(
-            abi.encodePacked("\x19\x01", domainSeparator, dataHash)
-        );
+    function hashTypedData(bytes32 domainSeparator, bytes32 dataHash) internal pure returns (bytes32 hash) {
+        hash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, dataHash));
     }
 
     /// @dev Modified version of https://github.com/Uniswap/permit2/blob/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219/src/libraries/PermitHash.sol#L85-L94.
@@ -69,30 +61,22 @@ library Permit2Signature {
         address spender
     ) private pure returns (bytes32 hash) {
         bytes32 typeHash = keccak256(
-            abi.encodePacked(
-                PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB,
-                witnessTypeString
-            )
+            abi.encodePacked(PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB, witnessTypeString)
         );
 
         hash = keccak256(
             abi.encode(
-                typeHash,
-                _hashTokenPermissions(permit.permitted),
-                spender,
-                permit.nonce,
-                permit.deadline,
-                witness
+                typeHash, _hashTokenPermissions(permit.permitted), spender, permit.nonce, permit.deadline, witness
             )
         );
     }
 
     /// @dev Copied from https://github.com/Uniswap/permit2/blob/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219/src/libraries/PermitHash.sol#L127-L133.
-    function _hashTokenPermissions(
-        ISignatureTransfer.TokenPermissions memory permitted
-    ) private pure returns (bytes32 hash) {
-        hash = keccak256(
-            abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permitted)
-        );
+    function _hashTokenPermissions(ISignatureTransfer.TokenPermissions memory permitted)
+        private
+        pure
+        returns (bytes32 hash)
+    {
+        hash = keccak256(abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permitted));
     }
 }

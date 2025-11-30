@@ -14,21 +14,13 @@ contract ForwarderExample is ProtocolAdapterSpecificForwarderBase {
     event CallForwarded(bytes input, bytes output);
     event EmergencyCallForwarded(bytes input, bytes output);
 
-    constructor(
-        address protocolAdapter,
-        bytes32 calldataCarrierLogicRef
-    )
-        ProtocolAdapterSpecificForwarderBase(
-            protocolAdapter,
-            calldataCarrierLogicRef
-        )
+    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef)
+        ProtocolAdapterSpecificForwarderBase(protocolAdapter, calldataCarrierLogicRef)
     {
         TARGET = address(new ForwarderTargetExample());
     }
 
-    function _forwardCall(
-        bytes calldata input
-    ) internal override returns (bytes memory output) {
+    function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
         output = TARGET.functionCall(input);
 
         emit CallForwarded({input: input, output: output});

@@ -9,9 +9,7 @@ interface IEmergencyMigratable {
     /// set by emergency committee if the RISC Zero emergency stop is active.
     /// @param input The `bytes` encoded calldata (including the `bytes4` function selector).
     /// @return output The `bytes` encoded output of the call.
-    function forwardEmergencyCall(
-        bytes memory input
-    ) external returns (bytes memory output);
+    function forwardEmergencyCall(bytes memory input) external returns (bytes memory output);
 
     /// @notice Sets the emergency caller. This function can only be called by the address
     /// set by emergency committee if the RISC Zero emergency stop is active.

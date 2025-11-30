@@ -9,10 +9,7 @@ import {IProtocolAdapterSpecific} from "../interfaces/IProtocolAdapterSpecific.s
 /// @author Anoma Foundation, 2025
 /// @notice The base contract to inherit from to create a forwarder contracts owning EVM state and executing EVM calls.
 /// @custom:security-contact security@anoma.foundation
-abstract contract ProtocolAdapterSpecificForwarderBase is
-    IForwarder,
-    IProtocolAdapterSpecific
-{
+abstract contract ProtocolAdapterSpecificForwarderBase is IForwarder, IProtocolAdapterSpecific {
     /// @notice The protocol adapter contract that can forward calls.
     address internal immutable _PROTOCOL_ADAPTER;
 
@@ -27,10 +24,7 @@ abstract contract ProtocolAdapterSpecificForwarderBase is
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) {
-        if (
-            protocolAdapter == address(0) ||
-            calldataCarrierLogicRef == bytes32(0)
-        ) {
+        if (protocolAdapter == address(0) || calldataCarrierLogicRef == bytes32(0)) {
             revert ZeroNotAllowed();
         }
 
@@ -40,29 +34,18 @@ abstract contract ProtocolAdapterSpecificForwarderBase is
     }
 
     /// @inheritdoc IForwarder
-    function forwardCall(
-        bytes32 logicRef,
-        bytes calldata input
-    ) external returns (bytes memory output) {
+    function forwardCall(bytes32 logicRef, bytes calldata input) external returns (bytes memory output) {
         _checkCaller(_PROTOCOL_ADAPTER);
 
         if (_CALLDATA_CARRIER_LOGIC_REF != logicRef) {
-            revert UnauthorizedLogicRef({
-                expected: _CALLDATA_CARRIER_LOGIC_REF,
-                actual: logicRef
-            });
+            revert UnauthorizedLogicRef({expected: _CALLDATA_CARRIER_LOGIC_REF, actual: logicRef});
         }
 
         output = _forwardCall(input);
     }
 
     /// @inheritdoc IProtocolAdapterSpecific
-    function getProtocolAdapter()
-        external
-        view
-        override
-        returns (address protocolAdapter)
-    {
+    function getProtocolAdapter() external view override returns (address protocolAdapter) {
         protocolAdapter = _PROTOCOL_ADAPTER;
     }
 
@@ -71,9 +54,7 @@ abstract contract ProtocolAdapterSpecificForwarderBase is
     /// @notice Forwards calls.
     /// @param input The `bytes` encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
-    function _forwardCall(
-        bytes calldata input
-    ) internal virtual returns (bytes memory output);
+    function _forwardCall(bytes calldata input) internal virtual returns (bytes memory output);
 
     // slither-disable-end unimplemented-functions
 

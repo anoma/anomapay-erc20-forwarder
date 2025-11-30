@@ -60,21 +60,11 @@ contract ERC20ForwarderTest is Test {
         _permit2 = _permit2Contract();
 
         // Deploy RISC Zero contracts
-        (
-            RiscZeroVerifierRouter router,
-            ,
-            RiscZeroGroth16Verifier verifier
-        ) = new DeployRiscZeroContracts().run({
-                admin: msg.sender,
-                guardian: msg.sender
-            });
+        (RiscZeroVerifierRouter router,, RiscZeroGroth16Verifier verifier) =
+            new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
 
         // Deploy the protocol adapter
-        _pa = new ProtocolAdapter(
-            router,
-            verifier.SELECTOR(),
-            _EMERGENCY_COMMITTEE
-        );
+        _pa = new ProtocolAdapter(router, verifier.SELECTOR(), _EMERGENCY_COMMITTEE);
 
         // Deploy the ERC20 forwarder
         _fwd = new ERC20Forwarder({
@@ -84,10 +74,7 @@ contract ERC20ForwarderTest is Test {
         });
 
         _defaultPermit = ISignatureTransfer.PermitTransferFrom({
-            permitted: ISignatureTransfer.TokenPermissions({
-                token: address(_erc20),
-                amount: _TRANSFER_AMOUNT
-            }),
+            permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: _TRANSFER_AMOUNT}),
             nonce: 123,
             deadline: Time.timestamp() + 5 minutes
         });
@@ -100,19 +87,26 @@ contract ERC20ForwarderTest is Test {
             witness: ERC20ForwarderPermit2.Witness(_ACTION_TREE_ROOT).hash()
         });
 
-        _defaultWrapInput = abi.encode(
-            /*       callType */ ERC20Forwarder.CallType.Wrap,
-            /*           from */ _alice,
-            /*         permit */ _defaultPermit,
-            /* actionTreeRoot */ _ACTION_TREE_ROOT,
-            /*      signature */ _defaultPermitSig
+        _defaultWrapInput = abi.encode( /*       callType */
+            ERC20Forwarder.CallType.Wrap,
+            /*           from */
+            _alice,
+            /*         permit */
+            _defaultPermit,
+            /* actionTreeRoot */
+            _ACTION_TREE_ROOT,
+            /*      signature */
+            _defaultPermitSig
         );
 
-        _defaultUnwrapInput = abi.encode(
-            /* callType */ ERC20Forwarder.CallType.Unwrap,
-            /*    token */ address(_erc20),
-            /*       to */ _alice,
-            /*   amount */ _TRANSFER_AMOUNT
+        _defaultUnwrapInput = abi.encode( /* callType */
+            ERC20Forwarder.CallType.Unwrap,
+            /*    token */
+            address(_erc20),
+            /*       to */
+            _alice,
+            /*   amount */
+            _TRANSFER_AMOUNT
         );
     }
 
@@ -130,10 +124,7 @@ contract ERC20ForwarderTest is Test {
     function test_forwardCall_reverts_on_invalid_calltype() public {
         vm.prank(address(_pa));
         vm.expectRevert(stdError.enumConversionError);
-        _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: abi.encode(type(uint8).max)
-        });
+        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: abi.encode(type(uint8).max)});
     }
 
     function test_unwrap_sends_funds_to_the_user() public {
@@ -142,20 +133,11 @@ contract ERC20ForwarderTest is Test {
         uint256 startBalanceForwarder = _erc20.balanceOf(address(_fwd));
 
         vm.prank(address(_pa));
-        bytes memory output = _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: _defaultUnwrapInput
-        });
+        bytes memory output = _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultUnwrapInput});
 
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
-        assertEq(
-            _erc20.balanceOf(_alice),
-            startBalanceAlice + _TRANSFER_AMOUNT
-        );
-        assertEq(
-            _erc20.balanceOf(address(_fwd)),
-            startBalanceForwarder - _TRANSFER_AMOUNT
-        );
+        assertEq(_erc20.balanceOf(_alice), startBalanceAlice + _TRANSFER_AMOUNT);
+        assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder - _TRANSFER_AMOUNT);
     }
 
     function test_unwrap_emits_the_Unwrapped_event() public {
@@ -163,16 +145,9 @@ contract ERC20ForwarderTest is Test {
 
         vm.prank(address(_pa));
         vm.expectEmit(address(_fwd));
-        emit ERC20Forwarder.Unwrapped({
-            token: address(_erc20),
-            to: _alice,
-            amount: _TRANSFER_AMOUNT
-        });
+        emit ERC20Forwarder.Unwrapped({token: address(_erc20), to: _alice, amount: _TRANSFER_AMOUNT});
 
-        _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: _defaultUnwrapInput
-        });
+        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultUnwrapInput});
     }
 
     function test_wrap_reverts_if_user_did_not_approve_permit2() public {
@@ -180,10 +155,7 @@ contract ERC20ForwarderTest is Test {
 
         vm.prank(address(_pa));
         vm.expectRevert("TRANSFER_FROM_FAILED", address(_erc20));
-        _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: _defaultWrapInput
-        });
+        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultWrapInput});
     }
 
     function test_wrap_reverts_if_the_signature_expired() public {
@@ -195,17 +167,8 @@ contract ERC20ForwarderTest is Test {
         vm.warp(_defaultPermit.deadline + 1);
 
         vm.prank(address(_pa));
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SignatureExpired.selector,
-                _defaultPermit.deadline
-            ),
-            address(_permit2)
-        );
-        _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: _defaultWrapInput
-        });
+        vm.expectRevert(abi.encodeWithSelector(SignatureExpired.selector, _defaultPermit.deadline), address(_permit2));
+        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultWrapInput});
     }
 
     function test_wrap_reverts_if_the_signature_was_already_used() public {
@@ -215,20 +178,11 @@ contract ERC20ForwarderTest is Test {
 
         // Use the signature.
         vm.startPrank(address(_pa));
-        _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: _defaultWrapInput
-        });
+        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultWrapInput});
 
         // Reuse the signature.
-        vm.expectRevert(
-            abi.encodeWithSelector(InvalidNonce.selector),
-            address(_permit2)
-        );
-        _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: _defaultWrapInput
-        });
+        vm.expectRevert(abi.encodeWithSelector(InvalidNonce.selector), address(_permit2));
+        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultWrapInput});
     }
 
     function test_wrap_reverts_if_the_amount_to_be_wrapped_overflows() public {
@@ -238,32 +192,27 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
 
-        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer
-            .PermitTransferFrom({
-                permitted: ISignatureTransfer.TokenPermissions({
-                    token: address(_erc20),
-                    amount: maxAmount + 1
-                }),
-                nonce: 123,
-                deadline: Time.timestamp() + 30 minutes
-            });
+        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: maxAmount + 1}),
+            nonce: 123,
+            deadline: Time.timestamp() + 30 minutes
+        });
 
-        bytes memory input = abi.encode(
-            /*       callType */ ERC20Forwarder.CallType.Wrap,
-            /*           from */ _alice,
-            /*         permit */ permit,
-            /* actionTreeRoot */ _ACTION_TREE_ROOT,
-            /*      signature */ _defaultPermitSig
+        bytes memory input = abi.encode( /*       callType */
+            ERC20Forwarder.CallType.Wrap,
+            /*           from */
+            _alice,
+            /*         permit */
+            permit,
+            /* actionTreeRoot */
+            _ACTION_TREE_ROOT,
+            /*      signature */
+            _defaultPermitSig
         );
 
         vm.prank(address(_pa));
         vm.expectRevert(
-            abi.encodeWithSelector(
-                ERC20Forwarder.TypeOverflow.selector,
-                maxAmount,
-                maxAmount + 1
-            ),
-            address(_fwd)
+            abi.encodeWithSelector(ERC20Forwarder.TypeOverflow.selector, maxAmount, maxAmount + 1), address(_fwd)
         );
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
@@ -277,20 +226,11 @@ contract ERC20ForwarderTest is Test {
         _erc20.approve(address(_permit2), type(uint256).max);
 
         vm.prank(address(_pa));
-        bytes memory output = _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: _defaultWrapInput
-        });
+        bytes memory output = _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultWrapInput});
 
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
-        assertEq(
-            _erc20.balanceOf(_alice),
-            startBalanceAlice - _TRANSFER_AMOUNT
-        );
-        assertEq(
-            _erc20.balanceOf(address(_fwd)),
-            startBalanceForwarder + _TRANSFER_AMOUNT
-        );
+        assertEq(_erc20.balanceOf(_alice), startBalanceAlice - _TRANSFER_AMOUNT);
+        assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder + _TRANSFER_AMOUNT);
     }
 
     function test_wrap_emits_the_Wrapped_event() public {
@@ -301,34 +241,17 @@ contract ERC20ForwarderTest is Test {
 
         vm.prank(address(_pa));
         vm.expectEmit(address(_fwd));
-        emit ERC20Forwarder.Wrapped({
-            token: address(_erc20),
-            from: _alice,
-            amount: _TRANSFER_AMOUNT
-        });
-        _fwd.forwardCall({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            input: _defaultWrapInput
-        });
+        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: _alice, amount: _TRANSFER_AMOUNT});
+        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: _defaultWrapInput});
     }
 
     function test_witness_typeHash_complies_with_eip712() public pure {
-        assertEq(
-            ERC20ForwarderPermit2._WITNESS_TYPEHASH,
-            vm.eip712HashType(ERC20ForwarderPermit2._WITNESS_TYPE_DEF)
-        );
+        assertEq(ERC20ForwarderPermit2._WITNESS_TYPEHASH, vm.eip712HashType(ERC20ForwarderPermit2._WITNESS_TYPE_DEF));
     }
 
     function test_witness_structHash_complies_with_eip712() public pure {
-        ERC20ForwarderPermit2.Witness memory witness = ERC20ForwarderPermit2
-            .Witness({actionTreeRoot: bytes32(0)});
-        assertEq(
-            witness.hash(),
-            vm.eip712HashStruct(
-                ERC20ForwarderPermit2._WITNESS_TYPE_DEF,
-                abi.encode(witness)
-            )
-        );
+        ERC20ForwarderPermit2.Witness memory witness = ERC20ForwarderPermit2.Witness({actionTreeRoot: bytes32(0)});
+        assertEq(witness.hash(), vm.eip712HashStruct(ERC20ForwarderPermit2._WITNESS_TYPE_DEF, abi.encode(witness)));
     }
 
     function _permit2Contract() internal virtual returns (IPermit2 permit2) {
