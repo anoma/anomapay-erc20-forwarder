@@ -140,6 +140,29 @@ contract ERC20ForwarderTest is Test {
         assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder - _TRANSFER_AMOUNT);
     }
 
+    function test_unwrap_does_not_revert_if_the_amount_is_zero() public {
+        _erc20.mint({to: address(_fwd), value: _TRANSFER_AMOUNT});
+        uint256 startBalanceAlice = _erc20.balanceOf(_alice);
+        uint256 startBalanceForwarder = _erc20.balanceOf(address(_fwd));
+
+        bytes memory unwrapInputWithZeroAmount = abi.encode(
+            /* callType */ ERC20Forwarder.CallType.Unwrap,
+            /*    token */ address(_erc20),
+            /*       to */ _alice,
+            /*   amount */ 0
+        );
+
+        vm.prank(address(_pa));
+        bytes memory output = _fwd.forwardCall({
+            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            input: unwrapInputWithZeroAmount
+        });
+
+        assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
+        assertEq(_erc20.balanceOf(_alice), startBalanceAlice);
+        assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder);
+    }
+
     function test_unwrap_emits_the_Unwrapped_event() public {
         _erc20.mint({to: address(_fwd), value: _TRANSFER_AMOUNT});
 
@@ -231,6 +254,53 @@ contract ERC20ForwarderTest is Test {
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
         assertEq(_erc20.balanceOf(_alice), startBalanceAlice - _TRANSFER_AMOUNT);
         assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder + _TRANSFER_AMOUNT);
+    }
+
+    function test_wrap_does_not_revert_if_the_amount_is_zero() public {
+        _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
+        uint256 startBalanceAlice = _erc20.balanceOf(_alice);
+        uint256 startBalanceForwarder = _erc20.balanceOf(address(_fwd));
+
+        vm.prank(_alice);
+        _erc20.approve(address(_permit2), type(uint256).max);
+
+        ISignatureTransfer.PermitTransferFrom
+            memory permitWithZeroAmount = ISignatureTransfer
+                .PermitTransferFrom({
+                    permitted: ISignatureTransfer.TokenPermissions({
+                        token: address(_erc20),
+                        amount: 0
+                    }),
+                    nonce: 123,
+                    deadline: Time.timestamp() + 5 minutes
+                });
+
+        bytes memory permitSigForZeroAmount = vm
+            .permitWitnessTransferFromSignature({
+                domainSeparator: _permit2.DOMAIN_SEPARATOR(),
+                permit: permitWithZeroAmount,
+                privateKey: _alicePrivateKey,
+                spender: address(_fwd),
+                witness: ERC20ForwarderPermit2.Witness(_ACTION_TREE_ROOT).hash()
+            });
+
+        bytes memory wrapInputWithZeroAmount = abi.encode(
+            /*       callType */ ERC20Forwarder.CallType.Wrap,
+            /*           from */ _alice,
+            /*         permit */ permitWithZeroAmount,
+            /* actionTreeRoot */ _ACTION_TREE_ROOT,
+            /*      signature */ permitSigForZeroAmount
+        );
+
+        vm.prank(address(_pa));
+        bytes memory output = _fwd.forwardCall({
+            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            input: wrapInputWithZeroAmount
+        });
+
+        assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
+        assertEq(_erc20.balanceOf(_alice), startBalanceAlice);
+        assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder);
     }
 
     function test_wrap_emits_the_Wrapped_event() public {
