@@ -5,6 +5,7 @@ import {TransactionExample} from "@anoma-evm-pa-testing/examples/transactions/Tr
 import {DeployRiscZeroContracts} from "@anoma-evm-pa-testing/script/DeployRiscZeroContracts.s.sol";
 
 import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
+import {CommitmentTree} from "@anoma-evm-pa/state/CommitmentTree.sol";
 import {NullifierSet} from "@anoma-evm-pa/state/NullifierSet.sol";
 import {Transaction} from "@anoma-evm-pa/Types.sol";
 
@@ -134,7 +135,13 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
             /*    amount */
             _TRANSFER_AMOUNT,
             /* nullifier */
-            _NULLIFIER
+            _NULLIFIER,
+            /*      root */
+            CommitmentTree(_paV1).latestCommitmentTreeRoot(),
+            /*  logicRef */
+            _logicRefV1,
+            /*  labelRef */
+            sha256(abi.encode(address(_fwdV1), address(_erc20)))
         );
 
         _defaultMigrateV2Input = abi.encode( /*  callType */
@@ -144,7 +151,13 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
             /*    amount */
             _TRANSFER_AMOUNT,
             /* nullifier */
-            _NULLIFIER
+            _NULLIFIER,
+            /*      root */
+            CommitmentTree(_paV2).latestCommitmentTreeRoot(),
+            /*  logicRef */
+            _logicRefV2,
+            /*  labelRef */
+            sha256(abi.encode(address(_fwdV2), address(_erc20)))
         );
     }
 
@@ -170,7 +183,8 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         _emergencyStopPaV1AndSetEmergencyCaller();
         _emergencyStopPaV2AndSetEmergencyCaller();
 
-        bytes memory input = abi.encode(ERC20ForwarderV3.CallTypeV3.MigrateV1, address(0), uint128(0), nullifier);
+        bytes memory input =
+            abi.encode(ERC20ForwarderV3.CallTypeV3.MigrateV1, address(0), uint128(0), nullifier, "", "", "");
 
         vm.prank(address(_paV3));
         vm.expectRevert(
@@ -189,7 +203,8 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         _emergencyStopPaV2AndSetEmergencyCaller();
 
-        bytes memory input = abi.encode(ERC20ForwarderV3.CallTypeV3.MigrateV2, address(0), uint128(0), nullifier);
+        bytes memory input =
+            abi.encode(ERC20ForwarderV3.CallTypeV3.MigrateV2, address(0), uint128(0), nullifier, "", "", "");
 
         vm.prank(address(_paV3));
         vm.expectRevert(

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ICommitmentTree} from "@anoma-evm-pa/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "@anoma-evm-pa/interfaces/INullifierSet.sol";
 import {NullifierSet} from "@anoma-evm-pa/state/NullifierSet.sol";
 
@@ -22,8 +23,13 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
 
     ERC20Forwarder internal immutable _ERC20_FORWARDER_V1;
     address internal immutable _PROTOCOL_ADAPTER_V1;
+    bytes32 internal immutable _COMMITMENT_TREE_ROOT_V1;
+    bytes32 internal immutable _LOGIC_REFERENCE_V1;
 
     error ResourceAlreadyConsumed(bytes32 nullifier);
+    error IncorrectMigrationCommitmentRoot(bytes32 root);
+    error IncorrectMigrationLogicReference(bytes32 logicRef);
+    error IncorrectForwarderInLabel(bytes32 labelRef);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapterV2 The protocol adapter v2 that can forward calls.
@@ -43,6 +49,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
 
         _ERC20_FORWARDER_V1 = erc20ForwarderV1;
         _PROTOCOL_ADAPTER_V1 = erc20ForwarderV1.getProtocolAdapter();
+        _COMMITMENT_TREE_ROOT_V1 = ICommitmentTree(_PROTOCOL_ADAPTER_V1).latestCommitmentTreeRoot();
+        _LOGIC_REFERENCE_V1 = erc20ForwarderV1.getLogicRef();
     }
 
     // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
@@ -79,8 +87,11 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
             // CallTypeV2.Migrate
             address token,
             uint128 amount,
-            bytes32 nullifier
-        ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32));
+            bytes32 nullifier,
+            bytes32 root,
+            bytes32 logicRef,
+            bytes32 labelRef
+        ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32, bytes32, bytes32, bytes32));
 
         // Check that the resource being upgraded is not in the protocol adapter v1 nullifier set.
         if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
@@ -89,6 +100,23 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
 
         // Add the nullifier to the this contract's nullifier set. The call will revert if the nullifier already exists.
         _addNullifier(nullifier);
+
+        // Check that the root matches the final PA V1 commitment tree root.
+        if (root != _COMMITMENT_TREE_ROOT_V1) {
+            revert IncorrectMigrationCommitmentRoot(root);
+        }
+
+        // Check that logicRef matches with ERC20ForwarderV1.
+        if (logicRef != _LOGIC_REFERENCE_V1) {
+            revert IncorrectMigrationLogicReference(logicRef);
+        }
+
+        bytes32 expectedLabelRef = sha256(abi.encode(address(_ERC20_FORWARDER_V1), token));
+
+        // Check that the labelRef is as expected so that the forwarder matches.
+        if (expectedLabelRef != labelRef) {
+            revert IncorrectForwarderInLabel(labelRef);
+        }
 
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v1.
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V1), amount: amount});
