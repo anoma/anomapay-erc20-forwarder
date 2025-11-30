@@ -41,8 +41,6 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     bytes internal _defaultMigrateV1Input;
 
     function setUp() public virtual override {
-        _logicRefV2 = bytes32(uint256(2));
-
         _alicePrivateKey = 0xc522337787f3037e9d0dcba4dc4c0e3d4eb7b1c65598d51c425574e8ce64d140;
         _alice = vm.addr(_alicePrivateKey);
 
