@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {INullifierSet} from "@anoma-evm-pa/interfaces/INullifierSet.sol";
 import {NullifierSet} from "@anoma-evm-pa/state/NullifierSet.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
@@ -16,7 +17,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     enum CallTypeV2 {
         Unwrap,
         Wrap,
-        Migrate
+        MigrateV1
     }
 
     address internal immutable _PROTOCOL_ADAPTER_V1;
@@ -46,13 +47,15 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         _ERC20_FORWARDER_V1 = ERC20Forwarder(erc20ForwarderV1);
     }
 
+    // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
+
     /// @notice Forwards a call wrapping, unwrapping, or migrating ERC20 tokens based on the provided input.
     /// @param input Contains data to
     /// - wrap ERC20 tokens into resources using Uniswap's Permit2,
     /// - unwrap ERC20 tokens from resources, and
     /// - migrate ERC20 resources from the ERC20 forwarder v1.
     /// @return output The empty string signaling that the function call has succeeded.
-    function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
+    function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
         CallTypeV2 callType = CallTypeV2(uint8(input[31]));
 
         if (callType == CallTypeV2.Wrap) {
@@ -60,7 +63,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         } else if (callType == CallTypeV2.Unwrap) {
             _unwrap(input);
         } else {
-            _migrate(input);
+            _migrateV1(input);
         }
 
         output = "";
@@ -69,11 +72,11 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// @notice Migrates ERC20 resources by transferring ERC20 tokens from the ERC20 forwarder v1 and storing the
     /// associated nullifier.
     /// @param input The input bytes containing the encoded arguments for the migration call:
-    /// * The `CallTypeV2.Migrate` enum value that has been checked already and is therefore unused.
+    /// * The `CallTypeV2.MigrateV1` enum value that has been checked already and is therefore unused.
     /// * `nullifier`: The nullifier of the resource to be migrated.
     /// * `token`: The address of the token to migrated.
     /// * `amount`: The amount to be migrated.
-    function _migrate(bytes calldata input) internal {
+    function _migrateV1(bytes calldata input) internal virtual {
         (,
             // CallTypeV2.Migrate
             address token,
@@ -81,8 +84,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
             bytes32 nullifier
         ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32));
 
-        // Check that the resource being migrated has not been consumed in the previous protocol adapter.
-        if (NullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
+        // Check that the resource being upgraded is not in the protocol adapter v1 nullifier set.
+        if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
             revert ResourceAlreadyConsumed(nullifier);
         }
 
@@ -92,10 +95,12 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v1.
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V1), amount: amount});
 
-        // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v1 to this contract.
+        // Forwards a call to transfer the ERC20 tokens from the ERC20 forwarder v1 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been withdrawn
         // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V1.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
     }
+
+    // slither-disable-end dead-code
 }
