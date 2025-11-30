@@ -7,9 +7,7 @@ import {EmergencyMigratableForwarderBase} from "../../src/bases/EmergencyMigrata
 
 import {ForwarderTargetExample} from "./ForwarderTarget.e.sol";
 
-contract EmergencyMigratableForwarderExample is
-    EmergencyMigratableForwarderBase
-{
+contract EmergencyMigratableForwarderExample is EmergencyMigratableForwarderBase {
     using Address for address;
 
     address public immutable TARGET;
@@ -17,31 +15,19 @@ contract EmergencyMigratableForwarderExample is
     event CallForwarded(bytes input, bytes output);
     event EmergencyCallForwarded(bytes input, bytes output);
 
-    constructor(
-        address protocolAdapter,
-        address emergencyCommittee,
-        bytes32 calldataCarrierLogicRef
-    )
-        EmergencyMigratableForwarderBase(
-            protocolAdapter,
-            calldataCarrierLogicRef,
-            emergencyCommittee
-        )
+    constructor(address protocolAdapter, address emergencyCommittee, bytes32 logicRef)
+        EmergencyMigratableForwarderBase(protocolAdapter, logicRef, emergencyCommittee)
     {
         TARGET = address(new ForwarderTargetExample());
     }
 
-    function _forwardCall(
-        bytes calldata input
-    ) internal override returns (bytes memory output) {
+    function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
         output = TARGET.functionCall(input);
 
         emit CallForwarded({input: input, output: output});
     }
 
-    function _forwardEmergencyCall(
-        bytes calldata input
-    ) internal override returns (bytes memory output) {
+    function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
         output = TARGET.functionCall(input);
 
         emit EmergencyCallForwarded({input: input, output: output});

@@ -25,8 +25,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
     /// @notice The canonical Uniswap Permit2 contract being deployed at the same address on all supported chains.
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
-    IPermit2 internal constant _PERMIT2 =
-        IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
+    IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
     /// @notice Emitted when ERC20 tokens get wrapped.
     /// @param token The ERC20 token address.
@@ -43,20 +42,12 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     error TypeOverflow(uint256 limit, uint256 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
-    /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
-    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
+    /// @param protocolAdapter The protocol adapter contract that can forward calls.
+    /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
-    constructor(
-        address protocolAdapter,
-        bytes32 calldataCarrierLogicRef,
-        address emergencyCommittee
-    )
-        EmergencyMigratableForwarderBase(
-            protocolAdapter,
-            calldataCarrierLogicRef,
-            emergencyCommittee
-        )
+    constructor(address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
+        EmergencyMigratableForwarderBase(protocolAdapter, logicRef, emergencyCommittee)
     {}
 
     // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
@@ -66,9 +57,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// - wrap ERC20 tokens into resources using Uniswap Permit2 and
     /// - unwrap ERC20 tokens from resources
     /// @return output The empty string signaling that the function call has succeeded.
-    function _forwardCall(
-        bytes calldata input
-    ) internal virtual override returns (bytes memory output) {
+    function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
         CallType callType = CallType(uint8(input[31]));
 
         if (callType == CallType.Wrap) {
@@ -96,47 +85,27 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// * `signature`: The Permit2 signature.
     function _wrap(bytes calldata input) internal {
         // slither-disable-next-line unused-return
-        (
-            ,
+        (,
             // CallType.Wrap
             address owner,
             ISignatureTransfer.PermitTransferFrom memory permit,
             bytes32 actionTreeRoot,
             bytes memory signature
-        ) = abi.decode(
-                input,
-                (
-                    CallType,
-                    address,
-                    ISignatureTransfer.PermitTransferFrom,
-                    bytes32,
-                    bytes
-                )
-            );
+        ) = abi.decode(input, (CallType, address, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
 
         if (permit.permitted.amount > type(uint128).max) {
-            revert TypeOverflow({
-                limit: type(uint128).max,
-                actual: permit.permitted.amount
-            });
+            revert TypeOverflow({limit: type(uint128).max, actual: permit.permitted.amount});
         }
 
-        emit Wrapped({
-            token: permit.permitted.token,
-            from: owner,
-            amount: uint128(permit.permitted.amount)
-        });
+        emit Wrapped({token: permit.permitted.token, from: owner, amount: uint128(permit.permitted.amount)});
 
         _PERMIT2.permitWitnessTransferFrom({
             permit: permit,
             transferDetails: ISignatureTransfer.SignatureTransferDetails({
-                to: address(this),
-                requestedAmount: permit.permitted.amount
+                to: address(this), requestedAmount: permit.permitted.amount
             }),
             owner: owner,
-            witness: ERC20ForwarderPermit2
-                .Witness({actionTreeRoot: actionTreeRoot})
-                .hash(),
+            witness: ERC20ForwarderPermit2.Witness({actionTreeRoot: actionTreeRoot}).hash(),
             witnessTypeString: ERC20ForwarderPermit2._WITNESS_TYPE_STRING,
             signature: signature
         });
@@ -150,8 +119,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// * `amount`: The amount to be transferred.
     function _unwrap(bytes calldata input) internal {
         // slither-disable-next-line unused-return
-        (
-            ,
+        (,
             // CallType.Unwrap
             address token,
             address receiver,
@@ -167,9 +135,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param input Contains data to withdraw or send ERC20 tokens from or to a user, respectively.
     /// @return output The output of the emergency call.
     /// @dev This function internally uses the `SafeERC20` library.
-    function _forwardEmergencyCall(
-        bytes calldata input
-    ) internal override returns (bytes memory output) {
+    function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
         output = _forwardCall(input);
     }
 }
