@@ -8,8 +8,7 @@ use crate::request::proving::resources::{
 use crate::request::proving::witness_data::token_transfer::{ConsumedPersistent, CreatedEphemeral};
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    label_ref, random_nonce, user_with_private_key, value_ref_ephemeral_created,
-    TOKEN_ADDRESS_SEPOLIA_USDC,
+    label_ref, random_nonce, user_with_private_key, TOKEN_ADDRESS_SEPOLIA_USDC,
 };
 use crate::tests::request::proving::mint::example_mint_transaction_submit;
 use crate::user::Keychain;
@@ -21,13 +20,15 @@ use arm::transaction::Transaction;
 use arm::Digest;
 use arm_gadgets::authorization::AuthorizationSignature;
 use transfer_library::TransferLogic;
-use transfer_witness::AUTH_SIGNATURE_DOMAIN;
+use transfer_witness::{calculate_value_ref_from_user_addr, AUTH_SIGNATURE_DOMAIN};
 
 #[ignore]
 #[tokio::test]
 /// Test creation of a burn transaction.
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_create_burn_transaction() {
+    dotenv::dotenv().ok();
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
@@ -52,6 +53,8 @@ async fn test_create_burn_transaction() {
 /// Test submitting a burn transaction to the protocol adapter.
 /// This requires an account with private key to actually submit to ethereum.
 pub async fn test_submit_burn_transaction() {
+    dotenv::dotenv().ok();
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
@@ -125,7 +128,7 @@ pub async fn example_burn_parameters(
         logic_ref: TransferLogic::verifying_key(),
         label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: to_burn_resource.quantity,
-        value_ref: value_ref_ephemeral_created(&burner),
+        value_ref: calculate_value_ref_from_user_addr(&burner.evm_address.into_array()),
         is_ephemeral: true,
         nonce,
         nk_commitment: burner.nf_key.commit(),

@@ -10,8 +10,8 @@ use crate::request::proving::witness_data::token_transfer::{
 };
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    create_permit_signature, label_ref, random_nonce, user_with_private_key,
-    DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC,
+    create_permit_signature, label_ref, random_nonce, user_with_private_key, DEFAULT_DEADLINE,
+    TOKEN_ADDRESS_SEPOLIA_USDC,
 };
 use crate::user::Keychain;
 use crate::{load_config, AnomaPayConfig};
@@ -20,7 +20,9 @@ use arm::logic_proof::LogicProver;
 use arm::resource::Resource;
 use arm::transaction::Transaction;
 use transfer_library::TransferLogic;
-use transfer_witness::{calculate_persistent_value_ref, calculate_value_ref_from_user_addr, ValueInfo};
+use transfer_witness::{
+    calculate_persistent_value_ref, calculate_value_ref_from_user_addr, ValueInfo,
+};
 
 #[ignore]
 #[tokio::test]
@@ -47,6 +49,8 @@ async fn test_create_mint_transaction() {
 /// Test submitting a mint transaction to the protocol adapter.
 /// This requires an account with private key to actually submit to ethereum.
 pub async fn test_submit_mint_transaction() {
+    dotenv::dotenv().ok();
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
@@ -62,6 +66,8 @@ pub async fn example_mint_transaction_submit(
     user: Keychain,
     config: &AnomaPayConfig,
 ) -> (Parameters, Transaction, String) {
+    dotenv::dotenv().ok();
+
     // Create a mint transaction.
     let (parameters, transaction) = example_mint_transaction(user, config).await;
 
@@ -119,17 +125,15 @@ pub async fn example_mint_parameters(
         .try_into()
         .expect("consumed resource nullifier is not 32 bytes");
 
-    let value_info = ValueInfo {
-       auth_pk: minter.auth_verifying_key(),
-         encryption_pk: minter.encryption_pk,
-    };
-
     // Construct the created resource (i.e., the one that wraps our tokens)
     let created_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
         label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: amount,
-        value_ref: calculate_persistent_value_ref(&value_info),
+        value_ref: calculate_persistent_value_ref(&ValueInfo {
+            auth_pk: minter.auth_verifying_key(),
+            encryption_pk: minter.encryption_pk,
+        }),
         is_ephemeral: false,
         nonce: created_resource_nonce,
         nk_commitment: minter.nf_key.commit(),
