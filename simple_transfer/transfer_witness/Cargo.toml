@@ -1,26 +1,16 @@
 [package]
-authors.workspace = true
-edition.workspace = true
-license.workspace = true
 name = "transfer_witness"
-readme.workspace = true
-version.workspace = true
+version = "0.1.0"
+edition = "2021"
 
 [dependencies]
-alloy-primitives = { workspace = true }
-alloy-sol-types = { workspace = true }
-arm = { workspace = true, default-features = false }
-arm-gadgets = { workspace = true }
-k256 = { workspace = true, features = [
-  "arithmetic",
-  "serde",
-  "expose-field",
-  "std",
-  "ecdsa",
-  "hash2curve",
-], default-features = false }
-rand = { workspace = true }
-serde = { workspace = true }
+serde = "1.0"
+arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = false }
+arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
+rand = "0.8"
+alloy-primitives = "1.0.23"
+alloy-sol-types = "1.0.23"
+k256 = { version = "=0.13.3", features = ["arithmetic", "serde", "expose-field", "std", "ecdsa", "hash2curve"], default-features = false }
 
 [dev-dependencies]
-hex = { workspace = true }
+hex = "0.4"

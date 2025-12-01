@@ -4309,6 +4309,7 @@ dependencies = [
  "once_cell",
  "serdect",
  "sha2",
+ "signature",
 ]
 
 [[package]]
@@ -7727,7 +7728,7 @@ dependencies = [
 
 [[package]]
 name = "transfer_app"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "alloy",
  "arm",
@@ -7762,7 +7763,7 @@ dependencies = [
 
 [[package]]
 name = "transfer_library"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "arm",
  "arm-gadgets",
@@ -7775,7 +7776,7 @@ dependencies = [
 
 [[package]]
 name = "transfer_witness"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -7783,7 +7784,7 @@ dependencies = [
  "arm-gadgets",
  "hex",
  "k256",
- "rand 0.9.2",
+ "rand 0.8.5",
  "serde",
 ]
 

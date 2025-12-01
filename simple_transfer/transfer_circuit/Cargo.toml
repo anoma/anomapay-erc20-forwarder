@@ -1,13 +1,10 @@
 [package]
-authors.workspace = true
-edition.workspace = true
-license.workspace = true
 name = "simple-transfer"
-readme.workspace = true
-version.workspace = true
+version = "0.1.0"
+edition = "2021"
 
 [workspace]
 
 [dependencies]
-risc0-zkvm = { workspace = true }
 simple-transfer-methods = { path = "methods" }
+risc0-zkvm = "3.0.3"

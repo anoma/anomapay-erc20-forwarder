@@ -4,7 +4,7 @@
 extern crate dotenv;
 use crate::load_config;
 use crate::request::fee_estimation::estimation::{
-    FeeEstimationPayload, estimate_fee_resource_quantity_by_resource_count,
+    estimate_fee_resource_quantity_by_resource_count, FeeEstimationPayload,
 };
 use crate::request::fee_estimation::price::token::get_ether_price_in_tokens;
 use crate::request::fee_estimation::token::{FeeCompatibleERC20Token, Token};
@@ -26,11 +26,9 @@ async fn test_estimate_fee() {
         fee_token: FeeCompatibleERC20Token::USDC,
     };
 
-    assert!(
-        estimate_fee(payload.into(), State::from(&config))
-            .await
-            .is_ok()
-    );
+    assert!(estimate_fee(payload.into(), State::from(&config))
+        .await
+        .is_ok());
 }
 
 #[tokio::test]

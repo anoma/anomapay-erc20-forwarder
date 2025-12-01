@@ -1,7 +1,7 @@
 //! Defines functions to communicate with the protocol adapter on Ethereum.
 use crate::{
-    AnomaPayConfig,
     rpc::RpcError::{FetchReceiptError, InvalidRPCUrl, SubmitTransactionError},
+    AnomaPayConfig,
 };
 use alloy::hex::ToHexExt;
 use alloy::network::ReceiptResponse;

@@ -1,23 +1,13 @@
 [package]
-authors.workspace = true
-edition.workspace = true
-license.workspace = true
 name = "transfer_library"
-readme.workspace = true
-version.workspace = true
+version = "0.1.0"
+edition = "2021"
 
 [dependencies]
-arm = { workspace = true, features = ["transaction"] }
-arm-gadgets = { workspace = true }
-hex = { workspace = true }
-k256 = { workspace = true, features = [
-  "arithmetic",
-  "serde",
-  "expose-field",
-  "std",
-  "ecdsa",
-  "hash2curve",
-], default-features = false }
-lazy_static = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-transfer_witness = { workspace = true }
+arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = true }
+arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
+transfer_witness = { path = "../transfer_witness" }
+serde = { version = "1.0.219", features = ["derive"] }
+lazy_static = "1.5.0"
+hex = "0.4"
+k256 = { version = "=0.13.3", features = ["arithmetic", "serde", "expose-field", "std", "ecdsa", "hash2curve"], default-features = false }
