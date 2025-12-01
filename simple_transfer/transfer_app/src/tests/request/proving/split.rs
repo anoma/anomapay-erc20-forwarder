@@ -56,7 +56,7 @@ async fn test_submit_split_transaction() {
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_create_split_transaction() {
     dotenv::dotenv().ok();
-    
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key

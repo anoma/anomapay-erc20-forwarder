@@ -87,8 +87,6 @@ pub async fn example_transfer_transaction_submit(
     config: &AnomaPayConfig,
     resources_to_transfer: Vec<Resource>,
 ) -> (Parameters, Transaction, String) {
-    dotenv::dotenv().ok();
-
     // Create a mint transaction.
     let (parameters, transaction) =
         example_transfer_transaction(sender, receiver, config, resources_to_transfer).await;
