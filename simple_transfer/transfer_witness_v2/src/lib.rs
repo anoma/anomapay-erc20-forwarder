@@ -66,6 +66,8 @@ pub struct MigrateInfo {
     pub path: MerklePath,
     pub auth_sig: AuthorizationSignature,
     pub value_info: ValueInfo,
+    // The forwarder address in the migrate resource label_ref is still the v1 address
+    pub forwarder_addr: Vec<u8>,
 }
 
 impl TokenTransferWitnessV2 {
@@ -206,13 +208,22 @@ impl TokenTransferWitnessV2 {
                     .resource
                     .nullifier_from_commitment(&migrate_info.nf_key, &migrate_cm)?;
 
+                // check migrate_resource label_ref_v1
+                let migrate_label_ref_v1 =
+                    calculate_label_ref(&migrate_info.forwarder_addr, erc20_addr);
+                if migrate_info.resource.label_ref != migrate_label_ref_v1 {
+                    return Err(ArmError::ProveFailed(
+                        "Invalid migrate resource label_ref".to_string(),
+                    ));
+                }
+
                 encode_migrate_forwarder_input(
                     erc20_addr,
                     self.resource.quantity,
                     migrate_nf.as_bytes(),
                     migrate_root.as_bytes(),
                     migrate_info.resource.logic_ref.as_bytes(),
-                    migrate_info.resource.label_ref.as_bytes(),
+                    &migrate_info.forwarder_addr,
                 )
             }
             _ => {

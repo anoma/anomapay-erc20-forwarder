@@ -34,6 +34,7 @@ pub fn construct_migrate_tx(
     migrated_auth_pk: AuthorizationVerifyingKey,
     migrated_encryption_pk: AffinePoint,
     migrated_auth_sig: AuthorizationSignature,
+    migrated_forwarder_addr: Vec<u8>,
 
     // Parameters for the created resource
     created_resource: Resource,
@@ -69,6 +70,7 @@ pub fn construct_migrate_tx(
         migrated_auth_pk,
         migrated_encryption_pk,
         migrated_auth_sig,
+        migrated_forwarder_addr,
     );
     let consumed_logic_proof = consumed_resource_logic.prove(ProofType::Groth16)?;
 
@@ -204,6 +206,7 @@ fn simple_migrate_test() {
         migrated_auth_pk,
         migrated_encryption_pk,
         migrated_auth_sig,
+        forwarder_addr_v1,
         created_resource,
         created_discovery_pk,
         created_auth_pk,

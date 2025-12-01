@@ -204,7 +204,8 @@ impl TransferLogicV2 {
         self_resource: Resource,
         action_tree_root: Digest,
         self_nf_key: NullifierKey,
-        forwarder_addr: Vec<u8>,
+        // forwarder address v2
+        self_forwarder_addr: Vec<u8>,
         token_addr: Vec<u8>,
         user_addr: Vec<u8>,
         migrated_resource: Resource,
@@ -213,9 +214,11 @@ impl TransferLogicV2 {
         migrated_auth_pk: AuthorizationVerifyingKey,
         migrated_encryption_pk: AffinePoint,
         migrated_auth_sig: AuthorizationSignature,
+        // forwarder address v1
+        migrated_forwarder_addr: Vec<u8>,
     ) -> Self {
         let label_info = LabelInfo {
-            forwarder_addr,
+            forwarder_addr: self_forwarder_addr,
             token_addr,
         };
 
@@ -230,6 +233,7 @@ impl TransferLogicV2 {
             path: migrated_resource_path,
             auth_sig: migrated_auth_sig,
             value_info: migrated_value_info,
+            forwarder_addr: migrated_forwarder_addr,
         };
 
         let forwarder_info = ForwarderInfoV2 {
