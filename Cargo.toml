@@ -1,6 +1,6 @@
 [workspace]
-resolver = "3"
 members = ["simple_transfer/transfer_app", "bindings"]
+resolver = "3"
 
 [workspace.package]
 authors = ["Heliax <hello@heliax.dev>"]
@@ -12,37 +12,37 @@ version = "0.0.1"
 [workspace.dependencies]
 alloy = { version = "1.1.0", features = ["full"] }
 alloy-chains = "0.2.18"
-tokio = { version = "1.48", features = ["rt-multi-thread"] }
-serde = { version = "1.0" }
-thiserror = "2.0.17"
-dotenv = "0.15.0"
+alloy-primitives = "1.0.23"
+alloy-sol-types = "1.0.23"
 async-trait = "0.1.89"
+base64 = "0.22.1"
 bincode = "1.3.3"
 chrono = "0.4.42"
+dotenv = "0.15.0"
+enum_dispatch = "0.3"
 futures = "0.3.31"
+hex = "0.4"
 itertools = "0.14.0"
 k256 = { version = "0.13", default-features = false }
+lazy_static = "1.5.0"
 log = "0.4.28"
 rand = "0.9.2"
 reqwest = "0.12"
 risc0-zkvm = "3.0.3"
+rocket = { version = "0.5", features = ["json"] }
+serde = { version = "1.0" }
 serde_json = "1.0"
 serde_with = { version = "3.0", features = ["hex"] }
-rocket = { version = "0.5", features = ["json"] }
+strum = "0.27.2"
+thiserror = "2.0.17"
+tokio = { version = "1.48", features = ["rt-multi-thread"] }
 typetag = "0.2.21"
 utoipa = "5"
-base64 = "0.22.1"
 utoipa-swagger-ui = { version = "9", features = ["rocket"] }
-enum_dispatch = "0.3"
-strum = "0.27.2"
-lazy_static = "1.5.0"
-hex = "0.4"
-alloy-primitives = "1.0.23"
-alloy-sol-types = "1.0.23"
 
-evm_protocol_adapter_bindings = { git = "https://github.com/anoma/evm-protocol-adapter", tag = "bindings/v1.0.0-rc.6" }
 arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = false }
 arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
+evm_protocol_adapter_bindings = { git = "https://github.com/anoma/evm-protocol-adapter", tag = "bindings/v1.0.0-rc.6" }
 
 transfer_library = { path = "simple_transfer/transfer_library" }
 transfer_witness = { path = "simple_transfer/transfer_witness" }

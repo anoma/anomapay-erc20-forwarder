@@ -1,13 +1,13 @@
 [package]
-name = "simple-transfer"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+name = "simple-transfer"
 readme.workspace = true
 version.workspace = true
 
 [workspace]
 
 [dependencies]
-simple-transfer-methods = { path = "methods" }
 risc0-zkvm = { workspace = true }
+simple-transfer-methods = { path = "methods" }

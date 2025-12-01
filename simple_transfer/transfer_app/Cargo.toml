@@ -1,8 +1,8 @@
 [package]
-name = "transfer_app"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+name = "transfer_app"
 readme.workspace = true
 version.workspace = true
 
@@ -20,8 +20,10 @@ alloy = { workspace = true }
 arm = { workspace = true, features = ["transaction"] }
 arm-gadgets = { workspace = true }
 async-trait = { workspace = true }
+base64 = { workspace = true }
 bincode = { workspace = true }
 chrono = { workspace = true }
+enum_dispatch = { workspace = true }
 evm_protocol_adapter_bindings = { workspace = true }
 futures = { workspace = true, features = ["thread-pool"] }
 itertools = { workspace = true }
@@ -34,16 +36,14 @@ rocket = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 serde_with = { workspace = true }
+strum = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt", "macros"] }
 transfer_library = { workspace = true }
 transfer_witness = { workspace = true }
 typetag = { workspace = true }
 utoipa = { workspace = true }
-base64 = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
-enum_dispatch = { workspace = true }
-strum = { workspace = true }
 
 [dev-dependencies]
 dotenv = { workspace = true }
