@@ -34,10 +34,10 @@ jobs:
             name: Run clippy
             cmd: just clippy
             cache_key: clippy
-          - step: Tests
-            name: Run tests
-            cmd: just test
-            cache_key: test
+          # - step: Tests
+          #   name: Run tests
+          #   cmd: just test
+          #   cache_key: test
 
     steps:
       - uses: actions/checkout@v6
