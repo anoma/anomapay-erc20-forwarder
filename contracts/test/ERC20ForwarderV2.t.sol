@@ -60,8 +60,9 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _logicRefV1 = bytes32(uint256(1));
 
         _paV2 = new ProtocolAdapter(router, verifier.SELECTOR(), _EMERGENCY_COMMITTEE);
-        _pa = _paV2;
         _logicRefV2 = bytes32(uint256(2));
+
+        _pa = _paV2;
         _logicRef = _logicRefV2;
 
         _fwdV1 = new ERC20Forwarder({
@@ -140,7 +141,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         });
     }
 
-    function test_migrate_reverts_if_the_v1_resource_to_migrate_has_already_been_consumed() public virtual {
+    function test_migrateV1_reverts_if_the_v1_resource_to_migrate_has_already_been_consumed() public virtual {
         Transaction memory txn = TransactionExample.transaction();
         bytes32 nullifier = txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
 
@@ -160,7 +161,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _fwdV2.forwardCall({logicRef: _logicRefV2, input: input});
     }
 
-    function test_migrate_reverts_if_the_v1_resource_has_already_been_migrated() public virtual {
+    function test_migrateV1_reverts_if_the_v1_resource_has_already_been_migrated() public virtual {
         // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
@@ -173,7 +174,115 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _fwdV2.forwardCall({logicRef: _logicRefV2, input: _defaultMigrateV1Input});
     }
 
-    function test_migrate_transfers_funds_from_forwarder_V1() public {
+    function test_migrateV1_reverts_if_the_commitment_tree_root_v1_is_incorrect() public virtual {
+        // Fund the forwarder v1.
+        _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
+
+        _emergencyStopPaV1AndSetEmergencyCaller();
+
+        bytes32 expectedCommitmentTreeRootV1 = CommitmentTree(_paV1).latestCommitmentTreeRoot();
+        bytes32 incorrectCommitmentTreeRootV1 = bytes32(type(uint256).max / 2);
+
+        bytes memory migrateV1InputWithIncorrectCommitmentTreeRootV1 = abi.encode( /*  callType */
+            ERC20ForwarderV2.CallTypeV2.MigrateV1,
+            /*     token */
+            address(_erc20),
+            /*    amount */
+            _TRANSFER_AMOUNT,
+            /* nullifier */
+            _NULLIFIER,
+            /*      root */
+            incorrectCommitmentTreeRootV1,
+            /*  logicRef */
+            _logicRefV1,
+            /*  labelRef */
+            sha256(abi.encode(address(_fwdV1), address(_erc20)))
+        );
+
+        vm.startPrank(address(_paV2));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20ForwarderV2.InvalidMigrationCommitmentTreeRootV1.selector,
+                expectedCommitmentTreeRootV1,
+                incorrectCommitmentTreeRootV1
+            ),
+            address(_fwdV2)
+        );
+        _fwdV2.forwardCall({logicRef: _logicRefV2, input: migrateV1InputWithIncorrectCommitmentTreeRootV1});
+    }
+
+    function test_migrateV1_reverts_if_the_logic_ref_v1_is_incorrect() public virtual {
+        // Fund the forwarder v1.
+        _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
+
+        _emergencyStopPaV1AndSetEmergencyCaller();
+
+        bytes32 incorrectLogicRefV1 = bytes32(type(uint256).max / 2);
+
+        bytes memory migrateV1InputWithIncorrectLogicRefV1 = abi.encode( /*  callType */
+            ERC20ForwarderV2.CallTypeV2.MigrateV1,
+            /*     token */
+            address(_erc20),
+            /*    amount */
+            _TRANSFER_AMOUNT,
+            /* nullifier */
+            _NULLIFIER,
+            /*      root */
+            CommitmentTree(_paV1).latestCommitmentTreeRoot(),
+            /*  logicRef */
+            incorrectLogicRefV1,
+            /*  labelRef */
+            sha256(abi.encode(address(_fwdV1), address(_erc20)))
+        );
+
+        vm.startPrank(address(_paV2));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20ForwarderV2.InvalidMigrationLogicRefV1.selector, _logicRefV1, incorrectLogicRefV1
+            ),
+            address(_fwdV2)
+        );
+        _fwdV2.forwardCall({logicRef: _logicRefV2, input: migrateV1InputWithIncorrectLogicRefV1});
+    }
+
+    function test_migrateV1_reverts_if_the_label_ref_v1_is_incorrect() public virtual {
+        // Fund the forwarder v1.
+        _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
+
+        _emergencyStopPaV1AndSetEmergencyCaller();
+
+        bytes32 expectedForwarderLabelRefV1 = sha256(abi.encode(address(_fwdV1), _erc20));
+        bytes32 incorrectForwarderLabelRefV1 = bytes32(type(uint256).max / 2);
+
+        bytes memory migrateV1InputWithIncorrectLabelRefV1 = abi.encode( /*  callType */
+            ERC20ForwarderV2.CallTypeV2.MigrateV1,
+            /*     token */
+            address(_erc20),
+            /*    amount */
+            _TRANSFER_AMOUNT,
+            /* nullifier */
+            _NULLIFIER,
+            /*      root */
+            CommitmentTree(_paV1).latestCommitmentTreeRoot(),
+            /*  logicRef */
+            _logicRefV1,
+            /*  labelRef */
+            incorrectForwarderLabelRefV1
+        );
+
+        vm.startPrank(address(_paV2));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20ForwarderV2.InvalidMigrationLabelRefV1.selector,
+                expectedForwarderLabelRefV1,
+                incorrectForwarderLabelRefV1
+            ),
+            address(_fwdV2)
+        );
+        _fwdV2.forwardCall({logicRef: _logicRefV2, input: migrateV1InputWithIncorrectLabelRefV1});
+    }
+
+    function test_migrateV1_transfers_funds_from_forwarder_V1() public {
         // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
