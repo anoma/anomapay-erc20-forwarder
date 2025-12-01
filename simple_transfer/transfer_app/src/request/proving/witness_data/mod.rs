@@ -17,18 +17,18 @@
 pub mod token_transfer;
 pub mod trivial;
 
-use crate::request::proving::resources::ConsumedWitnessDataEnum;
-use crate::request::proving::resources::CreatedWitnessDataEnum;
 use crate::request::proving::ProvingError::LogicProofGenerationError;
 use crate::request::proving::ProvingResult;
-use crate::{time_it, AnomaPayConfig};
+use crate::request::proving::resources::ConsumedWitnessDataEnum;
+use crate::request::proving::resources::CreatedWitnessDataEnum;
+use crate::{AnomaPayConfig, time_it};
+use arm::Digest;
 use arm::logic_proof::{LogicProver, LogicVerifier};
 use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::proving_system::ProofType;
 use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
-use arm::Digest;
 use async_trait::async_trait;
 use enum_dispatch::enum_dispatch;
 use log::info;

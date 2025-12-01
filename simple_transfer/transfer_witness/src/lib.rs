@@ -3,16 +3,16 @@
 //!
 pub mod call_type;
 use crate::call_type::{
-    encode_permit_witness_transfer_from, encode_transfer, CallType, PermitTransferFrom,
+    CallType, PermitTransferFrom, encode_permit_witness_transfer_from, encode_transfer,
 };
 pub use arm::resource_logic::LogicCircuit;
 use arm::{
+    Digest,
     error::ArmError,
     logic_instance::{AppData, ExpirableBlob, LogicInstance},
     nullifier_key::NullifierKey,
     resource::Resource,
     utils::{bytes_to_words, hash_bytes},
-    Digest,
 };
 use arm_gadgets::{
     authorization::{AuthorizationSignature, AuthorizationVerifyingKey},
@@ -178,9 +178,11 @@ impl LogicCircuit for SimpleTransferWitness {
                     calculate_value_ref_from_auth(&auth_pk)
                 );
                 // Verify the authorization signature
-                assert!(auth_pk
-                    .verify(AUTH_SIGNATURE_DOMAIN, root_bytes, &auth_info.auth_sig)
-                    .is_ok());
+                assert!(
+                    auth_pk
+                        .verify(AUTH_SIGNATURE_DOMAIN, root_bytes, &auth_info.auth_sig)
+                        .is_ok()
+                );
 
                 // empty payloads for consumed persistent resource
                 (vec![], vec![], vec![])

@@ -1,6 +1,6 @@
+use crate::AnomaPayConfig;
 use crate::request::fee_estimation::token::{Data, NativeToken, Token};
 use crate::request::fee_estimation::{FeeEstimationError, FeeEstimationResult};
-use crate::AnomaPayConfig;
 use reqwest::{Client, Response};
 use rocket::serde::Deserialize;
 use thiserror::Error;
