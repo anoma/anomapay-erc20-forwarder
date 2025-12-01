@@ -11,7 +11,7 @@ use crate::request::proving::witness_data::token_transfer::{
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
     create_permit_signature, label_ref, random_nonce, user_with_private_key,
-    value_ref_ephemeral_consumed, DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC,
+    DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC,
 };
 use crate::user::Keychain;
 use crate::{load_config, AnomaPayConfig};
@@ -20,7 +20,7 @@ use arm::logic_proof::LogicProver;
 use arm::resource::Resource;
 use arm::transaction::Transaction;
 use transfer_library::TransferLogic;
-use transfer_witness::{calculate_persistent_value_ref, ValueInfo};
+use transfer_witness::{calculate_persistent_value_ref, calculate_value_ref_from_user_addr, ValueInfo};
 
 #[ignore]
 #[tokio::test]
@@ -103,7 +103,7 @@ pub async fn example_mint_parameters(
         logic_ref: TransferLogic::verifying_key(),
         label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: amount,
-        value_ref: value_ref_ephemeral_consumed(&minter),
+        value_ref: calculate_value_ref_from_user_addr(&minter.evm_address.into_array()),
         is_ephemeral: true,
         nonce: random_nonce(),
         nk_commitment: minter.nf_key.commit(),
