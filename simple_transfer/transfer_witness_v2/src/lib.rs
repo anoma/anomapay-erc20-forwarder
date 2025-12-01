@@ -308,7 +308,7 @@ impl TokenTransferWitnessV2 {
             .ok_or(ArmError::MissingField("Encryption info"))?;
         let payload_plaintext = bincode::serialize(&ResourceWithLabel {
             resource: self.resource,
-            forwarder: label_info.token_addr.clone(),
+            forwarder: label_info.forwarder_addr.clone(),
             token: label_info.token_addr.clone(),
         })
         .map_err(|_| ArmError::InvalidResourceSerialization);
