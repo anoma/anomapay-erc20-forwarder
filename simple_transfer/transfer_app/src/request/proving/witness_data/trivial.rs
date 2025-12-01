@@ -2,16 +2,16 @@
 //! to balance transactions. Resources used to balance transactions are called
 //! "padding resources."
 
-use crate::AnomaPayConfig;
-use crate::request::proving::ProvingResult;
 use crate::request::proving::witness_data::{
     ConsumedWitnessData, CreatedWitnessData, WitnessTypes,
 };
-use arm::Digest;
+use crate::request::proving::ProvingResult;
+use crate::AnomaPayConfig;
 use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
+use arm::Digest;
 use async_trait::async_trait;
 use rocket::serde::{Deserialize, Serialize};
 use utoipa::ToSchema;

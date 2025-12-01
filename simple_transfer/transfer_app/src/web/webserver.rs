@@ -1,17 +1,17 @@
 use crate::request::fee_estimation::estimation::{
-    FeeEstimationPayload, estimate_fee_unit_quantity,
+    estimate_fee_unit_quantity, FeeEstimationPayload,
 };
 
-use crate::AnomaPayConfig;
 use crate::request::proving::parameters::Parameters;
 use crate::rpc::create_provider;
-use crate::web::RequestError;
 use crate::web::handlers::handle_parameters;
+use crate::web::RequestError;
+use crate::AnomaPayConfig;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{Header, Status};
 use rocket::response::status::Custom;
-use rocket::serde::json::{Json, json};
-use rocket::{Request, Response, State, catch, get, options, post};
+use rocket::serde::json::{json, Json};
+use rocket::{catch, get, options, post, Request, Response, State};
 use serde_json::Value;
 use utoipa::OpenApi;
 

@@ -1,21 +1,21 @@
 //! Token transfer resources are resources that hold ERC20 tokens. These are the
 //! resources that wrap these tokens and can be transferred within Anoma.
 
-use crate::AnomaPayConfig;
 use crate::indexer::pa_merkle_path;
-use crate::request::proving::ProvingError::MerklePathNotFound;
-use crate::request::proving::ProvingResult;
 use crate::request::proving::witness_data::{
     ConsumedWitnessData, CreatedWitnessData, WitnessTypes,
 };
+use crate::request::proving::ProvingError::MerklePathNotFound;
+use crate::request::proving::ProvingResult;
 use crate::web::serializer::serialize_affine_point;
 use crate::web::serializer::serialize_auth_verifying_key;
 use crate::web::serializer::serialize_authorization_signature;
+use crate::AnomaPayConfig;
 use alloy::primitives::{Address, U256};
-use arm::Digest;
 use arm::merkle_path::MerklePath;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
+use arm::Digest;
 use arm_gadgets::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use async_trait::async_trait;
 use k256::AffinePoint;

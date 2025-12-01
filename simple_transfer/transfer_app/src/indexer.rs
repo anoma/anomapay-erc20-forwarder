@@ -1,10 +1,10 @@
-use crate::AnomaPayConfig;
 use crate::indexer::IndexerError::{
     IndexerOverloaded, InvalidIndexerUrl, InvalidResponse, MerklePathNotFound, NeighbourValueError,
     Recoverable, Unrecoverable,
 };
-use arm::Digest;
+use crate::AnomaPayConfig;
 use arm::merkle_path::MerklePath;
+use arm::Digest;
 use log::{error, warn};
 use reqwest::{Client, Url};
 use serde::Deserialize;

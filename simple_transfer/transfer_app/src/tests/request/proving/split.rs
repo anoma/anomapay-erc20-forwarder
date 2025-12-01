@@ -8,12 +8,12 @@ use crate::request::proving::resources::{
 use crate::request::proving::witness_data::{token_transfer, trivial};
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    TOKEN_ADDRESS_SEPOLIA_USDC, label_ref, random_nonce, user_with_private_key,
-    user_without_private_key, value_ref_created,
+    label_ref, random_nonce, user_with_private_key, user_without_private_key, value_ref_created,
+    TOKEN_ADDRESS_SEPOLIA_USDC,
 };
 use crate::tests::request::proving::mint::example_mint_transaction_submit;
 use crate::user::Keychain;
-use crate::{AnomaPayConfig, load_config};
+use crate::{load_config, AnomaPayConfig};
 use arm::action_tree::MerkleTree;
 use arm::logic_proof::LogicProver;
 use arm::nullifier_key::NullifierKey;

@@ -6,10 +6,10 @@ mod tests;
 mod user;
 mod web;
 
-use crate::web::ApiDoc;
 use crate::web::webserver::{
-    Cors, all_options, default_error, estimate_fee, health, send_transaction, unprocessable,
+    all_options, default_error, estimate_fee, health, send_transaction, unprocessable, Cors,
 };
+use crate::web::ApiDoc;
 use alloy::primitives::Address;
 use alloy::signers::local::PrivateKeySigner;
 use rocket::{catchers, launch, routes};

@@ -1,16 +1,16 @@
-use crate::AnomaPayConfig;
-use crate::request::proving::ProvingError::InvalidNullifierKey;
-use crate::request::proving::ProvingResult;
 use crate::request::proving::witness_data::{
     ConsumedWitnessData, CreatedWitnessData, WitnessTypes,
 };
+use crate::request::proving::ProvingError::InvalidNullifierKey;
+use crate::request::proving::ProvingResult;
 use crate::web;
-use crate::web::serializer::SerializedResource;
 use crate::web::serializer::serialize_nullifier_key;
 use crate::web::serializer::serialize_resource;
-use arm::Digest;
+use crate::web::serializer::SerializedResource;
+use crate::AnomaPayConfig;
 use arm::nullifier_key::NullifierKey;
 use arm::resource::Resource;
+use arm::Digest;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;

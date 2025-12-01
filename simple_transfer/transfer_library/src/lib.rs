@@ -3,7 +3,7 @@
 //!
 //! Of particular interest are the TransferLogic struct, and the SimpleTransferWitness structs.
 
-use arm::{Digest, logic_proof::LogicProver, nullifier_key::NullifierKey, resource::Resource};
+use arm::{logic_proof::LogicProver, nullifier_key::NullifierKey, resource::Resource, Digest};
 use arm_gadgets::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use hex::FromHex;
 use k256::AffinePoint;
@@ -11,8 +11,8 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
 use transfer_witness::{
-    AuthorizationInfo, EncryptionInfo, ForwarderInfo, PermitInfo, SimpleTransferWitness,
-    call_type::CallType,
+    call_type::CallType, AuthorizationInfo, EncryptionInfo, ForwarderInfo, PermitInfo,
+    SimpleTransferWitness,
 };
 
 /// The binary program that is executed in the zkvm to generate proofs.

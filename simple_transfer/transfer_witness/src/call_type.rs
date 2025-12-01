@@ -1,5 +1,5 @@
 use alloy_primitives::{Address, B256, U256};
-use alloy_sol_types::{SolValue, sol};
+use alloy_sol_types::{sol, SolValue};
 
 sol! {
     #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]

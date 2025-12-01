@@ -1,68 +1,47 @@
-name: Rust Lints 👨‍🔧
-
+name: Rust CI
 on:
-  pull_request:
   push:
-    branches:
-      - main
-
-concurrency:
-  group: ${{ github.ref }}-rust-lints
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
-permissions:
-  packages: write
-  pages: write
-  id-token: write
-  contents: read
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  lints:
-    name: ${{ matrix.command.step }}
-    runs-on: ubuntu-latest
-    env:
-      CACHE_VERSION: v0
-    strategy:
-      fail-fast: false
-      matrix:
-        command:
-          - step: Format
-            name: Run format
-            cmd: just fmt check
-            cache_key: fmt
-          - step: Clippy
-            name: Run clippy
-            cmd: just clippy
-            cache_key: clippy
-          # - step: Tests
-          #   name: Run tests
-          #   cmd: just test
-          #   cache_key: test
-
+  lint-rust:
+    name: Lint Rust
+    runs-on: macos-latest
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v5
         with:
           submodules: "recursive"
-      - uses: rui314/setup-mold@v1
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          components: rustfmt, clippy
-          cache: false
-      - uses: actions/cache@v4
+      - uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-${{ matrix.command.cache_key }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ env.CACHE_VERSION }}
-      - name: Install just
-        uses: extractions/setup-just@v3
-      - name: Install foundry
-        uses: foundry-rs/foundry-toolchain@v1
-      - name: ${{ matrix.command.name }}
-        run: ${{ matrix.command.cmd }}
-        env:
-          API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
-          FORWARDER_ADDRESS: ${{ secrets.FORWARDER_ADDRESS }}
+            ~/.cargo
+            target/*
+            !target/patch
+            ${{ runner.temp }}/.buildx-cache
+          key: rust-new-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - run: cargo fmt -- --check
+      - uses: bnjbvr/cargo-machete@main
+        continue-on-error: true
+
+      - run: cargo clippy -- -Dwarnings
+
+      - run: cargo clippy --tests -- -Dwarnings
+
+      # - name: check for undocumented functions
+      #   run: RUSTFLAGS="-W missing_docs" cargo check
