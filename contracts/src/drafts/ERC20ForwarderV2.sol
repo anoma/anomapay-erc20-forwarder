@@ -27,9 +27,10 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     bytes32 internal immutable _LOGIC_REFERENCE_V1;
 
     error ResourceAlreadyConsumed(bytes32 nullifier);
+
     error InvalidMigrationCommitmentTreeRootV1(bytes32 expected, bytes32 actual);
     error InvalidMigrationLogicRefV1(bytes32 expected, bytes32 actual);
-    error InvalidMigrationLabelRefV1(bytes32 expected, bytes32 actual);
+    error InvalidForwarderV1(address expected, address actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapterV2 The protocol adapter v2 that can forward calls.
@@ -90,8 +91,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
             bytes32 nullifier,
             bytes32 root,
             bytes32 logicRef,
-            bytes32 labelRef
-        ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32, bytes32, bytes32, bytes32));
+            address forwarderV1
+        ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32, bytes32, bytes32, address));
 
         // Check that the resource being upgraded is not in the protocol adapter v1 nullifier set.
         if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
@@ -101,21 +102,19 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         // Add the nullifier to the this contract's nullifier set. The call will revert if the nullifier already exists.
         _addNullifier(nullifier);
 
-        // Check that the root matches the final PA V1 commitment tree root.
+        // Check that the root matches the final protocol adapter V1 commitment tree root.
         if (root != _COMMITMENT_TREE_ROOT_V1) {
             revert InvalidMigrationCommitmentTreeRootV1({expected: _COMMITMENT_TREE_ROOT_V1, actual: root});
         }
 
-        // Check that logicRef matches with ERC20ForwarderV1.
+        // Check that logicRef matches the logic reference associated with the ERC20 forwarder v1.
         if (logicRef != _LOGIC_REFERENCE_V1) {
             revert InvalidMigrationLogicRefV1({expected: _LOGIC_REFERENCE_V1, actual: logicRef});
         }
 
-        bytes32 expectedLabelRef = sha256(abi.encode(address(_ERC20_FORWARDER_V1), token));
-
-        // Check that the labelRef is as expected so that the forwarder matches.
-        if (expectedLabelRef != labelRef) {
-            revert InvalidMigrationLabelRefV1({expected: expectedLabelRef, actual: labelRef});
+        // Check that forwarder matches the ERC20 forwarder v1.
+        if (forwarderV1 != address(_ERC20_FORWARDER_V1)) {
+            revert InvalidForwarderV1({expected: address(_ERC20_FORWARDER_V1), actual: forwarderV1});
         }
 
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v1.
