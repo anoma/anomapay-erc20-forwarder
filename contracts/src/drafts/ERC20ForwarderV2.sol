@@ -89,8 +89,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
             address token,
             uint128 amount,
             bytes32 nullifier,
-            bytes32 root,
-            bytes32 logicRef,
+            bytes32 rootV1,
+            bytes32 logicRefV1,
             address forwarderV1
         ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32, bytes32, bytes32, address));
 
@@ -103,13 +103,13 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         _addNullifier(nullifier);
 
         // Check that the root matches the final protocol adapter V1 commitment tree root.
-        if (root != _COMMITMENT_TREE_ROOT_V1) {
-            revert InvalidMigrationCommitmentTreeRootV1({expected: _COMMITMENT_TREE_ROOT_V1, actual: root});
+        if (rootV1 != _COMMITMENT_TREE_ROOT_V1) {
+            revert InvalidMigrationCommitmentTreeRootV1({expected: _COMMITMENT_TREE_ROOT_V1, actual: rootV1});
         }
 
         // Check that logicRef matches the logic reference associated with the ERC20 forwarder v1.
-        if (logicRef != _LOGIC_REFERENCE_V1) {
-            revert InvalidMigrationLogicRefV1({expected: _LOGIC_REFERENCE_V1, actual: logicRef});
+        if (logicRefV1 != _LOGIC_REFERENCE_V1) {
+            revert InvalidMigrationLogicRefV1({expected: _LOGIC_REFERENCE_V1, actual: logicRefV1});
         }
 
         // Check that forwarder matches the ERC20 forwarder v1.
