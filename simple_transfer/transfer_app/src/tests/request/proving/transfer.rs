@@ -10,7 +10,7 @@ use crate::request::proving::witness_data::token_transfer::{
 use crate::request::proving::witness_data::trivial;
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    label_ref, random_nonce, user_with_private_key, user_without_private_key, value_ref_created,
+    label_ref, random_nonce, user_with_private_key, user_without_private_key,
     TOKEN_ADDRESS_SEPOLIA_USDC,
 };
 use crate::tests::request::proving::mint::example_mint_transaction_submit;
@@ -25,12 +25,14 @@ use arm::transaction::Transaction;
 use arm::Digest;
 use itertools::Itertools;
 use transfer_library::TransferLogic;
-use transfer_witness::AUTH_SIGNATURE_DOMAIN;
+use transfer_witness::{calculate_persistent_value_ref, ValueInfo, AUTH_SIGNATURE_DOMAIN};
 
 #[tokio::test]
 /// Test creation of a burn transaction.
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_submit_transfer_transaction() {
+    dotenv::dotenv().ok();
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
@@ -54,6 +56,8 @@ async fn test_submit_transfer_transaction() {
 /// Test creation of a burn transaction.
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_create_transfer_transaction() {
+    dotenv::dotenv().ok();
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
@@ -146,7 +150,10 @@ pub async fn example_transfer_parameters(
         logic_ref: TransferLogic::verifying_key(),
         label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity,
-        value_ref: value_ref_created(&receiver),
+        value_ref: calculate_persistent_value_ref(&ValueInfo {
+            auth_pk: receiver.auth_verifying_key(),
+            encryption_pk: receiver.encryption_pk,
+        }),
         is_ephemeral: false,
         nonce: created_resource_nonce,
         nk_commitment: receiver.nf_key.commit(),
@@ -155,7 +162,7 @@ pub async fn example_transfer_parameters(
 
     created_resources.push(created_resource);
 
-    // If  `n` resources are sent, `n-1` padding resources are necessary to balance the transaction.
+    // If `n` resources are sent, `n-1` padding resources are necessary to balance the transaction.
     // Each padding resource needs the nullifier of one of the consumed resources as its nonce.
     // A default padding resource. Each padding resource will have its nonce overwritten in the loop below.
     let padding_resource = Resource {
@@ -217,6 +224,7 @@ pub async fn example_transfer_parameters(
                 .auth_signing_key
                 .sign(AUTH_SIGNATURE_DOMAIN, action_tree_root.as_bytes()),
             sender_authorization_verifying_key: sender.clone().auth_verifying_key(),
+            sender_encryption_public_key: sender.encryption_pk,
         };
 
         let consumed_resource: Consumed = Consumed {
@@ -233,7 +241,9 @@ pub async fn example_transfer_parameters(
 
     let created_witness_data = CreatedPersistent {
         receiver_discovery_public_key: receiver.discovery_pk,
+        receiver_authorization_verifying_key: receiver.auth_verifying_key(),
         receiver_encryption_public_key: receiver.encryption_pk,
+        token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
     };
 
     let created_resource = Created {

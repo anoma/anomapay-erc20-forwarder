@@ -7775,6 +7775,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "transfer_library_v2"
+version = "0.1.0"
+dependencies = [
+ "arm",
+ "arm-gadgets",
+ "hex",
+ "k256",
+ "lazy_static",
+ "serde",
+ "transfer_witness",
+ "transfer_witness_v2",
+]
+
+[[package]]
 name = "transfer_witness"
 version = "0.1.0"
 dependencies = [
@@ -7782,10 +7796,26 @@ dependencies = [
  "alloy-sol-types",
  "arm",
  "arm-gadgets",
+ "bincode",
  "hex",
  "k256",
  "rand 0.8.5",
  "serde",
+]
+
+[[package]]
+name = "transfer_witness_v2"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "arm",
+ "arm-gadgets",
+ "bincode",
+ "k256",
+ "rand 0.8.5",
+ "serde",
+ "transfer_witness",
 ]
 
 [[package]]

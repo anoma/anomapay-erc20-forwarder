@@ -1,40 +1,46 @@
 //! the transfer library contains the definition of the resource logics for the simple transfer
 //! application.
 //!
-//! Of particular interest are the TransferLogic struct, and the TokenTransferWitness structs.
+//! Of particular interest are the TransferLogicV2 struct, and the TokenTransferWitnessV2 structs.
 
-use arm::{logic_proof::LogicProver, nullifier_key::NullifierKey, resource::Resource, Digest};
+pub mod migrate_tx;
+
+use arm::{
+    logic_proof::LogicProver, merkle_path::MerklePath, nullifier_key::NullifierKey,
+    resource::Resource, Digest,
+};
 use arm_gadgets::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use hex::FromHex;
 use k256::AffinePoint;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
-use transfer_witness::{
-    call_type::CallType, EncryptionInfo, ForwarderInfo, LabelInfo, PermitInfo,
-    TokenTransferWitness, ValueInfo,
+use transfer_witness_v2::{
+    call_type_v2::CallTypeV2, ForwarderInfoV2, MigrateInfo, TokenTransferWitnessV2,
 };
+
+use transfer_witness::{EncryptionInfo, LabelInfo, PermitInfo, ValueInfo};
 
 /// The binary program that is executed in the zkvm to generate proofs.
 /// This program takes in a witness as argument and runs the constraint function on it.
-pub const TOKEN_TRANSFER_ELF: &[u8] = include_bytes!("../elf/token-transfer-guest.bin");
+pub const TOKEN_TRANSFER_V2_ELF: &[u8] = include_bytes!("../elf/token-transfer-guest-v2.bin");
 
 lazy_static! {
     /// The identity of the binary that executes the proofs in the zkvm.
-    pub static ref TOKEN_TRANSFER_ID: Digest =
-        Digest::from_hex("7932dfc46cbff812338e826fa980a8d5f8c015a91a500914e2be3827920420c9")
+    pub static ref TOKEN_TRANSFER_V2_ID: Digest =
+        Digest::from_hex("b3e2cd8cb9d81696b6a93fd968a79a9f67e995a1fe9558b4288000b9731d3d40")
             .unwrap();
 }
 
 /// Holds the transfer resource logic.
-/// The witness is the input to create a proof. So a TransferLogic can be used to generate proof
+/// The witness is the input to create a proof. So a TransferLogicV2 can be used to generate proof
 /// that the resource logics held within it are actually correct.
 #[derive(Clone, Default, Deserialize, Serialize)]
-pub struct TransferLogic {
-    witness: TokenTransferWitness,
+pub struct TransferLogicV2 {
+    witness: TokenTransferWitnessV2,
 }
 
-impl TransferLogic {
+impl TransferLogicV2 {
     #[allow(clippy::too_many_arguments)]
     fn new(
         resource: Resource,
@@ -43,12 +49,12 @@ impl TransferLogic {
         nf_key: Option<NullifierKey>,
         auth_sig: Option<AuthorizationSignature>,
         encryption_info: Option<EncryptionInfo>,
-        forwarder_info: Option<ForwarderInfo>,
+        forwarder_info: Option<ForwarderInfoV2>,
         label_info: Option<LabelInfo>,
         value_info: Option<ValueInfo>,
     ) -> Self {
         Self {
-            witness: TokenTransferWitness::new(
+            witness: TokenTransferWitnessV2::new(
                 resource,
                 is_consumed,
                 action_tree_root,
@@ -137,10 +143,11 @@ impl TransferLogic {
             permit_deadline,
             permit_sig,
         };
-        let forwarder_info = ForwarderInfo {
-            call_type: CallType::Wrap,
+        let forwarder_info = ForwarderInfoV2 {
+            call_type: CallTypeV2::Wrap,
             user_addr,
             permit_info: Some(permit_info),
+            migrate_info: None,
         };
         let label_info = LabelInfo {
             forwarder_addr,
@@ -168,10 +175,11 @@ impl TransferLogic {
         token_addr: Vec<u8>,
         user_addr: Vec<u8>,
     ) -> Self {
-        let forwarder_info = ForwarderInfo {
-            call_type: CallType::Unwrap,
+        let forwarder_info = ForwarderInfoV2 {
+            call_type: CallTypeV2::Unwrap,
             user_addr,
             permit_info: None,
+            migrate_info: None,
         };
         let label_info = LabelInfo {
             forwarder_addr,
@@ -190,16 +198,73 @@ impl TransferLogic {
             None,
         )
     }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn migrate_resource_logic(
+        self_resource: Resource,
+        action_tree_root: Digest,
+        self_nf_key: NullifierKey,
+        // forwarder address v2
+        self_forwarder_addr: Vec<u8>,
+        token_addr: Vec<u8>,
+        user_addr: Vec<u8>,
+        migrated_resource: Resource,
+        migrated_nf_key: NullifierKey,
+        migrated_resource_path: MerklePath,
+        migrated_auth_pk: AuthorizationVerifyingKey,
+        migrated_encryption_pk: AffinePoint,
+        migrated_auth_sig: AuthorizationSignature,
+        // forwarder address v1
+        migrated_forwarder_addr: Vec<u8>,
+    ) -> Self {
+        let label_info = LabelInfo {
+            forwarder_addr: self_forwarder_addr,
+            token_addr,
+        };
+
+        let migrated_value_info = ValueInfo {
+            auth_pk: migrated_auth_pk,
+            encryption_pk: migrated_encryption_pk,
+        };
+
+        let migrate_info = MigrateInfo {
+            resource: migrated_resource,
+            nf_key: migrated_nf_key.clone(),
+            path: migrated_resource_path,
+            auth_sig: migrated_auth_sig,
+            value_info: migrated_value_info,
+            forwarder_addr: migrated_forwarder_addr,
+        };
+
+        let forwarder_info = ForwarderInfoV2 {
+            call_type: CallTypeV2::Migrate,
+            user_addr,
+            permit_info: None,
+            migrate_info: Some(migrate_info),
+        };
+
+        Self::new(
+            self_resource,
+            true,
+            action_tree_root,
+            Some(self_nf_key),
+            None,
+            None,
+            Some(forwarder_info),
+            Some(label_info),
+            None,
+        )
+    }
 }
 
-impl LogicProver for TransferLogic {
-    type Witness = TokenTransferWitness;
+impl LogicProver for TransferLogicV2 {
+    type Witness = TokenTransferWitnessV2;
     fn proving_key() -> &'static [u8] {
-        TOKEN_TRANSFER_ELF
+        TOKEN_TRANSFER_V2_ELF
     }
 
     fn verifying_key() -> Digest {
-        *TOKEN_TRANSFER_ID
+        *TOKEN_TRANSFER_V2_ID
     }
 
     fn witness(&self) -> &Self::Witness {

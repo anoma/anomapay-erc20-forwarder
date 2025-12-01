@@ -1,39 +1,34 @@
 //! The transfer witness library holds the struct to generate proofs over resource logics for
 //! simple transfer resources in the Anoma Pay application.
 //!
-pub mod call_type;
-use crate::call_type::{
-    encode_unwrap_forwarder_input, encode_wrap_forwarder_input, CallType, PermitTransferFrom,
-};
+pub mod call_type_v2;
+use crate::call_type_v2::{encode_migrate_forwarder_input, CallTypeV2};
 pub use arm::resource_logic::LogicCircuit;
 use arm::{
     error::ArmError,
     logic_instance::{AppData, ExpirableBlob, LogicInstance},
+    merkle_path::MerklePath,
     nullifier_key::NullifierKey,
     resource::Resource,
-    utils::{bytes_to_words, hash_bytes},
+    utils::bytes_to_words,
     Digest,
 };
 use arm_gadgets::{
-    authorization::{AuthorizationSignature, AuthorizationVerifyingKey},
-    encryption::{Ciphertext, SecretKey},
-    evm::ForwarderCalldata,
+    authorization::AuthorizationSignature, encryption::Ciphertext, evm::ForwarderCalldata,
 };
-use k256::elliptic_curve::group::GroupEncoding;
-use k256::AffinePoint;
 use serde::{Deserialize, Serialize};
+use transfer_witness::{
+    calculate_label_ref, calculate_persistent_value_ref, calculate_value_ref_from_user_addr,
+    call_type::{encode_unwrap_forwarder_input, encode_wrap_forwarder_input, PermitTransferFrom},
+    DeletionCriterion, EncryptionInfo, LabelInfo, PermitInfo, ResourceWithLabel, ValueInfo,
+};
 
-pub enum DeletionCriterion {
-    Immediately = 0,
-    Never = 1,
-}
+pub const AUTH_SIGNATURE_DOMAIN_V2: &[u8] = b"TokenTransferAuthorizationV2";
 
-pub const AUTH_SIGNATURE_DOMAIN: &[u8] = b"TokenTransferAuthorization";
-
-/// The TokenTransferWitness holds all the information necessary to generate a proof of the
+/// The TokenTransferWitnessV2 holds all the information necessary to generate a proof of the
 /// resource logic of a given resource.
 #[derive(Clone, Default, Serialize, Deserialize)]
-pub struct TokenTransferWitness {
+pub struct TokenTransferWitnessV2 {
     /// Resource this witness is about.
     pub resource: Resource,
     /// Is this a consumed or created resource.
@@ -46,76 +41,36 @@ pub struct TokenTransferWitness {
     pub auth_sig: Option<AuthorizationSignature>,
     /// See EncryptionInfo struct.
     pub encryption_info: Option<EncryptionInfo>,
-    /// See ForwarderInfo struct.
-    pub forwarder_info: Option<ForwarderInfo>,
+    /// See ForwarderInfoV2 struct.
+    pub forwarder_info_v2: Option<ForwarderInfoV2>,
     /// See LabelInfo struct.
     pub label_info: Option<LabelInfo>,
-    /// See ValueInfo struct.
+    /// See ValueInfo Struct
     pub value_info: Option<ValueInfo>,
 }
 
-/// The EncryptionInfo struct holds information about the encryption keys for the
-/// recipient/sender of a resource in a transaction.
 #[derive(Clone, Serialize, Deserialize)]
-pub struct EncryptionInfo {
-    /// Secret key. randomly generated for persistent resource_ciphertext
-    pub sender_sk: SecretKey,
-    /// randomly generated for persistent resource_ciphertext(12 bytes)
-    pub encryption_nonce: Vec<u8>,
-    /// The discovery ciphertext for the resource
-    pub discovery_ciphertext: Vec<u32>,
-}
-
-/// ForwarderInfo holds information about the forwarder contract being used by a transaction.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ForwarderInfo {
-    /// Wrapping/Unwrapping of a resource (i.e., mint/burn).
-    pub call_type: CallType,
-    /// Address of the user
+pub struct ForwarderInfoV2 {
+    pub call_type: CallTypeV2,
     pub user_addr: Vec<u8>,
-    /// PermitInfo (see struct)
     pub permit_info: Option<PermitInfo>,
+    // The migrate info is added for v2 witness to support migration from v1 to v2
+    pub migrate_info: Option<MigrateInfo>,
 }
 
-/// LabelInfo holds information about label plaintext.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct LabelInfo {
-    /// Address of the forwarder contract for this resource.
-    pub forwarder_addr: Vec<u8>,
-    /// Address of the wrapped token within this resource (e.g. USDC).
-    pub token_addr: Vec<u8>,
-}
-
-/// ValueInfo holds information about value plaintext
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ValueInfo {
-    /// The authorization verifying key corresponds to the resource.value.owner
-    pub auth_pk: AuthorizationVerifyingKey,
-    /// Public key. Obtain from the receiver for persistent resource_ciphertext
-    pub encryption_pk: AffinePoint,
-}
-
-/// The PermitInfo contains information about the permit2 signature that is used to generate
-/// logic proofs over resources.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct PermitInfo {
-    /// Nonce of the permit2 signature.
-    pub permit_nonce: Vec<u8>,
-    /// Deadline of the permit2 signature (i.e., when does it expire)
-    pub permit_deadline: Vec<u8>,
-    /// Signature
-    pub permit_sig: Vec<u8>,
-}
-
-/// The struct encoded in the resource payload for persistent created resources.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ResourceWithLabel {
+#[derive(Clone, Serialize, Deserialize)]
+pub struct MigrateInfo {
     pub resource: Resource,
-    pub forwarder: Vec<u8>,
-    pub token: Vec<u8>,
+    pub nf_key: NullifierKey,
+    // Merkle path from cm-tree v1 to prove existence of the migrate_resource
+    pub path: MerklePath,
+    pub auth_sig: AuthorizationSignature,
+    pub value_info: ValueInfo,
+    // The forwarder address in the migrate resource label_ref is still the v1 address
+    pub forwarder_addr: Vec<u8>,
 }
 
-impl TokenTransferWitness {
+impl TokenTransferWitnessV2 {
     // Compute the tag
     pub fn tag(&self) -> Result<Digest, ArmError> {
         if self.is_consumed {
@@ -149,7 +104,7 @@ impl TokenTransferWitness {
         action_root: &[u8],
     ) -> Result<Vec<ExpirableBlob>, ArmError> {
         let forwarder_info = self
-            .forwarder_info
+            .forwarder_info_v2
             .as_ref()
             .ok_or(ArmError::MissingField("Forwarder info"))?;
 
@@ -161,6 +116,7 @@ impl TokenTransferWitness {
         // Check resource label: label = sha2(forwarder_addr, erc20_addr)
         let forwarder_addr = label_info.forwarder_addr.as_ref();
         let erc20_addr = label_info.token_addr.as_ref();
+        let user_addr = forwarder_info.user_addr.as_ref();
         let label_ref = calculate_label_ref(forwarder_addr, erc20_addr);
         if self.resource.label_ref != label_ref {
             return Err(ArmError::ProveFailed(
@@ -172,7 +128,6 @@ impl TokenTransferWitness {
         // We need this check to ensure the permit2 signature covers
         // the correct user address. It signs over the action tree root,
         // and the tag containing the value_ref is directed to the tree root.
-        let user_addr = forwarder_info.user_addr.as_ref();
         let value_ref = calculate_value_ref_from_user_addr(user_addr);
         if self.resource.value_ref != value_ref {
             return Err(ArmError::ProveFailed(
@@ -180,39 +135,120 @@ impl TokenTransferWitness {
             ));
         }
 
-        let inputs = if self.is_consumed {
-            // Wrap
-            if forwarder_info.call_type != CallType::Wrap {
-                return Err(ArmError::ProveFailed(
-                    "Wrong call type for Wrap".to_string(),
+        let inputs = match forwarder_info.call_type {
+            CallTypeV2::Wrap => {
+                if self.is_consumed {
+                    return Err(ArmError::ProveFailed(
+                        "Wrap cannot be a consumed resource".to_string(),
+                    ));
+                }
+
+                let permit_info = forwarder_info
+                    .permit_info
+                    .as_ref()
+                    .ok_or(ArmError::MissingField("Permit info"))?;
+                let permit = PermitTransferFrom::from_bytes(
+                    erc20_addr,
+                    self.resource.quantity,
+                    permit_info.permit_nonce.as_ref(),
+                    permit_info.permit_deadline.as_ref(),
+                )?;
+                encode_wrap_forwarder_input(
+                    user_addr,
+                    permit,
+                    action_root,
+                    permit_info.permit_sig.as_ref(),
+                )?
+            }
+            CallTypeV2::Unwrap => {
+                if !self.is_consumed {
+                    return Err(ArmError::ProveFailed(
+                        "Unwrap must be a consumed resource".to_string(),
+                    ));
+                }
+
+                encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)?
+            }
+            CallTypeV2::Migrate => {
+                if !self.is_consumed {
+                    return Err(ArmError::ProveFailed(
+                        "Migrate must be a consumed resource".to_string(),
+                    ));
+                }
+
+                let migrate_info = forwarder_info
+                    .migrate_info
+                    .as_ref()
+                    .ok_or(ArmError::MissingField("Migrate info"))?;
+
+                // compute migrate resource commitment tree root
+                let migrate_cm = migrate_info.resource.commitment();
+                let migrate_root = migrate_info.path.root(&migrate_cm);
+
+                // check migrate_resource is non-ephemeral
+                if migrate_info.resource.is_ephemeral {
+                    return Err(ArmError::ProveFailed(
+                        "Migrate resource must be non-ephemeral".to_string(),
+                    ));
+                }
+
+                // check migrate_resource authorization
+                if migrate_info.resource.value_ref
+                    != calculate_persistent_value_ref(&migrate_info.value_info)
+                {
+                    return Err(ArmError::ProveFailed(
+                        "Invalid migrate resource value_ref".to_string(),
+                    ));
+                }
+
+                if migrate_info
+                    .value_info
+                    .auth_pk
+                    .verify(
+                        AUTH_SIGNATURE_DOMAIN_V2,
+                        action_root,
+                        &migrate_info.auth_sig,
+                    )
+                    .is_err()
+                {
+                    return Err(ArmError::InvalidSignature);
+                }
+
+                // check migrate_resource quantity
+                if migrate_info.resource.quantity != self.resource.quantity {
+                    return Err(ArmError::ProveFailed(
+                        "Wrong migrate resource quantity".to_string(),
+                    ));
+                }
+
+                // compute migrate resource nullifier
+                let migrate_nf = migrate_info
+                    .resource
+                    .nullifier_from_commitment(&migrate_info.nf_key, &migrate_cm)?;
+
+                // check migrate_resource label_ref_v1
+                let migrate_label_ref_v1 =
+                    calculate_label_ref(&migrate_info.forwarder_addr, erc20_addr);
+                if migrate_info.resource.label_ref != migrate_label_ref_v1 {
+                    return Err(ArmError::ProveFailed(
+                        "Invalid migrate resource label_ref".to_string(),
+                    ));
+                }
+
+                encode_migrate_forwarder_input(
+                    erc20_addr,
+                    self.resource.quantity,
+                    migrate_nf.as_bytes(),
+                    migrate_root.as_bytes(),
+                    migrate_info.resource.logic_ref.as_bytes(),
+                    &migrate_info.forwarder_addr,
+                )?
+            }
+            _ => {
+                return Err(ArmError::MissingField(
+                    "Invalid call type for ephemeral resource",
                 ));
             }
-
-            let permit_info = forwarder_info
-                .permit_info
-                .as_ref()
-                .ok_or(ArmError::MissingField("Permit info"))?;
-            let permit = PermitTransferFrom::from_bytes(
-                erc20_addr,
-                self.resource.quantity,
-                permit_info.permit_nonce.as_ref(),
-                permit_info.permit_deadline.as_ref(),
-            )?;
-            encode_wrap_forwarder_input(
-                user_addr,
-                permit,
-                action_root,
-                permit_info.permit_sig.as_ref(),
-            )?
-        } else {
-            // Unwrap
-            if forwarder_info.call_type != CallType::Unwrap {
-                return Err(ArmError::ProveFailed(
-                    "Wrong call type for Unwrap".to_string(),
-                ));
-            }
-
-            encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)?
         };
 
         let forwarder_call_data = ForwarderCalldata::from_bytes(forwarder_addr, inputs, vec![]);
@@ -235,7 +271,7 @@ impl TokenTransferWitness {
         // Verify the authorization signature
         if value_info
             .auth_pk
-            .verify(AUTH_SIGNATURE_DOMAIN, action_root, auth_sig)
+            .verify(AUTH_SIGNATURE_DOMAIN_V2, action_root, auth_sig)
             .is_err()
         {
             return Err(ArmError::InvalidSignature);
@@ -244,7 +280,7 @@ impl TokenTransferWitness {
         Ok(())
     }
 
-    // check persistent resource creation and return discovery_payload and resource_payload
+    /// check persistent resource creation and return discovery_payload and resource_payload
     pub fn persistent_resource_creation(
         &self,
     ) -> Result<(Vec<ExpirableBlob>, Vec<ExpirableBlob>), ArmError> {
@@ -306,17 +342,25 @@ impl TokenTransferWitness {
     }
 }
 
-impl LogicCircuit for TokenTransferWitness {
+impl LogicCircuit for TokenTransferWitnessV2 {
     fn constrain(&self) -> Result<LogicInstance, ArmError> {
         // Load resources
-        let tag = self.tag()?;
+        let cm = self.resource.commitment();
+        let tag = if self.is_consumed {
+            let nf_key = self
+                .nf_key
+                .as_ref()
+                .ok_or(ArmError::MissingField("Nullifier key"))?;
+            self.resource.nullifier_from_commitment(nf_key, &cm)?
+        } else {
+            cm
+        };
 
         let root_bytes = self.action_tree_root.as_bytes();
 
-        // Generate payloads
+        // Generate resource_payload and external_payload
         let (discovery_payload, resource_payload, external_payload) = if self.resource.is_ephemeral
         {
-            // Generate external_payload for the ephemeral resource
             let external_payload = self.ephemeral_resource_check(root_bytes)?;
 
             // Empty discovery_payload and resource_payload
@@ -351,7 +395,7 @@ impl LogicCircuit for TokenTransferWitness {
     }
 }
 
-impl TokenTransferWitness {
+impl TokenTransferWitnessV2 {
     /// Create a new transfer witness.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -361,7 +405,7 @@ impl TokenTransferWitness {
         nf_key: Option<NullifierKey>,
         auth_sig: Option<AuthorizationSignature>,
         encryption_info: Option<EncryptionInfo>,
-        forwarder_info: Option<ForwarderInfo>,
+        forwarder_info_v2: Option<ForwarderInfoV2>,
         label_info: Option<LabelInfo>,
         value_info: Option<ValueInfo>,
     ) -> Self {
@@ -372,76 +416,9 @@ impl TokenTransferWitness {
             nf_key,
             auth_sig,
             encryption_info,
-            forwarder_info,
+            forwarder_info_v2,
             label_info,
             value_info,
-        }
-    }
-}
-
-/// Calculate the value ref based on an authorization key for a given user.
-pub fn calculate_persistent_value_ref(value: &ValueInfo) -> Digest {
-    hash_bytes(
-        &[
-            value.auth_pk.to_bytes(),
-            value.encryption_pk.to_bytes().to_vec(),
-        ]
-        .concat(),
-    )
-}
-
-/// Create the value_ref for the user address.
-pub fn calculate_value_ref_from_user_addr(user_addr: &[u8]) -> Digest {
-    let mut addr_padded = [0u8; 32];
-    addr_padded[0..20].copy_from_slice(user_addr);
-    Digest::from_bytes(addr_padded)
-}
-
-/// Extract the user address from a value_ref.
-pub fn get_user_addr(value_ref: &Digest) -> [u8; 20] {
-    let bytes = value_ref.as_bytes();
-    let mut addr = [0u8; 20];
-    addr.copy_from_slice(&bytes[0..20]);
-    addr
-}
-
-/// Calculate the label ref based on the forwarded and token address for resources.
-pub fn calculate_label_ref(forwarder_add: &[u8], erc20_add: &[u8]) -> Digest {
-    hash_bytes(&[forwarder_add, erc20_add].concat())
-}
-
-impl EncryptionInfo {
-    /// Create new encryption info based on encryption and discovery public keys.
-    pub fn new(discovery_pk: &AffinePoint) -> Self {
-        let discovery_nonce: [u8; 12] = rand::random();
-        let discovery_sk = SecretKey::random();
-        let discovery_ciphertext = Ciphertext::encrypt_with_nonce(
-            &vec![0u8],
-            discovery_pk,
-            &discovery_sk,
-            discovery_nonce
-                .as_slice()
-                .try_into()
-                .expect("Failed to convert discovery nonce, it cannot fail"),
-        )
-        .unwrap()
-        .as_words();
-        let sender_sk = SecretKey::random();
-        let encryption_nonce: [u8; 12] = rand::random();
-        Self {
-            sender_sk,
-            encryption_nonce: encryption_nonce.to_vec(),
-            discovery_ciphertext,
-        }
-    }
-}
-
-impl ResourceWithLabel {
-    pub fn new(resource: Resource, forwarder: Vec<u8>, token: Vec<u8>) -> Self {
-        Self {
-            resource,
-            forwarder,
-            token,
         }
     }
 }

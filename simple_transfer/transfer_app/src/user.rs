@@ -1,5 +1,4 @@
 #![cfg(test)]
-
 use alloy::primitives::Address;
 use alloy::signers::local::PrivateKeySigner;
 use arm::nullifier_key::NullifierKey;

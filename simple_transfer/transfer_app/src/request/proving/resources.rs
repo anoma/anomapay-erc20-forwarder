@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 /// This enum holds all the possible structs for created resource witnesses.
+#[allow(clippy::large_enum_variant)]
 #[derive(ToSchema, Deserialize, Serialize, Clone, PartialEq)]
 #[enum_dispatch(CreatedWitnessData)]
 pub enum CreatedWitnessDataEnum {

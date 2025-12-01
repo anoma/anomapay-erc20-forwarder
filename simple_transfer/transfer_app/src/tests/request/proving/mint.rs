@@ -10,8 +10,8 @@ use crate::request::proving::witness_data::token_transfer::{
 };
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    create_permit_signature, label_ref, random_nonce, user_with_private_key, value_ref_created,
-    value_ref_ephemeral_consumed, DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC,
+    create_permit_signature, label_ref, random_nonce, user_with_private_key, DEFAULT_DEADLINE,
+    TOKEN_ADDRESS_SEPOLIA_USDC,
 };
 use crate::user::Keychain;
 use crate::{load_config, AnomaPayConfig};
@@ -20,12 +20,17 @@ use arm::logic_proof::LogicProver;
 use arm::resource::Resource;
 use arm::transaction::Transaction;
 use transfer_library::TransferLogic;
+use transfer_witness::{
+    calculate_persistent_value_ref, calculate_value_ref_from_user_addr, ValueInfo,
+};
 
 #[ignore]
 #[tokio::test]
 /// Test creation of a mint transaction.
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_create_mint_transaction() {
+    dotenv::dotenv().ok();
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
@@ -44,6 +49,8 @@ async fn test_create_mint_transaction() {
 /// Test submitting a mint transaction to the protocol adapter.
 /// This requires an account with private key to actually submit to ethereum.
 pub async fn test_submit_mint_transaction() {
+    dotenv::dotenv().ok();
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
@@ -59,6 +66,8 @@ pub async fn example_mint_transaction_submit(
     user: Keychain,
     config: &AnomaPayConfig,
 ) -> (Parameters, Transaction, String) {
+    dotenv::dotenv().ok();
+
     // Create a mint transaction.
     let (parameters, transaction) = example_mint_transaction(user, config).await;
 
@@ -100,7 +109,7 @@ pub async fn example_mint_parameters(
         logic_ref: TransferLogic::verifying_key(),
         label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: amount,
-        value_ref: value_ref_ephemeral_consumed(&minter),
+        value_ref: calculate_value_ref_from_user_addr(&minter.evm_address.into_array()),
         is_ephemeral: true,
         nonce: random_nonce(),
         nk_commitment: minter.nf_key.commit(),
@@ -121,7 +130,10 @@ pub async fn example_mint_parameters(
         logic_ref: TransferLogic::verifying_key(),
         label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: amount,
-        value_ref: value_ref_created(&minter),
+        value_ref: calculate_persistent_value_ref(&ValueInfo {
+            auth_pk: minter.auth_verifying_key(),
+            encryption_pk: minter.encryption_pk,
+        }),
         is_ephemeral: false,
         nonce: created_resource_nonce,
         nk_commitment: minter.nf_key.commit(),
@@ -137,7 +149,7 @@ pub async fn example_mint_parameters(
     // Create the permit2 signature.
 
     let permit_signature = create_permit_signature(
-        &minter.private_key.unwrap(),
+        &minter.private_key.clone().unwrap(),
         action_tree.clone(),
         consumed_resource_nullifier.into(),
         amount,
@@ -161,13 +173,15 @@ pub async fn example_mint_parameters(
 
     let consumed_resource = Consumed {
         resource: consumed_resource,
-        nullifier_key: minter.nf_key,
+        nullifier_key: minter.clone().nf_key,
         witness_data: ConsumedWitnessDataEnum::Ephemeral(consumed_witness_data),
     };
 
     let created_witness_data = CreatedPersistent {
         receiver_discovery_public_key: minter.discovery_pk,
+        receiver_authorization_verifying_key: minter.clone().auth_verifying_key(),
         receiver_encryption_public_key: minter.encryption_pk,
+        token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
     };
 
     let created_resource = Created {
