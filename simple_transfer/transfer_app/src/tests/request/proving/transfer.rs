@@ -31,6 +31,8 @@ use transfer_witness::{calculate_persistent_value_ref, ValueInfo, AUTH_SIGNATURE
 /// Test creation of a burn transaction.
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_submit_transfer_transaction() {
+    dotenv::dotenv().ok();
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
@@ -54,6 +56,8 @@ async fn test_submit_transfer_transaction() {
 /// Test creation of a burn transaction.
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_create_transfer_transaction() {
+    dotenv::dotenv().ok();
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
@@ -83,6 +87,8 @@ pub async fn example_transfer_transaction_submit(
     config: &AnomaPayConfig,
     resources_to_transfer: Vec<Resource>,
 ) -> (Parameters, Transaction, String) {
+    dotenv::dotenv().ok();
+
     // Create a mint transaction.
     let (parameters, transaction) =
         example_transfer_transaction(sender, receiver, config, resources_to_transfer).await;

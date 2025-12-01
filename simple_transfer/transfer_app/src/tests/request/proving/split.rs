@@ -29,6 +29,8 @@ use transfer_witness::{calculate_persistent_value_ref, ValueInfo, AUTH_SIGNATURE
 /// Test creation of a burn transaction.
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_submit_split_transaction() {
+    dotenv::dotenv().ok();
+
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
@@ -53,6 +55,8 @@ async fn test_submit_split_transaction() {
 /// Test creation of a burn transaction.
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_create_split_transaction() {
+    dotenv::dotenv().ok();
+    
     // Load the configuration parameters.
     let config = load_config().expect("failed to load config in test");
     // Create a keychain with a private key
