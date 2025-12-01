@@ -254,17 +254,17 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV1InputWithIncorrectCommitmentTreeRootV1 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV1,
-            /*     token */
+            /*       token */
             address(_erc20),
-            /*    amount */
+            /*      amount */
             _TRANSFER_AMOUNT,
-            /* nullifier */
+            /*   nullifier */
             _NULLIFIER,
-            /*      root */
+            /*      rootV1 */
             incorrectCommitmentTreeRootV1,
-            /*  logicRef */
+            /*  logicRefV1 */
             _logicRefV1,
-            /* forwarder */
+            /* forwarderV1 */
             address(_fwdV1)
         );
 
@@ -291,17 +291,17 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV2InputWithIncorrectCommitmentTreeRootV2 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV2,
-            /*     token */
+            /*       token */
             address(_erc20),
-            /*    amount */
+            /*      amount */
             _TRANSFER_AMOUNT,
-            /* nullifier */
+            /*   nullifier */
             _NULLIFIER,
-            /*      root */
+            /*      rootV2 */
             incorrectCommitmentTreeRootV2,
-            /*  logicRef */
+            /*  logicRefV2 */
             _logicRefV1,
-            /* forwarder */
+            /* forwarderV2 */
             address(_fwdV2)
         );
 
@@ -328,17 +328,17 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV1InputWithIncorrectLogicRefV1 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV1,
-            /*     token */
+            /*       token */
             address(_erc20),
-            /*    amount */
+            /*      amount */
             _TRANSFER_AMOUNT,
-            /* nullifier */
+            /*   nullifier */
             _NULLIFIER,
-            /*      root */
+            /*      rootV1 */
             CommitmentTree(_paV1).latestCommitmentTreeRoot(),
-            /*  logicRef */
+            /*  logicRefV1 */
             incorrectLogicRefV1,
-            /* forwarder */
+            /* forwarderV1 */
             address(_fwdV1)
         );
 
@@ -362,17 +362,17 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV2InputWithIncorrectLogicRefV2 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV2,
-            /*     token */
+            /*       token */
             address(_erc20),
-            /*    amount */
+            /*      amount */
             _TRANSFER_AMOUNT,
-            /* nullifier */
+            /*   nullifier */
             _NULLIFIER,
-            /*      root */
+            /*      rootV2 */
             CommitmentTree(_paV2).latestCommitmentTreeRoot(),
-            /*  logicRef */
+            /*  logicRefV2 */
             incorrectLogicRefV2,
-            /* forwarder */
+            /* forwarderV2 */
             address(_fwdV2)
         );
 
@@ -397,17 +397,17 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV1InputWithIncorrectLabelRefV1 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV1,
-            /*     token */
+            /*       token */
             address(_erc20),
-            /*    amount */
+            /*      amount */
             _TRANSFER_AMOUNT,
-            /* nullifier */
+            /*   nullifier */
             _NULLIFIER,
-            /*      root */
+            /*      rootV1 */
             CommitmentTree(_paV1).latestCommitmentTreeRoot(),
-            /*  logicRef */
+            /*  logicRefV1 */
             _logicRefV1,
-            /* forwarder */
+            /* forwarderV1 */
             incorrectForwarderV1
         );
 
@@ -429,17 +429,17 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV2InputWithIncorrectLabelRefV2 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV2,
-            /*     token */
+            /*       token */
             address(_erc20),
-            /*    amount */
+            /*      amount */
             _TRANSFER_AMOUNT,
-            /* nullifier */
+            /*   nullifier */
             _NULLIFIER,
-            /*      root */
+            /*      rootV2 */
             CommitmentTree(_paV2).latestCommitmentTreeRoot(),
-            /*  logicRef */
+            /*  logicRefV2 */
             _logicRefV2,
-            /* forwarder */
+            /* forwarderV2 */
             incorrectForwarderV2
         );
 
