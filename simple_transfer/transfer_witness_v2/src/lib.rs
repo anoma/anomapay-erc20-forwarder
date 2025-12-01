@@ -136,12 +136,13 @@ impl TokenTransferWitnessV2 {
         }
 
         let inputs = match forwarder_info.call_type {
-            CallTypeV2::Unwrap => {
-                assert!(!self.is_consumed);
-                encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)
-            }
             CallTypeV2::Wrap => {
-                assert!(self.is_consumed);
+                if self.is_consumed {
+                    return Err(ArmError::ProveFailed(
+                        "Wrap cannot be a consumed resource".to_string(),
+                    ));
+                }
+
                 let permit_info = forwarder_info
                     .permit_info
                     .as_ref()
@@ -151,16 +152,29 @@ impl TokenTransferWitnessV2 {
                     self.resource.quantity,
                     permit_info.permit_nonce.as_ref(),
                     permit_info.permit_deadline.as_ref(),
-                );
+                )?;
                 encode_wrap_forwarder_input(
                     user_addr,
                     permit,
                     action_root,
                     permit_info.permit_sig.as_ref(),
-                )
+                )?
+            }
+            CallTypeV2::Unwrap => {
+                if !self.is_consumed {
+                    return Err(ArmError::ProveFailed(
+                        "Unwrap must be a consumed resource".to_string(),
+                    ));
+                }
+
+                encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)?
             }
             CallTypeV2::Migrate => {
-                assert!(self.is_consumed);
+                if !self.is_consumed {
+                    return Err(ArmError::ProveFailed(
+                        "Migrate must be a consumed resource".to_string(),
+                    ));
+                }
 
                 let migrate_info = forwarder_info
                     .migrate_info
@@ -172,7 +186,11 @@ impl TokenTransferWitnessV2 {
                 let migrate_root = migrate_info.path.root(&migrate_cm);
 
                 // check migrate_resource is non-ephemeral
-                assert!(!migrate_info.resource.is_ephemeral);
+                if migrate_info.resource.is_ephemeral {
+                    return Err(ArmError::ProveFailed(
+                        "Migrate resource must be non-ephemeral".to_string(),
+                    ));
+                }
 
                 // check migrate_resource authorization
                 if migrate_info.resource.value_ref
@@ -224,7 +242,7 @@ impl TokenTransferWitnessV2 {
                     migrate_root.as_bytes(),
                     migrate_info.resource.logic_ref.as_bytes(),
                     &migrate_info.forwarder_addr,
-                )
+                )?
             }
             _ => {
                 return Err(ArmError::MissingField(

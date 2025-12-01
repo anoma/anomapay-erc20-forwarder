@@ -182,7 +182,12 @@ impl TokenTransferWitness {
 
         let inputs = if self.is_consumed {
             // Wrap
-            assert_eq!(forwarder_info.call_type, CallType::Wrap);
+            if forwarder_info.call_type != CallType::Wrap {
+                return Err(ArmError::ProveFailed(
+                    "Wrong call type for Wrap".to_string(),
+                ));
+            }
+
             let permit_info = forwarder_info
                 .permit_info
                 .as_ref()
@@ -192,17 +197,22 @@ impl TokenTransferWitness {
                 self.resource.quantity,
                 permit_info.permit_nonce.as_ref(),
                 permit_info.permit_deadline.as_ref(),
-            );
+            )?;
             encode_wrap_forwarder_input(
                 user_addr,
                 permit,
                 action_root,
                 permit_info.permit_sig.as_ref(),
-            )
+            )?
         } else {
             // Unwrap
-            assert_eq!(forwarder_info.call_type, CallType::Unwrap);
-            encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)
+            if forwarder_info.call_type != CallType::Unwrap {
+                return Err(ArmError::ProveFailed(
+                    "Wrong call type for Unwrap".to_string(),
+                ));
+            }
+
+            encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)?
         };
 
         let forwarder_call_data = ForwarderCalldata::from_bytes(forwarder_addr, inputs, vec![]);

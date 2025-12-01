@@ -1,5 +1,6 @@
 use alloy_primitives::{Address, B256, U256};
 use alloy_sol_types::{sol, SolValue};
+use arm::error::ArmError;
 
 sol! {
     #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
@@ -29,26 +30,42 @@ sol! {
 }
 
 impl PermitTransferFrom {
-    pub fn from_bytes(token: &[u8], amount: u128, nonce: &[u8], deadline: &[u8]) -> Self {
-        let token_addr: Address = token.try_into().expect("Invalid address bytes");
-        PermitTransferFrom {
+    pub fn from_bytes(
+        token: &[u8],
+        amount: u128,
+        nonce: &[u8],
+        deadline: &[u8],
+    ) -> Result<Self, ArmError> {
+        let token_addr: Address = token
+            .try_into()
+            .map_err(|_| ArmError::ProveFailed("Invalid token address bytes".to_string()))?;
+        Ok(PermitTransferFrom {
             permitted: TokenPermissions {
                 token: token_addr,
                 amount: U256::from(amount),
             },
             nonce: B256::from_slice(nonce),
             deadline: B256::from_slice(deadline),
-        }
+        })
     }
 }
 
-pub fn encode_unwrap_forwarder_input(token: &[u8], to: &[u8], value: u128) -> Vec<u8> {
-    // This is only used in circuits, just let it panic if the address is invalid
+pub fn encode_unwrap_forwarder_input(
+    token: &[u8],
+    to: &[u8],
+    value: u128,
+) -> Result<Vec<u8>, ArmError> {
     // Encode as (CallType, token, to, value)
-    let token: Address = token.try_into().expect("Invalid address bytes");
-    let to: Address = to.try_into().expect("Invalid address bytes");
+    let token: Address = token
+        .try_into()
+        .map_err(|_| ArmError::ProveFailed("Invalid token address bytes".to_string()))
+        .unwrap();
+    let to: Address = to
+        .try_into()
+        .map_err(|_| ArmError::ProveFailed("Invalid to address bytes".to_string()))
+        .unwrap();
     let value = U256::from(value);
-    (CallType::Unwrap, token, to, value).abi_encode_params()
+    Ok((CallType::Unwrap, token, to, value).abi_encode_params())
 }
 
 pub fn encode_wrap_forwarder_input(
@@ -56,17 +73,18 @@ pub fn encode_wrap_forwarder_input(
     permit: PermitTransferFrom,
     witness: &[u8],
     signature: &[u8],
-) -> Vec<u8> {
-    // This is only used in circuits, just let it panic if the address is invalid
-    let from: Address = from.try_into().expect("Invalid address bytes");
-    (
+) -> Result<Vec<u8>, ArmError> {
+    let from: Address = from
+        .try_into()
+        .map_err(|_| ArmError::ProveFailed("Invalid from address bytes".to_string()))?;
+    Ok((
         CallType::Wrap,
         from,
         permit,
         B256::from_slice(witness),
         signature,
     )
-        .abi_encode_params()
+        .abi_encode_params())
 }
 
 #[test]
@@ -96,11 +114,11 @@ fn encode_wrap_forwarder_input_test() {
     let token = hex::decode("2222222222222222222222222222222222222222").unwrap();
     let from = hex::decode("3333333333333333333333333333333333333333").unwrap();
     let value = 1000u128;
-    let permit = PermitTransferFrom::from_bytes(&token, value, &[1u8; 32], &[2u8; 32]);
+    let permit = PermitTransferFrom::from_bytes(&token, value, &[1u8; 32], &[2u8; 32]).unwrap();
     let witness = vec![3u8; 32];
     let signature = vec![4u8; 65];
 
-    let encoded = encode_wrap_forwarder_input(&from, permit, &witness, &signature);
+    let encoded = encode_wrap_forwarder_input(&from, permit, &witness, &signature).unwrap();
     println!("encode: {:?}", hex::encode(&encoded));
     println!("len: {}", encoded.len());
 }
