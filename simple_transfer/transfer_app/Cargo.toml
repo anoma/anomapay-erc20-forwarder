@@ -14,6 +14,7 @@ gpu = ["arm/cuda"]
 
 [dependencies]
 alloy = { version = "1.0.23", features = ["full"] }
+alloy-chains = "0.2.21"
 arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = false, features = ["transaction"] }
 arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
 async-trait = "0.1.89"

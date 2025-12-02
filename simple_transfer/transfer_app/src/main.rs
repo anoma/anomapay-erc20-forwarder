@@ -14,7 +14,6 @@ use crate::web::ApiDoc;
 use alloy::primitives::Address;
 use alloy::providers::{Provider, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;
-use erc20_forwarder_bindings::contract::erc20_forwarder;
 use rocket::{catchers, launch, routes};
 use std::env;
 use std::error::Error;
@@ -24,8 +23,8 @@ use utoipa_swagger_ui::SwaggerUi;
 /// The `AnomaPayConfig` struct holds all necessary secret information about the Anomapay backend.
 /// It contains the private key for submitting transactions, the address for the indexer, etc.
 pub struct AnomaPayConfig {
-    /// The address of the ERC20 forwarder contract
-    forwarder_address: Address,
+    /// The chain_id of the ethereum network
+    chain_id: u64,
     /// url of the ethereum rpc
     #[allow(dead_code)]
     ethereum_rpc: String,
@@ -58,7 +57,7 @@ async fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
         .connect_http(ethereum_rpc.parse().map_err(|_e| InvalidRPCUrl)?)
         .erased();
 
-    let forwarder_address: Address = erc20_forwarder(&provider).await?.address().clone();
+    let chain_id = provider.get_chain_id().await?;
 
     let hot_wallet_address: String =
         env::var("HOT_WALLET_USER_ADDRESS").map_err(|_| "HOT_WALLET_USER_ADDRESS not set")?;
@@ -68,7 +67,7 @@ async fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
         env::var("ALCHEMY_API_KEY").map_err(|_| "ALCHEMY_API_KEY not set")?;
 
     Ok(AnomaPayConfig {
-        forwarder_address,
+        chain_id,
         ethereum_rpc,
         indexer_address,
         hot_wallet_private_key,

@@ -37,5 +37,5 @@ async fn fwd_instance(chain: &NamedChain) -> ERC20ForwarderInstance<DynProvider>
         .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url))
         .expect("Couldn't create anvil provider")
         .erased();
-    erc20_forwarder(provider).await.unwrap()
+    erc20_forwarder(&provider).await.unwrap()
 }

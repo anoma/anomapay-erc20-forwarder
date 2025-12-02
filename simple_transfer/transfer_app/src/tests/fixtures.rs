@@ -1,6 +1,7 @@
 #![cfg(test)]
 //! Contains fixtures to generate test data in the test suite.
 
+use crate::rpc::named_chain_from_config;
 use crate::tests::permit2::{permit_witness_transfer_from_signature, Permit2Data};
 use crate::user::Keychain;
 use crate::AnomaPayConfig;
@@ -8,6 +9,7 @@ use alloy::hex::ToHexExt;
 use alloy::primitives::{address, Address, Signature, B256, U256};
 use alloy::signers::local::PrivateKeySigner;
 use arm::action_tree::MerkleTree;
+use erc20_forwarder_bindings::addresses::erc20_forwarder_address;
 use rand::Rng;
 use risc0_zkvm::sha::{Digest, Impl, Sha256};
 
@@ -41,8 +43,11 @@ pub fn random_nonce() -> [u8; 32] {
 /// forwarder contract is used for multiple tokens, so the tuple (forwarder address, token
 /// contract) uniquely identifies a resource.
 pub fn label_ref(config: &AnomaPayConfig, token_address: Address) -> Digest {
-    *Impl::hash_bytes(&[config.forwarder_address.to_vec(), token_address.to_vec()].concat())
-} // TODO! remove this method
+    let named_chain = named_chain_from_config(config).unwrap(); // TODO refactor
+    let forwarder_address = erc20_forwarder_address(&named_chain).unwrap(); // TODO refactor
+
+    *Impl::hash_bytes(&[forwarder_address.to_vec(), token_address.to_vec()].concat())
+}
 
 /// Create a permit2 signature for a transaction.
 pub async fn create_permit_signature(
@@ -59,13 +64,15 @@ pub async fn create_permit_signature(
         .expect("failed to create action tree root");
     let action_tree_encoded: &[u8] = action_tree_root.as_ref();
 
+    let named_chain = named_chain_from_config(config).unwrap(); // TODO refactor
+
     let x = Permit2Data {
         chain_id: 11155111,
         token: token_address,
         amount: U256::from(amount),
         nonce: U256::from_be_bytes(nullifier),
         deadline: U256::from(deadline),
-        spender: config.forwarder_address,
+        spender: erc20_forwarder_address(&named_chain).unwrap(), // TODO refactor
         action_tree_root: B256::from_slice(action_tree_encoded),
     };
 

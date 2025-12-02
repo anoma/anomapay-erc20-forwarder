@@ -8,28 +8,39 @@ use alloy::network::ReceiptResponse;
 use arm::transaction::Transaction;
 use evm_protocol_adapter_bindings::contract::protocol_adapter;
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
+
 pub type RpcResult<T> = Result<T, RpcError>;
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
+use alloy_chains::NamedChain;
+use rocket::serde::Serialize;
+use thiserror::Error;
 
 /// EthError represents all error states for calls to the Protocol Adapter.
-#[derive(thiserror::Error, Debug)]
+#[derive(Error, Debug, Serialize)]
 pub enum RpcError {
     #[error("Failed to submit a transaction to the protocol adapter: {0}")]
-    SubmitTransactionError(alloy::contract::Error),
+    SubmitTransactionError(String),
     #[error("Failed to fetch the receipt from the submitted transaction: {0}")]
-    FetchReceiptError(alloy::providers::PendingTransactionError),
+    FetchReceiptError(String),
     #[error("The Ethereum RPC url was not valid.")]
     InvalidRPCUrl,
+    #[error("The chain ID {0} is not in the list of named chains.")]
+    ChainIdUnknown(u64),
 }
 
 /// Create a provider based on the private key from the configuration.
 pub async fn create_provider(config: &AnomaPayConfig) -> RpcResult<DynProvider> {
     let provider = ProviderBuilder::new()
         .wallet(config.hot_wallet_private_key.clone())
-        .connect_http(config.ethereum_rpc.parse().map_err(|_e| InvalidRPCUrl)?)
+        .connect_http(config.ethereum_rpc.parse().map_err(|_| InvalidRPCUrl)?)
         .erased();
 
     Ok(provider)
+}
+
+pub fn named_chain_from_config(config: &AnomaPayConfig) -> RpcResult<NamedChain> {
+    let chain_id = config.chain_id;
+    NamedChain::try_from(chain_id).map_err(|_| RpcError::ChainIdUnknown(chain_id))
 }
 
 /// Submit a transaction to the protocol adapter and wait for the receipt.
@@ -48,13 +59,13 @@ pub async fn pa_submit_transaction(
         .execute(tx)
         .send()
         .await
-        .map_err(SubmitTransactionError)?;
+        .map_err(|err| SubmitTransactionError(err.to_string()))?;
 
     // Wait for the transaction to be confirmed by waiting for the receipt.
     let receipt = transaction_builder
         .get_receipt()
         .await
-        .map_err(FetchReceiptError)?;
+        .map_err(|err| FetchReceiptError(err.to_string()))?;
 
     // From the receipt, get the transaction hash.
     let tx_hash = receipt.transaction_hash();
