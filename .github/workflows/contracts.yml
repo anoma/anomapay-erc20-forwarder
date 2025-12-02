@@ -78,11 +78,11 @@ jobs:
       - name: Run Forge tests
         run: forge test --gas-report
         env:
-          API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
         working-directory: ./contracts
 
       - name: Run Forge coverage
         run: forge coverage --no-match-coverage "(script|test)" --report summary
         env:
-          API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
         working-directory: ./contracts
