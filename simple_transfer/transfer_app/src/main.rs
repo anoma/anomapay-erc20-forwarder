@@ -22,7 +22,7 @@ use utoipa_swagger_ui::SwaggerUi;
 /// The `AnomaPayConfig` struct holds all necessary secret information about the Anomapay backend.
 /// It contains the private key for submitting transactions, the address for the indexer, etc.
 pub struct AnomaPayConfig {
-    /// The chain_id of the ethereum network
+    /// The chain ID of the ethereum network
     chain_id: u64,
     /// url of the ethereum rpc
     #[allow(dead_code)]
