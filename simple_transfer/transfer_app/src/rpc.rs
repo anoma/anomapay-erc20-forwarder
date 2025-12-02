@@ -6,7 +6,6 @@ use crate::{
 use alloy::hex::ToHexExt;
 use alloy::network::ReceiptResponse;
 use arm::transaction::Transaction;
-// use evm_protocol_adapter_bindings::call::protocol_adapter;
 use evm_protocol_adapter_bindings::contract::protocol_adapter;
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
 pub type RpcResult<T> = Result<T, RpcError>;

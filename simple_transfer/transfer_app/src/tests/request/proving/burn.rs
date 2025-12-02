@@ -30,7 +30,7 @@ async fn test_create_burn_transaction() {
     dotenv::dotenv().ok();
 
     // Load the configuration parameters.
-    let config = load_config().expect("failed to load config in test");
+    let config = load_config().await.expect("failed to load config in test");
     // Create a keychain with a private key
     let user = user_with_private_key(&config);
 
@@ -56,7 +56,7 @@ pub async fn test_submit_burn_transaction() {
     dotenv::dotenv().ok();
 
     // Load the configuration parameters.
-    let config = load_config().expect("failed to load config in test");
+    let config = load_config().await.expect("failed to load config in test");
     // Create a keychain with a private key
     let user = user_with_private_key(&config);
 

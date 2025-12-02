@@ -18,7 +18,7 @@ use crate::{
 /// should be exactly the same.
 async fn serialize_mint() {
     // Load the configuration parameters.
-    let config = load_config().expect("failed to load config in test");
+    let config = load_config().await.expect("failed to load config in test");
     // Create a keychain with a private key
     let user = user_with_private_key(&config);
 
@@ -39,7 +39,7 @@ async fn serialize_mint() {
 /// should be exactly the same.
 async fn serialize_burn() {
     // Load the configuration parameters.
-    let config = load_config().expect("failed to load config in test");
+    let config = load_config().await.expect("failed to load config in test");
     // Create a keychain with a private key
     let user = user_with_private_key(&config);
 
@@ -66,7 +66,7 @@ async fn serialize_burn() {
 /// should be exactly the same.
 async fn serialize_split() {
     // Load the configuration parameters.
-    let config = load_config().expect("failed to load config in test");
+    let config = load_config().await.expect("failed to load config in test");
     // Create a keychain with a private key
     let user = user_with_private_key(&config);
     let other_user = user_without_private_key();
@@ -93,7 +93,7 @@ async fn serialize_split() {
 /// should be exactly the same.
 async fn serialize_transfer() {
     // Load the configuration parameters.
-    let config = load_config().expect("failed to load config in test");
+    let config = load_config().await.expect("failed to load config in test");
     // Create a keychain with a private key
     let user = user_with_private_key(&config);
     let other_user = user_without_private_key();
