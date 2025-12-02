@@ -21,7 +21,7 @@ pub const DEFAULT_DEADLINE: u64 = 1893456000;
 /// Creates a keychain to represent a user.
 pub fn user_with_private_key(config: &AnomaPayConfig) -> Keychain {
     Keychain::alice(
-        config.hot_wallet_address.encode_hex(),
+        config.hot_wallet_private_key.address().encode_hex(),
         Some(config.hot_wallet_private_key.clone()),
     )
 }

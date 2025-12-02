@@ -83,7 +83,7 @@ impl CreatedWitnessData for CreatedPersistent {
             &self.receiver_discovery_public_key,
             self.receiver_authorization_verifying_key,
             self.receiver_encryption_public_key,
-            forwarder_address(&config)?.to_vec(),
+            forwarder_address(config)?.to_vec(),
             self.token_contract_address.to_vec(),
         );
         Ok(WitnessTypes::Token(Box::new(witness)))

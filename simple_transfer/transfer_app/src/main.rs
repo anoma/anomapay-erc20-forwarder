@@ -11,7 +11,6 @@ use crate::web::webserver::{
     all_options, default_error, estimate_fee, health, send_transaction, unprocessable, Cors,
 };
 use crate::web::ApiDoc;
-use alloy::primitives::Address;
 use alloy::providers::{Provider, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;
 use rocket::{catchers, launch, routes};
@@ -31,9 +30,6 @@ pub struct AnomaPayConfig {
     /// url of the anoma indexer
     #[allow(dead_code)]
     indexer_address: String,
-    /// the address of the hot wallet
-    #[allow(dead_code)]
-    hot_wallet_address: Address,
     /// the private key of the hot wallet
     #[allow(dead_code)]
     hot_wallet_private_key: PrivateKeySigner,
@@ -52,16 +48,12 @@ async fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
         .parse()
         .map_err(|_| "HOT_WALLET_PRIVATE_KEY invalid")?;
 
-    let provider = ProviderBuilder::new()
+    let chain_id = ProviderBuilder::new()
         .wallet(hot_wallet_private_key.clone())
         .connect_http(ethereum_rpc.parse().map_err(|_e| InvalidRPCUrl)?)
-        .erased();
-
-    let chain_id = provider.get_chain_id().await?;
-
-    let hot_wallet_address: String =
-        env::var("HOT_WALLET_USER_ADDRESS").map_err(|_| "HOT_WALLET_USER_ADDRESS not set")?;
-    let hot_wallet_address: Address = hot_wallet_address.parse()?;
+        .erased()
+        .get_chain_id()
+        .await?;
 
     let alchemy_api_key: String =
         env::var("ALCHEMY_API_KEY").map_err(|_| "ALCHEMY_API_KEY not set")?;
@@ -71,7 +63,6 @@ async fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
         ethereum_rpc,
         indexer_address,
         hot_wallet_private_key,
-        hot_wallet_address,
         alchemy_api_key,
     })
 }
