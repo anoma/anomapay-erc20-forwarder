@@ -43,8 +43,8 @@ pub fn random_nonce() -> [u8; 32] {
 /// forwarder contract is used for multiple tokens, so the tuple (forwarder address, token
 /// contract) uniquely identifies a resource.
 pub fn label_ref(config: &AnomaPayConfig, token_address: Address) -> Digest {
-    let named_chain = named_chain_from_config(config).unwrap(); // TODO refactor
-    let forwarder_address = erc20_forwarder_address(&named_chain).unwrap(); // TODO refactor
+    let named_chain = named_chain_from_config(config).unwrap();
+    let forwarder_address = erc20_forwarder_address(&named_chain).unwrap();
 
     *Impl::hash_bytes(&[forwarder_address.to_vec(), token_address.to_vec()].concat())
 }
@@ -64,7 +64,7 @@ pub async fn create_permit_signature(
         .expect("failed to create action tree root");
     let action_tree_encoded: &[u8] = action_tree_root.as_ref();
 
-    let named_chain = named_chain_from_config(config).unwrap(); // TODO refactor
+    let named_chain = named_chain_from_config(config).unwrap();
 
     let x = Permit2Data {
         chain_id: 11155111,
@@ -72,7 +72,7 @@ pub async fn create_permit_signature(
         amount: U256::from(amount),
         nonce: U256::from_be_bytes(nullifier),
         deadline: U256::from(deadline),
-        spender: erc20_forwarder_address(&named_chain).unwrap(), // TODO refactor
+        spender: erc20_forwarder_address(&named_chain).unwrap(),
         action_tree_root: B256::from_slice(action_tree_encoded),
     };
 
