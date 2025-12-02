@@ -45,41 +45,22 @@ To build the entire workspace:
 cargo build
 ```
 
-If you want to use local proving, enable the `gpu` feature flag:
-
-```shell
-cargo build --features gpu
-```
-
-Note: CUDA can be tricky, and heavily depends on how your system is configured. You will at least need to know the path
-to the cuda library (e.g., `/usr/local/cuda/lib64`) and the path to your cuda binaries (e.g., `/usr/local/cuda-13.
-0/bin`). The cuda library path contains files such as `libculibos.a`. The cuda binaries path contains files such as
-`cuda-gdb-minimal`. Based on these paths, set the following env vars before compiling.
-
-```
-export LD_LIBRARY_PATH=/usr/local/cuda-13.0/lib64:${LD_LIBRARY_PATH}
-export PATH=/usr/local/cuda/bin:$PATH
-```
-
 ## Running
 
 To run the application, some parameters need to be passed via the environment.
 
 | Variable                         | Meaning                                                 | Example                  |
 |----------------------------------|---------------------------------------------------------|--------------------------|
-| `FEE_PAYMENT_WALLET_PRIVATE_KEY` | The hex encoded private key for the fee payment account | 0x00                     |
 | `RPC_URL`                        | URL for Ethereum RPC defining the network               | https://sepolia.drpc.org |
-| `INDEXER_ADDRESS`                | URL for the anoma indexer                               | http://example.com       |
-| `ALCHEMY_API_KEY`                | Key for Alchemy API services                            | `123456-ABCDEF`          | 
+| `GALILEO_INDEXER_ADDRESS`        | URL for the anoma indexer                               | http://example.com       |
+| `FEE_PAYMENT_WALLET_PRIVATE_KEY` | The hex encoded private key for the fee payment account | 0x00                     |
+| `ALCHEMY_API_KEY`                | Key for Alchemy API services                            | `123456-ABCDEF`          |
 
-To run the application, simply execute `cargo run`. If you want to use local proving, ensure the bonsai environment
-variables are unset (e.g., `unset BONSAI_API_KEY; unset BONSAI_API_URL`), and run `cargo run --features gpu`.
+To run the application, simply execute `cargo run`.
 
 ### Docker
 
-There is a Docker image in the repo to build your own image. Note that the
-docker image uses local proving and requires you to install nvidia cuda
-container tools.
+There is a Docker image in the repo to build your own image.
 
 ```shell
 docker build -t transfer .
@@ -88,22 +69,7 @@ docker build -t transfer .
 Run the container as follows. Replace the values as necessary.
 
 ```shell
-docker run -it --rm -p 8000:8000 --runtime=nvidia --gpus all transfer
-```
-
-## Generate example JSON
-
-The application has a flag to generate an example JSON request to mint.
-
-```shell
-cargo run -- --minting-example
-```
-
-if you have the application running a webserver somewhere, you can pipe the
-output through to a `curl` request.
-
-```shell
-cargo run -- --minting-example | curl -X POST -H "Content-Type: application/json" -d @- http://localhost:8000/api/mint
+docker run -it --rm -p 8000:8000 transfer
 ```
 
 ## Contracts
