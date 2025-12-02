@@ -14,12 +14,14 @@ gpu = ["arm/cuda"]
 
 [dependencies]
 alloy = { version = "1.0.23", features = ["full"] }
+alloy-chains = "0.2.21"
 arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = false, features = ["transaction"] }
 arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
 async-trait = "0.1.89"
 bincode = "1.3.3"
 chrono = "0.4.42"
 evm_protocol_adapter_bindings = { git = "https://github.com/anoma/evm-protocol-adapter", tag = "bindings/v1.0.0-rc.6" }
+erc20_forwarder_bindings = { path = "../../bindings" }
 futures = { version = "0.3.31", features = ["thread-pool"] }
 itertools = "0.14.0"
 k256 = { version = "0.13", features = ["serde"] }

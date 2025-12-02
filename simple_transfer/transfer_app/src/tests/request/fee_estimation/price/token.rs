@@ -9,7 +9,7 @@ use strum::IntoEnumIterator;
 #[tokio::test]
 async fn test_token_price_fetches_prices_for_all_supported_tokens() {
     dotenv::dotenv().ok();
-    let config = load_config().expect("failed to load config in test");
+    let config = load_config().await.expect("failed to load config in test");
 
     let tokens: Vec<Token> = vec![
         FeeCompatibleERC20Token::iter().next().unwrap().into(),

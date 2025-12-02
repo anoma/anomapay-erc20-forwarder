@@ -10,7 +10,8 @@ organized in a workspace structure.
 
 ## Security
 
-If you believe you've found a security issue, we encourage you to notify us via Email at [security@anoma.foundation](mailto:security@anoma.foundation).
+If you believe you've found a security issue, we encourage you to notify us via Email
+at [security@anoma.foundation](mailto:security@anoma.foundation).
 
 Please do not use the issue tracker for security issues. We welcome working with you to resolve the issue promptly.
 
@@ -64,13 +65,12 @@ export PATH=/usr/local/cuda/bin:$PATH
 
 To run the application, some parameters need to be passed via the environment.
 
-| Variable                  | Meaning                                              | Example                              |
-|---------------------------|------------------------------------------------------|--------------------------------------|
-| `HOT_WALLET_PRIVATE_KEY`  | The hex encoded private key for the account          | 00                                   |
-| `HOT_WALLET_USER_ADDRESS` | The hex encoded address belonging to the private key | 0x00                                 |
-| `ETHEREUM_RPC`            | URL for blockchain communication                     | https://eth-sepolia.g.alchemy.com/v2 |
-| `FORWARDER_ADDRESS`       | The hex encoded address of the forwarder contract    | 0x00                                 |
-| `INDEXER_ADDRESS`         | URL for the anoma indexer                            | http://example.com                   |
+| Variable                 | Meaning                                     | Example                              |
+|--------------------------|---------------------------------------------|--------------------------------------|
+| `HOT_WALLET_PRIVATE_KEY` | The hex encoded private key for the account | 0x00                                 |
+| `ETHEREUM_RPC`           | URL for blockchain communication            | https://eth-sepolia.g.alchemy.com/v2 |
+| `INDEXER_ADDRESS`        | URL for the anoma indexer                   | http://example.com                   |
+| `ALCHEMY_API_KEY`        | Key for Alchemy API services                | `123456-ABCDEF`                      | 
 
 To run the application, simply execute `cargo run`. If you want to use local proving, ensure the bonsai environment
 variables are unset (e.g., `unset BONSAI_API_KEY; unset BONSAI_API_URL`), and run `cargo run --features gpu`.
@@ -180,13 +180,14 @@ forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
 ```
 
 forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
- --sig "run(bool,address,bytes32,address)" true $PA_ADDRESS $CARRIER_LOGIC_REF $SENDER_ADDRESS \
- --rpc-url sepolia
+--sig "run(bool,address,bytes32,address)" true $PA_ADDRESS $CARRIER_LOGIC_REF $SENDER_ADDRESS \
+--rpc-url sepolia
 
 Append the
 
 - `--broadcast` flag to deploy on sepolia
-- `--verify --slow` flags for subsequent contract verification on Etherscan (`--slow` adds 15 seconds of waiting time between verification attempts)
+- `--verify --slow` flags for subsequent contract verification on Etherscan (`--slow` adds 15 seconds of waiting time
+  between verification attempts)
 - `--account <ACCOUNT_NAME>` flag to use a previously imported keystore (see `cast wallet --help` for more info)
 
 #### Block Explorer Verification

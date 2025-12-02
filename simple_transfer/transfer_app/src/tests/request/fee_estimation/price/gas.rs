@@ -9,7 +9,7 @@ use alloy::providers::Provider;
 async fn test_gas_price_returns_the_gas_price_in_wei() {
     dotenv::dotenv().ok();
 
-    let config = load_config().expect("failed to load config");
+    let config = load_config().await.expect("failed to load config");
     let provider = create_provider(&config)
         .await
         .expect("failed to create provider");

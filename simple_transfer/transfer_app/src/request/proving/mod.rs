@@ -5,13 +5,14 @@ pub mod parameters;
 pub mod resources;
 pub mod witness_data;
 
+use crate::rpc::RpcError;
 use arm::Digest;
 use serde::Serialize;
 use thiserror::Error;
 
 pub type ProvingResult<T> = Result<T, ProvingError>;
 
-#[derive(Error, Debug, Clone, Serialize)]
+#[derive(Error, Debug, Serialize)]
 pub enum ProvingError {
     #[error("The nullifier key was invalid for the consumed resource.")]
     InvalidNullifierKey,
@@ -33,4 +34,8 @@ pub enum ProvingError {
     MerklePathNotFound,
     #[error("The action tree root is invalid.")]
     InvalidActionTreeRoot,
+    #[error("An error occurred related to the contract bindings {0:?}.")]
+    ForwarderBindingsError(erc20_forwarder_bindings::contract::BindingsError),
+    #[error("An error occurred related to the RPC provider {0:?}.")]
+    ProviderError(RpcError),
 }

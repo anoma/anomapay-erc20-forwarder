@@ -5,8 +5,11 @@ use crate::indexer::pa_merkle_path;
 use crate::request::proving::witness_data::{
     ConsumedWitnessData, CreatedWitnessData, WitnessTypes,
 };
-use crate::request::proving::ProvingError::MerklePathNotFound;
+use crate::request::proving::ProvingError::{
+    ForwarderBindingsError, MerklePathNotFound, ProviderError,
+};
 use crate::request::proving::ProvingResult;
+use crate::rpc::named_chain_from_config;
 use crate::web::serializer::serialize_affine_point;
 use crate::web::serializer::serialize_auth_verifying_key;
 use crate::web::serializer::serialize_authorization_signature;
@@ -18,6 +21,7 @@ use arm::resource::Resource;
 use arm::Digest;
 use arm_gadgets::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use async_trait::async_trait;
+use erc20_forwarder_bindings::addresses::erc20_forwarder_address;
 use k256::AffinePoint;
 use rocket::serde::{Deserialize, Serialize};
 use serde_with::base64::Base64;
@@ -79,7 +83,7 @@ impl CreatedWitnessData for CreatedPersistent {
             &self.receiver_discovery_public_key,
             self.receiver_authorization_verifying_key,
             self.receiver_encryption_public_key,
-            config.forwarder_address.to_vec(),
+            forwarder_address(config)?.to_vec(),
             self.token_contract_address.to_vec(),
         );
         Ok(WitnessTypes::Token(Box::new(witness)))
@@ -117,7 +121,7 @@ impl CreatedWitnessData for CreatedEphemeral {
         let witness = TransferLogic::burn_resource_logic(
             resource,
             action_tree_root,
-            config.forwarder_address.to_vec(),
+            forwarder_address(config)?.to_vec(),
             self.token_contract_address.to_vec(),
             self.receiver_wallet_address.to_vec(),
         );
@@ -162,7 +166,7 @@ impl ConsumedWitnessData for ConsumedEphemeral {
             resource,
             action_tree_root,
             nullifier_key,
-            config.forwarder_address.to_vec(),
+            forwarder_address(config)?.to_vec(),
             self.token_contract_address.to_vec(),
             self.sender_wallet_address.to_vec(),
             self.permit2_data.nonce.clone(),
@@ -237,4 +241,20 @@ impl ConsumedWitnessData for ConsumedPersistent {
             MerklePathNotFound
         })
     }
+}
+
+fn forwarder_address(config: &AnomaPayConfig) -> ProvingResult<Address> {
+    let named_chain = named_chain_from_config(config).map_err(ProviderError)?;
+
+    let forwarder_address = match erc20_forwarder_address(&named_chain) {
+        Some(addr) => addr,
+        None => {
+            return Err(ForwarderBindingsError(
+                erc20_forwarder_bindings::contract::BindingsError::UnsupportedChain(
+                    named_chain.to_string(),
+                ),
+            ))
+        }
+    };
+    Ok(forwarder_address)
 }

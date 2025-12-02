@@ -2,22 +2,22 @@ use crate::addresses::erc20_forwarder_address;
 use crate::contract::ERC20Forwarder::ERC20ForwarderInstance;
 use alloy::providers::{DynProvider, Provider};
 use alloy::sol;
-use alloy::transports::{RpcError, TransportErrorKind};
 use alloy_chains::NamedChain;
+use serde::Serialize;
 use thiserror::Error;
 
 pub type BindingsResult<T> = Result<T, BindingsError>;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize)]
 pub enum BindingsError {
-    #[error("The chain ID returned by the RPC transport is not in the list of named chains.")]
-    ChainIdUnkown,
     #[error("The RPC transport returned an error.")]
-    RpcTransportError(RpcError<TransportErrorKind>),
+    RpcTransportError(String),
+    #[error("The chain ID {0} is not in the list of named chains.")]
+    ChainIdUnknown(u64),
     #[error(
         "The current protocol adapter version has not been deployed on the provided chain '{0}'."
     )]
-    UnsupportedChain(NamedChain),
+    UnsupportedChain(String),
 }
 
 sol!(
@@ -29,18 +29,18 @@ sol!(
 );
 
 pub async fn erc20_forwarder(
-    provider: DynProvider,
+    provider: &DynProvider,
 ) -> BindingsResult<ERC20ForwarderInstance<DynProvider>> {
-    let named_chain = NamedChain::try_from(
-        provider
-            .get_chain_id()
-            .await
-            .map_err(BindingsError::RpcTransportError)?,
-    )
-    .map_err(|_| BindingsError::ChainIdUnkown)?;
+    let chain_id = provider
+        .get_chain_id()
+        .await
+        .map_err(|err| BindingsError::RpcTransportError(err.to_string()))?;
+
+    let named_chain =
+        NamedChain::try_from(chain_id).map_err(|_| BindingsError::ChainIdUnknown(chain_id))?;
 
     match erc20_forwarder_address(&named_chain) {
-        Some(address) => Ok(ERC20ForwarderInstance::new(address, provider)),
-        None => Err(BindingsError::UnsupportedChain(named_chain)),
+        Some(address) => Ok(ERC20ForwarderInstance::new(address, provider.clone())),
+        None => Err(BindingsError::UnsupportedChain(named_chain.to_string())),
     }
 }

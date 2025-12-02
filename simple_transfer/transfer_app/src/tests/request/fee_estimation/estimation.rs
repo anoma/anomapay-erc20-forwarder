@@ -18,7 +18,7 @@ use rocket::State;
 async fn test_estimate_fee() {
     dotenv::dotenv().ok();
 
-    let config = load_config().expect("failed to load config in test");
+    let config = load_config().await.expect("failed to load config in test");
     let user = user_with_private_key(&config);
 
     let payload = FeeEstimationPayload {
@@ -35,7 +35,7 @@ async fn test_estimate_fee() {
 async fn test_estimate_fee_unit_quantity() {
     dotenv::dotenv().ok();
 
-    let config = load_config().expect("failed to load config");
+    let config = load_config().await.expect("failed to load config");
     let provider = create_provider(&config)
         .await
         .expect("failed to create provider");
@@ -55,7 +55,7 @@ async fn test_estimate_fee_unit_quantity() {
 async fn test_get_token_price_in_ether() {
     dotenv::dotenv().ok();
 
-    let config = load_config().expect("failed to load config in test");
+    let config = load_config().await.expect("failed to load config in test");
 
     let res = get_ether_price_in_tokens(
         &config,
