@@ -17,6 +17,19 @@ permissions:
   contents: read
 
 jobs:
+  taplo:
+    name: Taplo Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: taplo-cli
+      - name: Install just
+        uses: extractions/setup-just@v3
+      - name: Run Taplo format check
+        run: taplo fmt --check
+        
   lints:
     name: ${{ matrix.command.step }}
     runs-on: ubuntu-latest

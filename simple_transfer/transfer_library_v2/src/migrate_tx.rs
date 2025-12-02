@@ -1,5 +1,6 @@
 use crate::TransferLogicV2;
 use arm::{
+    Digest,
     action::Action,
     action_tree::MerkleTree,
     compliance::ComplianceWitness,
@@ -12,7 +13,6 @@ use arm::{
     proving_system::ProofType,
     resource::Resource,
     transaction::{Delta, Transaction},
-    Digest,
 };
 use arm_gadgets::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use k256::AffinePoint;

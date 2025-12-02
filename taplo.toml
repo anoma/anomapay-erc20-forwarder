@@ -1,4 +1,17 @@
-include = ["Cargo.toml", "simple_transfer/transfer_app/Cargo.toml", "simple_transfer/transfer_circuit/Cargo.toml", "simple_transfer/transfer_library/Cargo.toml", "simple_transfer/transfer_witness/Cargo.toml"]
+include = [
+    "Cargo.toml", 
+    "simple_transfer/transfer_app/Cargo.toml",
+    "simple_transfer/transfer_circuit/Cargo.toml",
+    "simple_transfer/transfer_circuit/methods/Cargo.toml",
+    "simple_transfer/transfer_circuit/methods/guest/Cargo.toml",
+    "simple_transfer/transfer_circuit_v2/Cargo.toml",
+    "simple_transfer/transfer_circuit_v2/methods/Cargo.toml",
+    "simple_transfer/transfer_circuit_v2/methods/guest/Cargo.toml",
+    "simple_transfer/transfer_library/Cargo.toml",
+    "simple_transfer/transfer_library_v2/Cargo.toml",
+    "simple_transfer/transfer_witness/Cargo.toml",
+    "simple_transfer/transfer_witness_v2/Cargo.toml"
+]
 
 [formatting]
 reorder_keys = true

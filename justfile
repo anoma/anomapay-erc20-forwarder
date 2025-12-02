@@ -18,3 +18,9 @@ test:
 
 check:
     cargo check
+
+taplo:
+    taplo fmt
+
+taplo-check:
+    taplo fmt --check

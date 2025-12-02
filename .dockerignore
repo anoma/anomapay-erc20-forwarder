@@ -16,3 +16,11 @@ target/
 # Docker
 Dockerfile
 .dockerignore
+
+# Misc
+taplo.toml
+rust-toolchain.toml
+README.md
+justfile
+docker-compose.yml
+.github/workflows

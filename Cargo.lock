@@ -7777,7 +7777,7 @@ dependencies = [
 
 [[package]]
 name = "transfer_library_v2"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "arm",
  "arm-gadgets",
@@ -7806,7 +7806,7 @@ dependencies = [
 
 [[package]]
 name = "transfer_witness_v2"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",

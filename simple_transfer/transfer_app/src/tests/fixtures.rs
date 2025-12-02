@@ -1,10 +1,10 @@
 #![cfg(test)]
 //! Contains fixtures to generate test data in the test suite.
 
-use crate::rpc::named_chain_from_config;
-use crate::tests::permit2::{permit_witness_transfer_from_signature, Permit2Data};
-use crate::user::Keychain;
 use crate::AnomaPayConfig;
+use crate::rpc::named_chain_from_config;
+use crate::tests::permit2::{Permit2Data, permit_witness_transfer_from_signature};
+use crate::user::Keychain;
 use alloy::hex::ToHexExt;
 use alloy::primitives::{Address, B256, Signature, U256, address};
 use alloy::signers::local::PrivateKeySigner;

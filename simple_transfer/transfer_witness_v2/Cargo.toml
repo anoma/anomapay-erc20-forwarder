@@ -1,13 +1,16 @@
 [package]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 name = "transfer_witness_v2"
-version = "0.1.0"
-edition = "2021"
+readme.workspace = true
+version.workspace = true
 
 [dependencies]
-serde = { workspace = true }
-arm = { workspace = true }
-arm-gadgets = { workspace = true }
-transfer_witness = { workspace = true }
 alloy-primitives = { workspace = true }
 alloy-sol-types = { workspace = true }
+arm = { workspace = true }
+arm-gadgets = { workspace = true }
 bincode = { workspace = true }
+serde = { workspace = true }
+transfer_witness = { workspace = true }

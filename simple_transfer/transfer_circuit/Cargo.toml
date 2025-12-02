@@ -1,8 +1,8 @@
 [package]
-name = "simple-transfer"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+name = "simple-transfer"
 readme.workspace = true
 version.workspace = true
 
@@ -10,9 +10,9 @@ version.workspace = true
 
 [dependencies]
 arm = { workspace = true }
-transfer_witness = { workspace = true }
-transfer_library = { workspace = true }
 arm-gadgets = { workspace = true }
+transfer_library = { workspace = true }
+transfer_witness = { workspace = true }
 
 [dev-dependencies]
 bincode = "1.3.3"

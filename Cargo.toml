@@ -1,5 +1,9 @@
 [workspace]
-members = ["simple_transfer/transfer_app", "bindings", "simple_transfer/transfer_library_v2"]
+members = [
+  "simple_transfer/transfer_app",
+  "bindings",
+  "simple_transfer/transfer_library_v2",
+]
 resolver = "3"
 
 [workspace.package]
@@ -44,11 +48,11 @@ arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-fea
 arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
 evm_protocol_adapter_bindings = { git = "https://github.com/anoma/evm-protocol-adapter", tag = "bindings/v1.0.0-rc.6" }
 
+erc20_forwarder_bindings = { path = "bindings" }
 transfer_library = { path = "simple_transfer/transfer_library" }
 transfer_library_v2 = { path = "simple_transfer/transfer_library_v2" }
 transfer_witness = { path = "simple_transfer/transfer_witness" }
 transfer_witness_v2 = { path = "simple_transfer/transfer_witness_v2" }
-erc20_forwarder_bindings = { path = "bindings" }
 
 # Always optimize; building and running the guest takes much longer without optimization.
 [profile.dev]

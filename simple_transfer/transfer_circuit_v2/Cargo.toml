@@ -1,14 +1,17 @@
 [package]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 name = "token-transfer-v2"
-version = "0.1.0"
-edition = "2021"
+readme.workspace = true
+version.workspace = true
 
 [workspace]
 
 [dependencies]
-arm =  { workspace = true }
-transfer_witness = { workspace = true }
-transfer_library = { workspace = true }
-transfer_witness_v2 = { workspace = true }
-transfer_library_v2 = { workspace = true }
+arm = { workspace = true }
 arm-gadgets = { workspace = true }
+transfer_library = { workspace = true }
+transfer_library_v2 = { workspace = true }
+transfer_witness = { workspace = true }
+transfer_witness_v2 = { workspace = true }

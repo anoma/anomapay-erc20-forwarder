@@ -1,8 +1,8 @@
 [package]
-name = "transfer_app"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+name = "transfer_app"
 readme.workspace = true
 version.workspace = true
 
@@ -24,8 +24,9 @@ async-trait = { workspace = true }
 base64 = { workspace = true }
 bincode = { workspace = true }
 chrono = { workspace = true }
-evm_protocol_adapter_bindings = { workspace = true }
+enum_dispatch = { workspace = true }
 erc20_forwarder_bindings = { workspace = true }
+evm_protocol_adapter_bindings = { workspace = true }
 futures = { workspace = true, features = ["thread-pool"] }
 itertools = { workspace = true }
 k256 = { workspace = true, features = ["serde"] }
@@ -45,7 +46,6 @@ transfer_witness = { workspace = true }
 typetag = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
-enum_dispatch = { workspace = true }
 
 [dev-dependencies]
 dotenv = { workspace = true }

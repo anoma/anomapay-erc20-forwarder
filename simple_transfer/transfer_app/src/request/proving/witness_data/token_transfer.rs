@@ -3,12 +3,12 @@
 
 use crate::AnomaPayConfig;
 use crate::indexer::pa_merkle_path;
+use crate::request::proving::ProvingError::{
+    ForwarderBindingsError, MerklePathNotFound, ProviderError,
+};
 use crate::request::proving::ProvingResult;
 use crate::request::proving::witness_data::{
     ConsumedWitnessData, CreatedWitnessData, WitnessTypes,
-};
-use crate::request::proving::ProvingError::{
-    ForwarderBindingsError, MerklePathNotFound, ProviderError,
 };
 use crate::rpc::named_chain_from_config;
 use crate::web::serializer::serialize_affine_point;
@@ -253,7 +253,7 @@ fn forwarder_address(config: &AnomaPayConfig) -> ProvingResult<Address> {
                 erc20_forwarder_bindings::contract::BindingsError::UnsupportedChain(
                     named_chain.to_string(),
                 ),
-            ))
+            ));
         }
     };
     Ok(forwarder_address)
