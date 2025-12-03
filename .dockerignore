@@ -24,3 +24,4 @@ README.md
 justfile
 docker-compose.yml
 .github/workflows
+.editorconfig
