@@ -6,8 +6,8 @@ use arm_gadgets::{
 };
 use transfer_library::TransferLogic;
 use transfer_witness::{
-    calculate_label_ref, calculate_persistent_value_ref, calculate_value_ref_from_ethereum_account_addr,
-    ValueInfo,
+    calculate_label_ref, calculate_persistent_value_ref,
+    calculate_value_ref_from_ethereum_account_addr, ValueInfo,
 };
 
 const FORWARDER_ADDR: [u8; 20] = [0u8; 20];
@@ -162,7 +162,7 @@ fn test_transfer() {
     let expected_plaintext = bincode::serialize(&ResourceWithLabel {
         resource: created_resource,
         forwarder: FORWARDER_ADDR.to_vec(),
-        token: ERC20_ADDR.to_vec(),
+        erc20_token_addr: ERC20_ADDR.to_vec(),
     })
     .unwrap();
     assert_eq!(plaintext.as_bytes(), expected_plaintext);

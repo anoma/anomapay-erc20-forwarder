@@ -31,17 +31,17 @@ sol! {
 
 impl PermitTransferFrom {
     pub fn from_bytes(
-        token: &[u8],
+        erc20_token_addr: &[u8],
         amount: u128,
         nonce: &[u8],
         deadline: &[u8],
     ) -> Result<Self, ArmError> {
-        let token_addr: Address = token
+        let erc20_token_addr: Address = erc20_token_addr
             .try_into()
             .map_err(|_| ArmError::ProveFailed("Invalid token address bytes".to_string()))?;
         Ok(PermitTransferFrom {
             permitted: TokenPermissions {
-                token: token_addr,
+                token: erc20_token_addr,
                 amount: U256::from(amount),
             },
             nonce: B256::from_slice(nonce),
@@ -51,12 +51,12 @@ impl PermitTransferFrom {
 }
 
 pub fn encode_unwrap_forwarder_input(
-    token: &[u8],
+    erc20_token_addr: &[u8],
     ethereum_account_addr: &[u8],
     value: u128,
 ) -> Result<Vec<u8>, ArmError> {
-    // Encode as (CallType, token, to, value)
-    let token: Address = token
+    // Encode as (CallType, erc20_token_addr, to, value)
+    let token: Address = erc20_token_addr
         .try_into()
         .map_err(|_| ArmError::ProveFailed("Invalid token address bytes".to_string()))
         .unwrap();

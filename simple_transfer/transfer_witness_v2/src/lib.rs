@@ -115,10 +115,10 @@ impl TokenTransferWitnessV2 {
             .as_ref()
             .ok_or(ArmError::MissingField("Label info"))?;
 
-        // Check resource label: label = sha2(forwarder_addr, erc20_addr)
+        // Check resource label: label = sha2(forwarder_addr, erc20_token_addr)
         let forwarder_addr = label_info.forwarder_addr.as_ref();
-        let erc20_addr = label_info.token_addr.as_ref();
-        let label_ref = calculate_label_ref(forwarder_addr, erc20_addr);
+        let erc20_token_addr = label_info.erc20_token_addr.as_ref();
+        let label_ref = calculate_label_ref(forwarder_addr, erc20_token_addr);
         if self.resource.label_ref != label_ref {
             return Err(ArmError::ProveFailed(
                 "Invalid resource label_ref".to_string(),
@@ -138,7 +138,7 @@ impl TokenTransferWitnessV2 {
                     .as_ref()
                     .ok_or(ArmError::MissingField("Permit info"))?;
                 let permit = PermitTransferFrom::from_bytes(
-                    erc20_addr,
+                    erc20_token_addr,
                     self.resource.quantity,
                     permit_info.permit_nonce.as_ref(),
                     permit_info.permit_deadline.as_ref(),
@@ -163,10 +163,11 @@ impl TokenTransferWitnessV2 {
                     ));
                 }
 
-                // Check resource value_ref: value_ref[0..20] = ethereum_account_addr. We only
-                // need this for Unwrap to ensure authorization signature of the
-                // consumed persistent resource over the action_tree_root that
-                // contains the value_ref(ethereum_account_addr)
+                // Check resource value_ref: value_ref[0..20] =
+                // ethereum_account_addr. We only need this for Unwrap to ensure
+                // authorization signature of the consumed persistent resource
+                // over the action tree root covers a resource containing
+                // value_ref(ethereum_account_addr)
                 let ethereum_account_addr = forwarder_info
                     .ethereum_account_addr
                     .as_ref()
@@ -180,7 +181,7 @@ impl TokenTransferWitnessV2 {
                 }
 
                 encode_unwrap_forwarder_input(
-                    erc20_addr,
+                    erc20_token_addr,
                     ethereum_account_addr,
                     self.resource.quantity,
                 )?
@@ -244,7 +245,7 @@ impl TokenTransferWitnessV2 {
 
                 // check migrate_resource label_ref_v1
                 let migrate_label_ref_v1 =
-                    calculate_label_ref(&migrate_info.forwarder_addr, erc20_addr);
+                    calculate_label_ref(&migrate_info.forwarder_addr, erc20_token_addr);
                 if migrate_info.resource.label_ref != migrate_label_ref_v1 {
                     return Err(ArmError::ProveFailed(
                         "Invalid migrate resource label_ref".to_string(),
@@ -252,7 +253,7 @@ impl TokenTransferWitnessV2 {
                 }
 
                 encode_migrate_forwarder_input(
-                    erc20_addr,
+                    erc20_token_addr,
                     self.resource.quantity,
                     migrate_nf.as_bytes(),
                     migrate_root.as_bytes(),
@@ -306,7 +307,7 @@ impl TokenTransferWitnessV2 {
             .ok_or(ArmError::MissingField("Label info"))?;
         let label_ref = calculate_label_ref(
             label_info.forwarder_addr.as_ref(),
-            label_info.token_addr.as_ref(),
+            label_info.erc20_token_addr.as_ref(),
         );
 
         if self.resource.label_ref != label_ref {
@@ -325,7 +326,7 @@ impl TokenTransferWitnessV2 {
         let payload_plaintext = bincode::serialize(&ResourceWithLabel {
             resource: self.resource,
             forwarder: label_info.forwarder_addr.clone(),
-            token: label_info.token_addr.clone(),
+            erc20_token_addr: label_info.erc20_token_addr.clone(),
         })
         .map_err(|_| ArmError::InvalidResourceSerialization);
         let ciphertext = Ciphertext::encrypt_with_nonce(

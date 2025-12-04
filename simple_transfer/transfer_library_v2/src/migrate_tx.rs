@@ -24,7 +24,7 @@ pub fn construct_migrate_tx(
     latest_cm_tree_root: Digest,
     consumed_nf_key: NullifierKey,
     forwarder_addr: Vec<u8>,
-    token_addr: Vec<u8>,
+    erc20_token_addr: Vec<u8>,
 
     // Parameters for migrated resource via forwarder
     migrated_resource: Resource,
@@ -61,7 +61,7 @@ pub fn construct_migrate_tx(
         action_tree_root,
         consumed_nf_key,
         forwarder_addr.clone(),
-        token_addr.clone(),
+        erc20_token_addr.clone(),
         migrated_resource,
         migrated_nf_key,
         migrated_resource_path,
@@ -79,7 +79,7 @@ pub fn construct_migrate_tx(
         created_auth_pk,
         created_encryption_pk,
         forwarder_addr,
-        token_addr,
+        erc20_token_addr,
     );
     let created_logic_proof = created_resource_logic.prove(ProofType::Groth16)?;
 
@@ -111,10 +111,10 @@ fn simple_migrate_test() {
     let forwarder_addr_v1 = vec![0u8; 20];
     let logic_ref_v1 = Digest::default();
     let forwarder_addr_v2 = vec![1u8; 20];
-    let token_addr = vec![2u8; 20];
+    let erc20_token_addr = vec![2u8; 20];
     let quantity = 100;
-    let label_ref = calculate_label_ref(&forwarder_addr_v1, &token_addr);
-    let label_ref_v2 = calculate_label_ref(&forwarder_addr_v2, &token_addr);
+    let label_ref = calculate_label_ref(&forwarder_addr_v1, &erc20_token_addr);
+    let label_ref_v2 = calculate_label_ref(&forwarder_addr_v2, &erc20_token_addr);
 
     // Construct the migrated resource
     let migrated_auth_sk = AuthorizationSigningKey::from_bytes(&[9u8; 32]).unwrap();
@@ -192,7 +192,7 @@ fn simple_migrate_test() {
         latest_cm_tree_root,
         consumed_nf_key,
         forwarder_addr_v2,
-        token_addr,
+        erc20_token_addr,
         migrated_resource,
         migrated_nf_key,
         MerklePath::from_path(&[]), // dummy path

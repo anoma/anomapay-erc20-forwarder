@@ -95,7 +95,6 @@ fn test_migrate() {
         nf_key.clone(),
         FORWARDER_ADDR_V2.to_vec(),
         ERC20_ADDR.to_vec(),
-        USER_ADDR.to_vec(),
         migrated_resource,
         nf_key,                // using the same nf_key for simplicity
         MerklePath::default(), // using default path for simplicity, only a real tx needs a valid path

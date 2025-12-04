@@ -22,7 +22,7 @@ pub const TOKEN_TRANSFER_ELF: &[u8] = include_bytes!("../elf/token-transfer-gues
 lazy_static! {
     /// The identity of the binary that executes the proofs in the zkvm.
     pub static ref TOKEN_TRANSFER_ID: Digest =
-        Digest::from_hex("7615935371cad8c02f5aa0049445a0828aa3413cb779bbde8f526c0e672a9a91")
+        Digest::from_hex("e751cb8fb403db5bf7838ef434e952652c5e197fe61bd9d7a907e67c4f9d9725")
             .unwrap();
 }
 
@@ -95,12 +95,12 @@ impl TransferLogic {
         auth_pk: AuthorizationVerifyingKey,
         encryption_pk: AffinePoint,
         forwarder_address: Vec<u8>,
-        token_address: Vec<u8>,
+        erc20_token_addr: Vec<u8>,
     ) -> Self {
         let encryption_info = EncryptionInfo::new(discovery_pk);
         let label_info = LabelInfo {
             forwarder_addr: forwarder_address,
-            token_addr: token_address,
+            erc20_token_addr,
         };
         let value_info = ValueInfo {
             auth_pk,
@@ -126,7 +126,7 @@ impl TransferLogic {
         action_tree_root: Digest,
         nf_key: NullifierKey,
         forwarder_addr: Vec<u8>,
-        token_addr: Vec<u8>,
+        erc20_token_addr: Vec<u8>,
         ethereum_account_addr: Vec<u8>,
         permit_nonce: Vec<u8>,
         permit_deadline: Vec<u8>,
@@ -144,7 +144,7 @@ impl TransferLogic {
         };
         let label_info = LabelInfo {
             forwarder_addr,
-            token_addr,
+            erc20_token_addr,
         };
 
         Self::new(
@@ -165,7 +165,7 @@ impl TransferLogic {
         resource: Resource,
         action_tree_root: Digest,
         forwarder_addr: Vec<u8>,
-        token_addr: Vec<u8>,
+        erc20_token_addr: Vec<u8>,
         ethereum_account_addr: Vec<u8>,
     ) -> Self {
         let forwarder_info = ForwarderInfo {
@@ -175,7 +175,7 @@ impl TransferLogic {
         };
         let label_info = LabelInfo {
             forwarder_addr,
-            token_addr,
+            erc20_token_addr,
         };
 
         Self::new(

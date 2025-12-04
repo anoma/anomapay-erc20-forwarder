@@ -83,7 +83,7 @@ pub struct LabelInfo {
     /// Address of the forwarder contract for this resource.
     pub forwarder_addr: Vec<u8>,
     /// Address of the wrapped token within this resource (e.g. USDC).
-    pub token_addr: Vec<u8>,
+    pub erc20_token_addr: Vec<u8>,
 }
 
 /// ValueInfo holds information about value plaintext
@@ -112,7 +112,7 @@ pub struct PermitInfo {
 pub struct ResourceWithLabel {
     pub resource: Resource,
     pub forwarder: Vec<u8>,
-    pub token: Vec<u8>,
+    pub erc20_token_addr: Vec<u8>,
 }
 
 impl TokenTransferWitness {
@@ -158,10 +158,10 @@ impl TokenTransferWitness {
             .as_ref()
             .ok_or(ArmError::MissingField("Label info"))?;
 
-        // Check resource label: label = sha2(forwarder_addr, erc20_addr)
+        // Check resource label: label = sha2(forwarder_addr, erc20_token_addr)
         let forwarder_addr = label_info.forwarder_addr.as_ref();
-        let erc20_addr = label_info.token_addr.as_ref();
-        let label_ref = calculate_label_ref(forwarder_addr, erc20_addr);
+        let erc20_token_addr = label_info.erc20_token_addr.as_ref();
+        let label_ref = calculate_label_ref(forwarder_addr, erc20_token_addr);
         if self.resource.label_ref != label_ref {
             return Err(ArmError::ProveFailed(
                 "Invalid resource label_ref".to_string(),
@@ -183,7 +183,7 @@ impl TokenTransferWitness {
                 .as_ref()
                 .ok_or(ArmError::MissingField("Permit info"))?;
             let permit = PermitTransferFrom::from_bytes(
-                erc20_addr,
+                erc20_token_addr,
                 self.resource.quantity,
                 permit_info.permit_nonce.as_ref(),
                 permit_info.permit_deadline.as_ref(),
@@ -202,10 +202,11 @@ impl TokenTransferWitness {
                 ));
             }
 
-            // Check resource value_ref: value_ref[0..20] = ethereum_account_addr. We only
-            // need this for Unwrap to ensure authorization signature of the
-            // consumed persistent resource over the action_tree_root that
-            // contains the value_ref(ethereum_account_addr)
+            // Check resource value_ref: value_ref[0..20] =
+            // ethereum_account_addr. We only need this for Unwrap to ensure
+            // authorization signature of the consumed persistent resource over
+            // the action tree root covers a resource containing
+            // value_ref(ethereum_account_addr)
             let value_ref = calculate_value_ref_from_ethereum_account_addr(ethereum_account_addr);
             if self.resource.value_ref != value_ref {
                 return Err(ArmError::ProveFailed(
@@ -214,7 +215,7 @@ impl TokenTransferWitness {
             }
 
             encode_unwrap_forwarder_input(
-                erc20_addr,
+                erc20_token_addr,
                 ethereum_account_addr,
                 self.resource.quantity,
             )?
@@ -259,7 +260,7 @@ impl TokenTransferWitness {
             .ok_or(ArmError::MissingField("Label info"))?;
         let label_ref = calculate_label_ref(
             label_info.forwarder_addr.as_ref(),
-            label_info.token_addr.as_ref(),
+            label_info.erc20_token_addr.as_ref(),
         );
 
         if self.resource.label_ref != label_ref {
@@ -278,7 +279,7 @@ impl TokenTransferWitness {
         let payload_plaintext = bincode::serialize(&ResourceWithLabel {
             resource: self.resource,
             forwarder: label_info.forwarder_addr.clone(),
-            token: label_info.token_addr.clone(),
+            erc20_token_addr: label_info.erc20_token_addr.clone(),
         })
         .map_err(|_| ArmError::InvalidResourceSerialization);
         let ciphertext = Ciphertext::encrypt_with_nonce(
@@ -384,7 +385,7 @@ impl TokenTransferWitness {
     }
 }
 
-/// Calculate the value ref based on an authorization key for a given user.
+/// Calculate the value ref based on an authorization key and an encryption key for a given user.
 pub fn calculate_persistent_value_ref(value: &ValueInfo) -> Digest {
     hash_bytes(
         &[
@@ -442,11 +443,11 @@ impl EncryptionInfo {
 }
 
 impl ResourceWithLabel {
-    pub fn new(resource: Resource, forwarder: Vec<u8>, token: Vec<u8>) -> Self {
+    pub fn new(resource: Resource, forwarder: Vec<u8>, erc20_token_addr: Vec<u8>) -> Self {
         Self {
             resource,
             forwarder,
-            token,
+            erc20_token_addr,
         }
     }
 }
