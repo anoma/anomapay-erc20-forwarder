@@ -13,4 +13,3 @@ pub enum BalancesError {
     #[error("Invalid Ethereum RPC URL")]
     InvalidEthereumRPC,
 }
-

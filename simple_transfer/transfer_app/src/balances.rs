@@ -84,7 +84,7 @@ fn get_alchemy_base_url(config: &AnomaPayConfig) -> String {
     if config.ethereum_rpc.contains("alchemy.com") {
         let url_parts: Vec<&str> = config.ethereum_rpc.split("/v2/").collect();
         if !url_parts.is_empty() {
-            format!("{}/v2/{}", url_parts[0], config.api_key_alchemy)
+            format!("{}/v2/{}", url_parts[0], config.alchemy_api_key)
         } else {
             let chain = if config.ethereum_rpc.contains("sepolia") {
                 "eth-sepolia"
@@ -93,14 +93,14 @@ fn get_alchemy_base_url(config: &AnomaPayConfig) -> String {
             };
             format!(
                 "https://{}.g.alchemy.com/v2/{}",
-                chain, config.api_key_alchemy
+                chain, config.alchemy_api_key
             )
         }
     } else {
         // Default to mainnet if not an Alchemy URL
         format!(
             "https://eth-mainnet.g.alchemy.com/v2/{}",
-            config.api_key_alchemy
+            config.alchemy_api_key
         )
     }
 }

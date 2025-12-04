@@ -7,15 +7,15 @@ use crate::rpc::create_provider;
 use crate::web::handlers::handle_parameters;
 use crate::web::RequestError;
 use crate::AnomaPayConfig;
-use serde::Serialize;
-use utoipa::ToSchema;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{Header, Status};
 use rocket::response::status::Custom;
 use rocket::serde::json::{json, Json};
 use rocket::{catch, get, options, post, Request, Response, State};
+use serde::Serialize;
 use serde_json::Value;
 use utoipa::OpenApi;
+use utoipa::ToSchema;
 
 #[derive(OpenApi)]
 #[openapi(paths(health, send_transaction, estimate_fee, token_balances))]
@@ -130,15 +130,17 @@ pub async fn token_balances(
     config: &State<AnomaPayConfig>,
 ) -> Result<Custom<Json<Value>>, RequestError> {
     let config: &AnomaPayConfig = config.inner();
-    
+
     let address_str = address.ok_or_else(|| {
         RequestError::TokenBalances("Missing 'address' query parameter".to_string())
     })?;
-    
+
     // Parse address from hex string (with or without 0x prefix)
     let user_address = address_str
         .parse::<alloy::primitives::Address>()
-        .map_err(|_| RequestError::TokenBalances(format!("Invalid address format: {}", address_str)))?;
+        .map_err(|_| {
+            RequestError::TokenBalances(format!("Invalid address format: {}", address_str))
+        })?;
 
     let balances = get_all_token_balances(user_address, config)
         .await

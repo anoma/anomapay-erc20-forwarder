@@ -1,13 +1,13 @@
 use crate::request::balances::BalancesError;
 use crate::request::balances::BalancesResult;
 use crate::AnomaPayConfig;
+use alloy::hex;
 use alloy::primitives::{Address, U256};
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy::sol;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use alloy::hex;
 
 // Extended ERC20 interface with metadata functions
 sol! {
@@ -76,7 +76,7 @@ async fn get_alchemy_token_balances(
     config: &AnomaPayConfig,
 ) -> BalancesResult<Vec<(Address, U256)>> {
     let client = Client::new();
-    
+
     // Determine the base URL from the ethereum_rpc URL
     // If it's an Alchemy URL, extract the API key; otherwise construct it
     let base_url = if config.ethereum_rpc.contains("alchemy.com") {
@@ -91,11 +91,17 @@ async fn get_alchemy_token_balances(
             } else {
                 "eth-mainnet"
             };
-            format!("https://{}.g.alchemy.com/v2/{}", chain, config.alchemy_api_key)
+            format!(
+                "https://{}.g.alchemy.com/v2/{}",
+                chain, config.alchemy_api_key
+            )
         }
     } else {
         // Default to mainnet if not an Alchemy URL
-        format!("https://eth-mainnet.g.alchemy.com/v2/{}", config.alchemy_api_key)
+        format!(
+            "https://eth-mainnet.g.alchemy.com/v2/{}",
+            config.alchemy_api_key
+        )
     };
 
     let address_hex = format!("0x{}", hex::encode(user_address.as_slice()));
@@ -139,12 +145,14 @@ async fn get_alchemy_token_balances(
             continue;
         }
 
-        let contract_address = Address::from_str(&token_balance.contract_address)
-            .map_err(|e| BalancesError::AlchemyApiError(format!("Invalid contract address: {}", e)))?;
+        let contract_address = Address::from_str(&token_balance.contract_address).map_err(|e| {
+            BalancesError::AlchemyApiError(format!("Invalid contract address: {}", e))
+        })?;
 
         let balance_hex = token_balance.token_balance.trim_start_matches("0x");
-        let balance = U256::from_str_radix(balance_hex, 16)
-            .map_err(|e| BalancesError::AlchemyApiError(format!("Invalid balance format: {}", e)))?;
+        let balance = U256::from_str_radix(balance_hex, 16).map_err(|e| {
+            BalancesError::AlchemyApiError(format!("Invalid balance format: {}", e))
+        })?;
 
         if balance != U256::ZERO {
             balances.push((contract_address, balance));
@@ -170,11 +178,9 @@ async fn get_token_metadata(
     let decimals_call = contract.decimals();
     let symbol_call = contract.symbol();
 
-    let (decimals_result, symbol_result) = tokio::try_join!(
-        decimals_call.call(),
-        symbol_call.call(),
-    )
-    .map_err(|e| BalancesError::ContractCallError(format!("{}", e)))?;
+    let (decimals_result, symbol_result) =
+        tokio::try_join!(decimals_call.call(), symbol_call.call(),)
+            .map_err(|e| BalancesError::ContractCallError(format!("{}", e)))?;
 
     Ok((decimals_result, symbol_result))
 }
@@ -205,15 +211,10 @@ pub async fn get_all_token_balances(
                 });
             }
             Err(e) => {
-                log::warn!(
-                    "Failed to fetch metadata for token {:?}: {}",
-                    token_addr,
-                    e
-                );
+                log::warn!("Failed to fetch metadata for token {:?}: {}", token_addr, e);
             }
         }
     }
 
     Ok(token_balances)
 }
-
