@@ -52,7 +52,7 @@ impl PermitTransferFrom {
 
 pub fn encode_unwrap_forwarder_input(
     token: &[u8],
-    to: &[u8],
+    ethereum_account_addr: &[u8],
     value: u128,
 ) -> Result<Vec<u8>, ArmError> {
     // Encode as (CallType, token, to, value)
@@ -60,7 +60,7 @@ pub fn encode_unwrap_forwarder_input(
         .try_into()
         .map_err(|_| ArmError::ProveFailed("Invalid token address bytes".to_string()))
         .unwrap();
-    let to: Address = to
+    let to: Address = ethereum_account_addr
         .try_into()
         .map_err(|_| ArmError::ProveFailed("Invalid to address bytes".to_string()))
         .unwrap();
@@ -69,12 +69,12 @@ pub fn encode_unwrap_forwarder_input(
 }
 
 pub fn encode_wrap_forwarder_input(
-    from: &[u8],
+    ethereum_account_addr: &[u8],
     permit: PermitTransferFrom,
     witness: &[u8],
     signature: &[u8],
 ) -> Result<Vec<u8>, ArmError> {
-    let from: Address = from
+    let from: Address = ethereum_account_addr
         .try_into()
         .map_err(|_| ArmError::ProveFailed("Invalid from address bytes".to_string()))?;
     Ok((

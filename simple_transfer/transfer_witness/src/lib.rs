@@ -71,8 +71,8 @@ pub struct EncryptionInfo {
 pub struct ForwarderInfo {
     /// Wrapping/Unwrapping of a resource (i.e., mint/burn).
     pub call_type: CallType,
-    /// Address of the user
-    pub user_addr: Vec<u8>,
+    /// Address of the ethereum account
+    pub ethereum_account_addr: Vec<u8>,
     /// PermitInfo (see struct)
     pub permit_info: Option<PermitInfo>,
 }
@@ -168,7 +168,7 @@ impl TokenTransferWitness {
             ));
         }
 
-        let user_addr = forwarder_info.user_addr.as_ref();
+        let ethereum_account_addr = forwarder_info.ethereum_account_addr.as_ref();
 
         let inputs = if self.is_consumed {
             // Wrap
@@ -189,7 +189,7 @@ impl TokenTransferWitness {
                 permit_info.permit_deadline.as_ref(),
             )?;
             encode_wrap_forwarder_input(
-                user_addr,
+                ethereum_account_addr,
                 permit,
                 action_root,
                 permit_info.permit_sig.as_ref(),
@@ -202,18 +202,22 @@ impl TokenTransferWitness {
                 ));
             }
 
-            // Check resource value_ref: value_ref[0..20] = user_addr. We only
+            // Check resource value_ref: value_ref[0..20] = ethereum_account_addr. We only
             // need this for Unwrap to ensure authorization signature of the
             // consumed persistent resource over the action_tree_root that
-            // contains the value_ref(user_addr)
-            let value_ref = calculate_value_ref_from_user_addr(user_addr);
+            // contains the value_ref(ethereum_account_addr)
+            let value_ref = calculate_value_ref_from_ethereum_account_addr(ethereum_account_addr);
             if self.resource.value_ref != value_ref {
                 return Err(ArmError::ProveFailed(
                     "Invalid resource value_ref".to_string(),
                 ));
             }
 
-            encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)?
+            encode_unwrap_forwarder_input(
+                erc20_addr,
+                ethereum_account_addr,
+                self.resource.quantity,
+            )?
         };
 
         let forwarder_call_data = ForwarderCalldata::from_bytes(forwarder_addr, inputs, vec![]);
@@ -391,15 +395,15 @@ pub fn calculate_persistent_value_ref(value: &ValueInfo) -> Digest {
     )
 }
 
-/// Create the value_ref for the user address.
-pub fn calculate_value_ref_from_user_addr(user_addr: &[u8]) -> Digest {
+/// Create the value_ref for the user's ethereum account address.
+pub fn calculate_value_ref_from_ethereum_account_addr(ethereum_account_addr: &[u8]) -> Digest {
     let mut addr_padded = [0u8; 32];
-    addr_padded[0..20].copy_from_slice(user_addr);
+    addr_padded[0..20].copy_from_slice(ethereum_account_addr);
     Digest::from_bytes(addr_padded)
 }
 
-/// Extract the user address from a value_ref.
-pub fn get_user_addr(value_ref: &Digest) -> [u8; 20] {
+/// Extract the ethereum_account_addr address from a value_ref.
+pub fn get_ethereum_account_addr(value_ref: &Digest) -> [u8; 20] {
     let bytes = value_ref.as_bytes();
     let mut addr = [0u8; 20];
     addr.copy_from_slice(&bytes[0..20]);

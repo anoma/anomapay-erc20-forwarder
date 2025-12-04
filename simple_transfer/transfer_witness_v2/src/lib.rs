@@ -19,7 +19,8 @@ use arm_gadgets::{
 use serde::{Deserialize, Serialize};
 use transfer_witness::{
     DeletionCriterion, EncryptionInfo, LabelInfo, PermitInfo, ResourceWithLabel, ValueInfo,
-    calculate_label_ref, calculate_persistent_value_ref, calculate_value_ref_from_user_addr,
+    calculate_label_ref, calculate_persistent_value_ref,
+    calculate_value_ref_from_ethereum_account_addr,
     call_type::{PermitTransferFrom, encode_unwrap_forwarder_input, encode_wrap_forwarder_input},
 };
 
@@ -52,8 +53,8 @@ pub struct TokenTransferWitnessV2 {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ForwarderInfoV2 {
     pub call_type: CallTypeV2,
-    // The user_addr is not needed for migration
-    pub user_addr: Option<Vec<u8>>,
+    // The ethereum_account_addr is not needed for migration
+    pub ethereum_account_addr: Option<Vec<u8>>,
     pub permit_info: Option<PermitInfo>,
     // The migrate info is added for v2 witness to support migration from v1 to v2
     pub migrate_info: Option<MigrateInfo>,
@@ -143,13 +144,13 @@ impl TokenTransferWitnessV2 {
                     permit_info.permit_deadline.as_ref(),
                 )?;
 
-                let user_addr = forwarder_info
-                    .user_addr
+                let ethereum_account_addr = forwarder_info
+                    .ethereum_account_addr
                     .as_ref()
-                    .ok_or(ArmError::MissingField("user address"))?;
+                    .ok_or(ArmError::MissingField("ethereum_account_addr"))?;
 
                 encode_wrap_forwarder_input(
-                    user_addr,
+                    ethereum_account_addr,
                     permit,
                     action_root,
                     permit_info.permit_sig.as_ref(),
@@ -162,22 +163,27 @@ impl TokenTransferWitnessV2 {
                     ));
                 }
 
-                // Check resource value_ref: value_ref[0..20] = user_addr. We only
+                // Check resource value_ref: value_ref[0..20] = ethereum_account_addr. We only
                 // need this for Unwrap to ensure authorization signature of the
                 // consumed persistent resource over the action_tree_root that
-                // contains the value_ref(user_addr)
-                let user_addr = forwarder_info
-                    .user_addr
+                // contains the value_ref(ethereum_account_addr)
+                let ethereum_account_addr = forwarder_info
+                    .ethereum_account_addr
                     .as_ref()
-                    .ok_or(ArmError::MissingField("user address"))?;
-                let value_ref = calculate_value_ref_from_user_addr(user_addr);
+                    .ok_or(ArmError::MissingField("ethereum_account_addr"))?;
+                let value_ref =
+                    calculate_value_ref_from_ethereum_account_addr(ethereum_account_addr);
                 if self.resource.value_ref != value_ref {
                     return Err(ArmError::ProveFailed(
                         "Invalid resource value_ref".to_string(),
                     ));
                 }
 
-                encode_unwrap_forwarder_input(erc20_addr, user_addr, self.resource.quantity)?
+                encode_unwrap_forwarder_input(
+                    erc20_addr,
+                    ethereum_account_addr,
+                    self.resource.quantity,
+                )?
             }
             CallTypeV2::Migrate => {
                 if !self.is_consumed {

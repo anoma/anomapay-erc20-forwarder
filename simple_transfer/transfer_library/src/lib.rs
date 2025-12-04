@@ -127,7 +127,7 @@ impl TransferLogic {
         nf_key: NullifierKey,
         forwarder_addr: Vec<u8>,
         token_addr: Vec<u8>,
-        user_addr: Vec<u8>,
+        ethereum_account_addr: Vec<u8>,
         permit_nonce: Vec<u8>,
         permit_deadline: Vec<u8>,
         permit_sig: Vec<u8>,
@@ -139,7 +139,7 @@ impl TransferLogic {
         };
         let forwarder_info = ForwarderInfo {
             call_type: CallType::Wrap,
-            user_addr,
+            ethereum_account_addr,
             permit_info: Some(permit_info),
         };
         let label_info = LabelInfo {
@@ -166,11 +166,11 @@ impl TransferLogic {
         action_tree_root: Digest,
         forwarder_addr: Vec<u8>,
         token_addr: Vec<u8>,
-        user_addr: Vec<u8>,
+        ethereum_account_addr: Vec<u8>,
     ) -> Self {
         let forwarder_info = ForwarderInfo {
             call_type: CallType::Unwrap,
-            user_addr,
+            ethereum_account_addr,
             permit_info: None,
         };
         let label_info = LabelInfo {

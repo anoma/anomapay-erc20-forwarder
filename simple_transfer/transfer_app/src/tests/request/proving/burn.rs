@@ -20,7 +20,7 @@ use arm::resource::Resource;
 use arm::transaction::Transaction;
 use arm_gadgets::authorization::AuthorizationSignature;
 use transfer_library::TransferLogic;
-use transfer_witness::{AUTH_SIGNATURE_DOMAIN, calculate_value_ref_from_user_addr};
+use transfer_witness::{AUTH_SIGNATURE_DOMAIN, calculate_value_ref_from_ethereum_account_addr};
 
 #[ignore]
 #[tokio::test]
@@ -128,7 +128,7 @@ pub async fn example_burn_parameters(
         logic_ref: TransferLogic::verifying_key(),
         label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: to_burn_resource.quantity,
-        value_ref: calculate_value_ref_from_user_addr(&burner.evm_address.into_array()),
+        value_ref: calculate_value_ref_from_ethereum_account_addr(&burner.evm_address.into_array()),
         is_ephemeral: true,
         nonce,
         nk_commitment: burner.nf_key.commit(),

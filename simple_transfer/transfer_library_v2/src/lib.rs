@@ -133,7 +133,7 @@ impl TransferLogicV2 {
         nf_key: NullifierKey,
         forwarder_addr: Vec<u8>,
         token_addr: Vec<u8>,
-        user_addr: Vec<u8>,
+        ethereum_account_addr: Vec<u8>,
         permit_nonce: Vec<u8>,
         permit_deadline: Vec<u8>,
         permit_sig: Vec<u8>,
@@ -145,7 +145,7 @@ impl TransferLogicV2 {
         };
         let forwarder_info = ForwarderInfoV2 {
             call_type: CallTypeV2::Wrap,
-            user_addr: Some(user_addr),
+            ethereum_account_addr: Some(ethereum_account_addr),
             permit_info: Some(permit_info),
             migrate_info: None,
         };
@@ -173,11 +173,11 @@ impl TransferLogicV2 {
         action_tree_root: Digest,
         forwarder_addr: Vec<u8>,
         token_addr: Vec<u8>,
-        user_addr: Vec<u8>,
+        ethereum_account_addr: Vec<u8>,
     ) -> Self {
         let forwarder_info = ForwarderInfoV2 {
             call_type: CallTypeV2::Unwrap,
-            user_addr: Some(user_addr),
+            ethereum_account_addr: Some(ethereum_account_addr),
             permit_info: None,
             migrate_info: None,
         };
@@ -237,7 +237,7 @@ impl TransferLogicV2 {
 
         let forwarder_info = ForwarderInfoV2 {
             call_type: CallTypeV2::Migrate,
-            user_addr: None,
+            ethereum_account_addr: None,
             permit_info: None,
             migrate_info: Some(migrate_info),
         };

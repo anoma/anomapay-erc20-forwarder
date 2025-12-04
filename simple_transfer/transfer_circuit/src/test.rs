@@ -6,7 +6,7 @@ use arm_gadgets::{
 };
 use transfer_library::TransferLogic;
 use transfer_witness::{
-    calculate_label_ref, calculate_persistent_value_ref, calculate_value_ref_from_user_addr,
+    calculate_label_ref, calculate_persistent_value_ref, calculate_value_ref_from_ethereum_account_addr,
     ValueInfo,
 };
 
@@ -23,7 +23,7 @@ const AUTH_SK: [u8; 32] = [7u8; 32];
 // Create a sample ephemeral resource for testing
 fn create_ephemeral_resource() -> Resource {
     let label_ref = calculate_label_ref(&FORWARDER_ADDR, &ERC20_ADDR);
-    let value_ref = calculate_value_ref_from_user_addr(&USER_ADDR);
+    let value_ref = calculate_value_ref_from_ethereum_account_addr(&USER_ADDR);
     let nk_commitment = NullifierKey::from_bytes(NF_KEY_BYTES).commit();
 
     Resource {
