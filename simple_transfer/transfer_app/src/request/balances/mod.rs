@@ -97,8 +97,6 @@ async fn get_alchemy_token_balances(
         } else {
             let chain = if config.ethereum_rpc.contains("sepolia") {
                 "eth-sepolia"
-            } else if config.ethereum_rpc.contains("goerli") {
-                "eth-goerli"
             } else {
                 "eth-mainnet"
             };
