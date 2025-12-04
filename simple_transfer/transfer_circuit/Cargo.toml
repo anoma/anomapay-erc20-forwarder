@@ -1,17 +1,18 @@
 [package]
-name = "token-transfer"
-version = "0.1.0"
-edition = "2021"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+name = "simple-transfer"
+readme.workspace = true
+version.workspace = true
 
 [workspace]
 
 [dependencies]
-token-transfer-methods = { path = "methods" }
-risc0-zkvm = "3.0.3"
-arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = false }
-transfer_witness = { path = "../transfer_witness" }
-transfer_library = { path = "../transfer_library" }
-arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
+arm = { workspace = true }
+arm-gadgets = { workspace = true }
+transfer_library = { workspace = true }
+transfer_witness = { workspace = true }
 
 [dev-dependencies]
 bincode = "1.3.3"

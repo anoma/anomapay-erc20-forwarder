@@ -7,11 +7,11 @@ mod user;
 mod web;
 
 use crate::rpc::RpcError::InvalidRPCUrl;
+use crate::web::ApiDoc;
 use crate::web::webserver::{
     all_options, default_error, estimate_fee, health, send_transaction, token_balances,
     unprocessable, Cors,
 };
-use crate::web::ApiDoc;
 use alloy::providers::{Provider, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;
 use rocket::{catchers, launch, routes};

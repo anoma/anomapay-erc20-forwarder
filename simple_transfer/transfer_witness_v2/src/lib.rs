@@ -2,25 +2,25 @@
 //! simple transfer resources in the Anoma Pay application.
 //!
 pub mod call_type_v2;
-use crate::call_type_v2::{encode_migrate_forwarder_input, CallTypeV2};
+use crate::call_type_v2::{CallTypeV2, encode_migrate_forwarder_input};
 pub use arm::resource_logic::LogicCircuit;
 use arm::{
+    Digest,
     error::ArmError,
     logic_instance::{AppData, ExpirableBlob, LogicInstance},
     merkle_path::MerklePath,
     nullifier_key::NullifierKey,
     resource::Resource,
     utils::bytes_to_words,
-    Digest,
 };
 use arm_gadgets::{
     authorization::AuthorizationSignature, encryption::Ciphertext, evm::ForwarderCalldata,
 };
 use serde::{Deserialize, Serialize};
 use transfer_witness::{
-    calculate_label_ref, calculate_persistent_value_ref, calculate_value_ref_from_user_addr,
-    call_type::{encode_unwrap_forwarder_input, encode_wrap_forwarder_input, PermitTransferFrom},
     DeletionCriterion, EncryptionInfo, LabelInfo, PermitInfo, ResourceWithLabel, ValueInfo,
+    calculate_label_ref, calculate_persistent_value_ref, calculate_value_ref_from_user_addr,
+    call_type::{PermitTransferFrom, encode_unwrap_forwarder_input, encode_wrap_forwarder_input},
 };
 
 pub const AUTH_SIGNATURE_DOMAIN_V2: &[u8] = b"TokenTransferAuthorizationV2";
