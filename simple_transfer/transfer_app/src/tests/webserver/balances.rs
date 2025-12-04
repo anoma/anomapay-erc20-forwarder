@@ -1,6 +1,5 @@
 #![cfg(test)]
 
-use crate::helpers::parse_address;
 use crate::load_config;
 use crate::requests::balances::{handle_token_balances_request, TokenBalancesRequest};
 use alloy::primitives::Address;
@@ -9,7 +8,7 @@ use serial_test::serial;
 /// Create an example request to fetch token balances for an address
 pub fn create_token_balances_request(address: Address) -> TokenBalancesRequest {
     TokenBalancesRequest {
-        address: address.as_slice().to_vec(),
+        address: address.to_string(),
     }
 }
 
@@ -63,24 +62,26 @@ async fn test_token_balances_handler() {
     }
 }
 
-/// Test parsing address from base64
+/// Test parsing address from hex string (with and without 0x prefix)
 #[tokio::test]
 #[serial]
-async fn test_parse_address_from_base64() {
-    let test_address_hex = "0x7bCd418a9705B93935D05a4BF74CE45e1f8Ab86A";
-    let test_address = test_address_hex
+async fn test_parse_address_from_hex() {
+    let test_address_hex_with_prefix = "0x7bCd418a9705B93935D05a4BF74CE45e1f8Ab86A";
+    let test_address_hex_without_prefix = "7bCd418a9705B93935D05a4BF74CE45e1f8Ab86A";
+    
+    let address_with_prefix = test_address_hex_with_prefix
         .parse::<Address>()
-        .expect("Failed to parse test address");
-
-    let address_bytes = test_address.as_slice().to_vec();
-
-    let parsed = parse_address(address_bytes);
-    assert!(parsed.is_some(), "Should be able to parse valid address");
+        .expect("Failed to parse address with 0x prefix");
+    
+    let address_without_prefix = test_address_hex_without_prefix
+        .parse::<Address>()
+        .expect("Failed to parse address without 0x prefix");
+    
     assert_eq!(
-        parsed.unwrap(),
-        test_address,
-        "Parsed address should match original"
+        address_with_prefix,
+        address_without_prefix,
+        "Addresses with and without 0x prefix should be equal"
     );
 
-    println!("Successfully parsed address from bytes");
+    println!("Successfully parsed address from hex string (with and without 0x prefix)");
 }

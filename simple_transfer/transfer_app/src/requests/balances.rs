@@ -1,19 +1,15 @@
-use crate::evm::balances::get_all_token_balances;
-use crate::helpers::parse_address;
+use crate::request::balances::get_all_token_balances;
 use crate::requests::RequestErr::FailedTokenBalancesRequest;
 use crate::requests::RequestResult;
 use crate::AnomaPayConfig;
+use alloy::primitives::Address;
 use serde::{Deserialize, Serialize};
-use serde_with::base64::Base64;
-use serde_with::serde_as;
-use std::io;
 
 /// Defines the payload sent to the API to fetch token balances for an address
-#[serde_as]
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub struct TokenBalancesRequest {
-    #[serde_as(as = "Base64")]
-    pub address: Vec<u8>,
+    /// Ethereum address in hex format (with or without 0x prefix)
+    pub address: String,
 }
 
 /// Response structure for token balance
@@ -30,10 +26,11 @@ pub async fn handle_token_balances_request(
     request: TokenBalancesRequest,
     config: &AnomaPayConfig,
 ) -> RequestResult<Vec<TokenBalanceResponse>> {
-    let user_address = parse_address(request.address).ok_or_else(|| {
-        FailedTokenBalancesRequest(Box::new(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "invalid user address",
+    // Parse address from hex string (with or without 0x prefix)
+    let user_address = request.address.parse::<Address>().map_err(|_| {
+        FailedTokenBalancesRequest(Box::new(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("Invalid address format: {}", request.address),
         )))
     })?;
 
