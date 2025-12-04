@@ -1,13 +1,10 @@
 [package]
-authors.workspace = true
-edition.workspace = true
-license.workspace = true
 name = "token-transfer-methods"
-readme.workspace = true
-version.workspace = true
+version = "0.1.0"
+edition = "2021"
 
 [build-dependencies]
-risc0-build = { workspace = true, features = ["unstable"] }
+risc0-build = { version = "3.0.3", features = ["unstable"] }
 
 [package.metadata.risc0]
 methods = ["guest"]
