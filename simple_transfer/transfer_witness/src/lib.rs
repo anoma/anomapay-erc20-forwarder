@@ -168,17 +168,7 @@ impl TokenTransferWitness {
             ));
         }
 
-        // Check resource value_ref: value_ref[0..20] = user_addr
-        // We need this check to ensure the permit2 signature covers
-        // the correct user address. It signs over the action tree root,
-        // and the tag containing the value_ref is directed to the tree root.
         let user_addr = forwarder_info.user_addr.as_ref();
-        let value_ref = calculate_value_ref_from_user_addr(user_addr);
-        if self.resource.value_ref != value_ref {
-            return Err(ArmError::ProveFailed(
-                "Invalid resource value_ref".to_string(),
-            ));
-        }
 
         let inputs = if self.is_consumed {
             // Wrap
@@ -209,6 +199,17 @@ impl TokenTransferWitness {
             if forwarder_info.call_type != CallType::Unwrap {
                 return Err(ArmError::ProveFailed(
                     "Wrong call type for Unwrap".to_string(),
+                ));
+            }
+
+            // Check resource value_ref: value_ref[0..20] = user_addr. We only
+            // need this for Unwrap to ensure authorization signature of the
+            // consumed persistent resource over the action_tree_root that
+            // contains the value_ref(user_addr)
+            let value_ref = calculate_value_ref_from_user_addr(user_addr);
+            if self.resource.value_ref != value_ref {
+                return Err(ArmError::ProveFailed(
+                    "Invalid resource value_ref".to_string(),
                 ));
             }
 
