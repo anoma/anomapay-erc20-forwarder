@@ -3,24 +3,24 @@
 //!
 pub mod call_type;
 use crate::call_type::{
-    encode_unwrap_forwarder_input, encode_wrap_forwarder_input, CallType, PermitTransferFrom,
+    CallType, PermitTransferFrom, encode_unwrap_forwarder_input, encode_wrap_forwarder_input,
 };
 pub use arm::resource_logic::LogicCircuit;
 use arm::{
+    Digest,
     error::ArmError,
     logic_instance::{AppData, ExpirableBlob, LogicInstance},
     nullifier_key::NullifierKey,
     resource::Resource,
     utils::{bytes_to_words, hash_bytes},
-    Digest,
 };
 use arm_gadgets::{
     authorization::{AuthorizationSignature, AuthorizationVerifyingKey},
     encryption::{Ciphertext, SecretKey},
     evm::ForwarderCalldata,
 };
-use k256::elliptic_curve::group::GroupEncoding;
 use k256::AffinePoint;
+use k256::elliptic_curve::group::GroupEncoding;
 use serde::{Deserialize, Serialize};
 
 pub enum DeletionCriterion {

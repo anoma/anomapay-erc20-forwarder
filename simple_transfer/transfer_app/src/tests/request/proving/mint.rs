@@ -10,18 +10,18 @@ use crate::request::proving::witness_data::token_transfer::{
 };
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    create_permit_signature, label_ref, random_nonce, user_with_private_key, DEFAULT_DEADLINE,
-    TOKEN_ADDRESS_SEPOLIA_USDC,
+    DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC, create_permit_signature, label_ref, random_nonce,
+    user_with_private_key,
 };
 use crate::user::Keychain;
-use crate::{load_config, AnomaPayConfig};
+use crate::{AnomaPayConfig, load_config};
 use arm::action_tree::MerkleTree;
 use arm::logic_proof::LogicProver;
 use arm::resource::Resource;
 use arm::transaction::Transaction;
 use transfer_library::TransferLogic;
 use transfer_witness::{
-    calculate_persistent_value_ref, calculate_value_ref_from_user_addr, ValueInfo,
+    ValueInfo, calculate_persistent_value_ref, calculate_value_ref_from_user_addr,
 };
 
 #[ignore]

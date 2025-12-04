@@ -6,8 +6,8 @@
 pub mod migrate_tx;
 
 use arm::{
-    logic_proof::LogicProver, merkle_path::MerklePath, nullifier_key::NullifierKey,
-    resource::Resource, Digest,
+    Digest, logic_proof::LogicProver, merkle_path::MerklePath, nullifier_key::NullifierKey,
+    resource::Resource,
 };
 use arm_gadgets::authorization::{AuthorizationSignature, AuthorizationVerifyingKey};
 use hex::FromHex;
@@ -16,7 +16,7 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
 use transfer_witness_v2::{
-    call_type_v2::CallTypeV2, ForwarderInfoV2, MigrateInfo, TokenTransferWitnessV2,
+    ForwarderInfoV2, MigrateInfo, TokenTransferWitnessV2, call_type_v2::CallTypeV2,
 };
 
 use transfer_witness::{EncryptionInfo, LabelInfo, PermitInfo, ValueInfo};

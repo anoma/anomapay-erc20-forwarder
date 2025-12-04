@@ -8,12 +8,12 @@ use crate::request::proving::resources::{
 use crate::request::proving::witness_data::{token_transfer, trivial};
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    label_ref, random_nonce, user_with_private_key, user_without_private_key,
-    TOKEN_ADDRESS_SEPOLIA_USDC,
+    TOKEN_ADDRESS_SEPOLIA_USDC, label_ref, random_nonce, user_with_private_key,
+    user_without_private_key,
 };
 use crate::tests::request::proving::mint::example_mint_transaction_submit;
 use crate::user::Keychain;
-use crate::{load_config, AnomaPayConfig};
+use crate::{AnomaPayConfig, load_config};
 use arm::action_tree::MerkleTree;
 use arm::logic_proof::LogicProver;
 use arm::nullifier_key::NullifierKey;
@@ -23,7 +23,7 @@ use arm::transaction::Transaction;
 use arm_gadgets::authorization::AuthorizationSignature;
 use risc0_zkvm::Digest;
 use transfer_library::TransferLogic;
-use transfer_witness::{calculate_persistent_value_ref, ValueInfo, AUTH_SIGNATURE_DOMAIN};
+use transfer_witness::{AUTH_SIGNATURE_DOMAIN, ValueInfo, calculate_persistent_value_ref};
 
 #[tokio::test]
 /// Test creation of a burn transaction.
