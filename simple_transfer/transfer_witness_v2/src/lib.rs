@@ -52,7 +52,8 @@ pub struct TokenTransferWitnessV2 {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ForwarderInfoV2 {
     pub call_type: CallTypeV2,
-    pub user_addr: Vec<u8>,
+    // The user_addr is not needed for migration
+    pub user_addr: Option<Vec<u8>>,
     pub permit_info: Option<PermitInfo>,
     // The migrate info is added for v2 witness to support migration from v1 to v2
     pub migrate_info: Option<MigrateInfo>,
@@ -116,22 +117,10 @@ impl TokenTransferWitnessV2 {
         // Check resource label: label = sha2(forwarder_addr, erc20_addr)
         let forwarder_addr = label_info.forwarder_addr.as_ref();
         let erc20_addr = label_info.token_addr.as_ref();
-        let user_addr = forwarder_info.user_addr.as_ref();
         let label_ref = calculate_label_ref(forwarder_addr, erc20_addr);
         if self.resource.label_ref != label_ref {
             return Err(ArmError::ProveFailed(
                 "Invalid resource label_ref".to_string(),
-            ));
-        }
-
-        // Check resource value_ref: value_ref[0..20] = user_addr
-        // We need this check to ensure the permit2 signature covers
-        // the correct user address. It signs over the action tree root,
-        // and the tag containing the value_ref is directed to the tree root.
-        let value_ref = calculate_value_ref_from_user_addr(user_addr);
-        if self.resource.value_ref != value_ref {
-            return Err(ArmError::ProveFailed(
-                "Invalid resource value_ref".to_string(),
             ));
         }
 
@@ -153,6 +142,12 @@ impl TokenTransferWitnessV2 {
                     permit_info.permit_nonce.as_ref(),
                     permit_info.permit_deadline.as_ref(),
                 )?;
+
+                let user_addr = forwarder_info
+                    .user_addr
+                    .as_ref()
+                    .ok_or(ArmError::MissingField("user address"))?;
+
                 encode_wrap_forwarder_input(
                     user_addr,
                     permit,
@@ -164,6 +159,21 @@ impl TokenTransferWitnessV2 {
                 if self.is_consumed {
                     return Err(ArmError::ProveFailed(
                         "Token unwraps must be triggered by a created resource".to_string(),
+                    ));
+                }
+
+                // Check resource value_ref: value_ref[0..20] = user_addr. We only
+                // need this for Unwrap to ensure authorization signature of the
+                // consumed persistent resource over the action_tree_root that
+                // contains the value_ref(user_addr)
+                let user_addr = forwarder_info
+                    .user_addr
+                    .as_ref()
+                    .ok_or(ArmError::MissingField("user address"))?;
+                let value_ref = calculate_value_ref_from_user_addr(user_addr);
+                if self.resource.value_ref != value_ref {
+                    return Err(ArmError::ProveFailed(
+                        "Invalid resource value_ref".to_string(),
                     ));
                 }
 

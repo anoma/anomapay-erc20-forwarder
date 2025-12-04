@@ -25,7 +25,6 @@ pub fn construct_migrate_tx(
     consumed_nf_key: NullifierKey,
     forwarder_addr: Vec<u8>,
     token_addr: Vec<u8>,
-    user_addr: Vec<u8>,
 
     // Parameters for migrated resource via forwarder
     migrated_resource: Resource,
@@ -63,7 +62,6 @@ pub fn construct_migrate_tx(
         consumed_nf_key,
         forwarder_addr.clone(),
         token_addr.clone(),
-        user_addr.clone(),
         migrated_resource,
         migrated_nf_key,
         migrated_resource_path,
@@ -106,9 +104,7 @@ fn simple_migrate_test() {
         encryption::random_keypair,
     };
     use transfer_witness::ValueInfo;
-    use transfer_witness::{
-        calculate_label_ref, calculate_persistent_value_ref, calculate_value_ref_from_user_addr,
-    };
+    use transfer_witness::{calculate_label_ref, calculate_persistent_value_ref};
     use transfer_witness_v2::AUTH_SIGNATURE_DOMAIN_V2;
 
     // Common parameters
@@ -116,7 +112,6 @@ fn simple_migrate_test() {
     let logic_ref_v1 = Digest::default();
     let forwarder_addr_v2 = vec![1u8; 20];
     let token_addr = vec![2u8; 20];
-    let user_addr = vec![3u8; 20];
     let quantity = 100;
     let label_ref = calculate_label_ref(&forwarder_addr_v1, &token_addr);
     let label_ref_v2 = calculate_label_ref(&forwarder_addr_v2, &token_addr);
@@ -151,7 +146,6 @@ fn simple_migrate_test() {
         logic_ref: TransferLogicV2::verifying_key(),
         label_ref: label_ref_v2,
         nk_commitment: consumed_nf_cm,
-        value_ref: calculate_value_ref_from_user_addr(&user_addr),
         quantity,
         is_ephemeral: true,
         ..Default::default()
@@ -199,7 +193,6 @@ fn simple_migrate_test() {
         consumed_nf_key,
         forwarder_addr_v2,
         token_addr,
-        user_addr,
         migrated_resource,
         migrated_nf_key,
         MerklePath::from_path(&[]), // dummy path

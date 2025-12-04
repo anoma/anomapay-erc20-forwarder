@@ -145,7 +145,7 @@ impl TransferLogicV2 {
         };
         let forwarder_info = ForwarderInfoV2 {
             call_type: CallTypeV2::Wrap,
-            user_addr,
+            user_addr: Some(user_addr),
             permit_info: Some(permit_info),
             migrate_info: None,
         };
@@ -177,7 +177,7 @@ impl TransferLogicV2 {
     ) -> Self {
         let forwarder_info = ForwarderInfoV2 {
             call_type: CallTypeV2::Unwrap,
-            user_addr,
+            user_addr: Some(user_addr),
             permit_info: None,
             migrate_info: None,
         };
@@ -207,7 +207,6 @@ impl TransferLogicV2 {
         // forwarder address v2
         self_forwarder_addr: Vec<u8>,
         token_addr: Vec<u8>,
-        user_addr: Vec<u8>,
         migrated_resource: Resource,
         migrated_nf_key: NullifierKey,
         migrated_resource_path: MerklePath,
@@ -238,7 +237,7 @@ impl TransferLogicV2 {
 
         let forwarder_info = ForwarderInfoV2 {
             call_type: CallTypeV2::Migrate,
-            user_addr,
+            user_addr: None,
             permit_info: None,
             migrate_info: Some(migrate_info),
         };
