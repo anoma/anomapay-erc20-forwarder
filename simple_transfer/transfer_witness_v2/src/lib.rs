@@ -137,9 +137,9 @@ impl TokenTransferWitnessV2 {
 
         let inputs = match forwarder_info.call_type {
             CallTypeV2::Wrap => {
-                if self.is_consumed {
+                if !self.is_consumed {
                     return Err(ArmError::ProveFailed(
-                        "Wrap cannot be a consumed resource".to_string(),
+                        "Token wraps must be triggered by a consumed resource".to_string(),
                     ));
                 }
 
@@ -161,9 +161,9 @@ impl TokenTransferWitnessV2 {
                 )?
             }
             CallTypeV2::Unwrap => {
-                if !self.is_consumed {
+                if self.is_consumed {
                     return Err(ArmError::ProveFailed(
-                        "Unwrap must be a consumed resource".to_string(),
+                        "Token unwraps must be triggered by a created resource".to_string(),
                     ));
                 }
 
@@ -172,7 +172,7 @@ impl TokenTransferWitnessV2 {
             CallTypeV2::Migrate => {
                 if !self.is_consumed {
                     return Err(ArmError::ProveFailed(
-                        "Migrate must be a consumed resource".to_string(),
+                        "Token migration must be triggered by a consumed resource".to_string(),
                     ));
                 }
 
