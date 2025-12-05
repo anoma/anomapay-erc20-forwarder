@@ -28,6 +28,9 @@ pub enum RequestError {
     /// An error occurred fetching token balances.
     #[response(status = 400)]
     TokenBalances(String),
+    /// An error occurred fetching token prices.
+    #[response(status = 400)]
+    TokenPrices(String),
     #[response(status = 400)]
     ProviderError(String),
 }
