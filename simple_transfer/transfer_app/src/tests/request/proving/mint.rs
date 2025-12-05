@@ -82,7 +82,7 @@ pub async fn example_mint_transaction_submit(
 }
 
 /// Creates an example transaction that mints 1 resource for the given user.
-async fn example_mint_transaction(
+pub async fn example_mint_transaction(
     user: Keychain,
     config: &AnomaPayConfig,
 ) -> (Parameters, Transaction) {
