@@ -42,11 +42,11 @@ pub fn random_nonce() -> [u8; 32] {
 /// value allows us to distinguish between wrapped USDC or USDT tokens, for example. The
 /// forwarder contract is used for multiple tokens, so the tuple (forwarder address, token
 /// contract) uniquely identifies a resource.
-pub fn label_ref(config: &AnomaPayConfig, token_address: Address) -> Digest {
+pub fn label_ref(config: &AnomaPayConfig, erc20_token_addr: Address) -> Digest {
     let named_chain = named_chain_from_config(config).unwrap();
     let forwarder_address = erc20_forwarder_address(&named_chain).unwrap();
 
-    *Impl::hash_bytes(&[forwarder_address.to_vec(), token_address.to_vec()].concat())
+    *Impl::hash_bytes(&[forwarder_address.to_vec(), erc20_token_addr.to_vec()].concat())
 }
 
 /// Create a permit2 signature for a transaction.
@@ -56,7 +56,7 @@ pub async fn create_permit_signature(
     nullifier: [u8; 32],
     amount: u128,
     config: &AnomaPayConfig,
-    token_address: Address,
+    erc20_token: Address,
     deadline: u64,
 ) -> Signature {
     let action_tree_root: Digest = action_tree
@@ -68,7 +68,7 @@ pub async fn create_permit_signature(
 
     let x = Permit2Data {
         chain_id: 11155111,
-        token: token_address,
+        token: erc20_token,
         amount: U256::from(amount),
         nonce: U256::from_be_bytes(nullifier),
         deadline: U256::from(deadline),
