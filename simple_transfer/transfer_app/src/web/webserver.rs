@@ -1,4 +1,4 @@
-use crate::request::balances::get_all_token_balances;
+use crate::request::balances::call_balances_api::get_all_token_balances;
 use crate::request::fee_estimation::estimation::{
     FeeEstimationPayload, estimate_fee_unit_quantity,
 };
