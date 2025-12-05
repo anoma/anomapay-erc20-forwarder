@@ -179,10 +179,6 @@ forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
   --rpc-url sepolia
 ```
 
-forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
---sig "run(bool,address,bytes32,address)" true $PA_ADDRESS $CARRIER_LOGIC_REF $SENDER_ADDRESS \
---rpc-url sepolia
-
 Append the
 
 - `--broadcast` flag to deploy on sepolia
