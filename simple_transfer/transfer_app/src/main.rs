@@ -24,33 +24,35 @@ use utoipa_swagger_ui::SwaggerUi;
 pub struct AnomaPayConfig {
     /// The chain ID of the ethereum network
     chain_id: u64,
-    /// url of the ethereum rpc
+    /// The URL of the Ethereum RPC
     #[allow(dead_code)]
-    ethereum_rpc: String,
-    /// url of the anoma indexer
+    rpc_url: String,
+    /// The URL of the Anoma Galileo indexer
     #[allow(dead_code)]
     indexer_address: String,
-    /// the private key of the hot wallet
+    /// The private key of the fee payment wallet
     #[allow(dead_code)]
-    hot_wallet_private_key: PrivateKeySigner,
+    fee_payment_wallet_private_key: PrivateKeySigner,
     /// The Alchemy API key
     alchemy_api_key: String,
 }
 
 /// Reads the environment for required values and sets them into the config.
 async fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
-    let ethereum_rpc = env::var("ETHEREUM_RPC").map_err(|_| "ETHEREUM_RPC not set")?;
-    let indexer_address = env::var("INDEXER_ADDRESS").map_err(|_| "INDEXER_ADDRESS not set")?;
+    let rpc_url = env::var("RPC_URL").map_err(|_| "RPC_URL not set")?;
 
-    let hot_wallet_private_key: String =
-        env::var("HOT_WALLET_PRIVATE_KEY").expect("HOT_WALLET_PRIVATE_KEY not found");
-    let hot_wallet_private_key: PrivateKeySigner = hot_wallet_private_key
-        .parse()
-        .map_err(|_| "HOT_WALLET_PRIVATE_KEY invalid")?;
+    let indexer_address =
+        env::var("GALILEO_INDEXER_ADDRESS").map_err(|_| "GALILEO_INDEXER_ADDRESS not set")?;
+
+    let fee_payment_wallet_private_key: PrivateKeySigner =
+        env::var("FEE_PAYMENT_WALLET_PRIVATE_KEY")
+            .expect("FEE_PAYMENT_WALLET_PRIVATE_KEY not found")
+            .parse()
+            .map_err(|_| "FEE_PAYMENT_WALLET_PRIVATE_KEY invalid")?;
 
     let chain_id = ProviderBuilder::new()
-        .wallet(hot_wallet_private_key.clone())
-        .connect_http(ethereum_rpc.parse().map_err(|_e| InvalidRPCUrl)?)
+        .wallet(fee_payment_wallet_private_key.clone())
+        .connect_http(rpc_url.parse().map_err(|_e| InvalidRPCUrl)?)
         .erased()
         .get_chain_id()
         .await?;
@@ -60,9 +62,9 @@ async fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
 
     Ok(AnomaPayConfig {
         chain_id,
-        ethereum_rpc,
+        rpc_url,
         indexer_address,
-        hot_wallet_private_key,
+        fee_payment_wallet_private_key,
         alchemy_api_key,
     })
 }
