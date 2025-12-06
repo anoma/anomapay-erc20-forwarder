@@ -8,6 +8,14 @@ version = "0.1.0"
 [dependencies]
 arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = true }
 arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
+k256 = { version = "=0.13.3", features = [
+  "arithmetic",
+  "serde",
+  "expose-field",
+  "std",
+  "ecdsa",
+  "hash2curve",
+], default-features = false }
 risc0-zkvm = "3.0.3"
 token-transfer-methods = { path = "methods" }
 transfer_library = { path = "../transfer_library" }
