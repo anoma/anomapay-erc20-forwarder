@@ -1,6 +1,6 @@
 use crate::AnomaPayConfig;
-use crate::request::prices::{PricesError, PricesResult};
 use crate::request::helpers::price_helper::{TokenPrice, get_token_prices_with_network};
+use crate::request::prices::{PricesError, PricesResult};
 use alloy::primitives::Address;
 
 /// Fetches a single token price using Alchemy Prices API

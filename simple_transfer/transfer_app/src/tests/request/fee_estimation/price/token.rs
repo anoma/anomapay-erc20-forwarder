@@ -2,9 +2,8 @@
 extern crate dotenv;
 
 use crate::load_config;
-use crate::request::fee_estimation::price::token::get_token_prices;
 use crate::request::fee_estimation::token::{FeeCompatibleERC20Token, NativeToken, Token};
-use strum::IntoEnumIterator;
+use crate::request::helpers::price_helper::get_token_prices_with_network;
 
 #[tokio::test]
 async fn test_token_price_fetches_prices_for_all_supported_tokens() {
@@ -12,12 +11,26 @@ async fn test_token_price_fetches_prices_for_all_supported_tokens() {
     let config = load_config().await.expect("failed to load config in test");
 
     let tokens: Vec<Token> = vec![
-        FeeCompatibleERC20Token::iter().next().unwrap().into(),
-        NativeToken::iter().next().unwrap().into(),
+        Token::FeeCompatibleERC20(FeeCompatibleERC20Token::USDC),
+        Token::Native(NativeToken::ETH),
     ];
 
-    let res = get_token_prices(&config, tokens.clone()).await;
+    let addresses: Vec<_> = tokens.iter().map(|t| t.mainnet_address()).collect();
+
+    let mut unique_addresses = addresses.clone();
+    unique_addresses.sort();
+    unique_addresses.dedup();
+    let unique_count = unique_addresses.len();
+
+    let res = get_token_prices_with_network(unique_addresses, &config, Some("eth-mainnet")).await;
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap().data.len(), tokens.len());
+    // Should get prices for all unique addresses requested
+    let prices = res.unwrap();
+    assert_eq!(
+        prices.len(),
+        unique_count,
+        "Should get price for each unique address"
+    );
+    assert!(!prices.is_empty());
 }
