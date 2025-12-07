@@ -12,14 +12,14 @@ sol! {
 }
 
 pub fn encode_migrate_forwarder_input(
-    token: &[u8],
+    erc20_token_addr: &[u8],
     quantity: u128,
     nf: &[u8],
     commitment_tree_root: &[u8],
     migrate_resource_logic_ref: &[u8],
     migrate_resource_forwarder_addr: &[u8],
 ) -> Result<Vec<u8>, ArmError> {
-    let token: Address = token
+    let token: Address = erc20_token_addr
         .try_into()
         .map_err(|_| ArmError::ProveFailed("Invalid address bytes".to_string()))?;
 

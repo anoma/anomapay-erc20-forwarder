@@ -31,8 +31,8 @@ pub enum RpcError {
 /// Create a provider based on the private key from the configuration.
 pub async fn create_provider(config: &AnomaPayConfig) -> RpcResult<DynProvider> {
     let provider = ProviderBuilder::new()
-        .wallet(config.hot_wallet_private_key.clone())
-        .connect_http(config.ethereum_rpc.parse().map_err(|_| InvalidRPCUrl)?)
+        .wallet(config.fee_payment_wallet_private_key.clone())
+        .connect_http(config.rpc_url.parse().map_err(|_| InvalidRPCUrl)?)
         .erased();
 
     Ok(provider)

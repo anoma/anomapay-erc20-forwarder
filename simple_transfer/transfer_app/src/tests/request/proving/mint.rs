@@ -21,7 +21,7 @@ use arm::resource::Resource;
 use arm::transaction::Transaction;
 use transfer_library::TransferLogic;
 use transfer_witness::{
-    ValueInfo, calculate_persistent_value_ref, calculate_value_ref_from_user_addr,
+    ValueInfo, calculate_persistent_value_ref, calculate_value_ref_from_ethereum_account_addr,
 };
 
 #[ignore]
@@ -109,7 +109,7 @@ pub async fn example_mint_parameters(
         logic_ref: TransferLogic::verifying_key(),
         label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
         quantity: amount,
-        value_ref: calculate_value_ref_from_user_addr(&minter.evm_address.into_array()),
+        value_ref: calculate_value_ref_from_ethereum_account_addr(&minter.evm_address.into_array()),
         is_ephemeral: true,
         nonce: random_nonce(),
         nk_commitment: minter.nf_key.commit(),

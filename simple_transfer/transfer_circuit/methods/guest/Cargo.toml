@@ -1,17 +1,15 @@
 [package]
-authors.workspace = true
-edition.workspace = true
-license.workspace = true
+edition = "2021"
 name = "token-transfer-guest"
-readme.workspace = true
-version.workspace = true
+version = "0.1.0"
 
 [workspace]
 
 [dependencies]
 # If you want to try (experimental) std support, add `features = [ "std" ]` to risc0-zkvm
-risc0-zkvm = { workspace = true, features = ["std", "unstable"] }
-transfer_witness = { workspace = true }
+arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = false }
+risc0-zkvm = { version = "3.0.3", features = ["std", "unstable"] }
+transfer_witness = { path = "../../../transfer_witness" }
 
 [patch.crates-io]
 # Placing this patch statement in the workspace Cargo.toml will add RISC Zero SHA-256 accelerator
