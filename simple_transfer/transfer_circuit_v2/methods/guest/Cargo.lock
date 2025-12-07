@@ -3994,7 +3994,7 @@ dependencies = [
 
 [[package]]
 name = "transfer_witness"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4002,21 +4002,19 @@ dependencies = [
  "arm-gadgets",
  "bincode",
  "k256",
- "rand 0.8.5",
+ "rand 0.9.2",
  "serde",
 ]
 
 [[package]]
 name = "transfer_witness_v2"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "arm",
  "arm-gadgets",
  "bincode",
- "k256",
- "rand 0.8.5",
  "serde",
  "transfer_witness",
 ]

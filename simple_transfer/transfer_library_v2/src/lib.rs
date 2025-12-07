@@ -28,7 +28,7 @@ pub const TOKEN_TRANSFER_V2_ELF: &[u8] = include_bytes!("../elf/token-transfer-g
 lazy_static! {
     /// The identity of the binary that executes the proofs in the zkvm.
     pub static ref TOKEN_TRANSFER_V2_ID: Digest =
-        Digest::from_hex("b3e2cd8cb9d81696b6a93fd968a79a9f67e995a1fe9558b4288000b9731d3d40")
+        Digest::from_hex("c5486c68e8c5001485fba78880c6910086ec8ee51f70859490b4ec0e4239c714")
             .unwrap();
 }
 
@@ -101,12 +101,12 @@ impl TransferLogicV2 {
         auth_pk: AuthorizationVerifyingKey,
         encryption_pk: AffinePoint,
         forwarder_address: Vec<u8>,
-        token_address: Vec<u8>,
+        erc20_token_addr: Vec<u8>,
     ) -> Self {
         let encryption_info = EncryptionInfo::new(discovery_pk);
         let label_info = LabelInfo {
             forwarder_addr: forwarder_address,
-            token_addr: token_address,
+            erc20_token_addr,
         };
         let value_info = ValueInfo {
             auth_pk,
@@ -132,8 +132,8 @@ impl TransferLogicV2 {
         action_tree_root: Digest,
         nf_key: NullifierKey,
         forwarder_addr: Vec<u8>,
-        token_addr: Vec<u8>,
-        user_addr: Vec<u8>,
+        erc20_token_addr: Vec<u8>,
+        ethereum_account_addr: Vec<u8>,
         permit_nonce: Vec<u8>,
         permit_deadline: Vec<u8>,
         permit_sig: Vec<u8>,
@@ -145,13 +145,13 @@ impl TransferLogicV2 {
         };
         let forwarder_info = ForwarderInfoV2 {
             call_type: CallTypeV2::Wrap,
-            user_addr,
+            ethereum_account_addr: Some(ethereum_account_addr),
             permit_info: Some(permit_info),
             migrate_info: None,
         };
         let label_info = LabelInfo {
             forwarder_addr,
-            token_addr,
+            erc20_token_addr,
         };
 
         Self::new(
@@ -172,18 +172,18 @@ impl TransferLogicV2 {
         resource: Resource,
         action_tree_root: Digest,
         forwarder_addr: Vec<u8>,
-        token_addr: Vec<u8>,
-        user_addr: Vec<u8>,
+        erc20_token_addr: Vec<u8>,
+        ethereum_account_addr: Vec<u8>,
     ) -> Self {
         let forwarder_info = ForwarderInfoV2 {
             call_type: CallTypeV2::Unwrap,
-            user_addr,
+            ethereum_account_addr: Some(ethereum_account_addr),
             permit_info: None,
             migrate_info: None,
         };
         let label_info = LabelInfo {
             forwarder_addr,
-            token_addr,
+            erc20_token_addr,
         };
 
         Self::new(
@@ -206,8 +206,7 @@ impl TransferLogicV2 {
         self_nf_key: NullifierKey,
         // forwarder address v2
         self_forwarder_addr: Vec<u8>,
-        token_addr: Vec<u8>,
-        user_addr: Vec<u8>,
+        erc20_token_addr: Vec<u8>,
         migrated_resource: Resource,
         migrated_nf_key: NullifierKey,
         migrated_resource_path: MerklePath,
@@ -219,7 +218,7 @@ impl TransferLogicV2 {
     ) -> Self {
         let label_info = LabelInfo {
             forwarder_addr: self_forwarder_addr,
-            token_addr,
+            erc20_token_addr,
         };
 
         let migrated_value_info = ValueInfo {
@@ -238,7 +237,7 @@ impl TransferLogicV2 {
 
         let forwarder_info = ForwarderInfoV2 {
             call_type: CallTypeV2::Migrate,
-            user_addr,
+            ethereum_account_addr: None,
             permit_info: None,
             migrate_info: Some(migrate_info),
         };

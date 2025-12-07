@@ -65,12 +65,12 @@ export PATH=/usr/local/cuda/bin:$PATH
 
 To run the application, some parameters need to be passed via the environment.
 
-| Variable                 | Meaning                                     | Example                              |
-|--------------------------|---------------------------------------------|--------------------------------------|
-| `HOT_WALLET_PRIVATE_KEY` | The hex encoded private key for the account | 0x00                                 |
-| `ETHEREUM_RPC`           | URL for blockchain communication            | https://eth-sepolia.g.alchemy.com/v2 |
-| `INDEXER_ADDRESS`        | URL for the anoma indexer                   | http://example.com                   |
-| `ALCHEMY_API_KEY`        | Key for Alchemy API services                | `123456-ABCDEF`                      | 
+| Variable                         | Meaning                                                 | Example                  |
+|----------------------------------|---------------------------------------------------------|--------------------------|
+| `FEE_PAYMENT_WALLET_PRIVATE_KEY` | The hex encoded private key for the fee payment account | 0x00                     |
+| `RPC_URL`                        | URL for Ethereum RPC defining the network               | https://sepolia.drpc.org |
+| `INDEXER_ADDRESS`                | URL for the anoma indexer                               | http://example.com       |
+| `ALCHEMY_API_KEY`                | Key for Alchemy API services                            | `123456-ABCDEF`          | 
 
 To run the application, simply execute `cargo run`. If you want to use local proving, ensure the bonsai environment
 variables are unset (e.g., `unset BONSAI_API_KEY; unset BONSAI_API_URL`), and run `cargo run --features gpu`.
@@ -178,10 +178,6 @@ forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
   --sig "run(bool,address,bytes32,address)" <IS_TEST_DEPLOYMENT> <PROTOCOL_ADAPTER> <CARRIER_LOGIC_REF> <EMERGENCY_COMMITTEE> \
   --rpc-url sepolia
 ```
-
-forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
---sig "run(bool,address,bytes32,address)" true $PA_ADDRESS $CARRIER_LOGIC_REF $SENDER_ADDRESS \
---rpc-url sepolia
 
 Append the
 
