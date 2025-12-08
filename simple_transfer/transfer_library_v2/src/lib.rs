@@ -37,12 +37,12 @@ lazy_static! {
 /// that the resource logics held within it are actually correct.
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct TransferLogicV2 {
-    witness: TokenTransferWitnessV2,
+    pub witness: TokenTransferWitnessV2,
 }
 
 impl TransferLogicV2 {
     #[allow(clippy::too_many_arguments)]
-    fn new(
+    pub fn new(
         resource: Resource,
         is_consumed: bool,
         action_tree_root: Digest,

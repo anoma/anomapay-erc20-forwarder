@@ -4574,6 +4574,8 @@ version = "0.1.0"
 dependencies = [
  "arm",
  "arm-gadgets",
+ "bincode",
+ "k256",
  "risc0-zkvm",
  "token-transfer-methods",
  "transfer_library",
