@@ -79,3 +79,42 @@ jobs:
         env:
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
           FORWARDER_ADDRESS: ${{ secrets.FORWARDER_ADDRESS }}
+
+  circuit-tests:
+    name: Test transfer circuits (risc0)
+    runs-on: ubuntu-latest
+    needs: lints
+    env:
+      CACHE_VERSION: v0
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Set up Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache: true
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-risczero-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ env.CACHE_VERSION }}
+      - name: Run circuit v1 tests
+        run: |
+          cd simple_transfer/transfer_circuit
+          cargo test -- --nocapture
+        env:
+          RISC0_DEV_MODE: 1  # Use dev mode for faster testing
+
+      - name: Run circuit v2 tests
+        run: |
+          cd simple_transfer/transfer_circuit_v2
+          cargo test -- --nocapture
+        env:
+          RISC0_DEV_MODE: 1  # Use dev mode for faster testing
+
