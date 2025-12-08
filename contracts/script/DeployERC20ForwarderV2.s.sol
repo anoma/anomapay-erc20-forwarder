@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Versioning} from "@anoma-evm-pa/libs/Versioning.sol";
-
 import {Script} from "forge-std/Script.sol";
 
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
