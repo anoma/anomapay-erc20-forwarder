@@ -13,7 +13,7 @@ import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 /// @custom:security-contact security@anoma.foundation
 contract DeployERC20Forwarder is Script {
     /// @notice Deploys the ERC20 forwarder contract.
-    /// @param isTestDeployment Whether the deployment is a test deployment or not. If set to `false`, the ER20
+    /// @param isTestDeployment Whether the deployment is a test deployment or not. If set to `false`, the ERC20
     /// forwarder is deployed deterministically.
     /// @param protocolAdapter The protocol adapter contract that can forward calls.
     /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
