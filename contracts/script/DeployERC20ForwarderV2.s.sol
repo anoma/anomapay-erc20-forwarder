@@ -14,8 +14,8 @@ contract DeployERC20ForwarderV2 is Script {
     /// @notice Deploys the ERC20 forwarder contract.
     /// @param protocolAdapterV2 The protocol adapter v2 contract that can forward calls.
     /// @param logicRefV2 The reference to the logic function of the resource v2 kind triggering the forward call.
-    /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
-    /// RISC Zero verifier has been stopped.
+    /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter v2
+    /// has been stopped.
     /// @param erc20ForwarderV1 The ERC20 forwarder v1 being associated with the stop protocol adapter v1 that funds can
     /// be migrated from.
     function run(address protocolAdapterV2, bytes32 logicRefV2, address emergencyCommittee, address erc20ForwarderV1)

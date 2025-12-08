@@ -35,8 +35,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapterV2 The protocol adapter v2 that can forward calls.
     /// @param logicRefV2 The reference to the logic function of the resource v2 triggering the forward calls.
-    /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
-    /// RISC Zero verifier has been stopped.
+    /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter v2
+    /// has been stopped.
     /// @param erc20ForwarderV1 The ERC20 forwarder v1 connected to the protocol adapter v1 that has been stopped.
     constructor(
         address protocolAdapterV2,

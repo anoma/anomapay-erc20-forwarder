@@ -34,8 +34,8 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapterV3 The protocol adapter v3 that can forward calls.
     /// @param logicRefV3 The reference to the logic function of the resource v3 triggering the forward calls.
-    /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
-    /// RISC Zero verifier has been stopped.
+    /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter v3
+    /// has been stopped.
     /// @param erc20ForwarderV1 The ERC20 forwarder v1 connected to the protocol adapter v1 that has been stopped.
     /// @param erc20ForwarderV2 The ERC20 forwarder v2 connected to the protocol adapter v2 that has been stopped.
     constructor(

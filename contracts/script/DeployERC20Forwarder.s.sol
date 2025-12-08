@@ -17,8 +17,8 @@ contract DeployERC20Forwarder is Script {
     /// forwarder is deployed deterministically.
     /// @param protocolAdapter The protocol adapter contract that can forward calls.
     /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
-    /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
-    /// RISC Zero verifier has been stopped.
+    /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter has
+    /// been stopped.
     function run(bool isTestDeployment, address protocolAdapter, bytes32 logicRef, address emergencyCommittee) public {
         bytes32 salt;
         if (isTestDeployment) {
