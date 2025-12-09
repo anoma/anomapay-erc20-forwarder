@@ -106,11 +106,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// associated nullifier.
     /// @param token The address of the token to be transferred.
     /// @param amount The amount to be transferred.
-    /// @param migrateV1Input The input bytes containing the encoded arguments for the v1 migration call:
-    /// * `nullifier`: The nullifier of the resource to be migrated.
-    /// * `rootV1`: The root of the commitment tree that must be the latest root of the stopped protocol adapter v1.
-    /// * `logicRefV1`: The logic reference that must match the ERC20 forwarder v1 contract.
-    /// * `forwarderV1`: The ERC20 forwarder v1 contract address that must match the one set in this contract.
+    /// @param migrateV1Input The input bytes containing the encoded arguments for to migrate v1 resources.
     function _migrateV1(address token, uint128 amount, bytes calldata migrateV1Input) internal virtual {
         (MigrateV1Data memory data) = abi.decode(migrateV1Input, (MigrateV1Data));
 

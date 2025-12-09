@@ -116,7 +116,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// `Permit2.permitWitnessTransferFrom`.
     /// @param token The address of the token to be transferred.
     /// @param amount The amount to be transferred.
-    /// @param wrapInput The input bytes containing the encoded arguments specific for the wrap call:
+    /// @param wrapInput The input bytes containing the encoded arguments specific for the wrap call.
     function _wrap(address token, uint128 amount, bytes calldata wrapInput) internal {
         (WrapData memory data) = abi.decode(wrapInput, (WrapData));
 
@@ -140,8 +140,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
     /// @param token The address of the token to be transferred.
     /// @param amount The amount to be transferred.
-    /// @param unwrapInput The input bytes containing the encoded arguments for the unwrap call:
-    /// * `receiver`: The receiver address to transfer the funds to.
+    /// @param unwrapInput The input bytes containing the encoded arguments for the unwrap call.
     function _unwrap(address token, uint128 amount, bytes calldata unwrapInput) internal {
         (UnwrapData memory data) = abi.decode(unwrapInput, (UnwrapData));
 
