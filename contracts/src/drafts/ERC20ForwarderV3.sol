@@ -23,6 +23,18 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         MigrateV2
     }
 
+    /// @notice A struct containing wrap specific inputs.
+    /// @param nullifier The nullifier of the resource to be migrated.
+    /// @param rootV2 The root of the commitment tree that must be the latest root of the stopped protocol adapter v2.
+    /// @param logicRefV2 The logic reference that must match the ERC20 forwarder v2 contract.
+    /// @param forwarderV2  The ERC20 forwarder v2 contract address that must match the one set in this contract.
+    struct MigrateV2Data {
+        bytes32 nullifier;
+        bytes32 rootV2;
+        bytes32 logicRefV2;
+        address forwarderV2;
+    }
+
     ERC20ForwarderV2 internal immutable _ERC20_FORWARDER_V2;
     address internal immutable _PROTOCOL_ADAPTER_V2;
     bytes32 internal immutable _COMMITMENT_TREE_ROOT_V2;
@@ -103,8 +115,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     /// * `logicRefV1`: The logic reference that must match the ERC20 forwarder v1 contract.
     /// * `forwarderV1`: The ERC20 forwarder v1 contract address that must match the one set in this contract.
     function _migrateV1(address token, uint128 amount, bytes calldata migrateV1Input) internal virtual override {
-        (bytes32 nullifier, bytes32 root, bytes32 logicRef, address forwarderV1) =
-            abi.decode(migrateV1Input, (bytes32, bytes32, bytes32, address));
+        (MigrateV1Data memory data) = abi.decode(migrateV1Input, (MigrateV1Data));
 
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v2.
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V2), amount: amount});
@@ -112,7 +123,9 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         // Forwards a call to migrate ERC20 v1 tokens via the ERC20 forwarder v1.
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V2.forwardEmergencyCall({
-            input: abi.encode(CallTypeV2.MigrateV1, token, amount, nullifier, root, logicRef, forwarderV1)
+            input: abi.encode(
+                CallTypeV2.MigrateV1, token, amount, data.nullifier, data.rootV1, data.logicRefV1, data.forwarderV1
+            )
         });
 
         // Forwards a call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
@@ -133,30 +146,29 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     /// * `logicRefV2`: The logic reference that must match the ERC20 forwarder v2 contract.
     /// * `forwarderV2`: The ERC20 forwarder v2 contract address that must match the one set in this contract.
     function _migrateV2(address token, uint128 amount, bytes calldata migrateV2Input) internal virtual {
-        (bytes32 nullifier, bytes32 rootV2, bytes32 logicRefV2, address forwarderV2) =
-            abi.decode(migrateV2Input, (bytes32, bytes32, bytes32, address));
+        (MigrateV2Data memory data) = abi.decode(migrateV2Input, (MigrateV2Data));
 
         // Check that the resource being upgraded is not in the protocol adapter v2 nullifier set.
-        if (INullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(nullifier)) {
-            revert ResourceAlreadyConsumed(nullifier);
+        if (INullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(data.nullifier)) {
+            revert ResourceAlreadyConsumed(data.nullifier);
         }
 
         // Add the nullifier to the this contract's nullifier set. The call will revert if the nullifier already exists.
-        _addNullifier(nullifier);
+        _addNullifier(data.nullifier);
 
         // Check that the root matches the final protocol adapter v2 commitment tree root.
-        if (rootV2 != _COMMITMENT_TREE_ROOT_V2) {
-            revert InvalidMigrationCommitmentTreeRootV2({expected: _COMMITMENT_TREE_ROOT_V2, actual: rootV2});
+        if (data.rootV2 != _COMMITMENT_TREE_ROOT_V2) {
+            revert InvalidMigrationCommitmentTreeRootV2({expected: _COMMITMENT_TREE_ROOT_V2, actual: data.rootV2});
         }
 
         // Check that logicRef matches the logic reference associated with the ERC20 forwarder v2.
-        if (logicRefV2 != _LOGIC_REFERENCE_V2) {
-            revert InvalidMigrationLogicRefV2({expected: _LOGIC_REFERENCE_V2, actual: logicRefV2});
+        if (data.logicRefV2 != _LOGIC_REFERENCE_V2) {
+            revert InvalidMigrationLogicRefV2({expected: _LOGIC_REFERENCE_V2, actual: data.logicRefV2});
         }
 
         // Check that forwarder matches the ERC20 forwarder v2.
-        if (forwarderV2 != address(_ERC20_FORWARDER_V2)) {
-            revert InvalidForwarderV2({expected: address(_ERC20_FORWARDER_V2), actual: forwarderV2});
+        if (data.forwarderV2 != address(_ERC20_FORWARDER_V2)) {
+            revert InvalidForwarderV2({expected: address(_ERC20_FORWARDER_V2), actual: data.forwarderV2});
         }
 
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v2.

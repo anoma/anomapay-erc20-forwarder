@@ -99,28 +99,26 @@ contract ERC20ForwarderTest is Test {
             _defaultPermit.permitted.token,
             /*         amount */
             _defaultPermit.permitted.amount,
-            /*          nonce */
-            _defaultPermit.nonce,
-            /*       deadline */
-            _defaultPermit.deadline,
-            /*           from */
-            _alice,
-            /* actionTreeRoot */
-            _ACTION_TREE_ROOT,
-            /*      signature */
-            _defaultPermitSigR,
-            _defaultPermitSigS,
-            _defaultPermitSigV
+            /*      wrap data */
+            ERC20Forwarder.WrapData({
+                nonce: _defaultPermit.nonce,
+                deadline: _defaultPermit.deadline,
+                owner: _alice,
+                actionTreeRoot: _ACTION_TREE_ROOT,
+                r: _defaultPermitSigR,
+                s: _defaultPermitSigS,
+                v: _defaultPermitSigV
+            })
         );
 
         _defaultUnwrapInput = abi.encode( /* callType */
             ERC20Forwarder.CallType.Unwrap,
-            /*    token */
+            /*       token */
             address(_erc20),
-            /*   amount */
+            /*      amount */
             _TRANSFER_AMOUNT,
-            /*       to */
-            _alice
+            /* unwrap data */
+            ERC20Forwarder.UnwrapData({receiver: _alice})
         );
     }
 
@@ -159,14 +157,15 @@ contract ERC20ForwarderTest is Test {
 
         _erc20FeeAdd.mint({to: address(_fwd), value: _TRANSFER_AMOUNT + fee});
 
-        bytes memory input = abi.encode( /* callType */
+        bytes memory input = abi.encode(
+            /*    callType */
             ERC20Forwarder.CallType.Unwrap,
-            /*    token */
+            /*       token */
             address(_erc20FeeAdd),
-            /*   amount */
+            /*      amount */
             _TRANSFER_AMOUNT,
-            /*       to */
-            _alice
+            /* unwrap data */
+            ERC20Forwarder.UnwrapData({receiver: _alice})
         );
 
         uint256 actualWithdrawalAmount = _TRANSFER_AMOUNT + fee;

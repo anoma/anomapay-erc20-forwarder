@@ -22,6 +22,18 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         MigrateV1
     }
 
+    /// @notice A struct containing wrap specific inputs.
+    /// @param nullifier The nullifier of the resource to be migrated.
+    /// @param rootV1 The root of the commitment tree that must be the latest root of the stopped protocol adapter v1.
+    /// @param logicRefV1 The logic reference that must match the ERC20 forwarder v1 contract.
+    /// @param forwarderV1  The ERC20 forwarder v1 contract address that must match the one set in this contract.
+    struct MigrateV1Data {
+        bytes32 nullifier;
+        bytes32 rootV1;
+        bytes32 logicRefV1;
+        address forwarderV1;
+    }
+
     ERC20Forwarder internal immutable _ERC20_FORWARDER_V1;
     address internal immutable _PROTOCOL_ADAPTER_V1;
     bytes32 internal immutable _COMMITMENT_TREE_ROOT_V1;
@@ -100,30 +112,29 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// * `logicRefV1`: The logic reference that must match the ERC20 forwarder v1 contract.
     /// * `forwarderV1`: The ERC20 forwarder v1 contract address that must match the one set in this contract.
     function _migrateV1(address token, uint128 amount, bytes calldata migrateV1Input) internal virtual {
-        (bytes32 nullifier, bytes32 rootV1, bytes32 logicRefV1, address forwarderV1) =
-            abi.decode(migrateV1Input, (bytes32, bytes32, bytes32, address));
+        (MigrateV1Data memory data) = abi.decode(migrateV1Input, (MigrateV1Data));
 
         // Check that the resource being upgraded is not in the protocol adapter v1 nullifier set.
-        if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
-            revert ResourceAlreadyConsumed(nullifier);
+        if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(data.nullifier)) {
+            revert ResourceAlreadyConsumed(data.nullifier);
         }
 
         // Add the nullifier to the this contract's nullifier set. The call will revert if the nullifier already exists.
-        _addNullifier(nullifier);
+        _addNullifier(data.nullifier);
 
         // Check that the root matches the final protocol adapter V1 commitment tree root.
-        if (rootV1 != _COMMITMENT_TREE_ROOT_V1) {
-            revert InvalidMigrationCommitmentTreeRootV1({expected: _COMMITMENT_TREE_ROOT_V1, actual: rootV1});
+        if (data.rootV1 != _COMMITMENT_TREE_ROOT_V1) {
+            revert InvalidMigrationCommitmentTreeRootV1({expected: _COMMITMENT_TREE_ROOT_V1, actual: data.rootV1});
         }
 
         // Check that logicRef matches the logic reference associated with the ERC20 forwarder v1.
-        if (logicRefV1 != _LOGIC_REFERENCE_V1) {
-            revert InvalidMigrationLogicRefV1({expected: _LOGIC_REFERENCE_V1, actual: logicRefV1});
+        if (data.logicRefV1 != _LOGIC_REFERENCE_V1) {
+            revert InvalidMigrationLogicRefV1({expected: _LOGIC_REFERENCE_V1, actual: data.logicRefV1});
         }
 
         // Check that forwarder matches the ERC20 forwarder v1.
-        if (forwarderV1 != address(_ERC20_FORWARDER_V1)) {
-            revert InvalidForwarderV1({expected: address(_ERC20_FORWARDER_V1), actual: forwarderV1});
+        if (data.forwarderV1 != address(_ERC20_FORWARDER_V1)) {
+            revert InvalidForwarderV1({expected: address(_ERC20_FORWARDER_V1), actual: data.forwarderV1});
         }
 
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v1.

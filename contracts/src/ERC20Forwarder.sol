@@ -23,6 +23,29 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         Unwrap
     }
 
+    /// @notice A struct containing wrap specific inputs.
+    /// @param nonce A unique value to prevent signature replays.
+    /// @param deadline The deadline of the permit signature.
+    /// @param owner The owner from which the funds a transferred from and signer of the Permit2 message.
+    /// @param witness The action tree root that was signed over in addition to the permit data.
+    /// @param signature The Permit2 signature.
+    // solhint-disable-next-line gas-struct-packing
+    struct WrapData {
+        uint256 nonce;
+        uint256 deadline;
+        address owner;
+        bytes32 actionTreeRoot;
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+    }
+
+    /// @notice A struct containing unwrap specific inputs.
+    /// @param receiver The receiving account address.
+    struct UnwrapData {
+        address receiver;
+    }
+
     /// @notice The offset for the calltype specific input data (3 slots).
     // slither-disable-next-line unused-state
     uint256 internal constant _GENERIC_INPUT_OFFSET = 3 * 32;
@@ -92,28 +115,22 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param token The address of the token to be transferred.
     /// @param amount The amount to be transferred.
     /// @param wrapInput The input bytes containing the encoded arguments specific for the wrap call:
-    /// * `nonce`: A unique value to prevent signature replays.
-    /// * `deadline`: The deadline of the permit signature.
-    /// * `owner`: The owner from which the funds a transferred from and signer of the Permit2 message.
-    /// * `witness`: The witness information (the action tree root) that was signed over in addition to the permit data.
-    /// * `signature`: The Permit2 signature.
     function _wrap(address token, uint128 amount, bytes calldata wrapInput) internal {
-        (uint256 nonce, uint256 deadline, address owner, bytes32 actionTreeRoot, bytes32 r, bytes32 s, uint8 v) =
-            abi.decode(wrapInput, (uint256, uint256, address, bytes32, bytes32, bytes32, uint8));
+        (WrapData memory data) = abi.decode(wrapInput, (WrapData));
 
-        emit Wrapped({token: token, from: owner, amount: amount});
+        emit Wrapped({token: token, from: data.owner, amount: amount});
 
         _PERMIT2.permitWitnessTransferFrom({
             permit: ISignatureTransfer.PermitTransferFrom({
                 permitted: ISignatureTransfer.TokenPermissions({token: token, amount: amount}),
-                nonce: nonce,
-                deadline: deadline
+                nonce: data.nonce,
+                deadline: data.deadline
             }),
             transferDetails: ISignatureTransfer.SignatureTransferDetails({to: address(this), requestedAmount: amount}),
-            owner: owner,
-            witness: ERC20ForwarderPermit2.Witness({actionTreeRoot: actionTreeRoot}).hash(),
+            owner: data.owner,
+            witness: ERC20ForwarderPermit2.Witness({actionTreeRoot: data.actionTreeRoot}).hash(),
             witnessTypeString: ERC20ForwarderPermit2._WITNESS_TYPE_STRING,
-            signature: abi.encodePacked(r, s, v)
+            signature: abi.encodePacked(data.r, data.s, data.v)
         });
     }
 
@@ -124,11 +141,11 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param unwrapInput The input bytes containing the encoded arguments for the unwrap call:
     /// * `receiver`: The receiver address to transfer the funds to.
     function _unwrap(address token, uint128 amount, bytes calldata unwrapInput) internal {
-        address receiver = abi.decode(unwrapInput, (address));
+        (UnwrapData memory data) = abi.decode(unwrapInput, (UnwrapData));
 
-        emit Unwrapped({token: address(token), to: receiver, amount: amount});
+        emit Unwrapped({token: address(token), to: data.receiver, amount: amount});
 
-        IERC20(token).safeTransfer({to: receiver, value: amount});
+        IERC20(token).safeTransfer({to: data.receiver, value: amount});
     }
 
     /// @notice Forwards an emergency call wrapping or unwrapping ERC20 tokens based on the provided input.
