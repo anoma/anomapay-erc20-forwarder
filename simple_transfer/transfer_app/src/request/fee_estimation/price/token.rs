@@ -23,7 +23,7 @@ pub async fn get_ether_price_in_tokens(
         Some("eth-mainnet"), // Api does not support testnets
     )
     .await
-    .map_err(|e| FeeEstimationError::TokenPriceError(e))?;
+    .map_err(FeeEstimationError::TokenPriceError)?;
 
     let token_price_in_usd = prices
         .iter()

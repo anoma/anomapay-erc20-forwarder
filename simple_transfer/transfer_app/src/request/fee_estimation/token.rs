@@ -7,6 +7,7 @@ use utoipa::ToSchema;
 pub struct TokenMetadata {
     #[allow(unused)]
     pub name: String,
+    #[allow(unused)]
     pub symbol: String,
     pub decimals: u8,
 }
@@ -33,10 +34,6 @@ pub enum NativeToken {
 
 pub trait Data {
     fn metadata(&self) -> TokenMetadata;
-
-    fn symbol(&self) -> String {
-        self.metadata().symbol.clone()
-    }
 
     fn decimals(&self) -> u8 {
         self.metadata().decimals
