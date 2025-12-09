@@ -12,9 +12,10 @@ for i in $(seq 0 10 100); do
     echo "Running with CONCURRENCY=$i"
     # run the benchmark with `i` concurrent mint requests
     # extract the runtime for a single test from the output.
+    PROOFS=$(echo "$i * 3" | bc)
     CONCURRENCY=$i cargo test benchmark_mint -- --ignored 2>&1 | \
     grep 'test result: ok. 1 passed' | \
-    awk -v vals="${i}" '{print vals "," $NF}' | tr -d 's' >> data.csv;
+    awk -v vals="${PROOFS}" '{print vals "," $NF}' | tr -d 's' >> data.csv;
   done;
 done;
 

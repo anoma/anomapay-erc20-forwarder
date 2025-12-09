@@ -5,7 +5,7 @@ set title 'Average Execution Time Mint'
 set grid
 set key top left
 
-plot 'data.csv' using 1:2 with points pt 7 ps 2 title 'Values'
+plot 'non_aggregate.csv' using 1:2 with points pt 7 ps 2 title 'Non-Aggregate Proofs (non_aggregate.csv)', 'aggregate.csv' using 1:2 with points pt 7 ps 2 title 'Aggregate Proofs (aggregate.csv)', 'data.csv' using 1:2 with points pt 7 ps 2 title 'Proofs (data.csv)'
 
 set terminal push
 set terminal pngcairo
