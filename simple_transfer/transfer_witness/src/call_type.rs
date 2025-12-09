@@ -65,6 +65,10 @@ pub fn encode_wrap_forwarder_input(
     action_tree_root: &[u8],
     signature: &[u8],
 ) -> Result<Vec<u8>, ArmError> {
+    let erc20_token: Address = erc20_token_addr
+        .try_into()
+        .map_err(|_| ArmError::ProveFailed("Invalid from address bytes".to_string()))?;
+
     let owner: Address = ethereum_account_addr
         .try_into()
         .map_err(|_| ArmError::ProveFailed("Invalid from address bytes".to_string()))?;
@@ -85,7 +89,7 @@ pub fn encode_wrap_forwarder_input(
         v: signature[64],
     };
 
-    Ok((CallType::Wrap, erc20_token_addr, quantity, wrap_data).abi_encode_params())
+    Ok((CallType::Wrap, erc20_token, quantity, wrap_data).abi_encode_params())
 }
 
 #[test]
