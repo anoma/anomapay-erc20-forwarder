@@ -150,7 +150,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         });
     }
 
-    function test_migrateV1_reverts_if_the_v1_resource_to_migrate_has_already_been_consumed() public virtual {
+    function test_migrateV1_reverts_if_the_v1_resource_to_migrate_has_already_been_consumed() public {
         Transaction memory txn = TransactionExample.transaction();
         bytes32 nullifier = txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
 
@@ -170,7 +170,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _fwdV2.forwardCall({logicRef: _logicRefV2, input: input});
     }
 
-    function test_migrateV1_reverts_if_the_v1_resource_has_already_been_migrated() public virtual {
+    function test_migrateV1_reverts_if_the_v1_resource_has_already_been_migrated() public {
         // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
@@ -183,7 +183,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _fwdV2.forwardCall({logicRef: _logicRefV2, input: _defaultMigrateV1Input});
     }
 
-    function test_migrateV1_reverts_if_the_commitment_tree_root_v1_is_incorrect() public virtual {
+    function test_migrateV1_reverts_if_the_commitment_tree_root_v1_is_incorrect() public {
         // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
@@ -220,7 +220,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _fwdV2.forwardCall({logicRef: _logicRefV2, input: migrateV1InputWithIncorrectCommitmentTreeRootV1});
     }
 
-    function test_migrateV1_reverts_if_the_logic_ref_v1_is_incorrect() public virtual {
+    function test_migrateV1_reverts_if_the_logic_ref_v1_is_incorrect() public {
         // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
@@ -254,7 +254,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _fwdV2.forwardCall({logicRef: _logicRefV2, input: migrateV1InputWithIncorrectLogicRefV1});
     }
 
-    function test_migrateV1_reverts_if_the_forwarder_v1_is_incorrect() public virtual {
+    function test_migrateV1_reverts_if_the_forwarder_v1_is_incorrect() public {
         // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 

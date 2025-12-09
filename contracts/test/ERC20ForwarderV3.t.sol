@@ -251,7 +251,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         _fwdV3.forwardCall({logicRef: _logicRefV3, input: _defaultMigrateV2Input});
     }
 
-    function test_migrateV1_reverts_if_the_commitment_tree_root_v1_is_incorrect() public virtual {
+    function test_migrateV1_reverts_if_the_commitment_tree_root_v1_is_incorrect() public {
         // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
