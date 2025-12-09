@@ -28,9 +28,9 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param deadline The deadline of the permit signature.
     /// @param owner The owner from which the funds a transferred from and signer of the Permit2 message.
     /// @param witness The action tree root that was signed over in addition to the permit data.
-    /// @param r The Permit2 signature. // TODO!
-    /// @param s The Permit2 signature. // TODO!
-    /// @param v The Permit2 signature. // TODO!
+    /// @param r The ECDSA signature component `r` of the Permit2 signature.
+    /// @param s The ECDSA signature component `s` of the Permit2 signature.
+    /// @param v The ECDSA recovery identifier (27 or 28) of the Permit2 signature.
     // solhint-disable-next-line gas-struct-packing
     struct WrapData {
         uint256 nonce;
