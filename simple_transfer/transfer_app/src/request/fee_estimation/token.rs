@@ -22,7 +22,7 @@ pub enum Token {
 pub enum FeeCompatibleERC20Token {
     WETH,
     USDC,
-    USDT
+    USDT,
 }
 
 #[derive(Debug, Clone, EnumIter, Deserialize)]
@@ -116,7 +116,7 @@ impl Token {
             Token::FeeCompatibleERC20(fee_token) => match fee_token {
                 FeeCompatibleERC20Token::WETH => addresses::WETH_MAINNET,
                 FeeCompatibleERC20Token::USDC => addresses::USDC_MAINNET,
-                FeeCompatibleERC20Token::USDT => addresses::USDT_MAINNET
+                FeeCompatibleERC20Token::USDT => addresses::USDT_MAINNET,
             },
             Token::Native(native_token) => match native_token {
                 NativeToken::ETH => addresses::WETH_MAINNET, // Use WETH for ETH
