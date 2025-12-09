@@ -4568,17 +4568,10 @@ dependencies = [
  "arm",
  "arm-gadgets",
  "bincode",
+ "k256",
  "risc0-zkvm",
- "token-transfer-methods",
  "transfer_library",
  "transfer_witness",
-]
-
-[[package]]
-name = "token-transfer-methods"
-version = "0.1.0"
-dependencies = [
- "risc0-build",
 ]
 
 [[package]]
