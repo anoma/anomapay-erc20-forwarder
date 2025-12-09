@@ -25,7 +25,7 @@ pub struct FeeEstimationPayload {
 pub async fn estimate_fee_unit_quantity(
     config: &AnomaPayConfig,
     provider: &DynProvider,
-    fee_token: &FeeCompatibleERC20Token, // Address
+    fee_token: &FeeCompatibleERC20Token,
     transaction: &Parameters,
 ) -> FeeEstimationResult<u128> {
     let resource_count = transaction.consumed_resources.len() + transaction.created_resources.len();
