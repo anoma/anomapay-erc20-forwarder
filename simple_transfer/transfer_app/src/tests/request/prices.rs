@@ -26,7 +26,7 @@ async fn test_get_token_price() {
     );
 
     // Try with config network first, then fall back to mainnet if on testnet
-    let result = if config.ethereum_rpc.contains("sepolia") {
+    let result = if config.rpc_url.contains("sepolia") {
         // Prices API only works on mainnet, so use mainnet for testing
         println!("   Config is set to Sepolia, using mainnet for price API");
         crate::request::prices::call_prices_api::get_token_price_with_network(

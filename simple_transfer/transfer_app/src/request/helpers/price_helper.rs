@@ -59,7 +59,7 @@ struct AlchemyPricesResponse {
 /// Gets the network name from config
 // TODO: Adapt to multiple networks
 fn get_network_from_config(config: &AnomaPayConfig) -> String {
-    if config.ethereum_rpc.contains("sepolia") {
+    if config.rpc_url.contains("sepolia") {
         "eth-sepolia".to_string()
     } else {
         "eth-mainnet".to_string()

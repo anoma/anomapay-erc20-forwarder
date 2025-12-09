@@ -146,12 +146,12 @@ async fn get_alchemy_token_balances(
 
 /// Gets the Alchemy API base URL based on the config
 fn get_alchemy_base_url(config: &AnomaPayConfig) -> String {
-    if config.ethereum_rpc.contains("alchemy.com") {
-        let url_parts: Vec<&str> = config.ethereum_rpc.split("/v2/").collect();
+    if config.rpc_url.contains("alchemy.com") {
+        let url_parts: Vec<&str> = config.rpc_url.split("/v2/").collect();
         if !url_parts.is_empty() {
             format!("{}/v2/{}", url_parts[0], config.alchemy_api_key)
         } else {
-            let chain = if config.ethereum_rpc.contains("sepolia") {
+            let chain = if config.rpc_url.contains("sepolia") {
                 "eth-sepolia"
             } else {
                 "eth-mainnet"
