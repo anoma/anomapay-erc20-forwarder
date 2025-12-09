@@ -76,8 +76,8 @@ pub fn encode_wrap_forwarder_input(
     }
 
     let wrap_data = WrapData {
-        nonce: U256::from_le_slice(nonce),
-        deadline: U256::from_le_slice(deadline),
+        nonce: U256::from_be_slice(nonce),
+        deadline: U256::from_be_slice(deadline),
         owner,
         actionTreeRoot: B256::from_slice(action_tree_root),
         r: B256::from_slice(&signature[0..32]),
