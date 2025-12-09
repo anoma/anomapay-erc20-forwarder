@@ -193,9 +193,9 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         bytes memory migrateV1InputWithIncorrectCommitmentTreeRootV1 = abi.encode( /*  callType */
             ERC20ForwarderV2.CallTypeV2.MigrateV1,
-            /*       token */
+            /*           token */
             address(_erc20),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
@@ -226,11 +226,12 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         bytes32 incorrectLogicRefV1 = bytes32(type(uint256).max / 2);
 
-        bytes memory migrateV1InputWithIncorrectLogicRefV1 = abi.encode( /*  callType */
+        bytes memory migrateV1InputWithIncorrectLogicRefV1 = abi.encode(
+            /*        callType */
             ERC20ForwarderV2.CallTypeV2.MigrateV1,
-            /*       token */
+            /*           token */
             address(_erc20),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
@@ -259,11 +260,12 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         address incorrectForwarderV1 = address(type(uint160).max / 2);
 
-        bytes memory migrateV1InputWithIncorrectForwarderV1 = abi.encode( /*  callType */
+        bytes memory migrateV1InputWithIncorrectForwarderV1 = abi.encode(
+            /*        callType */
             ERC20ForwarderV2.CallTypeV2.MigrateV1,
-            /*       token */
+            /*           token */
             address(_erc20),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
@@ -288,11 +290,12 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         _emergencyStopPaV1AndSetEmergencyCaller();
 
-        bytes memory input = abi.encode( /*  callType */
+        bytes memory input = abi.encode(
+            /*        callType */
             ERC20ForwarderV2.CallTypeV2.MigrateV1,
-            /*       token */
+            /*           token */
             address(_erc20FeeSub),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({

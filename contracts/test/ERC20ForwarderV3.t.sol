@@ -156,9 +156,9 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         _defaultMigrateV2Input = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV2,
-            /*     token */
+            /*           token */
             address(_erc20),
-            /*    amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v2 data */
             ERC20ForwarderV3.MigrateV2Data({
@@ -261,9 +261,9 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV1InputWithIncorrectCommitmentTreeRootV1 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV1,
-            /*       token */
+            /*           token */
             address(_erc20),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
@@ -297,9 +297,9 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV2InputWithIncorrectCommitmentTreeRootV2 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV2,
-            /*       token */
+            /*           token */
             address(_erc20),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v2 data */
             ERC20ForwarderV3.MigrateV2Data({
@@ -333,9 +333,9 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV1InputWithIncorrectLogicRefV1 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV1,
-            /*       token */
+            /*           token */
             address(_erc20),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
@@ -366,9 +366,9 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV2InputWithIncorrectLogicRefV2 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV2,
-            /*       token */
+            /*           token */
             address(_erc20),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v2 data */
             ERC20ForwarderV3.MigrateV2Data({
@@ -400,9 +400,9 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV1InputWithIncorrectLabelRefV1 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV1,
-            /*       token */
+            /*           token */
             address(_erc20),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
@@ -431,9 +431,9 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         bytes memory migrateV2InputWithIncorrectLabelRefV2 = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV2,
-            /*       token */
+            /*           token */
             address(_erc20),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v2 data */
             ERC20ForwarderV3.MigrateV2Data({
@@ -459,11 +459,12 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         _emergencyStopPaV1AndSetEmergencyCaller();
         _emergencyStopPaV2AndSetEmergencyCaller();
 
-        bytes memory input = abi.encode( /*  callType */
+        bytes memory input = abi.encode(
+            /*        callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV1,
-            /*       token */
+            /*           token */
             address(_erc20FeeSub),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
@@ -490,20 +491,20 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         _emergencyStopPaV2AndSetEmergencyCaller();
 
-        bytes memory input = abi.encode( /*  callType */
+        bytes memory input = abi.encode(
+            /*        callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV2,
-            /*       token */
+            /*           token */
             address(_erc20FeeSub),
-            /*      amount */
+            /*          amount */
             _TRANSFER_AMOUNT,
-            /*   nullifier */
-            _NULLIFIER,
-            /*      rootV2 */
-            CommitmentTree(_paV2).latestCommitmentTreeRoot(),
-            /*  logicRefV2 */
-            _logicRefV2,
-            /* forwarderV2 */
-            address(_fwdV2)
+            /* migrate v2 data */
+            ERC20ForwarderV3.MigrateV2Data({
+                nullifier: _NULLIFIER,
+                rootV2: CommitmentTree(_paV2).latestCommitmentTreeRoot(),
+                logicRefV2: _logicRefV2,
+                forwarderV2: address(_fwdV2)
+            })
         );
 
         uint256 actualDepositAmount = _TRANSFER_AMOUNT - _erc20FeeSub.FEE();

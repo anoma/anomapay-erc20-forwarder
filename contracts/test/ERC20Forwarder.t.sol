@@ -190,7 +190,7 @@ contract ERC20ForwarderTest is Test {
             /*   amount */
             0,
             /*       to */
-            _alice
+            ERC20Forwarder.UnwrapData({receiver: _alice})
         );
 
         vm.prank(address(_pa));
