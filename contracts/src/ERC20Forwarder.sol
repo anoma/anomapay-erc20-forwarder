@@ -137,7 +137,6 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     }
 
     /// @notice Unwraps an ERC20 token and transfers funds to the recipient using the `SafeERC20.safeTransfer`.
-
     /// @param token The address of the token to be transferred.
     /// @param amount The amount to be transferred.
     /// @param unwrapInput The input bytes containing the encoded arguments for the unwrap call.

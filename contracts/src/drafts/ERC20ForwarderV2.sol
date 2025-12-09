@@ -137,8 +137,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V1), amount: amount});
 
         // Forwards a call to transfer the ERC20 tokens from the ERC20 forwarder v1 to this contract.
-        // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been
-        // withdrawn and the `Transfer` event on the ERC20 token.
+        // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been withdrawn
+        // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V1.forwardEmergencyCall(abi.encode(CallType.Unwrap, token, amount, address(this)));
     }
