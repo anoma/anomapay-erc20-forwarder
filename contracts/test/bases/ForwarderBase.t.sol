@@ -55,7 +55,7 @@ contract ForwarderBaseTest is Test {
         new ForwarderExample({protocolAdapter: address(0), logicRef: _LOGIC_REF});
     }
 
-    function test_constructor_reverts_if_the_LOGIC_REF_is_zero() public {
+    function test_constructor_reverts_if_the_logic_ref_is_zero() public {
         vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
         new ForwarderExample({protocolAdapter: _pa, logicRef: bytes32(0)});
     }

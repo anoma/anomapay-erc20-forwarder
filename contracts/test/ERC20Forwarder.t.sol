@@ -41,7 +41,9 @@ contract ERC20ForwarderTest is Test {
     ERC20WithFeeExample internal _erc20FeeSub;
 
     ISignatureTransfer.PermitTransferFrom internal _defaultPermit;
-    bytes internal _defaultPermitSig;
+    bytes32 internal _defaultPermitSigR;
+    bytes32 internal _defaultPermitSigS;
+    uint8 internal _defaultPermitSigV;
     bytes internal _defaultWrapInput;
     bytes internal _defaultUnwrapInput;
 
@@ -82,7 +84,7 @@ contract ERC20ForwarderTest is Test {
             deadline: Time.timestamp() + 5 minutes
         });
 
-        _defaultPermitSig = vm.permitWitnessTransferFromSignature({
+        (_defaultPermitSigR, _defaultPermitSigS, _defaultPermitSigV) = vm.permitWitnessTransferFromSignature({
             domainSeparator: _permit2.DOMAIN_SEPARATOR(),
             permit: _defaultPermit,
             privateKey: _alicePrivateKey,
@@ -106,7 +108,9 @@ contract ERC20ForwarderTest is Test {
             /* actionTreeRoot */
             _ACTION_TREE_ROOT,
             /*      signature */
-            _defaultPermitSig
+            _defaultPermitSigR,
+            _defaultPermitSigS,
+            _defaultPermitSigV
         );
 
         _defaultUnwrapInput = abi.encode( /* callType */
@@ -254,7 +258,7 @@ contract ERC20ForwarderTest is Test {
             deadline: Time.timestamp() + 30 minutes
         });
 
-        bytes memory signature = vm.permitWitnessTransferFromSignature({
+        (bytes32 r, bytes32 s, uint8 v) = vm.permitWitnessTransferFromSignature({
             domainSeparator: _permit2.DOMAIN_SEPARATOR(),
             permit: permit,
             privateKey: _alicePrivateKey,
@@ -277,7 +281,9 @@ contract ERC20ForwarderTest is Test {
             /* actionTreeRoot */
             _ACTION_TREE_ROOT,
             /*      signature */
-            signature
+            r,
+            s,
+            v
         );
 
         uint256 actualDepositAmount = _TRANSFER_AMOUNT - _erc20FeeSub.FEE();
@@ -320,7 +326,7 @@ contract ERC20ForwarderTest is Test {
             deadline: Time.timestamp() + 5 minutes
         });
 
-        bytes memory permitSigForZeroAmount = vm.permitWitnessTransferFromSignature({
+        (bytes32 r, bytes32 s, uint8 v) = vm.permitWitnessTransferFromSignature({
             domainSeparator: _permit2.DOMAIN_SEPARATOR(),
             permit: permitWithZeroAmount,
             privateKey: _alicePrivateKey,
@@ -343,7 +349,9 @@ contract ERC20ForwarderTest is Test {
             /* actionTreeRoot */
             _ACTION_TREE_ROOT,
             /*      signature */
-            permitSigForZeroAmount
+            r,
+            s,
+            v
         );
 
         vm.prank(address(_pa));

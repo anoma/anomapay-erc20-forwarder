@@ -64,19 +64,22 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// - migrate ERC20 resources from the ERC20 forwarder v1.
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
-        (CallTypeV2 callType, IERC20 token, uint128 amount) = abi.decode(input[:96], (CallTypeV2, IERC20, uint128));
+        (CallTypeV2 callType, IERC20 token, uint128 amount) =
+            abi.decode(input[:_GENERIC_INPUT_OFFSET], (CallTypeV2, IERC20, uint128));
+
+        bytes calldata specificInput = input[_GENERIC_INPUT_OFFSET:];
 
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 balanceDelta = 0;
 
         if (callType == CallTypeV2.Wrap) {
-            _wrap(input);
+            _wrap({token: address(token), amount: amount, wrapInput: specificInput});
             balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         } else if (callType == CallTypeV2.Unwrap) {
-            _unwrap(input);
+            _unwrap({token: address(token), amount: amount, unwrapInput: specificInput});
             balanceDelta = balanceBefore - token.balanceOf(address(this));
         } else {
-            _migrateV1(input);
+            _migrateV1({token: address(token), amount: amount, migrateV1Input: specificInput});
             balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         }
 
@@ -89,21 +92,16 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
 
     /// @notice Migrates ERC20 resources by transferring ERC20 tokens from the ERC20 forwarder v1 and storing the
     /// associated nullifier.
-    /// @param input The input bytes containing the encoded arguments for the migration call:
-    /// * The `CallTypeV2.MigrateV1` enum value that has been checked already and is therefore unused.
+    /// @param token The address of the token to be transferred.
+    /// @param amount The amount to be transferred.
+    /// @param migrateV1Input The input bytes containing the encoded arguments for the v1 migration call:
     /// * `nullifier`: The nullifier of the resource to be migrated.
-    /// * `token`: The address of the token to migrated.
-    /// * `amount`: The amount to be migrated.
-    function _migrateV1(bytes calldata input) internal virtual {
-        (,
-            // CallTypeV2.Migrate
-            address token,
-            uint128 amount,
-            bytes32 nullifier,
-            bytes32 rootV1,
-            bytes32 logicRefV1,
-            address forwarderV1
-        ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32, bytes32, bytes32, address));
+    /// * `rootV1`: The root of the commitment tree that must be the latest root of the stopped protocol adapter v1.
+    /// * `logicRefV1`: The logic reference that must match the ERC20 forwarder v1 contract.
+    /// * `forwarderV1`: The ERC20 forwarder v1 contract address that must match the one set in this contract.
+    function _migrateV1(address token, uint128 amount, bytes calldata migrateV1Input) internal virtual {
+        (bytes32 nullifier, bytes32 rootV1, bytes32 logicRefV1, address forwarderV1) =
+            abi.decode(migrateV1Input, (bytes32, bytes32, bytes32, address));
 
         // Check that the resource being upgraded is not in the protocol adapter v1 nullifier set.
         if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
