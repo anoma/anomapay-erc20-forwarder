@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {ICommitmentTree} from "@anoma-evm-pa/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "@anoma-evm-pa/interfaces/INullifierSet.sol";
+import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
 import {ERC20ForwarderV2} from "./ERC20ForwarderV2.sol";
@@ -62,16 +63,27 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     /// - migrate ERC20 resources from the ERC20 forwarder v2.
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
-        CallTypeV3 callType = CallTypeV3(uint8(input[31]));
+        (CallTypeV3 callType, IERC20 token, uint128 amount) = abi.decode(input[:96], (CallTypeV3, IERC20, uint128));
+
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 balanceDelta = 0;
 
         if (callType == CallTypeV3.Wrap) {
             _wrap(input);
+            balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         } else if (callType == CallTypeV3.Unwrap) {
             _unwrap(input);
+            balanceDelta = balanceBefore - token.balanceOf(address(this));
         } else if (callType == CallTypeV3.MigrateV1) {
             _migrateV1(input);
+            balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         } else {
             _migrateV2(input);
+            balanceDelta = token.balanceOf(address(this)) - balanceBefore;
+        }
+
+        if (balanceDelta != amount) {
+            revert BalanceMismatch({expected: amount, actual: balanceDelta});
         }
 
         output = "";
@@ -108,7 +120,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
         // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
-        _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
+        _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, amount, address(this))});
     }
 
     /// @notice Migrates ERC20 v2 resources by transferring ERC20 tokens from the ERC20 forwarder v1 and storing the
@@ -121,13 +133,13 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     function _migrateV2(bytes calldata input) internal virtual {
         (,
             // CallTypeV3.MigrateV2
-            address token,
+            IERC20 token,
             uint128 amount,
             bytes32 nullifier,
             bytes32 rootV2,
             bytes32 logicRefV2,
             address forwarderV2
-        ) = abi.decode(input, (CallTypeV3, address, uint128, bytes32, bytes32, bytes32, address));
+        ) = abi.decode(input, (CallTypeV3, IERC20, uint128, bytes32, bytes32, bytes32, address));
 
         // Check that the resource being upgraded is not in the protocol adapter v2 nullifier set.
         if (INullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(nullifier)) {
@@ -153,12 +165,12 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         }
 
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v2.
-        emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V2), amount: amount});
+        emit ERC20Forwarder.Wrapped({token: address(token), from: address(_ERC20_FORWARDER_V2), amount: amount});
 
         // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
         // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
-        _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
+        _ERC20_FORWARDER_V2.forwardEmergencyCall(abi.encode(CallType.Unwrap, token, amount, address(this)));
     }
 }

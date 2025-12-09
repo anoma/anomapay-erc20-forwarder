@@ -20,7 +20,7 @@ import {ForwarderBase} from "../src/bases/ForwarderBase.sol";
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
-import {ERC20Example} from "../test/examples/ERC20.e.sol";
+import {ERC20Example, ERC20WithFeeExample} from "../test/examples/ERC20.e.sol";
 import {ERC20ForwarderTest} from "./ERC20Forwarder.t.sol";
 import {Permit2Signature} from "./libs/Permit2Signature.sol";
 
@@ -47,6 +47,8 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         // Deploy token and mint for alice
         _erc20 = new ERC20Example();
+        _erc20FeeAdd = new ERC20WithFeeExample({isFeeAdded: true});
+        _erc20FeeSub = new ERC20WithFeeExample({isFeeAdded: false});
 
         // Get the Permit2 contract
         _permit2 = _permit2Contract();
@@ -92,12 +94,19 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             witness: ERC20ForwarderPermit2.Witness(_ACTION_TREE_ROOT).hash()
         });
 
-        _defaultWrapInput = abi.encode( /*       callType */
-            ERC20ForwarderV2.CallTypeV2.Wrap,
+        _defaultWrapInput = abi.encode(
+            /*       callType */
+            ERC20Forwarder.CallType.Wrap,
+            /*          token */
+            _defaultPermit.permitted.token,
+            /*         amount */
+            _defaultPermit.permitted.amount,
+            /*          nonce */
+            _defaultPermit.nonce,
+            /*       deadline */
+            _defaultPermit.deadline,
             /*           from */
             _alice,
-            /*         permit */
-            _defaultPermit,
             /* actionTreeRoot */
             _ACTION_TREE_ROOT,
             /*      signature */
@@ -105,13 +114,13 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         );
 
         _defaultUnwrapInput = abi.encode( /* callType */
-            ERC20ForwarderV2.CallTypeV2.Unwrap,
+            ERC20Forwarder.CallType.Unwrap,
             /*    token */
             address(_erc20),
-            /*       to */
-            _alice,
             /*   amount */
-            _TRANSFER_AMOUNT
+            _TRANSFER_AMOUNT,
+            /*       to */
+            _alice
         );
 
         _defaultMigrateV1Input = abi.encode( /*  callType */
@@ -152,7 +161,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _emergencyStopPaV1AndSetEmergencyCaller();
 
         bytes memory input =
-            abi.encode(ERC20ForwarderV2.CallTypeV2.MigrateV1, address(0), uint128(0), nullifier, "", "", "");
+            abi.encode(ERC20ForwarderV2.CallTypeV2.MigrateV1, address(_erc20), uint128(0), nullifier, "", "", "");
 
         vm.prank(address(_paV2));
         vm.expectRevert(
@@ -275,6 +284,38 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             address(_fwdV2)
         );
         _fwdV2.forwardCall({logicRef: _logicRefV2, input: migrateV1InputWithIncorrectForwarderV1});
+    }
+
+    function test_migrateV1_reverts_if_the_amount_deposited_into_fwd_v2_is_not_the_migrate_amount() public {
+        // Fund the forwarder v1.
+        _erc20FeeSub.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
+
+        _emergencyStopPaV1AndSetEmergencyCaller();
+
+        bytes memory input = abi.encode( /*  callType */
+            ERC20ForwarderV2.CallTypeV2.MigrateV1,
+            /*       token */
+            address(_erc20FeeSub),
+            /*      amount */
+            _TRANSFER_AMOUNT,
+            /*   nullifier */
+            _NULLIFIER,
+            /*      rootV1 */
+            CommitmentTree(_paV1).latestCommitmentTreeRoot(),
+            /*  logicRefV1 */
+            _logicRefV1,
+            /* forwarderV1 */
+            address(_fwdV1)
+        );
+
+        uint256 actualDepositAmount = _TRANSFER_AMOUNT - _erc20FeeSub.FEE();
+
+        vm.startPrank(address(_paV2));
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC20Forwarder.BalanceMismatch.selector, _TRANSFER_AMOUNT, actualDepositAmount),
+            address(_fwdV2)
+        );
+        _fwdV2.forwardCall({logicRef: _logicRefV2, input: input});
     }
 
     function test_migrateV1_transfers_funds_from_forwarder_V1() public {

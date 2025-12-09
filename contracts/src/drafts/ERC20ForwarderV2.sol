@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {ICommitmentTree} from "@anoma-evm-pa/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "@anoma-evm-pa/interfaces/INullifierSet.sol";
 import {NullifierSet} from "@anoma-evm-pa/state/NullifierSet.sol";
+import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
 
@@ -63,14 +64,24 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// - migrate ERC20 resources from the ERC20 forwarder v1.
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
-        CallTypeV2 callType = CallTypeV2(uint8(input[31]));
+        (CallTypeV2 callType, IERC20 token, uint128 amount) = abi.decode(input[:96], (CallTypeV2, IERC20, uint128));
+
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 balanceDelta = 0;
 
         if (callType == CallTypeV2.Wrap) {
             _wrap(input);
+            balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         } else if (callType == CallTypeV2.Unwrap) {
             _unwrap(input);
+            balanceDelta = balanceBefore - token.balanceOf(address(this));
         } else {
             _migrateV1(input);
+            balanceDelta = token.balanceOf(address(this)) - balanceBefore;
+        }
+
+        if (balanceDelta != amount) {
+            revert BalanceMismatch({expected: amount, actual: balanceDelta});
         }
 
         output = "";
@@ -121,10 +132,10 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V1), amount: amount});
 
         // Forwards a call to transfer the ERC20 tokens from the ERC20 forwarder v1 to this contract.
-        // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been withdrawn
-        // and the `Transfer` event on the ERC20 token.
+        // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been
+        // withdrawn and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
-        _ERC20_FORWARDER_V1.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
+        _ERC20_FORWARDER_V1.forwardEmergencyCall(abi.encode(CallType.Unwrap, token, amount, address(this)));
     }
 
     // slither-disable-end dead-code

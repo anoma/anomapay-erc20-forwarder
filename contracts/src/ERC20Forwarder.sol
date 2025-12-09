@@ -39,7 +39,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param amount The token amount being withdrawn from the ERC20 forwarder contract.
     event Unwrapped(address indexed token, address indexed to, uint128 amount);
 
-    error TypeOverflow(uint256 limit, uint256 actual);
+    error BalanceMismatch(uint256 expected, uint256 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that can forward calls.
@@ -58,12 +58,21 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// - unwrap ERC20 tokens from resources
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
-        CallType callType = CallType(uint8(input[31]));
+        (CallType callType, IERC20 token, uint128 amount) = abi.decode(input[:96], (CallType, IERC20, uint128));
+
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 balanceDelta = 0;
 
         if (callType == CallType.Wrap) {
             _wrap(input);
+            balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         } else {
             _unwrap(input);
+            balanceDelta = balanceBefore - token.balanceOf(address(this));
+        }
+
+        if (balanceDelta != amount) {
+            revert BalanceMismatch({expected: amount, actual: balanceDelta});
         }
 
         output = "";
@@ -87,23 +96,24 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         // slither-disable-next-line unused-return
         (,
             // CallType.Wrap
+            address token,
+            uint128 amount,
+            uint256 nonce,
+            uint256 deadline,
             address owner,
-            ISignatureTransfer.PermitTransferFrom memory permit,
             bytes32 actionTreeRoot,
             bytes memory signature
-        ) = abi.decode(input, (CallType, address, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
+        ) = abi.decode(input, (CallType, address, uint128, uint256, uint256, address, bytes32, bytes));
 
-        if (permit.permitted.amount > type(uint128).max) {
-            revert TypeOverflow({limit: type(uint128).max, actual: permit.permitted.amount});
-        }
-
-        emit Wrapped({token: permit.permitted.token, from: owner, amount: uint128(permit.permitted.amount)});
+        emit Wrapped({token: token, from: owner, amount: amount});
 
         _PERMIT2.permitWitnessTransferFrom({
-            permit: permit,
-            transferDetails: ISignatureTransfer.SignatureTransferDetails({
-                to: address(this), requestedAmount: permit.permitted.amount
+            permit: ISignatureTransfer.PermitTransferFrom({
+                permitted: ISignatureTransfer.TokenPermissions({token: token, amount: amount}),
+                nonce: nonce,
+                deadline: deadline
             }),
+            transferDetails: ISignatureTransfer.SignatureTransferDetails({to: address(this), requestedAmount: amount}),
             owner: owner,
             witness: ERC20ForwarderPermit2.Witness({actionTreeRoot: actionTreeRoot}).hash(),
             witnessTypeString: ERC20ForwarderPermit2._WITNESS_TYPE_STRING,
@@ -122,11 +132,11 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         (,
             // CallType.Unwrap
             address token,
-            address receiver,
-            uint128 amount
-        ) = abi.decode(input, (CallType, address, address, uint128));
+            uint128 amount,
+            address receiver
+        ) = abi.decode(input, (CallType, address, uint128, address));
 
-        emit Unwrapped({token: token, to: receiver, amount: amount});
+        emit Unwrapped({token: address(token), to: receiver, amount: amount});
 
         IERC20(token).safeTransfer({to: receiver, value: amount});
     }
