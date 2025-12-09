@@ -50,7 +50,7 @@ pub fn encode_unwrap_forwarder_input(
     Ok((
         CallType::Unwrap,
         token,
-        U256::from(quantity),
+        quantity,
         UnwrapData { receiver: to },
     )
         .abi_encode_params())
