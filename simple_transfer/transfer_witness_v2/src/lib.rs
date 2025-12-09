@@ -21,7 +21,7 @@ use transfer_witness::{
     DeletionCriterion, EncryptionInfo, LabelInfo, PermitInfo, ResourceWithLabel, ValueInfo,
     calculate_label_ref, calculate_persistent_value_ref,
     calculate_value_ref_from_ethereum_account_addr,
-    call_type::{PermitTransferFrom, encode_unwrap_forwarder_input, encode_wrap_forwarder_input},
+    call_type::{encode_unwrap_forwarder_input, encode_wrap_forwarder_input},
 };
 
 pub const AUTH_SIGNATURE_DOMAIN_V2: &[u8] = b"TokenTransferAuthorizationV2";
@@ -137,12 +137,6 @@ impl TokenTransferWitnessV2 {
                     .permit_info
                     .as_ref()
                     .ok_or(ArmError::MissingField("Permit info"))?;
-                let permit = PermitTransferFrom::from_bytes(
-                    erc20_token_addr,
-                    self.resource.quantity,
-                    permit_info.permit_nonce.as_ref(),
-                    permit_info.permit_deadline.as_ref(),
-                )?;
 
                 let ethereum_account_addr = forwarder_info
                     .ethereum_account_addr
@@ -150,8 +144,11 @@ impl TokenTransferWitnessV2 {
                     .ok_or(ArmError::MissingField("ethereum_account_addr"))?;
 
                 encode_wrap_forwarder_input(
+                    erc20_token_addr,
+                    self.resource.quantity,
+                    permit_info.permit_nonce.as_ref(),
+                    permit_info.permit_deadline.as_ref(),
                     ethereum_account_addr,
-                    permit,
                     action_root,
                     permit_info.permit_sig.as_ref(),
                 )?

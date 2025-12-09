@@ -9,51 +9,33 @@ sol! {
         Unwrap
     }
 
-    /// @notice The token and amount details for a transfer signed in the permit transfer signature
-    struct TokenPermissions {
-        // ERC20 token address
-        address token;
-        // the maximum amount that can be spent
-        uint256 amount;
+   /// @notice A struct containing wrap specific inputs.
+   /// @param nonce A unique value to prevent signature replays.
+   /// @param deadline The deadline of the permit signature.
+   /// @param owner The owner from which the funds a transferred from and signer of the Permit2 message.
+   /// @param witness The action tree root that was signed over in addition to the permit data.
+   /// @param signature The Permit2 signature.
+    struct WrapData {
+        uint256 nonce;
+        uint256 deadline;
+        address owner;
+        bytes32 actionTreeRoot;
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
     }
 
-    /// @notice The signed permit message for a single token transfer
-    struct PermitTransferFrom {
-        TokenPermissions permitted;
-        // a unique value for every token owner's signature to prevent signature replays
-        // In permit2, this is a uint256
-        bytes32 nonce;
-        // deadline on the permit signature
-        // In permit2, this is a uint256
-        bytes32 deadline;
-    }
-}
-
-impl PermitTransferFrom {
-    pub fn from_bytes(
-        erc20_token_addr: &[u8],
-        amount: u128,
-        nonce: &[u8],
-        deadline: &[u8],
-    ) -> Result<Self, ArmError> {
-        let erc20_token_addr: Address = erc20_token_addr
-            .try_into()
-            .map_err(|_| ArmError::ProveFailed("Invalid token address bytes".to_string()))?;
-        Ok(PermitTransferFrom {
-            permitted: TokenPermissions {
-                token: erc20_token_addr,
-                amount: U256::from(amount),
-            },
-            nonce: B256::from_slice(nonce),
-            deadline: B256::from_slice(deadline),
-        })
+    /// @notice A struct containing unwrap specific inputs.
+    /// @param receiver The receiving account address.
+    struct UnwrapData {
+        address receiver;
     }
 }
 
 pub fn encode_unwrap_forwarder_input(
     erc20_token_addr: &[u8],
     ethereum_account_addr: &[u8],
-    value: u128,
+    quantity: u128,
 ) -> Result<Vec<u8>, ArmError> {
     // Encode as (CallType, erc20_token_addr, to, value)
     let token: Address = erc20_token_addr
@@ -64,27 +46,46 @@ pub fn encode_unwrap_forwarder_input(
         .try_into()
         .map_err(|_| ArmError::ProveFailed("Invalid to address bytes".to_string()))
         .unwrap();
-    let value = U256::from(value);
-    Ok((CallType::Unwrap, token, to, value).abi_encode_params())
+
+    Ok((
+        CallType::Unwrap,
+        token,
+        U256::from(quantity),
+        UnwrapData { receiver: to },
+    )
+        .abi_encode_params())
 }
 
 pub fn encode_wrap_forwarder_input(
+    erc20_token_addr: &[u8],
+    quantity: u128,
+    nonce: &[u8],
+    deadline: &[u8],
     ethereum_account_addr: &[u8],
-    permit: PermitTransferFrom,
-    witness: &[u8],
+    action_tree_root: &[u8],
     signature: &[u8],
 ) -> Result<Vec<u8>, ArmError> {
-    let from: Address = ethereum_account_addr
+    let owner: Address = ethereum_account_addr
         .try_into()
         .map_err(|_| ArmError::ProveFailed("Invalid from address bytes".to_string()))?;
-    Ok((
-        CallType::Wrap,
-        from,
-        permit,
-        B256::from_slice(witness),
-        signature,
-    )
-        .abi_encode_params())
+
+    if signature.len() != 65 {
+        return Err(ArmError::ProveFailed(
+            "Signature must be 65 bytes long".to_string(),
+        ));
+    }
+
+    let wrap_data = WrapData {
+        nonce: U256::from_le_slice(nonce),
+        deadline: U256::from_le_slice(deadline),
+        owner,
+        actionTreeRoot: B256::from_slice(action_tree_root),
+        r: B256::from_slice(&signature[0..32]),
+        s: B256::from_slice(&signature[32..64]),
+        v: signature[64],
+    };
+
+    Ok((CallType::Wrap, erc20_token_addr, quantity, wrap_data).abi_encode_params())
 }
 
 #[test]
@@ -113,12 +114,23 @@ fn forward_call_data_test() {
 fn encode_wrap_forwarder_input_test() {
     let token = hex::decode("2222222222222222222222222222222222222222").unwrap();
     let from = hex::decode("3333333333333333333333333333333333333333").unwrap();
-    let value = 1000u128;
-    let permit = PermitTransferFrom::from_bytes(&token, value, &[1u8; 32], &[2u8; 32]).unwrap();
+    let quantity = 1000u128;
+
+    let nonce = &[1u8; 32];
+    let deadline = &[2u8; 32];
     let witness = vec![3u8; 32];
     let signature = vec![4u8; 65];
 
-    let encoded = encode_wrap_forwarder_input(&from, permit, &witness, &signature).unwrap();
+    let encoded = encode_wrap_forwarder_input(
+        token.as_slice(),
+        quantity,
+        nonce,
+        deadline,
+        &from,
+        &witness,
+        &signature,
+    )
+    .unwrap();
     println!("encode: {:?}", hex::encode(&encoded));
     println!("len: {}", encoded.len());
 }

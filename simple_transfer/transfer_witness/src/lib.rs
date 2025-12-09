@@ -2,9 +2,8 @@
 //! simple transfer resources in the Anoma Pay application.
 //!
 pub mod call_type;
-use crate::call_type::{
-    CallType, PermitTransferFrom, encode_unwrap_forwarder_input, encode_wrap_forwarder_input,
-};
+
+use crate::call_type::{CallType, encode_unwrap_forwarder_input, encode_wrap_forwarder_input};
 pub use arm::resource_logic::LogicCircuit;
 use arm::{
     Digest,
@@ -182,15 +181,13 @@ impl TokenTransferWitness {
                 .permit_info
                 .as_ref()
                 .ok_or(ArmError::MissingField("Permit info"))?;
-            let permit = PermitTransferFrom::from_bytes(
+
+            encode_wrap_forwarder_input(
                 erc20_token_addr,
                 self.resource.quantity,
                 permit_info.permit_nonce.as_ref(),
                 permit_info.permit_deadline.as_ref(),
-            )?;
-            encode_wrap_forwarder_input(
                 ethereum_account_addr,
-                permit,
                 action_root,
                 permit_info.permit_sig.as_ref(),
             )?
