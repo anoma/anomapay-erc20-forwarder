@@ -19,7 +19,7 @@ test:
 ci-test:
     cargo build --tests
     # cargo test -- --test-threads=1 --show-output
-    # cargo test test_submit_mint_transaction -- --show-output
+    cargo test test_submit_mint_transaction -- --show-output
 check:
     cargo check
 
