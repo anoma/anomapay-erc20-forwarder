@@ -9,7 +9,8 @@ mod web;
 use crate::rpc::RpcError::InvalidRPCUrl;
 use crate::web::ApiDoc;
 use crate::web::webserver::{
-    Cors, all_options, default_error, estimate_fee, health, send_transaction, unprocessable,
+    Cors, all_options, default_error, estimate_fee, health, send_transaction, token_balances,
+    unprocessable,
 };
 use alloy::providers::{Provider, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;
@@ -57,8 +58,7 @@ async fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
         .get_chain_id()
         .await?;
 
-    let alchemy_api_key: String =
-        env::var("ALCHEMY_API_KEY").map_err(|_| "ALCHEMY_API_KEY not set")?;
+    let alchemy_api_key = env::var("ALCHEMY_API_KEY").map_err(|_| "ALCHEMY_API_KEY not set")?;
 
     Ok(AnomaPayConfig {
         chain_id,
@@ -86,7 +86,13 @@ async fn rocket() -> _ {
         )
         .mount(
             "/",
-            routes![health, send_transaction, estimate_fee, all_options],
+            routes![
+                health,
+                send_transaction,
+                estimate_fee,
+                token_balances,
+                all_options
+            ],
         )
         .register("/", catchers![default_error, unprocessable])
 }

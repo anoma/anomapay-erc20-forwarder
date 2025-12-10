@@ -25,6 +25,9 @@ pub enum RequestError {
     /// An error occurred during fee estimation.
     #[response(status = 400)]
     FeeEstimation(String),
+    /// An error occurred fetching token balances.
+    #[response(status = 400)]
+    TokenBalances(String),
     #[response(status = 400)]
     ProviderError(String),
 }

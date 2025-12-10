@@ -1,3 +1,4 @@
+use crate::request::balances::call_balances_api::get_all_token_balances;
 use crate::request::fee_estimation::estimation::{
     FeeEstimationPayload, estimate_fee_unit_quantity,
 };
@@ -12,11 +13,13 @@ use rocket::http::{Header, Status};
 use rocket::response::status::Custom;
 use rocket::serde::json::{Json, json};
 use rocket::{Request, Response, State, catch, get, options, post};
+use serde::Serialize;
 use serde_json::Value;
 use utoipa::OpenApi;
+use utoipa::ToSchema;
 
 #[derive(OpenApi)]
-#[openapi(paths(health, send_transaction))]
+#[openapi(paths(health, send_transaction, estimate_fee, token_balances))]
 pub struct AnomaPayApi;
 
 /// Return the health status
@@ -99,6 +102,62 @@ pub async fn estimate_fee(
             .map_err(|err| RequestError::FeeEstimation(err.to_string()))?;
 
     Ok(Custom(Status::Accepted, Json(json!({"fee": fee}))))
+}
+
+/// Response structure for token balance
+#[derive(Serialize, Debug, ToSchema)]
+pub struct TokenBalanceResponse {
+    pub address: String,
+    pub value: String,
+    pub decimals: u8,
+    pub symbol: String,
+}
+
+/// Fetches token balances for an address using Alchemy API.
+#[get("/token_balances?<address>")]
+#[utoipa::path(
+    get,
+    path = "/token_balances",
+    params(
+        ("address" = String, Query, description = "Ethereum address in hex format (with or without 0x prefix)")
+    ),
+    responses(
+            (status = 200, description = "Fetch token balances for an address.", body = Vec<TokenBalanceResponse>),
+            (status = 400, description = "Token balances request failed.", body = RequestError, example = json!(RequestError::TokenBalances(String::from("failed to fetch token balances")))),
+    )
+)]
+pub async fn token_balances(
+    address: Option<String>,
+    config: &State<AnomaPayConfig>,
+) -> Result<Custom<Json<Value>>, RequestError> {
+    let config: &AnomaPayConfig = config.inner();
+
+    let address_str = address.ok_or_else(|| {
+        RequestError::TokenBalances("Missing 'address' query parameter".to_string())
+    })?;
+
+    // Parse address from hex string (with or without 0x prefix)
+    let user_address = address_str
+        .parse::<alloy::primitives::Address>()
+        .map_err(|_| {
+            RequestError::TokenBalances(format!("Invalid address format: {}", address_str))
+        })?;
+
+    let balances = get_all_token_balances(user_address, config)
+        .await
+        .map_err(|err| RequestError::TokenBalances(err.to_string()))?;
+
+    let response: Vec<TokenBalanceResponse> = balances
+        .into_iter()
+        .map(|balance| TokenBalanceResponse {
+            address: balance.address.to_string(),
+            value: balance.value.to_string(),
+            decimals: balance.decimals,
+            symbol: balance.symbol,
+        })
+        .collect();
+
+    Ok(Custom(Status::Ok, Json(json!(response))))
 }
 
 #[catch(422)]
