@@ -159,8 +159,15 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         _emergencyStopPaV1AndSetEmergencyCaller();
 
-        bytes memory input =
-            abi.encode(ERC20ForwarderV2.CallTypeV2.MigrateV1, address(_erc20), uint128(0), nullifier, "", "", "");
+        bytes memory input = abi.encode(
+            ERC20ForwarderV2.CallTypeV2.MigrateV1,
+            address(_erc20),
+            uint128(0),
+            nullifier,
+            bytes32(0),
+            bytes32(0),
+            address(0)
+        );
 
         vm.prank(address(_paV2));
         vm.expectRevert(
@@ -314,6 +321,21 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             address(_fwdV2)
         );
         _fwdV2.forwardCall({logicRef: _logicRefV2, input: input});
+    }
+
+    function test_migrateV1_reverts_if_the_input_length_is_wrong() public {
+        bytes memory inputWithWrongLength = abi.encodePacked(_defaultMigrateV1Input, uint256(0));
+
+        vm.prank(address(_pa));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20Forwarder.InvalidInputLength.selector,
+                _defaultMigrateV1Input.length - _GENERIC_INPUT_OFFSET,
+                inputWithWrongLength.length - _GENERIC_INPUT_OFFSET
+            ),
+            address(_fwd)
+        );
+        _fwd.forwardCall({logicRef: _logicRef, input: inputWithWrongLength});
     }
 
     function test_migrateV1_transfers_funds_from_forwarder_V1() public {

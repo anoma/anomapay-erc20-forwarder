@@ -23,6 +23,8 @@ contract ERC20ForwarderTest is Test {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using Permit2Signature for Vm;
 
+    uint256 internal constant _GENERIC_INPUT_OFFSET = 3 * 32;
+
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
     uint128 internal constant _TRANSFER_AMOUNT = 1000;
     bytes internal constant _EXPECTED_OUTPUT = "";
@@ -178,6 +180,21 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _logicRef, input: input});
     }
 
+    function test_unwrap_reverts_if_the_input_length_is_wrong() public {
+        bytes memory inputWithWrongLength = abi.encodePacked(_defaultUnwrapInput, uint256(0));
+
+        vm.prank(address(_pa));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20Forwarder.InvalidInputLength.selector,
+                _defaultUnwrapInput.length - _GENERIC_INPUT_OFFSET,
+                inputWithWrongLength.length - _GENERIC_INPUT_OFFSET
+            ),
+            address(_fwd)
+        );
+        _fwd.forwardCall({logicRef: _logicRef, input: inputWithWrongLength});
+    }
+
     function test_unwrap_does_not_revert_if_the_amount_is_zero() public {
         _erc20.mint({to: address(_fwd), value: _TRANSFER_AMOUNT});
         uint256 startBalanceAlice = _erc20.balanceOf(_alice);
@@ -293,6 +310,21 @@ contract ERC20ForwarderTest is Test {
             address(_fwd)
         );
         _fwd.forwardCall({logicRef: _logicRef, input: input});
+    }
+
+    function test_wrap_reverts_if_the_input_length_is_wrong() public {
+        bytes memory inputWithWrongLength = abi.encodePacked(_defaultWrapInput, uint256(0));
+
+        vm.prank(address(_pa));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20Forwarder.InvalidInputLength.selector,
+                _defaultWrapInput.length - _GENERIC_INPUT_OFFSET,
+                inputWithWrongLength.length - _GENERIC_INPUT_OFFSET
+            ),
+            address(_fwd)
+        );
+        _fwd.forwardCall({logicRef: _logicRef, input: inputWithWrongLength});
     }
 
     function test_wrap_pulls_funds_from_user() public {

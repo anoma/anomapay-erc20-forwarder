@@ -34,6 +34,9 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         address forwarderV1;
     }
 
+    /// @notice The length of the migrate v1 data.
+    uint256 internal constant _MIGRATE_V1_DATA_LENGTH = 4 * 32;
+
     ERC20Forwarder internal immutable _ERC20_FORWARDER_V1;
     address internal immutable _PROTOCOL_ADAPTER_V1;
     bytes32 internal immutable _COMMITMENT_TREE_ROOT_V1;
@@ -108,6 +111,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// @param amount The amount to be migrated.
     /// @param migrateV1Input The input bytes containing the encoded arguments for to migrate v1 resources.
     function _migrateV1(address token, uint128 amount, bytes calldata migrateV1Input) internal virtual {
+        _checkLength({input: migrateV1Input, expected: _MIGRATE_V1_DATA_LENGTH});
+
         (MigrateV1Data memory data) = abi.decode(migrateV1Input, (MigrateV1Data));
 
         // Check that the resource being upgraded is not in the protocol adapter v1 nullifier set.

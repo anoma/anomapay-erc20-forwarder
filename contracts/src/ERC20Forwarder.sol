@@ -52,6 +52,12 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     // slither-disable-next-line unused-state
     uint256 internal constant _GENERIC_INPUT_OFFSET = 3 * 32;
 
+    /// @notice The length of the wrap data.
+    uint256 internal constant _WRAP_DATA_LENGTH = 7 * 32;
+
+    /// @notice The length of the unwrap data.
+    uint256 internal constant _UNWRAP_DATA_LENGTH = 1 * 32;
+
     /// @notice The canonical Uniswap Permit2 contract being deployed at the same address on all supported chains.
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
     IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
@@ -69,6 +75,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     event Unwrapped(address indexed token, address indexed to, uint128 amount);
 
     error BalanceMismatch(uint256 expected, uint256 actual);
+    error InvalidInputLength(uint256 expected, uint256 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that can forward calls.
@@ -118,6 +125,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param amount The amount to be transferred.
     /// @param wrapInput The input bytes containing the encoded arguments specific for the wrap call.
     function _wrap(address token, uint128 amount, bytes calldata wrapInput) internal {
+        _checkLength({input: wrapInput, expected: _WRAP_DATA_LENGTH});
+
         (WrapData memory data) = abi.decode(wrapInput, (WrapData));
 
         emit Wrapped({token: token, from: data.owner, amount: amount});
@@ -141,6 +150,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param amount The amount to be transferred.
     /// @param unwrapInput The input bytes containing the encoded arguments for the unwrap call.
     function _unwrap(address token, uint128 amount, bytes calldata unwrapInput) internal {
+        _checkLength({input: unwrapInput, expected: _UNWRAP_DATA_LENGTH});
+
         (UnwrapData memory data) = abi.decode(unwrapInput, (UnwrapData));
 
         emit Unwrapped({token: address(token), to: data.receiver, amount: amount});
@@ -154,5 +165,11 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @dev This function internally uses the `SafeERC20` library.
     function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
         output = _forwardCall(input);
+    }
+
+    function _checkLength(bytes calldata input, uint256 expected) internal pure {
+        if (input.length != expected) {
+            revert InvalidInputLength({expected: expected, actual: input.length});
+        }
     }
 }

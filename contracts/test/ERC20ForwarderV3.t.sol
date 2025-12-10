@@ -192,8 +192,15 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         _emergencyStopPaV1AndSetEmergencyCaller();
         _emergencyStopPaV2AndSetEmergencyCaller();
 
-        bytes memory input =
-            abi.encode(ERC20ForwarderV3.CallTypeV3.MigrateV1, address(_erc20), uint128(0), nullifier, "", "", "");
+        bytes memory input = abi.encode(
+            ERC20ForwarderV3.CallTypeV3.MigrateV1,
+            address(_erc20),
+            uint128(0),
+            nullifier,
+            bytes32(0),
+            bytes32(0),
+            address(0)
+        );
 
         vm.prank(address(_paV3));
         vm.expectRevert(
@@ -212,8 +219,15 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         _emergencyStopPaV2AndSetEmergencyCaller();
 
-        bytes memory input =
-            abi.encode(ERC20ForwarderV3.CallTypeV3.MigrateV2, address(_erc20), uint128(0), nullifier, "", "", "");
+        bytes memory input = abi.encode(
+            ERC20ForwarderV3.CallTypeV3.MigrateV2,
+            address(_erc20),
+            uint128(0),
+            nullifier,
+            bytes32(0),
+            bytes32(0),
+            address(0)
+        );
 
         vm.prank(address(_paV3));
         vm.expectRevert(
@@ -515,6 +529,36 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
             address(_fwdV3)
         );
         _fwdV3.forwardCall({logicRef: _logicRefV3, input: input});
+    }
+
+    function test_migrateV1_reverts_if_the_input_length_is_wrong() public {
+        bytes memory inputWithWrongLength = abi.encodePacked(_defaultMigrateV1Input, uint256(0));
+
+        vm.prank(address(_pa));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20Forwarder.InvalidInputLength.selector,
+                _defaultMigrateV1Input.length - _GENERIC_INPUT_OFFSET,
+                inputWithWrongLength.length - _GENERIC_INPUT_OFFSET
+            ),
+            address(_fwd)
+        );
+        _fwd.forwardCall({logicRef: _logicRef, input: inputWithWrongLength});
+    }
+
+    function test_migrateV2_reverts_if_the_input_length_is_wrong() public {
+        bytes memory inputWithWrongLength = abi.encodePacked(_defaultMigrateV2Input, uint256(0));
+
+        vm.prank(address(_pa));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20Forwarder.InvalidInputLength.selector,
+                _defaultMigrateV2Input.length - _GENERIC_INPUT_OFFSET,
+                inputWithWrongLength.length - _GENERIC_INPUT_OFFSET
+            ),
+            address(_fwd)
+        );
+        _fwd.forwardCall({logicRef: _logicRef, input: inputWithWrongLength});
     }
 
     function test_migrateV1_transfers_funds_from_forwarder_V1() public {
