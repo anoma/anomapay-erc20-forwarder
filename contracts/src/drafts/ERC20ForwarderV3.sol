@@ -106,8 +106,8 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
 
     /// @notice Migrates ERC20 resources by transferring ERC20 tokens from the ERC20 forwarder v2 and storing the
     /// associated nullifier.
-    /// @param token The address of the token to be transferred.
-    /// @param amount The amount to be transferred.
+    /// @param token The address of the token to be migrated.
+    /// @param amount The amount to be migrated.
     /// @param migrateV1Input The input bytes containing the encoded arguments for to migrate v1 resources.
     function _migrateV1(address token, uint128 amount, bytes calldata migrateV1Input) internal virtual override {
         (MigrateV1Data memory data) = abi.decode(migrateV1Input, (MigrateV1Data));
@@ -132,8 +132,8 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
 
     /// @notice Migrates ERC20 v2 resources by transferring ERC20 tokens from the ERC20 forwarder v1 and storing the
     /// associated nullifier.
-    /// @param token The address of the token to be transferred.
-    /// @param amount The amount to be transferred.
+    /// @param token The address of the token to be migrated.
+    /// @param amount The amount to be migrated.
     /// @param migrateV2Input The input bytes containing the encoded arguments for to migrate v2 resources.
     function _migrateV2(address token, uint128 amount, bytes calldata migrateV2Input) internal virtual {
         (MigrateV2Data memory data) = abi.decode(migrateV2Input, (MigrateV2Data));
