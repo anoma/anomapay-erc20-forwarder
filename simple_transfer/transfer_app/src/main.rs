@@ -10,7 +10,7 @@ use crate::rpc::RpcError::InvalidRPCUrl;
 use crate::web::ApiDoc;
 use crate::web::webserver::{
     Cors, all_options, default_error, estimate_fee, health, send_transaction, token_balances,
-    unprocessable,
+    token_price, unprocessable,
 };
 use alloy::providers::{Provider, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;
@@ -91,6 +91,7 @@ async fn rocket() -> _ {
                 send_transaction,
                 estimate_fee,
                 token_balances,
+                token_price,
                 all_options
             ],
         )

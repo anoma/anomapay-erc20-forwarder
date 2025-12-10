@@ -2,6 +2,7 @@ use crate::request::balances::call_balances_api::get_all_token_balances;
 use crate::request::fee_estimation::estimation::{
     FeeEstimationPayload, estimate_fee_unit_quantity,
 };
+use crate::request::prices::call_prices_api::get_token_price;
 
 use crate::AnomaPayConfig;
 use crate::request::proving::parameters::Parameters;
@@ -19,7 +20,7 @@ use utoipa::OpenApi;
 use utoipa::ToSchema;
 
 #[derive(OpenApi)]
-#[openapi(paths(health, send_transaction, estimate_fee, token_balances))]
+#[openapi(paths(health, send_transaction, estimate_fee, token_balances, token_price))]
 pub struct AnomaPayApi;
 
 /// Return the health status
@@ -156,6 +157,57 @@ pub async fn token_balances(
             symbol: balance.symbol,
         })
         .collect();
+
+    Ok(Custom(Status::Ok, Json(json!(response))))
+}
+
+/// Response structure for token price
+#[derive(Serialize, Debug, ToSchema)]
+pub struct TokenPriceResponse {
+    pub address: String,
+    pub usd_price: f64,
+    pub last_updated_at: String,
+}
+
+/// Fetches token price for an address using Alchemy Prices API.
+#[get("/token_price?<address>")]
+#[utoipa::path(
+    get,
+    path = "/token_price",
+    params(
+        ("address" = String, Query, description = "Token contract address in hex format (with or without 0x prefix)")
+    ),
+    responses(
+            (status = 200, description = "Fetch token price for an address.", body = TokenPriceResponse),
+            (status = 400, description = "Token price request failed.", body = RequestError, example = json!(RequestError::TokenPrices(String::from("failed to fetch token price")))),
+    )
+)]
+pub async fn token_price(
+    address: Option<String>,
+    config: &State<AnomaPayConfig>,
+) -> Result<Custom<Json<Value>>, RequestError> {
+    let config: &AnomaPayConfig = config.inner();
+
+    let address_str = address.ok_or_else(|| {
+        RequestError::TokenPrices("Missing 'address' query parameter".to_string())
+    })?;
+
+    // Parse address from hex string (with or without 0x prefix)
+    let token_address = address_str
+        .parse::<alloy::primitives::Address>()
+        .map_err(|_| {
+            RequestError::TokenPrices(format!("Invalid address format: {}", address_str))
+        })?;
+
+    let price = get_token_price(token_address, config)
+        .await
+        .map_err(|err| RequestError::TokenPrices(err.to_string()))?;
+
+    let response = TokenPriceResponse {
+        address: price.address.to_string(),
+        usd_price: price.usd_price,
+        last_updated_at: price.last_updated_at,
+    };
 
     Ok(Custom(Status::Ok, Json(json!(response))))
 }
