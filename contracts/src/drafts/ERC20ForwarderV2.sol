@@ -22,7 +22,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         MigrateV1
     }
 
-    /// @notice A struct containing wrap specific inputs.
+    /// @notice A struct containing specific inputs to migrate from v1.
     /// @param nullifier The nullifier of the resource to be migrated.
     /// @param rootV1 The root of the commitment tree that must be the latest root of the stopped protocol adapter v1.
     /// @param logicRefV1 The logic reference that must match the ERC20 forwarder v1 contract.
