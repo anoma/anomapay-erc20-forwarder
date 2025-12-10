@@ -7,7 +7,7 @@ pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Address> {
     use NamedChain::*;
     HashMap::from([(
         Sepolia,
-        address!("0xfeD05755a5d397416ca55Dd85b77b33B19e79AB5"),
+        address!("0x882fB202a7326e755902C7891D1b0DD4f2036413"),
     )])
 }
 
