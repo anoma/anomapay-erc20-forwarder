@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {ICommitmentTree} from "@anoma-evm-pa/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "@anoma-evm-pa/interfaces/INullifierSet.sol";
+import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
 import {ERC20ForwarderV2} from "./ERC20ForwarderV2.sol";
@@ -21,6 +22,21 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         MigrateV1,
         MigrateV2
     }
+
+    /// @notice A struct containing wrap specific inputs.
+    /// @param nullifier The nullifier of the resource to be migrated.
+    /// @param rootV2 The root of the commitment tree that must be the latest root of the stopped protocol adapter v2.
+    /// @param logicRefV2 The logic reference that must match the ERC20 forwarder v2 contract.
+    /// @param forwarderV2  The ERC20 forwarder v2 contract address that must match the one set in this contract.
+    struct MigrateV2Data {
+        bytes32 nullifier;
+        bytes32 rootV2;
+        bytes32 logicRefV2;
+        address forwarderV2;
+    }
+
+    /// @notice The length of the migrate v1 data.
+    uint256 internal constant _MIGRATE_V2_DATA_LENGTH = 4 * 32;
 
     ERC20ForwarderV2 internal immutable _ERC20_FORWARDER_V2;
     address internal immutable _PROTOCOL_ADAPTER_V2;
@@ -62,16 +78,30 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     /// - migrate ERC20 resources from the ERC20 forwarder v2.
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
-        CallTypeV3 callType = CallTypeV3(uint8(input[31]));
+        (CallTypeV3 callType, IERC20 token, uint128 amount) =
+            abi.decode(input[:_GENERIC_INPUT_OFFSET], (CallTypeV3, IERC20, uint128));
+
+        bytes calldata specificInput = input[_GENERIC_INPUT_OFFSET:];
+
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 balanceDelta = 0;
 
         if (callType == CallTypeV3.Wrap) {
-            _wrap(input);
+            _wrap({token: address(token), amount: amount, wrapInput: specificInput});
+            balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         } else if (callType == CallTypeV3.Unwrap) {
-            _unwrap(input);
+            _unwrap({token: address(token), amount: amount, unwrapInput: specificInput});
+            balanceDelta = balanceBefore - token.balanceOf(address(this));
         } else if (callType == CallTypeV3.MigrateV1) {
-            _migrateV1(input);
+            _migrateV1({token: address(token), amount: amount, migrateV1Input: specificInput});
+            balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         } else {
-            _migrateV2(input);
+            _migrateV2({token: address(token), amount: amount, migrateV2Input: specificInput});
+            balanceDelta = token.balanceOf(address(this)) - balanceBefore;
+        }
+
+        if (balanceDelta != amount) {
+            revert BalanceMismatch({expected: amount, actual: balanceDelta});
         }
 
         output = "";
@@ -79,21 +109,13 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
 
     /// @notice Migrates ERC20 resources by transferring ERC20 tokens from the ERC20 forwarder v2 and storing the
     /// associated nullifier.
-    /// @param input The input bytes containing the encoded arguments for the migration call:
-    /// * The `CallTypeV2.MigrateV1` enum value that has been checked already and is therefore unused.
-    /// * `nullifier`: The nullifier of the resource to be migrated.
-    /// * `token`: The address of the token to migrated.
-    /// * `amount`: The amount to be migrated.
-    function _migrateV1(bytes calldata input) internal virtual override {
-        (,
-            // CallTypeV3.MigrateV1
-            address token,
-            uint128 amount,
-            bytes32 nullifier,
-            bytes32 root,
-            bytes32 logicRef,
-            address forwarderV1
-        ) = abi.decode(input, (CallTypeV3, address, uint128, bytes32, bytes32, bytes32, address));
+    /// @param token The address of the token to be migrated.
+    /// @param amount The amount to be migrated.
+    /// @param migrateV1Input The input bytes containing the encoded arguments for to migrate v1 resources.
+    function _migrateV1(address token, uint128 amount, bytes calldata migrateV1Input) internal virtual override {
+        _checkLength({input: migrateV1Input, expectedLength: _MIGRATE_V1_DATA_LENGTH});
+
+        (MigrateV1Data memory data) = abi.decode(migrateV1Input, (MigrateV1Data));
 
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v2.
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V2), amount: amount});
@@ -101,64 +123,58 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         // Forwards a call to migrate ERC20 v1 tokens via the ERC20 forwarder v1.
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V2.forwardEmergencyCall({
-            input: abi.encode(CallTypeV2.MigrateV1, token, amount, nullifier, root, logicRef, forwarderV1)
+            input: abi.encode(
+                CallTypeV2.MigrateV1, token, amount, data.nullifier, data.rootV1, data.logicRefV1, data.forwarderV1
+            )
         });
 
         // Forwards a call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
         // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
-        _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
+        _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, amount, address(this))});
     }
 
     /// @notice Migrates ERC20 v2 resources by transferring ERC20 tokens from the ERC20 forwarder v1 and storing the
     /// associated nullifier.
-    /// @param input The input bytes containing the encoded arguments for the migration call:
-    /// * The `CallTypeV3.MigrateV2` enum value that has been checked already and is therefore unused.
-    /// * `nullifier`: The nullifier of the resource to be migrated.
-    /// * `token`: The address of the token to migrated.
-    /// * `amount`: The amount to be migrated.
-    function _migrateV2(bytes calldata input) internal virtual {
-        (,
-            // CallTypeV3.MigrateV2
-            address token,
-            uint128 amount,
-            bytes32 nullifier,
-            bytes32 rootV2,
-            bytes32 logicRefV2,
-            address forwarderV2
-        ) = abi.decode(input, (CallTypeV3, address, uint128, bytes32, bytes32, bytes32, address));
+    /// @param token The address of the token to be migrated.
+    /// @param amount The amount to be migrated.
+    /// @param migrateV2Input The input bytes containing the encoded arguments for to migrate v2 resources.
+    function _migrateV2(address token, uint128 amount, bytes calldata migrateV2Input) internal virtual {
+        _checkLength({input: migrateV2Input, expectedLength: _MIGRATE_V2_DATA_LENGTH});
+
+        (MigrateV2Data memory data) = abi.decode(migrateV2Input, (MigrateV2Data));
 
         // Check that the resource being upgraded is not in the protocol adapter v2 nullifier set.
-        if (INullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(nullifier)) {
-            revert ResourceAlreadyConsumed(nullifier);
+        if (INullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(data.nullifier)) {
+            revert ResourceAlreadyConsumed(data.nullifier);
         }
 
         // Add the nullifier to the this contract's nullifier set. The call will revert if the nullifier already exists.
-        _addNullifier(nullifier);
+        _addNullifier(data.nullifier);
 
         // Check that the root matches the final protocol adapter v2 commitment tree root.
-        if (rootV2 != _COMMITMENT_TREE_ROOT_V2) {
-            revert InvalidMigrationCommitmentTreeRootV2({expected: _COMMITMENT_TREE_ROOT_V2, actual: rootV2});
+        if (data.rootV2 != _COMMITMENT_TREE_ROOT_V2) {
+            revert InvalidMigrationCommitmentTreeRootV2({expected: _COMMITMENT_TREE_ROOT_V2, actual: data.rootV2});
         }
 
         // Check that logicRef matches the logic reference associated with the ERC20 forwarder v2.
-        if (logicRefV2 != _LOGIC_REFERENCE_V2) {
-            revert InvalidMigrationLogicRefV2({expected: _LOGIC_REFERENCE_V2, actual: logicRefV2});
+        if (data.logicRefV2 != _LOGIC_REFERENCE_V2) {
+            revert InvalidMigrationLogicRefV2({expected: _LOGIC_REFERENCE_V2, actual: data.logicRefV2});
         }
 
         // Check that forwarder matches the ERC20 forwarder v2.
-        if (forwarderV2 != address(_ERC20_FORWARDER_V2)) {
-            revert InvalidForwarderV2({expected: address(_ERC20_FORWARDER_V2), actual: forwarderV2});
+        if (data.forwarderV2 != address(_ERC20_FORWARDER_V2)) {
+            revert InvalidForwarderV2({expected: address(_ERC20_FORWARDER_V2), actual: data.forwarderV2});
         }
 
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v2.
-        emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V2), amount: amount});
+        emit ERC20Forwarder.Wrapped({token: address(token), from: address(_ERC20_FORWARDER_V2), amount: amount});
 
         // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
         // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
-        _ERC20_FORWARDER_V2.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
+        _ERC20_FORWARDER_V2.forwardEmergencyCall(abi.encode(CallType.Unwrap, token, amount, address(this)));
     }
 }

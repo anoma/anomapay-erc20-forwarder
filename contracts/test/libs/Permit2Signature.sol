@@ -18,14 +18,12 @@ library Permit2Signature {
         address spender,
         uint256 privateKey,
         bytes32 witness
-    ) internal pure returns (bytes memory signature) {
+    ) internal pure returns (bytes32 r, bytes32 s, uint8 v) {
         bytes32 digest = permitWitnessTransferFromDigest({
             domainSeparator: domainSeparator, permit: permit, spender: spender, witness: witness
         });
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-
-        return abi.encodePacked(r, s, v);
+        (v, r, s) = vm.sign(privateKey, digest);
     }
 
     /// @notice Computes the `permitWitnessTransferFrom` digest.
