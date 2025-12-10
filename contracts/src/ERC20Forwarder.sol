@@ -125,7 +125,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param amount The amount to be transferred.
     /// @param wrapInput The input bytes containing the encoded arguments specific for the wrap call.
     function _wrap(address token, uint128 amount, bytes calldata wrapInput) internal {
-        _checkLength({input: wrapInput, expected: _WRAP_DATA_LENGTH});
+        _checkLength({input: wrapInput, expectedLength: _WRAP_DATA_LENGTH});
 
         (WrapData memory data) = abi.decode(wrapInput, (WrapData));
 
@@ -150,7 +150,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param amount The amount to be transferred.
     /// @param unwrapInput The input bytes containing the encoded arguments for the unwrap call.
     function _unwrap(address token, uint128 amount, bytes calldata unwrapInput) internal {
-        _checkLength({input: unwrapInput, expected: _UNWRAP_DATA_LENGTH});
+        _checkLength({input: unwrapInput, expectedLength: _UNWRAP_DATA_LENGTH});
 
         (UnwrapData memory data) = abi.decode(unwrapInput, (UnwrapData));
 
@@ -167,9 +167,12 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         output = _forwardCall(input);
     }
 
-    function _checkLength(bytes calldata input, uint256 expected) internal pure {
-        if (input.length != expected) {
-            revert InvalidInputLength({expected: expected, actual: input.length});
+    /// @notice Checks that the length of an input is the expected length.
+    /// @param input The input data to check.
+    /// @param expectedLength The expected length.
+    function _checkLength(bytes calldata input, uint256 expectedLength) internal pure {
+        if (input.length != expectedLength) {
+            revert InvalidInputLength({expected: expectedLength, actual: input.length});
         }
     }
 }
