@@ -100,7 +100,7 @@ jobs:
           - step: Test
             name: Run tests
             cmd: just ci-test
-            cache_key: clippy
+            cache_key: ci-test
     steps:
       - uses: actions/checkout@v6
         with:
