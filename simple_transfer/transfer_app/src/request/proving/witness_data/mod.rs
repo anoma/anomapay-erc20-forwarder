@@ -51,9 +51,10 @@ impl WitnessTypes {
             WitnessTypes::Trivial(witness) => {
                 time_it!(
                     "logic proof",
-                    witness
-                        .prove(ProofType::Groth16)
-                        .map_err(|_| LogicProofGenerationError)
+                    witness.prove(ProofType::Groth16).map_err(|err| {
+                        println!("error: {:?}", err);
+                        LogicProofGenerationError
+                    })
                 )
             }
             WitnessTypes::Token(witness) => {
@@ -61,7 +62,10 @@ impl WitnessTypes {
                     "logic proof",
                     witness
                         .prove(ProofType::Groth16)
-                        .map_err(|_| LogicProofGenerationError)
+                        .map_err(|err| {
+                        println!("error: {:?}", err);
+                        LogicProofGenerationError
+                    })
                 )
             }
         }
