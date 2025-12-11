@@ -60,9 +60,7 @@ impl WitnessTypes {
             WitnessTypes::Token(witness) => {
                 time_it!(
                     "logic proof",
-                    witness
-                        .prove(ProofType::Groth16)
-                        .map_err(|err| {
+                    witness.prove(ProofType::Groth16).map_err(|err| {
                         println!("error: {:?}", err);
                         LogicProofGenerationError
                     })
