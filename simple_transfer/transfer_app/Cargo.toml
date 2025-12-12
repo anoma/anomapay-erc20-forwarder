@@ -1,5 +1,6 @@
 [package]
 authors.workspace = true
+build = "build.rs"
 edition.workspace = true
 license.workspace = true
 name = "transfer_app"
@@ -49,3 +50,7 @@ utoipa-swagger-ui = { workspace = true }
 
 [dev-dependencies]
 dotenv = { workspace = true }
+
+[build-dependencies]
+vergen = { workspace = true }
+vergen-git2 = { workspace = true}

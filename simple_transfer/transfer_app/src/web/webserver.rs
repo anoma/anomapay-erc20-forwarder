@@ -36,11 +36,14 @@ pub struct AnomaPayApi;
             }))),
 )]
 pub fn health() -> Custom<Json<Value>> {
+    let version = option_env!("VERGEN_GIT_SHA").unwrap_or("no_commit_found");
+
     Custom(
         Status::Ok,
         Json(json!({
             "ok": "live long and prosper",
-            "version": env!("CARGO_PKG_VERSION")
+            "version": env!("CARGO_PKG_VERSION"),
+            "build": version
         })),
     )
 }
