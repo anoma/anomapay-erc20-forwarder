@@ -22,10 +22,10 @@ pub enum ProvingError {
     ConsumedResourceNotInActionTree(Digest),
     #[error("The number of consumed and created resources are not equal.")]
     ConsumedAndCreatedResourceCountMismatch,
-    #[error("Failed to generate the resource logic proof for a resource.")]
-    LogicProofGenerationError,
-    #[error("Failed to generate the compliance proof.")]
-    ComplianceProofGenerationError,
+    #[error("Failed to generate the resource logic proof for a resource: {0:?}")]
+    LogicProofGenerationError(String),
+    #[error("Failed to generate the compliance proof {0:?}")]
+    ComplianceProofGenerationError(String),
     #[error("Failed to generate the delta proof.")]
     DeltaProofGenerationError,
     #[error("Failed to verify the split transaction.")]

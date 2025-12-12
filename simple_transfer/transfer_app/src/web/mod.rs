@@ -1,8 +1,15 @@
+use std::io::Cursor;
+
 use crate::request::proving::witness_data::token_transfer;
 use crate::request::proving::witness_data::trivial;
 use crate::web;
-use rocket::Responder;
+use rocket::Request;
+use rocket::http::ContentType;
+use rocket::http::Status;
+use rocket::response;
+use rocket::response::Responder;
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
 
@@ -12,27 +19,50 @@ pub mod webserver;
 
 pub type ReqResult<T> = Result<T, RequestError>;
 
-#[derive(Serialize, ToSchema, Responder, Debug)]
+#[derive(Error, Serialize, ToSchema, Debug)]
 pub enum RequestError {
     /// An error occurred trying to generate a transaction.
     /// Chances are there is something wrong with the passed resources.
-    #[response(status = 400)]
+    #[error("An error occurred generating the transaction: {0:?}")]
     TransactionGeneration(String),
     /// An error occurred submitting the transaction.
     /// The transaction was generated successfully, but submitting it to the PA failed.
-    #[response(status = 400)]
+    #[error("An error occurred submitting the transaction: {0:?}")]
     Submit(String),
     /// An error occurred during fee estimation.
-    #[response(status = 400)]
+    #[error("An error occurred estimating the transaction fee: {0:?}")]
     FeeEstimation(String),
-    /// An error occurred fetching token balances.
-    #[response(status = 400)]
+    #[error("An error occurred fetching token balances: {0:?}")]
     TokenBalances(String),
     /// An error occurred fetching token prices.
-    #[response(status = 400)]
+    #[error("An error occurred fetching token prices: {0:?}")]
     TokenPrices(String),
-    #[response(status = 400)]
+    #[error("An error occurred generating communicating with the RPC: {0:?}")]
     ProviderError(String),
+}
+
+impl<'r> Responder<'r, 'static> for RequestError {
+    fn respond_to(self, _req: &'r Request<'_>) -> response::Result<'static> {
+        let (status, message) = match self {
+            RequestError::TransactionGeneration(msg) => (Status::BadRequest, msg),
+            RequestError::Submit(msg) => (Status::BadRequest, msg),
+            RequestError::FeeEstimation(msg) => (Status::InternalServerError, msg),
+            RequestError::TokenBalances(msg) => (Status::InternalServerError, msg),
+            RequestError::TokenPrices(msg) => (Status::InternalServerError, msg),
+            RequestError::ProviderError(msg) => (Status::InternalServerError, msg),
+        };
+        let json = serde_json::json!({
+            "error": message,
+            "status": status.code
+        })
+        .to_string();
+
+        response::Response::build()
+            .status(status)
+            .header(ContentType::JSON)
+            .sized_body(json.len(), Cursor::new(json))
+            .ok()
+    }
 }
 
 /// An enum type for all possible Created Resource witness to satisfy the OpenAPI schema generator.
