@@ -28,7 +28,7 @@ pub enum ProvingError {
     ComplianceProofGenerationError(String),
     #[error("Failed to generate the delta proof.")]
     DeltaProofGenerationError,
-    #[error("Failed to verify the split transaction.")]
+    #[error("Failed to verify the transaction.")]
     TransactionVerificationError,
     #[error("Failed to get the merkle path for a consumed resource")]
     MerklePathNotFound,
