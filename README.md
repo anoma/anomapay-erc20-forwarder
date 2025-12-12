@@ -51,7 +51,7 @@ To run the application, some parameters need to be passed via the environment.
 
 | Variable                         | Meaning                                                 | Example                  |
 |----------------------------------|---------------------------------------------------------|--------------------------|
-| `RPC_URL`                        | URL for Ethereum RPC defining the network               | https://sepolia.drpc.org |
+| `RPC_URL`                        | URL for the Ethereum RPC defining the network           | https://sepolia.drpc.org |
 | `GALILEO_INDEXER_ADDRESS`        | URL for the anoma indexer                               | http://example.com       |
 | `FEE_PAYMENT_WALLET_PRIVATE_KEY` | The hex encoded private key for the fee payment account | 0x00                     |
 | `ALCHEMY_API_KEY`                | Key for Alchemy API services                            | `123456-ABCDEF`          |
