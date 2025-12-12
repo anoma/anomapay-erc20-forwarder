@@ -7,6 +7,7 @@
 
 use crate::AnomaPayConfig;
 use crate::request::proving::ProvingError::ConsumedAndCreatedResourceCountMismatch;
+use crate::request::proving::aggregation_proof::aggregate_proof_async;
 use crate::request::proving::compliance_proof::compliance_proofs_async;
 use crate::request::proving::logic_proof::logic_proofs_async;
 use crate::request::proving::resources::{Consumed, Created};
@@ -197,9 +198,12 @@ impl Parameters {
         let transaction = Transaction::create(vec![action], Delta::Witness(delta_witness));
 
         // Generate the delta proof
-        let transaction = transaction
+        let transaction: Transaction = transaction
             .generate_delta_proof()
             .map_err(|_| DeltaProofGenerationError)?;
+
+        // Generate the aggregated proofs (proof over the compliance and logic proofs)
+        let transaction = aggregate_proof_async(transaction).await?;
 
         // Verify the transaction before returning. If it does not verify, something went wrong.
         match transaction.clone().verify() {

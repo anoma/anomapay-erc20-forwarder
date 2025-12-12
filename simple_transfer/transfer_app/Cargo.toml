@@ -19,7 +19,7 @@ gpu = ["arm/cuda"]
 [dependencies]
 alloy = { workspace = true }
 alloy-chains = { workspace = true }
-arm = { workspace = true, features = ["transaction"] }
+arm = { workspace = true, features = ["transaction", "aggregation"] }
 arm-gadgets = { workspace = true }
 async-trait = { workspace = true }
 base64 = { workspace = true }
