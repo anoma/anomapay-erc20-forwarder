@@ -16,6 +16,9 @@ clippy-fix:
 test:
     cargo test --all --workspace
 
+ci-test:
+    cargo build --tests
+    cargo test -- --test-threads=1 --show-output
 check:
     cargo check
 
