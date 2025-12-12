@@ -102,7 +102,10 @@ pub async fn estimate_fee(
             .await
             .map_err(|err| RequestError::FeeEstimation(err.to_string()))?;
 
-    Ok(Custom(Status::Accepted, Json(json!({"fee": fee}))))
+    Ok(Custom(
+        Status::Accepted,
+        Json(json!({"fee": fee.to_string()})),
+    ))
 }
 
 /// Response structure for token balance
