@@ -56,7 +56,7 @@ pub fn health() -> Custom<Json<Value>> {
             example = json!({
                 "transaction_hash": "0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF",
             })),
-            (status = 400, description = "Error occurred submitting transaction", body = RequestError, example = json!(RequestError::TransactionGeneration(String::from("failed to generate tx")))),
+            (status = 400, description = "Error occurred submitting transaction", body = inline(Object), example = json!({"error": "error message here", "status": 400}))
     )
 )]
 
@@ -69,7 +69,7 @@ pub async fn send_transaction(
 
     let tx_hash = handle_parameters(parameters, config)
         .await
-        .map_err(|_| RequestError::TransactionGeneration("kapot".to_string()))?;
+        .map_err(|err| RequestError::TransactionGeneration(err.to_string()))?;
 
     Ok(Custom(
         Status::Accepted,
@@ -81,11 +81,11 @@ pub async fn send_transaction(
 #[post("/estimate_fee", data = "<payload>")]
 #[utoipa::path(
     post,
-    path = "/estimate_fee",
+    path = "estimate_fee",
     request_body = FeeEstimationPayload,
     responses(
             (status = 200, description = "Submit a fee estimation request to the backend.", body = FeeEstimationPayload),
-            (status = 400, description = "Fee estimation failed.", body = RequestError, example = json!(RequestError::FeeEstimation(String::from("failed to estimate fee")))),
+            (status = 400, description = "Fee estimation failed.", body = inline(Object), example = json!({"error": "error message here", "status": 400}))
     )
 )]
 

@@ -38,7 +38,7 @@ pub fn compliance_proof(compliance_witness: &ComplianceWitness) -> ProvingResult
     time_it!(
         "compliance proof",
         ComplianceUnit::create(compliance_witness, ProofType::Groth16)
-            .map_err(|_| ComplianceProofGenerationError)
+            .map_err(|err| ComplianceProofGenerationError(err.to_string()))
     )
 }
 

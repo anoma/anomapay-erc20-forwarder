@@ -53,7 +53,7 @@ impl WitnessTypes {
                     "logic proof",
                     witness.prove(ProofType::Groth16).map_err(|err| {
                         println!("error: {:?}", err);
-                        LogicProofGenerationError
+                        LogicProofGenerationError(err.to_string())
                     })
                 )
             }
@@ -62,7 +62,7 @@ impl WitnessTypes {
                     "logic proof",
                     witness.prove(ProofType::Groth16).map_err(|err| {
                         println!("error: {:?}", err);
-                        LogicProofGenerationError
+                        LogicProofGenerationError(err.to_string())
                     })
                 )
             }

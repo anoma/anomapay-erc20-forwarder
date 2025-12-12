@@ -15,12 +15,12 @@ pub async fn handle_parameters(
     let transaction: Transaction = parameters
         .generate_transaction(config)
         .await
-        .map_err(|_| TransactionGeneration("kapot".to_string()))?;
+        .map_err(|err| TransactionGeneration(err.to_string()))?;
 
     // Submit the transaction.
     let tx_hash = pa_submit_transaction(config, transaction)
         .await
-        .map_err(|_| Submit("kapot".to_string()))?;
+        .map_err(|err| Submit(err.to_string()))?;
 
     Ok(tx_hash)
 }
