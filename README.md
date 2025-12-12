@@ -60,7 +60,7 @@ To run the application, simply execute `cargo run`.
 
 ### Docker
 
-There is a Docker image in the repo to build your own image.
+There is a Docker file in the repo to build your own image of the application.
 
 ```shell
 docker build -t transfer .
