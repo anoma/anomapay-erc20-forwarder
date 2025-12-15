@@ -1,4 +1,4 @@
-[![CI](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml)
+****[![CI](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml)
 
 # Simplified Transfer Example
 
@@ -55,6 +55,8 @@ To run the application, some parameters need to be passed via the environment.
 | `GALILEO_INDEXER_ADDRESS`        | URL for the anoma indexer                               | http://example.com       |
 | `FEE_PAYMENT_WALLET_PRIVATE_KEY` | The hex encoded private key for the fee payment account | 0x00                     |
 | `ALCHEMY_API_KEY`                | Key for Alchemy API services                            | `123456-ABCDEF`          |
+| `BONSAI_API_URL`                 | Bonsai API URL                                          | `http://example.com`     |
+| `BONSAI_API_KEY`                 | Bonsai API key                                          | `supersecret`            |
 
 To run the application, simply execute `cargo run`.
 
