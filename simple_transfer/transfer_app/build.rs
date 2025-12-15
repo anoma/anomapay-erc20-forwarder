@@ -9,8 +9,6 @@ extern crate vergen;
 /// Fetch environment information during build.
 /// Used to return git commit in the health endpoint in the webserver.
 fn version_info() {
-    // Rebuild the contracts if any file has changed in the contracts dir.
-
     let build = BuildBuilder::all_build().unwrap();
     let rustc = RustcBuilder::all_rustc().unwrap();
     let git2 = Git2Builder::all_git().unwrap();
@@ -44,8 +42,6 @@ fn build_contracts() {
     if !status.success() {
         panic!("forge build --ast command failed");
     }
-
-    // Rebuild the contracts if any file has changed in the contracts dir.
 }
 
 fn main() {
