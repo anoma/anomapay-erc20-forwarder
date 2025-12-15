@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Versioning} from "@anoma-evm-pa/libs/Versioning.sol";
+import {IVersion} from "@anoma-evm-pa/interfaces/IVersion.sol";
 
 import {Script} from "forge-std/Script.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
+import {Versioning} from "../src/libs/Versioning.sol";
 
 /// @title DeployERC20Forwarder
 /// @author Anoma Foundation, 2025
@@ -19,18 +20,34 @@ contract DeployERC20Forwarder is Script {
     /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
     /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter has
     /// been stopped.
-    function run(bool isTestDeployment, address protocolAdapter, bytes32 logicRef, address emergencyCommittee) public {
-        bytes32 salt;
+    function run(bool isTestDeployment, address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
+        public
+        returns (address erc20Forwarder)
+    {
+        vm.startBroadcast();
+
         if (isTestDeployment) {
-            salt = bytes32(block.prevrandao);
+            // Deploy regularly.
+            erc20Forwarder = address(
+                new ERC20Forwarder({
+                    protocolAdapter: protocolAdapter, logicRef: logicRef, emergencyCommittee: emergencyCommittee
+                })
+            );
         } else {
-            salt = keccak256(abi.encode("ERC20Forwarder", Versioning._PROTOCOL_ADAPTER_VERSION));
+            bytes32 paVersion = IVersion(protocolAdapter).getVersion();
+
+            // Deploy deterministically.
+            erc20Forwarder = address(
+                new ERC20Forwarder{
+                    salt: keccak256(
+                        abi.encode("ERC20Forwarder", Versioning._ERC20_FORWARDER_VERSION, "ProtocolAdapter", paVersion)
+                    )
+                }({
+                    protocolAdapter: protocolAdapter, logicRef: logicRef, emergencyCommittee: emergencyCommittee
+                })
+            );
         }
 
-        vm.startBroadcast();
-        new ERC20Forwarder{salt: salt}({
-            protocolAdapter: protocolAdapter, logicRef: logicRef, emergencyCommittee: emergencyCommittee
-        });
         vm.stopBroadcast();
     }
 }
