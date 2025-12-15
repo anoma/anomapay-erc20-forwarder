@@ -19,7 +19,7 @@ permissions:
 jobs:
   taplo:
     name: Taplo Format Check
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v6
       - uses: taiki-e/install-action@v2
@@ -82,7 +82,7 @@ jobs:
 
   circuit-tests:
     name: Test transfer circuits (risc0)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: lints
     env:
       CACHE_VERSION: v0
