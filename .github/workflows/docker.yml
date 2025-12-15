@@ -21,7 +21,7 @@ permissions:
 jobs:
   docker:
     name: Docker
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       GIT_LFS_SKIP_SMUDGE: 1
       REGISTRY_URL: ghcr.io
