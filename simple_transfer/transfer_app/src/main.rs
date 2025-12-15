@@ -42,6 +42,10 @@ pub struct AnomaPayConfig {
 async fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
     let rpc_url = env::var("RPC_URL").map_err(|_| "RPC_URL not set")?;
 
+    // Verify that the bonsai variables are set, if not throw an error.
+    let _ = env::var("BONSAI_API_URL").map_err(|_| "BONSAI_API_URL not set")?;
+    let _ = env::var("BONSAI_API_KEY").map_err(|_| "BONSAI_API_KEY not set")?;
+
     let indexer_address =
         env::var("GALILEO_INDEXER_ADDRESS").map_err(|_| "GALILEO_INDEXER_ADDRESS not set")?;
 
