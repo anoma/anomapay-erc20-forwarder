@@ -11,7 +11,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     services:
       envio-postgres:
         image: postgres:17.5
@@ -126,14 +126,9 @@ jobs:
       - name: ${{ matrix.command.name }}
         run: ${{ matrix.command.cmd }}
         env:
-          API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+          RPC_URL: ${{ secrets.RPC_URL }}
+          GALILEO_INDEXER_ADDRESS: "http://localhost:4000"
+          FEE_PAYMENT_WALLET_PRIVATE_KEY: ${{ secrets.FEE_PAYMENT_WALLET_PRIVATE_KEY }}
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
-          ETHEREUM_RPC: ${{ secrets.ETHEREUM_RPC }}
-          FORWARDER_ADDRESS: ${{ secrets.FORWARDER_ADDRESS }}
-          HOT_WALLET_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           BONSAI_API_KEY: ${{ secrets.BONSAI_API_KEY }}
           BONSAI_API_URL: ${{ secrets.BONSAI_API_URL }}
-          PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ secrets.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}
-          INDEXER_ADDRESS: "http://localhost:4000"
-          HOT_WALLET_USER_ADDRESS: ${{ secrets.HOT_WALLET_USER_ADDRESS }}
