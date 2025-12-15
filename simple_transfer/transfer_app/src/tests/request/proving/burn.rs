@@ -66,6 +66,7 @@ pub async fn test_submit_burn_transaction() {
 
     // Submit a burn transaction.
     let minted_resource = parameters.created_resources[0].resource;
+
     let (_parameters, _transaction, hash) =
         example_burn_transaction_submit(user, &config, minted_resource).await;
     println!("burn transaction hash: {}", hash)
@@ -79,6 +80,8 @@ pub async fn example_burn_transaction_submit(
 ) -> (Parameters, Transaction, String) {
     // Create a mint transaction.
     let (parameters, transaction) = example_burn_transaction(user, config, resource).await;
+
+    println!("created burn transaction");
 
     // Submit the transaction.
     let tx_hash = pa_submit_transaction(config, transaction.clone())

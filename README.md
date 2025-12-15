@@ -1,4 +1,4 @@
-[![CI](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml)
+****[![CI](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml)
 
 # Simplified Transfer Example
 
