@@ -32,7 +32,7 @@ jobs:
 
   lints:
     name: ${{ matrix.command.step }}
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       CACHE_VERSION: v0
     strategy:
@@ -117,4 +117,3 @@ jobs:
           cargo test -- --nocapture
         env:
           RISC0_DEV_MODE: 1  # Use dev mode for faster testing
-

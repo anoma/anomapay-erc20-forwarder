@@ -15,7 +15,7 @@ concurrency:
 jobs:
   contracts:
     name: Contracts
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       FOUNDRY_PROFILE: ci
 
