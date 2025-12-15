@@ -7,6 +7,7 @@ import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
 import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {SemVerLib} from "@solady/utils/SemVerLib.sol";
 
 import {Test} from "forge-std/Test.sol";
 
@@ -22,6 +23,8 @@ import {
 } from "../examples/ForwarderTarget.e.sol";
 
 contract ForwarderBaseTest is Test {
+    using SemVerLib for bytes32;
+
     address internal constant _EMERGENCY_CALLER = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
     address internal constant _PA_OWNER = address(uint160(3));
@@ -109,6 +112,19 @@ contract ForwarderBaseTest is Test {
 
     function test_getLogicRef_returns_the_logic_ref() public view {
         assertEq(_fwd.getLogicRef(), _LOGIC_REF);
+    }
+
+    function test_getVersion_returns_a_semantic_version() public view {
+        bytes32 version = _fwd.getVersion();
+
+        assertEq(
+            version.cmp("0.0.0"),
+            1 /* GT */
+        );
+        assertEq(
+            version.cmp("999.999.999"),
+            -1 /* LT */
+        );
     }
 
     function _stopProtocolAdapter() internal {
