@@ -14,3 +14,6 @@ tokio = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 dotenv = { workspace = true, features = ["cli"] }
+
+[dev-dependencies]
+transfer_library = { workspace = true }

@@ -3111,6 +3111,7 @@ dependencies = [
  "serde",
  "thiserror 2.0.17",
  "tokio",
+ "transfer_library",
 ]
 
 [[package]]
