@@ -12,7 +12,7 @@ use evm_protocol_adapter_bindings::helpers::alchemy_url;
 use transfer_library::TOKEN_TRANSFER_ID;
 
 #[tokio::test]
-async fn versions_of_deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
+async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
     // Iterate over all supported chains
     for chain in erc20_forwarder_deployments_map().keys() {
         let fwd_referenced_protocol_adapter: Address = fwd_instance(chain)
@@ -33,7 +33,7 @@ async fn versions_of_deployed_forwarders_point_to_the_current_protocol_adapter_c
 }
 
 #[tokio::test]
-async fn versions_of_deployed_forwarders_have_the_current_logic_ref() {
+async fn deployed_forwarders_have_the_current_logic_ref() {
     // Iterate over all supported chains
     for chain in erc20_forwarder_deployments_map().keys() {
         let actual_logic_ref = fwd_instance(chain)
