@@ -18,7 +18,7 @@ test:
 
 ci-test:
     cargo build --tests
-    cargo test -- --test-threads=1 --show-output
+    cargo test -- --show-output
 check:
     cargo check
 

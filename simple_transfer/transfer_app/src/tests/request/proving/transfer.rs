@@ -24,10 +24,12 @@ use arm::resource::Resource;
 use arm::resource_logic::TrivialLogicWitness;
 use arm::transaction::Transaction;
 use itertools::Itertools;
+use serial_test::serial;
 use transfer_library::TransferLogic;
 use transfer_witness::{AUTH_SIGNATURE_DOMAIN, ValueInfo, calculate_persistent_value_ref};
 
 #[tokio::test]
+#[serial]
 /// Test creation of a burn transaction.
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_submit_transfer_transaction() {

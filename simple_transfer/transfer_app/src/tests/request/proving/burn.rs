@@ -19,6 +19,7 @@ use arm::logic_proof::LogicProver;
 use arm::resource::Resource;
 use arm::transaction::Transaction;
 use arm_gadgets::authorization::AuthorizationSignature;
+use serial_test::serial;
 use transfer_library::TransferLogic;
 use transfer_witness::{AUTH_SIGNATURE_DOMAIN, calculate_value_ref_from_ethereum_account_addr};
 
@@ -50,6 +51,7 @@ async fn test_create_burn_transaction() {
 }
 
 #[tokio::test]
+#[serial]
 /// Test submitting a burn transaction to the protocol adapter.
 /// This requires an account with private key to actually submit to ethereum.
 pub async fn test_submit_burn_transaction() {
