@@ -37,7 +37,7 @@ macro_rules! time_it {
 pub fn compliance_proof(compliance_witness: &ComplianceWitness) -> ProvingResult<ComplianceUnit> {
     time_it!(
         "compliance proof",
-        ComplianceUnit::create(compliance_witness, ProofType::Groth16)
+        ComplianceUnit::create(compliance_witness, ProofType::Succinct)
             .map_err(|err| ComplianceProofGenerationError(err.to_string()))
     )
 }

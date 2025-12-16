@@ -1,3 +1,4 @@
+mod aggregation_proof;
 mod compliance_proof;
 mod logic_proof;
 pub mod parameters;
@@ -38,4 +39,6 @@ pub enum ProvingError {
     ForwarderBindingsError(erc20_forwarder_bindings::contract::BindingsError),
     #[error("An error occurred related to the RPC provider {0:?}.")]
     ProviderError(RpcError),
+    #[error("An error occurred during proof aggregation: {0:?}")]
+    ProofAggregation(String),
 }
