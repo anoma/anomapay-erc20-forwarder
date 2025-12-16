@@ -33,7 +33,7 @@ async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
 }
 
 #[tokio::test]
-async fn deployed_forwarders_have_the_current_logic_ref() {
+async fn deployed_forwarders_reference_the_current_logic_ref() {
     // Iterate over all supported chains
     for chain in erc20_forwarder_deployments_map().keys() {
         let actual_logic_ref = fwd_instance(chain)
