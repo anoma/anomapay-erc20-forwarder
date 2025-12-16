@@ -54,6 +54,13 @@ transfer_library_v2 = { path = "simple_transfer/transfer_library_v2" }
 transfer_witness = { path = "simple_transfer/transfer_witness" }
 transfer_witness_v2 = { path = "simple_transfer/transfer_witness_v2" }
 
+vergen = { version = "9.0.6", features = ["build", "cargo", "rustc", "si"] }
+vergen-git2 = { version = "1.0.0", features = [
+  "build",
+  "cargo",
+  "rustc",
+  "si",
+] }
 # Always optimize; building and running the guest takes much longer without optimization.
 [profile.dev]
 opt-level = 3
