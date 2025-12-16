@@ -1,6 +1,7 @@
 #[cfg(test)]
 extern crate dotenv;
 
+use alloy::primitives::{Address, B256};
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy_chains::NamedChain;
 use erc20_forwarder_bindings::addresses::erc20_forwarder_deployments_map;
@@ -8,12 +9,13 @@ use erc20_forwarder_bindings::contract::ERC20Forwarder::ERC20ForwarderInstance;
 use erc20_forwarder_bindings::contract::erc20_forwarder;
 use evm_protocol_adapter_bindings::addresses::protocol_adapter_address;
 use evm_protocol_adapter_bindings::helpers::alchemy_url;
+use transfer_library::TOKEN_TRANSFER_ID;
 
 #[tokio::test]
-async fn versions_of_deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
+async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
     // Iterate over all supported chains
     for chain in erc20_forwarder_deployments_map().keys() {
-        let fwd_referenced_protocol_adapter: alloy::primitives::Address = fwd_instance(chain)
+        let fwd_referenced_protocol_adapter: Address = fwd_instance(chain)
             .await
             .getProtocolAdapter()
             .call()
@@ -26,6 +28,27 @@ async fn versions_of_deployed_forwarders_point_to_the_current_protocol_adapter_c
         assert_eq!(
             fwd_referenced_protocol_adapter, deployed_protocol_adapter,
             "Protocol adapter address mismatch on network '{chain}'."
+        );
+    }
+}
+
+#[tokio::test]
+async fn deployed_forwarders_have_the_current_logic_ref() {
+    // Iterate over all supported chains
+    for chain in erc20_forwarder_deployments_map().keys() {
+        let actual_logic_ref = fwd_instance(chain)
+            .await
+            .getLogicRef()
+            .call()
+            .await
+            .expect("Couldn't get logic ref");
+
+        let expected_logic_ref = B256::from_slice(TOKEN_TRANSFER_ID.as_bytes());
+
+        // Check that the logic ref in the deployed forwarder matches the expected one from the transfer library.
+        assert_eq!(
+            actual_logic_ref, expected_logic_ref,
+            "Logic address mismatch on network '{chain}': expected {expected_logic_ref}, actual: {actual_logic_ref}."
         );
     }
 }
