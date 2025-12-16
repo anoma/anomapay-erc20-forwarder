@@ -47,7 +47,7 @@ utoipa-swagger-ui = { version = "9", features = ["rocket"] }
 
 arm = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0", default-features = false }
 arm-gadgets = { git = "https://github.com/anoma/arm-risc0", tag = "v0.13.0" }
-evm_protocol_adapter_bindings = { git = "https://github.com/anoma/evm-protocol-adapter", tag = "bindings/v1.0.0-rc.8" }
+evm_protocol_adapter_bindings = { git = "https://github.com/anoma/evm-protocol-adapter", tag = "bindings/v1.0.0-rc.9" }
 
 erc20_forwarder_bindings = { path = "bindings" }
 transfer_library = { path = "simple_transfer/transfer_library" }

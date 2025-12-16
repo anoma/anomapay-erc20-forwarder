@@ -3126,8 +3126,8 @@ dependencies = [
 
 [[package]]
 name = "evm_protocol_adapter_bindings"
-version = "1.0.0-rc.8"
-source = "git+https://github.com/anoma/evm-protocol-adapter?tag=bindings%2Fv1.0.0-rc.8#c6bf83b38d485352700ac9465dc7ac99986cedba"
+version = "1.0.0-rc.9"
+source = "git+https://github.com/anoma/evm-protocol-adapter?tag=bindings%2Fv1.0.0-rc.9#7847e2eb079d8cb517e22f662172a83a6c347d91"
 dependencies = [
  "alloy",
  "alloy-chains",
