@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {ICommitmentTree} from "@anoma-evm-pa/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "@anoma-evm-pa/interfaces/INullifierSet.sol";
+import {IProtocolAdapter} from "@anoma-evm-pa/interfaces/IProtocolAdapter.sol";
 import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
@@ -46,6 +47,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
     error InvalidMigrationCommitmentTreeRootV2(bytes32 expected, bytes32 actual);
     error InvalidMigrationLogicRefV2(bytes32 expected, bytes32 actual);
     error InvalidForwarderV2(address expected, address actual);
+    error UnstoppedProtocolAdapterV2(address protocolAdapterV2);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapterV3 The protocol adapter v3 that can forward calls.
@@ -66,6 +68,12 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         }
         _ERC20_FORWARDER_V2 = erc20ForwarderV2;
         _PROTOCOL_ADAPTER_V2 = erc20ForwarderV2.getProtocolAdapter();
+
+        // Check that the protocol adapter v2 is stopped before capturing the final commitment tree root.
+        if (!IProtocolAdapter(_PROTOCOL_ADAPTER_V2).isEmergencyStopped()) {
+            revert UnstoppedProtocolAdapterV2({protocolAdapterV2: _PROTOCOL_ADAPTER_V2});
+        }
+
         _COMMITMENT_TREE_ROOT_V2 = ICommitmentTree(_PROTOCOL_ADAPTER_V1).latestCommitmentTreeRoot();
         _LOGIC_REFERENCE_V2 = erc20ForwarderV2.getLogicRef();
     }
