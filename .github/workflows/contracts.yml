@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'contracts/**'
+      - "contracts/**"
   pull_request:
 
 concurrency:
@@ -15,7 +15,7 @@ concurrency:
 jobs:
   contracts:
     name: Contracts
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     env:
       FOUNDRY_PROFILE: ci
 

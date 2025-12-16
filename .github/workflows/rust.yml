@@ -19,7 +19,7 @@ permissions:
 jobs:
   taplo:
     name: Taplo Format Check
-    runs-on: self-hosted
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
       - uses: taiki-e/install-action@v2
@@ -32,7 +32,7 @@ jobs:
 
   lints:
     name: ${{ matrix.command.step }}
-    runs-on: self-hosted
+    runs-on: macos-latest
     env:
       CACHE_VERSION: v0
     strategy:
@@ -82,7 +82,7 @@ jobs:
 
   circuit-tests:
     name: Test transfer circuits (risc0)
-    runs-on: self-hosted
+    runs-on: macos-latest
     needs: lints
     env:
       CACHE_VERSION: v0
@@ -109,11 +109,11 @@ jobs:
           cd simple_transfer/transfer_circuit
           cargo test -- --nocapture
         env:
-          RISC0_DEV_MODE: 1  # Use dev mode for faster testing
+          RISC0_DEV_MODE: 1 # Use dev mode for faster testing
 
       - name: Run circuit v2 tests
         run: |
           cd simple_transfer/transfer_circuit_v2
           cargo test -- --nocapture
         env:
-          RISC0_DEV_MODE: 1  # Use dev mode for faster testing
+          RISC0_DEV_MODE: 1 # Use dev mode for faster testing
