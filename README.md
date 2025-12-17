@@ -1,12 +1,19 @@
-****[![CI](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml)
+[![Contracts & Bindings](https://github.com/anoma/anomapay-backend/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/anomapay-backend/actions/workflows/contracts.yml)
 
-# Simplified Transfer Example
+[![Rust Lints & Circuits](https://github.com/anoma/anomapay-backend/actions/workflows/rust.yml/badge.svg)](https://github.com/anoma/anomapay-backend/actions/workflows/rust.yml)
 
-This repository contains a simplified example of a transfer application built
-with Rust, exposed via a JSON api.
+[![Webserver & E2E Tests](https://github.com/anoma/anomapay-backend/actions/workflows/rust_test.yml/badge.svg)](https://github.com/anoma/anomapay-backend/actions/workflows/rust_test.yml)
 
-The project demonstrates basic transfer functionality with multiple components
-organized in a workspace structure.
+[![AnomaPay Docker](https://github.com/anoma/anomapay-backend/actions/workflows/docker.yml/badge.svg)](https://github.com/anoma/anomapay-backend/actions/workflows/docker.yml)
+
+# AnomaPay Backend
+
+This repository is a workspace containing:
+
+- The token transfer resource logic RISC Zero (Rust)
+- The ERC20 forwarder contracts (Solidity)
+- The ERC20 forwarder contract bindings (Rust)
+- The Webserver exposed via a JSON api for proof generation and transaction execution (Rust)
 
 ## Security
 
@@ -50,7 +57,7 @@ cargo build
 To run the application, some parameters need to be passed via the environment.
 
 | Variable                         | Meaning                                                 | Example                  |
-|----------------------------------|---------------------------------------------------------|--------------------------|
+| -------------------------------- | ------------------------------------------------------- | ------------------------ |
 | `RPC_URL`                        | URL for the Ethereum RPC defining the network           | https://sepolia.drpc.org |
 | `GALILEO_INDEXER_ADDRESS`        | URL for the anoma indexer                               | http://example.com       |
 | `FEE_PAYMENT_WALLET_PRIVATE_KEY` | The hex encoded private key for the fee payment account | 0x00                     |
