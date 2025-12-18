@@ -8,15 +8,36 @@ use crate::user::Keychain;
 use alloy::hex::ToHexExt;
 use alloy::primitives::{Address, B256, Signature, U256, address};
 use alloy::signers::local::PrivateKeySigner;
+use alloy_chains::NamedChain;
 use arm::action_tree::MerkleTree;
 use erc20_forwarder_bindings::addresses::erc20_forwarder_address;
 use rand::Rng;
 use risc0_zkvm::sha::{Digest, Impl, Sha256};
 
-pub const TOKEN_ADDRESS_SEPOLIA_USDC: Address =
-    address!("0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238");
-
 pub const DEFAULT_DEADLINE: u64 = 1893456000;
+
+/// Returns the address of the USDC ERC-20 token for the configured network.
+pub fn usdc_token_address(config: &AnomaPayConfig) -> Address {
+    use NamedChain::*;
+
+    let named_chain = named_chain_from_config(config).unwrap();
+
+    match named_chain {
+        Sepolia => address!("0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"),
+        Mainnet => address!("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
+        //
+        BaseSepolia => address!("0x036CbD53842c5426634e7929541eC2318f3dCF7e"),
+        Base => address!("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
+        //
+        ArbitrumSepolia => address!("0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"),
+        Arbitrum => address!("0xaf88d065e77c8cC2239327C5EDb3A432268e5831"),
+        //
+        OptimismSepolia => address!("0x5fd84259d66Cd46123540766Be93DFE6D43130D7"),
+        Optimism => address!("0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85"),
+        //
+        _ => panic!("Unsupported chain"),
+    }
+}
 
 /// Creates a keychain to represent a user.
 pub fn user_with_private_key(config: &AnomaPayConfig) -> Keychain {
@@ -66,8 +87,8 @@ pub async fn create_permit_signature(
 
     let named_chain = named_chain_from_config(config).unwrap();
 
-    let x = Permit2Data {
-        chain_id: 11155111,
+    let permit2_data = Permit2Data {
+        chain_id: config.chain_id,
         token: erc20_token,
         amount: U256::from(amount),
         nonce: U256::from_be_bytes(nullifier),
@@ -76,5 +97,5 @@ pub async fn create_permit_signature(
         action_tree_root: B256::from_slice(action_tree_encoded),
     };
 
-    permit_witness_transfer_from_signature(private_key, x).await
+    permit_witness_transfer_from_signature(private_key, permit2_data).await
 }

@@ -8,8 +8,7 @@ use crate::request::proving::resources::{
 use crate::request::proving::witness_data::{token_transfer, trivial};
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    TOKEN_ADDRESS_SEPOLIA_USDC, label_ref, random_nonce, user_with_private_key,
-    user_without_private_key,
+    label_ref, random_nonce, usdc_token_address, user_with_private_key, user_without_private_key,
 };
 use crate::tests::request::proving::mint::example_mint_transaction_submit;
 use crate::user::Keychain;
@@ -162,7 +161,7 @@ pub async fn example_split_parameters(
 
     let created_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
-        label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
+        label_ref: label_ref(config, usdc_token_address(config)),
         quantity: 1,
         value_ref: calculate_persistent_value_ref(&ValueInfo {
             auth_pk: receiver.auth_verifying_key(),
@@ -238,7 +237,7 @@ pub async fn example_split_parameters(
         receiver_discovery_public_key: receiver.discovery_pk,
         receiver_authorization_verifying_key: receiver.auth_verifying_key(),
         receiver_encryption_public_key: receiver.encryption_pk,
-        token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
+        token_contract_address: usdc_token_address(config),
     };
     let created = Created {
         resource: created_resource,
@@ -250,7 +249,7 @@ pub async fn example_split_parameters(
         receiver_discovery_public_key: sender.discovery_pk,
         receiver_authorization_verifying_key: sender.auth_verifying_key(),
         receiver_encryption_public_key: sender.encryption_pk,
-        token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
+        token_contract_address: usdc_token_address(config),
     };
     let remainder = Created {
         resource: remainder_resource,

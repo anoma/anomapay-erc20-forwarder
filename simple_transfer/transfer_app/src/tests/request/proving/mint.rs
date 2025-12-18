@@ -10,7 +10,7 @@ use crate::request::proving::witness_data::token_transfer::{
 };
 use crate::rpc::pa_submit_transaction;
 use crate::tests::fixtures::{
-    DEFAULT_DEADLINE, TOKEN_ADDRESS_SEPOLIA_USDC, create_permit_signature, label_ref, random_nonce,
+    DEFAULT_DEADLINE, create_permit_signature, label_ref, random_nonce, usdc_token_address,
     user_with_private_key,
 };
 use crate::user::Keychain;
@@ -27,7 +27,6 @@ use transfer_witness::{
 
 #[ignore]
 #[tokio::test]
-
 /// Test creation of a mint transaction.
 /// This test verifies that the proofs are generated, and the transaction is valid.
 async fn test_create_mint_transaction() {
@@ -110,7 +109,7 @@ pub async fn example_mint_parameters(
     // Construct the ephemeral resource
     let consumed_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
-        label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
+        label_ref: label_ref(config, usdc_token_address(config)),
         quantity: amount,
         value_ref: calculate_value_ref_from_ethereum_account_addr(&minter.evm_address.into_array()),
         is_ephemeral: true,
@@ -131,7 +130,7 @@ pub async fn example_mint_parameters(
     // Construct the created resource (i.e., the one that wraps our tokens)
     let created_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
-        label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
+        label_ref: label_ref(config, usdc_token_address(config)),
         quantity: amount,
         value_ref: calculate_persistent_value_ref(&ValueInfo {
             auth_pk: minter.auth_verifying_key(),
@@ -157,7 +156,7 @@ pub async fn example_mint_parameters(
         consumed_resource_nullifier.into(),
         amount,
         config,
-        TOKEN_ADDRESS_SEPOLIA_USDC,
+        usdc_token_address(config),
         DEFAULT_DEADLINE,
     )
     .await;
@@ -166,7 +165,7 @@ pub async fn example_mint_parameters(
     let consumed_witness_data = ConsumedEphemeral {
         sender_wallet_address: minter.evm_address,
 
-        token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
+        token_contract_address: usdc_token_address(config),
         permit2_data: Permit2Data {
             signature: permit_signature.into(),
             deadline: DEFAULT_DEADLINE,
@@ -184,7 +183,7 @@ pub async fn example_mint_parameters(
         receiver_discovery_public_key: minter.discovery_pk,
         receiver_authorization_verifying_key: minter.clone().auth_verifying_key(),
         receiver_encryption_public_key: minter.encryption_pk,
-        token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
+        token_contract_address: usdc_token_address(config),
     };
 
     let created_resource = Created {
