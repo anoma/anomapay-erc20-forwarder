@@ -8,12 +8,13 @@ pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Address> {
     HashMap::from([
         (
             Sepolia,
-            address!("0x9109d47d17cABF2693cD19de8fAef31875d12aA3"),
+            address!("0x9bbC75f66f5344864FfABCF70625B99E42e5F108"),
         ),
         (
             BaseSepolia,
-            address!("0x1ff6a61447F3fD70cAe9C6247663eED90ef25d8c"),
+            address!("0xfeE5b48919100c192E017992810c9539ebD00249"),
         ),
+        (Base, address!("0xfeE5b48919100c192E017992810c9539ebD00249")),
     ])
 }
 
