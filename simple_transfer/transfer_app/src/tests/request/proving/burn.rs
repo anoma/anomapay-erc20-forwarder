@@ -7,9 +7,7 @@ use crate::request::proving::resources::{
 };
 use crate::request::proving::witness_data::token_transfer::{ConsumedPersistent, CreatedEphemeral};
 use crate::rpc::pa_submit_transaction;
-use crate::tests::fixtures::{
-    TOKEN_ADDRESS_SEPOLIA_USDC, label_ref, random_nonce, user_with_private_key,
-};
+use crate::tests::fixtures::{label_ref, random_nonce, usdc_token_address, user_with_private_key};
 use crate::tests::request::proving::mint::example_mint_transaction_submit;
 use crate::user::Keychain;
 use crate::{AnomaPayConfig, load_config};
@@ -131,7 +129,7 @@ pub async fn example_burn_parameters(
 
     let created_resource = Resource {
         logic_ref: TransferLogic::verifying_key(),
-        label_ref: label_ref(config, TOKEN_ADDRESS_SEPOLIA_USDC),
+        label_ref: label_ref(config, usdc_token_address(config)),
         quantity: to_burn_resource.quantity,
         value_ref: calculate_value_ref_from_ethereum_account_addr(&burner.evm_address.into_array()),
         is_ephemeral: true,
@@ -158,7 +156,7 @@ pub async fn example_burn_parameters(
 
     // Construct the CreatedResource
     let created_witness_data = CreatedEphemeral {
-        token_contract_address: TOKEN_ADDRESS_SEPOLIA_USDC,
+        token_contract_address: usdc_token_address(config),
         receiver_wallet_address: burner.evm_address,
     };
 
