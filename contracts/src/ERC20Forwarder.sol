@@ -154,7 +154,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
         (UnwrapData memory data) = abi.decode(unwrapInput, (UnwrapData));
 
-        emit Unwrapped({token: address(token), to: data.receiver, amount: amount});
+        emit Unwrapped({token: token, to: data.receiver, amount: amount});
 
         IERC20(token).safeTransfer({to: data.receiver, value: amount});
     }
