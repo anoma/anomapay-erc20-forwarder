@@ -177,7 +177,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         }
 
         // Emit the `Wrapped` event indicating that ERC20 tokens have been deposited from the ERC20 forwarder v2.
-        emit ERC20Forwarder.Wrapped({token: address(token), from: address(_ERC20_FORWARDER_V2), amount: amount});
+        emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V2), amount: amount});
 
         // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
