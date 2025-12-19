@@ -183,6 +183,8 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
         // and the `Transfer` event on the ERC20 token.
         // slither-disable-next-line unused-return
-        _ERC20_FORWARDER_V2.forwardEmergencyCall(abi.encode(CallType.Unwrap, token, amount, address(this)));
+        _ERC20_FORWARDER_V2.forwardEmergencyCall(
+            abi.encode(CallType.Unwrap, token, amount, UnwrapData({receiver: address(this)}))
+        );
     }
 }
