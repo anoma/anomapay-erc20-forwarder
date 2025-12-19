@@ -55,7 +55,7 @@ jobs:
           PORT: 8080
           HASURA_GRAPHQL_UNAUTHORIZED_ROLE: public
       envio-indexer:
-        image: ghcr.io/anoma/galileo-indexer:main-envio-
+        image: ghcr.io/anoma/galileo-indexer:eth-sepolia-rc-7-envio-
         ports:
           - 9898:9898
         env:
@@ -77,7 +77,7 @@ jobs:
           HASURA_SERVICE_PORT: 8080
           TUI_OFF: true
       galileo-indexer:
-        image: ghcr.io/anoma/galileo-indexer:main
+        image: ghcr.io/anoma/galileo-indexer:eth-sepolia-rc-7
         credentials:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
