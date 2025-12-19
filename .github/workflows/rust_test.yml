@@ -132,3 +132,4 @@ jobs:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
           BONSAI_API_KEY: ${{ secrets.BONSAI_API_KEY }}
           BONSAI_API_URL: ${{ secrets.BONSAI_API_URL }}
+          QUEUE_BASE_URL: "http://placeholder.com"
