@@ -6,6 +6,7 @@ use crate::request::prices::call_prices_api::get_token_price;
 
 use crate::AnomaPayConfig;
 use crate::request::proving::parameters::Parameters;
+use crate::request::queue::stats::get_queue_stats;
 use crate::rpc::create_provider;
 use crate::web::RequestError;
 use crate::web::handlers::handle_parameters;
@@ -46,6 +47,32 @@ pub fn health() -> Custom<Json<Value>> {
             "build": version
         })),
     )
+}
+
+/// Return the health status
+#[get("/stats/queue")]
+#[utoipa::path(
+    get,
+    path = "stats/queue",
+    responses(
+            (status = 200, description = "Statistics regarding the proving queue", body = inline(Object),
+            example = json!({
+                "created": 0,
+                "completed": 0,
+                "processing": 0
+            }))),
+)]
+pub async fn queue_stats(
+    config: &State<AnomaPayConfig>,
+) -> Result<Custom<Json<Value>>, RequestError> {
+    let queue_stats = get_queue_stats(&config.queue_base_url).await?;
+
+    Ok(Custom(
+        Status::Ok,
+        Json(
+            json!({"created": queue_stats.created_requests, "completed": queue_stats.completed_requests, "processing": queue_stats.pending_requests}),
+        ),
+    ))
 }
 
 /// Proves and executes an AnomaPay transaction and returns the Ethereum transaction hash.

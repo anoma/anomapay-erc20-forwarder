@@ -39,11 +39,14 @@ pub enum RequestError {
     TokenPrices(String),
     #[error("An error occurred generating communicating with the RPC: {0:?}")]
     ProviderError(String),
+    #[error("Error while connecting to: {0:?}")]
+    NetworkError(String),
 }
 
 impl<'r> Responder<'r, 'static> for RequestError {
     fn respond_to(self, _req: &'r Request<'_>) -> response::Result<'static> {
         let (status, message) = match self {
+            RequestError::NetworkError(msg) => (Status::ServiceUnavailable, msg),
             RequestError::TransactionGeneration(msg) => (Status::BadRequest, msg),
             RequestError::Submit(msg) => (Status::BadRequest, msg),
             RequestError::FeeEstimation(msg) => (Status::InternalServerError, msg),
