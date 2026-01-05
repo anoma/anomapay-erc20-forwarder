@@ -1,12 +1,60 @@
-****[![CI](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/Simple-Transfer-Example/actions/workflows/ci.yml)
+[![Contracts & Bindings](https://github.com/anoma/anomapay-backend/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/anomapay-backend/actions/workflows/contracts.yml)
 
-# Simplified Transfer Example
+[![Rust Lints & Circuits](https://github.com/anoma/anomapay-backend/actions/workflows/rust.yml/badge.svg)](https://github.com/anoma/anomapay-backend/actions/workflows/rust.yml)
 
-This repository contains a simplified example of a transfer application built
-with Rust, exposed via a JSON api.
+[![Webserver & E2E Tests](https://github.com/anoma/anomapay-backend/actions/workflows/rust_test.yml/badge.svg)](https://github.com/anoma/anomapay-backend/actions/workflows/rust_test.yml)
 
-The project demonstrates basic transfer functionality with multiple components
-organized in a workspace structure.
+[![AnomaPay Docker](https://github.com/anoma/anomapay-backend/actions/workflows/docker.yml/badge.svg)](https://github.com/anoma/anomapay-backend/actions/workflows/docker.yml)
+
+# Project Structure
+
+This repository is a workspace with the following structure:
+
+```
+.
+├── benchmark
+├── bindings
+├── contracts
+├── simple_transfer
+│   ├── transfer_app
+│   ├── transfer_circuit
+│   ├── transfer_circuit_v2
+│   ├── transfer_library
+│   ├── transfer_library_v2
+│   ├── transfer_witness
+│   └── transfer_witness_v2
+└── README.md
+```
+
+## Components
+
+- **Benchmark** (`benchmark/`)
+
+  The folder contains a script to compute benchmarks to compare proof generation time for aggregated and non-aggregated AnomaPay ZK proofs.
+
+- **Bindings** (`bindings/`)
+
+  The `bindings` folder makes the contracts and deployments available in [Rust](https://www.rust-lang.org/) using the [`alloy-rs` library](https://github.com/alloy-rs), thus allowing to connect to the ERC20 forwarder contracts on supported networks.
+
+- **Contracts** (`contracts/`)
+
+  The `contracts` folder contains ERC20 forwarder contracts being called through the [EVM protocol adapter](https://github.com/anoma/evm-protocol-adapter) written in [Solidity](https://soliditylang.org/) as well as [Foundry forge](https://book.getfoundry.sh/forge/) tests and deploy scripts.
+
+- **App** (`simple_transfer/transfer_app/`)
+
+  The AnomaPay webserver written in Rust.
+
+- **Circuits** (`simple_transfer/transfer_circuit/` and `simple_transfer/transfer_circuit_v2/`)
+
+  These folders contain helpers to compile the AnomaPay [RISC Zero](https://dev.risczero.com) guest program into an [RISC-V](https://riscv.org/developers/) executable ELF Binaries.
+
+- **Libraries** (`simple_transfer/transfer_library/` and `simple_transfer/transfer_library_v2/`)
+
+  These folder make the ELF Binary and related methods available in Rust.
+
+- **Witnesses** (`simple_transfer/transfer_witness/` and `simple_transfer/transfer_witness_v2/`)
+
+  These folders contain the constraints and methods to provide and convert required witness data for the AnomaPay guest program.
 
 ## Security
 
@@ -14,28 +62,6 @@ If you believe you've found a security issue, we encourage you to notify us via 
 at [security@anoma.foundation](mailto:security@anoma.foundation).
 
 Please do not use the issue tracker for security issues. We welcome working with you to resolve the issue promptly.
-
-## Components
-
-- **Transfer App** (`simple_transfer/transfer_app/`)
-
-  The main application that orchestrates transfers and provides the user interface.
-
-- **Transfer Library** (`simple_transfer/transfer_library/`)
-
-  Contains the core transfer logic and algorithms.
-
-- **Transfer NIF** (`simple_transfer/transfer_nif/`)
-
-  Provides native function bindings for performance-critical operations.
-
-- **Transfer Witness** (`simple_transfer/transfer_witness/`)
-
-  Handles cryptographic proof generation and verification for transfers.
-
-- **Contracts** (`contracts/`)
-
-  Contains the Solidity forwarder contract being called through the EVM protocol adapter.
 
 ## Building
 
@@ -50,7 +76,7 @@ cargo build
 To run the application, some parameters need to be passed via the environment.
 
 | Variable                         | Meaning                                                 | Example                  |
-|----------------------------------|---------------------------------------------------------|--------------------------|
+| -------------------------------- | ------------------------------------------------------- | ------------------------ |
 | `RPC_URL`                        | URL for the Ethereum RPC defining the network           | https://sepolia.drpc.org |
 | `GALILEO_INDEXER_ADDRESS`        | URL for the anoma indexer                               | http://example.com       |
 | `FEE_PAYMENT_WALLET_PRIVATE_KEY` | The hex encoded private key for the fee payment account | 0x00                     |
