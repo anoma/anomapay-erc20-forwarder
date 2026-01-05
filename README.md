@@ -50,7 +50,7 @@ This repository is a workspace with the following structure:
 
 - **Libraries** (`simple_transfer/transfer_library/` and `simple_transfer/transfer_library_v2/`)
 
-  These folder make the ELF Binary and related methods available in Rust.
+  These folders make the ELF Binary and related methods available in Rust.
 
 - **Witnesses** (`simple_transfer/transfer_witness/` and `simple_transfer/transfer_witness_v2/`)
 
