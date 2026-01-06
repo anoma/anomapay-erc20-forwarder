@@ -50,11 +50,25 @@ This repository is a workspace with the following structure:
 
 - **Libraries** (`simple_transfer/transfer_library/` and `simple_transfer/transfer_library_v2/`)
 
-  These folder make the ELF Binary and related methods available in Rust.
+  These folders make the ELF Binary and related methods available in Rust.
 
 - **Witnesses** (`simple_transfer/transfer_witness/` and `simple_transfer/transfer_witness_v2/`)
 
   These folders contain the constraints and methods to provide and convert required witness data for the AnomaPay guest program.
+
+## Audits
+
+Our software undergoes regular audits:
+
+1. Informal Systems
+
+   - Company Website: https://informal.systems
+   - Commit ID: [03e60b64d9dc3845c55e34d1d0bef25392cb5b60](https://github.com/anoma/anomapay-backend/tree/03e60b64d9dc3845c55e34d1d0bef25392cb5b60)
+   - Started: 2025-12-01
+   - Finished: 2025-12-16
+   - Last revised: 2025-12-19
+
+   [📄 Audit Report (pdf)](./audits/2025-12-19_Informal_Systems_AnomaPay_Phase_I.pdf)
 
 ## Security
 
