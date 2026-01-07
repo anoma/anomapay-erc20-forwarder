@@ -49,8 +49,8 @@ async fn test_estimate_fee_unit_quantity() {
         2,
     )
     .await
-    .expect("failed to get price");
-    println!("price: {res}");
+    .expect("failed to get quantity");
+    println!("quantity: {res}");
 }
 
 #[tokio::test]
@@ -66,4 +66,20 @@ async fn test_get_token_price_in_ether() {
     .await
     .expect("failed to get price");
     println!("price: {res}");
+}
+
+#[tokio::test]
+async fn test_get_token_price_sanity_check() {
+    dotenv::dotenv().ok();
+
+    let config = load_config().await.expect("failed to load config in test");
+
+    let res = get_ether_price_in_tokens(
+        &config,
+        &Token::FeeCompatibleERC20(FeeCompatibleERC20Token::WETH),
+    )
+    .await
+    .expect("failed to get price");
+
+    assert_eq!(res, 1.0);
 }
