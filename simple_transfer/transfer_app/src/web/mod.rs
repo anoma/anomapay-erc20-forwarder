@@ -25,6 +25,8 @@ pub enum RequestError {
     /// Chances are there is something wrong with the passed resources.
     #[error("An error occurred generating the transaction: {0:?}")]
     TransactionGeneration(String),
+    #[error("Bento queue is configured")]
+    QueueNotConfigured,
     /// An error occurred submitting the transaction.
     /// The transaction was generated successfully, but submitting it to the PA failed.
     #[error("An error occurred submitting the transaction: {0:?}")]
@@ -46,6 +48,9 @@ pub enum RequestError {
 impl<'r> Responder<'r, 'static> for RequestError {
     fn respond_to(self, _req: &'r Request<'_>) -> response::Result<'static> {
         let (status, message) = match self {
+            RequestError::QueueNotConfigured => {
+                (Status::NotFound, "Queue not configured".to_string())
+            }
             RequestError::NetworkError(msg) => (Status::ServiceUnavailable, msg),
             RequestError::TransactionGeneration(msg) => (Status::BadRequest, msg),
             RequestError::Submit(msg) => (Status::BadRequest, msg),

@@ -65,7 +65,12 @@ pub fn health() -> Custom<Json<Value>> {
 pub async fn queue_stats(
     config: &State<AnomaPayConfig>,
 ) -> Result<Custom<Json<Value>>, RequestError> {
-    let queue_stats = get_queue_stats(&config.queue_base_url).await?;
+    let queue_url = if let Some(queue_url) = &config.queue_base_url {
+        queue_url
+    } else {
+        return Err(RequestError::QueueNotConfigured);
+    };
+    let queue_stats = get_queue_stats(queue_url).await?;
 
     Ok(Custom(
         Status::Ok,

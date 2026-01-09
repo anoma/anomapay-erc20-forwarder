@@ -37,7 +37,7 @@ pub struct AnomaPayConfig {
     /// The Alchemy API key
     alchemy_api_key: String,
     /// Queue base URL
-    pub queue_base_url: String,
+    pub queue_base_url: Option<String>,
 }
 
 /// Reads the environment for required values and sets them into the config.
@@ -66,7 +66,7 @@ async fn load_config() -> Result<AnomaPayConfig, Box<dyn Error>> {
 
     let alchemy_api_key = env::var("ALCHEMY_API_KEY").map_err(|_| "ALCHEMY_API_KEY not set")?;
 
-    let queue_base_url = env::var("QUEUE_BASE_URL").map_err(|_| "QUEUE_BASE_URL not set")?;
+    let queue_base_url = env::var("QUEUE_BASE_URL").ok();
 
     Ok(AnomaPayConfig {
         chain_id,
