@@ -75,7 +75,7 @@ pub async fn queue_stats(
     Ok(Custom(
         Status::Ok,
         Json(
-            json!({"created": queue_stats.created_requests, "completed": queue_stats.completed_requests, "processing": queue_stats.pending_requests}),
+            json!({"created": queue_stats.tasks_created_total, "completed": queue_stats.tasks_completed_total, "processing": queue_stats.tasks_processing_currently}),
         ),
     ))
 }

@@ -5,9 +5,10 @@ use crate::web::RequestError;
 
 #[derive(Serialize, Deserialize)]
 pub struct QueueStatsInfo {
-    pub created_requests: usize,
-    pub pending_requests: usize,
-    pub completed_requests: usize,
+    pub tasks_created_total: usize,
+    pub tasks_completed_total: usize,
+    pub tasks_processing_currently: usize,
+    pub tasks_error: usize,
 }
 
 pub async fn get_queue_stats(queue_base_url: &str) -> Result<QueueStatsInfo, RequestError> {
@@ -18,12 +19,12 @@ pub async fn get_queue_stats(queue_base_url: &str) -> Result<QueueStatsInfo, Req
         .get(&url)
         .send()
         .await
-        .map_err(|_e| RequestError::NetworkError(url.clone()))?;
+        .map_err(|e| RequestError::NetworkError(e.to_string()))?;
 
     let stats: QueueStatsInfo = resp
         .json()
         .await
-        .map_err(|_e| RequestError::NetworkError(url.clone()))?;
+        .map_err(|e| RequestError::NetworkError(e.to_string()))?;
 
     Ok(stats)
 }
