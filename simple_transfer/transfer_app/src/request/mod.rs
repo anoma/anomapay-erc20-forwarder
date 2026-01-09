@@ -5,3 +5,4 @@ pub mod fee_estimation;
 pub mod helpers;
 pub mod prices;
 pub(crate) mod proving;
+pub mod queue;
