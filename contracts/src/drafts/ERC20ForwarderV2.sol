@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ICommitmentTree} from "@anoma-evm-pa/interfaces/ICommitmentTree.sol";
-import {INullifierSet} from "@anoma-evm-pa/interfaces/INullifierSet.sol";
-import {IProtocolAdapter} from "@anoma-evm-pa/interfaces/IProtocolAdapter.sol";
-import {NullifierSet} from "@anoma-evm-pa/state/NullifierSet.sol";
-import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin-contracts-5.5.0/token/ERC20/IERC20.sol";
+import {ICommitmentTree} from "anoma-pa-evm-1.0.0-rc.8/src/interfaces/ICommitmentTree.sol";
+import {INullifierSet} from "anoma-pa-evm-1.0.0-rc.8/src/interfaces/INullifierSet.sol";
+import {IProtocolAdapter} from "anoma-pa-evm-1.0.0-rc.8/src/interfaces/IProtocolAdapter.sol";
+import {NullifierSet} from "anoma-pa-evm-1.0.0-rc.8/src/state/NullifierSet.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
 

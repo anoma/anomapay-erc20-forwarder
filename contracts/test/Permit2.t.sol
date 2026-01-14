@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IPermit2} from "@permit2/src/interfaces/IPermit2.sol";
-import {Permit2Lib} from "@permit2/src/libraries/Permit2Lib.sol";
-
-import {Test} from "forge-std/Test.sol";
+import {Test} from "forge-std-1.14.0/src/Test.sol";
+import {IPermit2} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
+import {Permit2Lib} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/libraries/Permit2Lib.sol";
 
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 

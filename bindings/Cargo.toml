@@ -1,5 +1,5 @@
 [package]
-name = "erc20_forwarder_bindings"
+name = "anomapay-erc20-forwarder-bindings"
 version = "1.0.0-rc.6"
 authors.workspace = true
 edition.workspace = true
@@ -7,13 +7,12 @@ license.workspace = true
 readme.workspace = true
 
 [dependencies]
-evm_protocol_adapter_bindings = { workspace = true }
 alloy = { workspace = true, features = ["eip712", "node-bindings"] }
 alloy-chains = { workspace = true }
-tokio = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
-dotenv = { workspace = true, features = ["cli"] }
+dotenvy = { workspace = true }
 
 [dev-dependencies]
-transfer_library = { workspace = true }
+anoma-pa-evm-bindings = { workspace = true }
+tokio = { workspace = true }

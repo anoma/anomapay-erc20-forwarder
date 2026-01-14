@@ -2,38 +2,22 @@
 cache/
 out/
 target/
+deps/
+dependencies/
+docs/
 node_modules/
-
-# Environment and secret files
-env.secret
-*.env
-.env*
-
-# IDE and editor files
-.vscode/
+.vscode/*
 .idea/
-*.swp
-*.swo
-*~
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
-# Backup files
-*.bak
-*.backup
-*.tmp
-
-# Logs
-*.log
-
-# Contract broadcasts
+# broadcasts
 !broadcast
 contracts/broadcast/*
 contracts/broadcast/*/31337/
+
+# Files
+*.env
+.DS_Store
+.history
+*.bkp
+*.zip

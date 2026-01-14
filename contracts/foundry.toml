@@ -1,46 +1,56 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 [profile.default]
-fs_permissions = [
-    { access = "read", path = "./test/examples/transactions/mint.bin" },
-    { access = "read", path = "./test/examples/transactions/transfer.bin" },
-    { access = "read", path = "./test/examples/transactions/burn.bin" },
-]
+fs_permissions = [{ access = "read", path = "./" }]
 
+solc = "0.8.33"
+auto_detect_solc = false
+evm_version = "osaka"
+src = "src"
+libs = ["dependencies"]
+out = "out"
+script = "script"
+test = "test"
 
-remappings = [
-    "forge-std/=lib/forge-std/src/",
-    "@openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
-    "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-    "@anoma-evm-pa/=lib/evm-protocol-adapter/contracts/src/",
-    "@anoma-evm-pa-testing/=lib/evm-protocol-adapter/contracts/test/",
-    "@permit2/=lib/permit2/",
-    #
-    "@risc0-ethereum/=lib/evm-protocol-adapter/contracts/lib/risc0-ethereum/contracts/src/",
-    "@elliptic-curve-solidity/=lib/evm-protocol-adapter/contracts/lib/elliptic-curve-solidity/",
-    "@solady/=lib/evm-protocol-adapter/contracts/lib/solady/src",
-]
-
+optimizer = true
+via_ir = true
+optimizer_runs = 10_000
+allow_internal_expect_revert = true
+gas_reports = ["ERC20Forwarder"]
 
 # Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
 cbor_metadata = false
 bytecode_hash = "none"
 
-solc = "0.8.30"
-auto_detect_solc = false
-evm_version = "prague"
-gas_reports = [
-    "ERC20Forwarder",
-]
-optimizer = true
-via_ir = true
-optimizer_runs = 10_000
+auto_detect_remappings = false
 
-src = "src"
-libs = ["lib"]
-out = "out"
-script = "script"
-test = "test"
-allow_internal_expect_revert = true
+remappings = [
+    "@openzeppelin-contracts-5.5.0/=dependencies/@openzeppelin-contracts-5.5.0/",
+    "anoma-pa-evm-1.0.0-rc.8/=dependencies/anoma-pa-evm-1.0.0-rc.8/",
+    "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-1.0.0-rc.8/dependencies/elliptic-curve-solidity-0.2.5/",
+    "forge-std-1.14.0/=dependencies/forge-std-1.14.0/",
+    "openzeppelin/contracts/=dependencies/anoma-pa-evm-1.0.0-rc.8/dependencies/risc0-risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
+    "risc0-risc0-ethereum-3.0.1/=dependencies/anoma-pa-evm-1.0.0-rc.8/dependencies/risc0-risc0-ethereum-3.0.1/",
+    "solady-0.1.26/=dependencies/solady-0.1.26/",
+    "solmate/=dependencies/uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/lib/solmate/",
+    "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/=dependencies/uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/",
+]
+ignored_warnings_from = [
+    "dependencies/anoma-pa-evm-1.0.0-rc.8/dependencies/risc0-risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
+    "dependencies/solady-0.1.26/src/utils",                                                       # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
+]
+
+[dependencies]
+"@openzeppelin-contracts" = "5.5.0"
+"anoma-pa-evm" = "1.0.0-rc.8"
+"forge-std" = "1.14.0"
+"solady" = "0.1.26"
+"uniswap-permit2" = "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+
+[soldeer]
+recursive_deps = true
+remappings_location = "config"
+remappings_generate = true
+remappings_version = true
 
 [fuzz]
 runs = 1_000

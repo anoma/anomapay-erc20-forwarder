@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeployRiscZeroContracts} from "@anoma-evm-pa-testing/script/DeployRiscZeroContracts.s.sol";
-import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
-import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-1.0.0-rc.8/src/ProtocolAdapter.sol";
+import {DeployRiscZeroContracts} from "anoma-pa-evm-1.0.0-rc.8/test/script/DeployRiscZeroContracts.s.sol";
+import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 
 import {EmergencyMigratableForwarderBase} from "../../src/bases/EmergencyMigratableForwarderBase.sol";
 import {ForwarderBase} from "../../src/bases/ForwarderBase.sol";

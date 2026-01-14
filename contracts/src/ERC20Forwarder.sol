@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
-import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
+import {IERC20} from "@openzeppelin-contracts-5.5.0/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin-contracts-5.5.0/token/ERC20/utils/SafeERC20.sol";
+import {
+    IPermit2,
+    ISignatureTransfer
+} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
 
 import {EmergencyMigratableForwarderBase} from "./bases/EmergencyMigratableForwarderBase.sol";
 import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
