@@ -1,79 +1,98 @@
-name: Contract Tests 👨‍🔧
+name: Contracts
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - "contracts/**"
+    branches: [main]
   pull_request:
-
-concurrency:
-  group: ${{ github.ref }}-contracts
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  workflow_dispatch:
 
 jobs:
-  contracts:
-    name: Contracts
+  tests:
+    name: Tests
     runs-on: macos-latest
     env:
       FOUNDRY_PROFILE: ci
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
+        uses: actions/checkout@v5
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
-        with:
-          cache: true
+
+      - name: Install dependencies
+        run: forge soldeer install
+        working-directory: ./contracts
+
       - name: Show Foundry version
         run: forge --version
+
       - name: Run Forge Lint
-        run: forge lint --deny-warnings
+        run: forge lint --deny warnings
         working-directory: ./contracts
+
       - name: Install Bun
         uses: oven-sh/setup-bun@v1
+
       - name: Show Bun version
         run: bun --version
         working-directory: ./contracts
+
       - name: Install Solhint
         run: bun install solhint
         working-directory: ./contracts
+
       - name: Run Solhint in `src`
         run: bunx --bun solhint --config .solhint.json 'src/**/*.sol'
         working-directory: ./contracts
         id: solhint-src
+
       - name: Run Solhint in `test` dir
         run: bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
         working-directory: ./contracts
         id: solhint-test
+
       - name: Run Solhint in `script` dir
         run: bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
         working-directory: ./contracts
         id: solhint-script
+
       - name: Install Slither
         run: pip install slither-analyzer
+
       - name: Show Slither version
         run: slither --version
+
       - name: Run Slither
         run: slither .
+        working-directory: ./contracts
         id: slither
+
       - name: Run Forge fmt
         run: forge fmt --check
-        id: fmt
         working-directory: ./contracts
+        id: fmt
+
       - name: Run Forge build
         run: forge build --sizes --ast
         working-directory: ./contracts
+
       - name: Run Forge tests
         run: forge test --gas-report
         env:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
         working-directory: ./contracts
-      - name: Run Forge coverage
-        run: forge coverage --no-match-coverage "(script|test)" --report summary
-        env:
-          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+
+      - name: Check that bindings are up-to-date
+        run: |
+          forge bind \
+            --select '^(ERC20Forwarder)$' \
+            --bindings-path ../bindings/src/generated/ \
+            --module \
+            --overwrite && \
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Error: Bindings are out of date. Regenerate them locally and commit the changes."
+            git status --porcelain
+            exit 1
+          fi
         working-directory: ./contracts

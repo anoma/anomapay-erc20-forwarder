@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IForwarder} from "@anoma-evm-pa/interfaces/IForwarder.sol";
-import {IVersion} from "@anoma-evm-pa/interfaces/IVersion.sol";
+import {IForwarder} from "anoma-pa-evm-1.0.0-rc.8/src/interfaces/IForwarder.sol";
+import {IVersion} from "anoma-pa-evm-1.0.0-rc.8/src/interfaces/IVersion.sol";
 
 import {ILogicRefSpecific} from "../interfaces/ILogicRefSpecific.sol";
 import {IProtocolAdapterSpecific} from "../interfaces/IProtocolAdapterSpecific.sol";

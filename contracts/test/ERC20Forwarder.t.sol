@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeployRiscZeroContracts} from "@anoma-evm-pa-testing/script/DeployRiscZeroContracts.s.sol";
-import {IForwarder} from "@anoma-evm-pa/interfaces/IForwarder.sol";
-import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
-
-import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
-import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
-import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-
-import {Test, Vm, stdError} from "forge-std/Test.sol";
+import {Time} from "@openzeppelin-contracts-5.5.0/utils/types/Time.sol";
+import {IForwarder} from "anoma-pa-evm-1.0.0-rc.8/src/interfaces/IForwarder.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-1.0.0-rc.8/src/ProtocolAdapter.sol";
+import {DeployRiscZeroContracts} from "anoma-pa-evm-1.0.0-rc.8/test/script/DeployRiscZeroContracts.s.sol";
+import {Test, Vm, stdError} from "forge-std-1.14.0/src/Test.sol";
+import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {
+    IPermit2,
+    ISignatureTransfer
+} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
@@ -49,7 +50,7 @@ contract ERC20ForwarderTest is Test {
     bytes internal _defaultWrapInput;
     bytes internal _defaultUnwrapInput;
 
-    // Copied since we can't `import {SignatureExpired, InvalidNonce} from "@permit2/src/PermitErrors.sol";`
+    // Copied since we can't `import {SignatureExpired, InvalidNonce} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/PermitErrors.sol";`
     // because of the incompatible solc pragma.
     error SignatureExpired(uint256 signatureDeadline);
     error InvalidNonce();

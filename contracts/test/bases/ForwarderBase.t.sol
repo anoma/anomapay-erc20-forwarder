@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeployRiscZeroContracts} from "@anoma-evm-pa-testing/script/DeployRiscZeroContracts.s.sol";
-import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
-
-import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
-import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-import {SemVerLib} from "@solady/utils/SemVerLib.sol";
-
-import {Test} from "forge-std/Test.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-1.0.0-rc.8/src/ProtocolAdapter.sol";
+import {DeployRiscZeroContracts} from "anoma-pa-evm-1.0.0-rc.8/test/script/DeployRiscZeroContracts.s.sol";
+import {Test} from "forge-std-1.14.0/src/Test.sol";
+import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
+import {
+    RiscZeroVerifierEmergencyStop
+} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 
 import {ForwarderBase} from "../../src/bases/ForwarderBase.sol";
 

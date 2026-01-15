@@ -1,15 +1,14 @@
 #[cfg(test)]
-extern crate dotenv;
+extern crate dotenvy;
 
-use alloy::primitives::{Address, B256};
+use alloy::primitives::{Address, b256};
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy_chains::NamedChain;
-use erc20_forwarder_bindings::addresses::erc20_forwarder_deployments_map;
-use erc20_forwarder_bindings::contract::ERC20Forwarder::ERC20ForwarderInstance;
-use erc20_forwarder_bindings::contract::erc20_forwarder;
-use evm_protocol_adapter_bindings::addresses::protocol_adapter_address;
-use evm_protocol_adapter_bindings::helpers::alchemy_url;
-use transfer_library::TOKEN_TRANSFER_ID;
+use anoma_pa_evm_bindings::addresses::protocol_adapter_address;
+use anoma_pa_evm_bindings::helpers::alchemy_url;
+use anomapay_erc20_forwarder_bindings::addresses::erc20_forwarder_deployments_map;
+use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder;
+use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance;
 
 #[tokio::test]
 async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
@@ -33,7 +32,7 @@ async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
 }
 
 #[tokio::test]
-async fn deployed_forwarders_reference_the_current_logic_ref() {
+async fn deployed_forwarders_reference_the_expected_logic_ref() {
     // Iterate over all supported chains
     for chain in erc20_forwarder_deployments_map().keys() {
         let actual_logic_ref = fwd_instance(chain)
@@ -43,7 +42,10 @@ async fn deployed_forwarders_reference_the_current_logic_ref() {
             .await
             .expect("Couldn't get logic ref");
 
-        let expected_logic_ref = B256::from_slice(TOKEN_TRANSFER_ID.as_bytes());
+        // The token transfer circuit verifying key taken from
+        // https://github.com/anoma/anomapay-backend/blob/4df12690df83ff966a13f5318652af588f716f13/simple_transfer/transfer_library/src/lib.rs#L27.
+        let expected_logic_ref =
+            b256!("0x997819ee983b526a59a6a510be3c01357aaf86f8d98bc9aa13ec4a1693e9245d");
 
         // Check that the logic ref in the deployed forwarder matches the expected one from the transfer library.
         assert_eq!(

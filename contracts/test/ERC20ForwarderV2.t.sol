@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {TransactionExample} from "@anoma-evm-pa-testing/examples/transactions/Transaction.e.sol";
-import {DeployRiscZeroContracts} from "@anoma-evm-pa-testing/script/DeployRiscZeroContracts.s.sol";
-
-import {ProtocolAdapter} from "@anoma-evm-pa/ProtocolAdapter.sol";
-import {CommitmentTree} from "@anoma-evm-pa/state/CommitmentTree.sol";
-import {NullifierSet} from "@anoma-evm-pa/state/NullifierSet.sol";
-import {Transaction} from "@anoma-evm-pa/Types.sol";
-
-import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
-import {ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
-import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-import {Vm} from "forge-std/Test.sol";
+import {IERC20} from "@openzeppelin-contracts-5.5.0/token/ERC20/IERC20.sol";
+import {Time} from "@openzeppelin-contracts-5.5.0/utils/types/Time.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-1.0.0-rc.8/src/ProtocolAdapter.sol";
+import {CommitmentTree} from "anoma-pa-evm-1.0.0-rc.8/src/state/CommitmentTree.sol";
+import {NullifierSet} from "anoma-pa-evm-1.0.0-rc.8/src/state/NullifierSet.sol";
+import {Transaction} from "anoma-pa-evm-1.0.0-rc.8/src/Types.sol";
+import {DeployRiscZeroContracts} from "anoma-pa-evm-1.0.0-rc.8/test/script/DeployRiscZeroContracts.s.sol";
+import {Vm} from "forge-std-1.14.0/src/Test.sol";
+import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {
+    ISignatureTransfer
+} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
 
 import {ForwarderBase} from "../src/bases/ForwarderBase.sol";
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
@@ -22,11 +21,13 @@ import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
 import {ERC20Example, ERC20WithFeeExample} from "../test/examples/ERC20.e.sol";
 import {ERC20ForwarderTest} from "./ERC20Forwarder.t.sol";
+import {TransactionExample} from "./examples/Transaction.e.sol";
 import {Permit2Signature} from "./libs/Permit2Signature.sol";
 
 contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using Permit2Signature for Vm;
+    using TransactionExample for Vm;
 
     bytes32 internal constant _NULLIFIER = bytes32(type(uint256).max);
 
@@ -169,7 +170,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     function test_migrateV1_reverts_if_the_v1_resource_to_migrate_has_already_been_consumed() public {
         (ProtocolAdapter paV1, ProtocolAdapter paV2, ERC20Forwarder fwdV1) = _deployContracts();
 
-        Transaction memory txn = TransactionExample.transaction();
+        Transaction memory txn = vm.exampleTransaction();
         bytes32 nullifier = txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
 
         assertEq(paV1.isNullifierContained(nullifier), false);

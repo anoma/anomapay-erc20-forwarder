@@ -1,0 +1,34 @@
+[[dependencies]]
+name = "@openzeppelin-contracts"
+version = "5.5.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/5_5_0_01-11-2025_09:56:40_contracts.zip"
+checksum = "2ee78837130cf06b456d9ef7ab70753685d9c1c9c2c5b70f24bd4c16695d0337"
+integrity = "da8336cf949f0e0667ae8360af849681e3a3e76d7e61e7a86b1a3414a158aeea"
+
+[[dependencies]]
+name = "anoma-pa-evm"
+version = "1.0.0-rc.8"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/1_0_0-rc_8_14-01-2026_16:52:25_contracts.zip"
+checksum = "ac60a66930a2246ecdb47215f92a475906669f5110b5f96c73e1176123fd279b"
+integrity = "748c6c1635bffc3e05a2ae76532804cf1075bd17d62efef3ab20177656f0ec0d"
+
+[[dependencies]]
+name = "forge-std"
+version = "1.14.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_14_0_05-01-2026_15:24:39_forge-std-1.14.zip"
+checksum = "d10079d1b7aac1a36dd2eeb4c5d042e8ed27b00f4ef89530b7f0a6ecd18cada3"
+integrity = "64133846def1b04b1726d2bf1292c19050a0e8cb832b60c6104c19595b9699f8"
+
+[[dependencies]]
+name = "solady"
+version = "0.1.26"
+url = "https://soldeer-revisions.s3.amazonaws.com/solady/0_1_26_25-08-2025_15:30:06_solady.zip"
+checksum = "9872ac7cfd32c1eba32800508a1325c49f4a4aa8c6f670454db91971a583e26b"
+integrity = "5da4b5ca9cbad98812a4b75ad528ff34c72a0b84433204be6d1420c81de1d6ff"
+
+[[dependencies]]
+name = "uniswap-permit2"
+version = "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+url = "https://soldeer-revisions.s3.amazonaws.com/uniswap-permit2/0x000000000022D473030F116dDEE9F6B43aC78BA3_11-11-2024_08:00:23_permit2.zip"
+checksum = "d4fb59a5d0b9bb91c6800b55a0fa4037dcf4d2a17e55750ffb369572a4dd5906"
+integrity = "38baa5ecdbd2156a13837cd8117944e7b863fe8ad1e6d1f7a447819c64430426"

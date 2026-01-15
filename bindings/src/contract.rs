@@ -1,7 +1,6 @@
 use crate::addresses::erc20_forwarder_address;
-use crate::contract::ERC20Forwarder::ERC20ForwarderInstance;
+use crate::generated::erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance;
 use alloy::providers::{DynProvider, Provider};
-use alloy::sol;
 use alloy_chains::NamedChain;
 use serde::Serialize;
 use thiserror::Error;
@@ -19,14 +18,6 @@ pub enum BindingsError {
     )]
     UnsupportedChain(String),
 }
-
-sol!(
-    #[allow(missing_docs)]
-    #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize, Default)]
-    #[sol(rpc)]
-    ERC20Forwarder,
-    "../contracts/out/ERC20Forwarder.sol/ERC20Forwarder.json"
-);
 
 pub async fn erc20_forwarder(
     provider: &DynProvider,

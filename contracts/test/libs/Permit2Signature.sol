@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
-import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
-
-import {Vm} from "forge-std/Vm.sol";
+import {Vm} from "forge-std-1.14.0/src/Vm.sol";
+import {
+    ISignatureTransfer
+} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
+import {PermitHash} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/libraries/PermitHash.sol";
 
 import {ERC20ForwarderPermit2} from "../../src/ERC20ForwarderPermit2.sol";
 
