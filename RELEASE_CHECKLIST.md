@@ -182,7 +182,7 @@ For each chain, you want to deploy to, do the following:
 - [ ] Publish the `contracts` package on https://soldeer.xyz/ with
 
   ```sh
-  forge soldeer push anoma-pa-evm~<X.Y.Z> --dry-run
+  forge soldeer push anomapay-erc20-forwarder~<X.Y.Z> --dry-run
   ```
 
   where `<X.Y.Z>` is the `_ERC20_FORWARDER_VERSION` number and check the resulting `contracts.zip` file. If everything is correct, remove the `--dry-run` flag and publish the package.
