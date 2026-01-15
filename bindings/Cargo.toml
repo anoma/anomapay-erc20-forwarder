@@ -1,10 +1,12 @@
 [package]
 name = "anomapay-erc20-forwarder-bindings"
 version = "1.0.0-rc.6"
+description = "The AnomaPay ERC20 forwarder contract bindings and deployments."
+keywords.workspace = true
 authors.workspace = true
-edition.workspace = true
 license.workspace = true
-readme.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
 alloy = { workspace = true, features = ["eip712", "node-bindings"] }
