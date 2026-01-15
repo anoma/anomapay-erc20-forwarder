@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/anoma/anomapay-backend/blob/feature/refactor-bindings-generation/contracts/LICENSE) [![Contracts Tests](https://github.com/anoma/anomapay-backend/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/anomapay-backend/actions/workflows/contracts.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/contracts/LICENSE) [![Contracts Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml)
 
 # ERC20Forwarder Contract
 
