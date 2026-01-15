@@ -1,28 +1,25 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 [profile.default]
-fs_permissions = [{ access = "read", path = "./" }]
-
 solc = "0.8.33"
 auto_detect_solc = false
 evm_version = "osaka"
-src = "src"
-libs = ["dependencies"]
-out = "out"
-script = "script"
-test = "test"
-
+gas_reports = ["ERC20Forwarder"]
 optimizer = true
 via_ir = true
 optimizer_runs = 10_000
 allow_internal_expect_revert = true
-gas_reports = ["ERC20Forwarder"]
-
 # Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
 cbor_metadata = false
 bytecode_hash = "none"
 
-auto_detect_remappings = false
 
+src = "src"
+test = "test"
+out = "out"
+script = "script"
+fs_permissions = [{ access = "read", path = "./" }]
+libs = ["dependencies"]
+auto_detect_remappings = false
 remappings = [
     "@openzeppelin-contracts-5.5.0/=dependencies/@openzeppelin-contracts-5.5.0/",
     "anoma-pa-evm-1.0.0-rc.8/=dependencies/anoma-pa-evm-1.0.0-rc.8/",
