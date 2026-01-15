@@ -1,4 +1,4 @@
-[![Crates.io](https://img.shields.io/crates/v/anomapay-erc20-forwarder-bindings)](https://crates.io/crates/anomapay-erc20-forwarder-bindings) [![License](https://img.shields.io/crates/l/anomapay-erc20-forwarder-bindings)](https://github.com/anoma/anomapay-erc20-forwarder/blob/main/LICENSE) [![Bindings Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/bindings.yml)
+[![Bindings Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/bindings.yml) [![crates.io](https://img.shields.io/badge/crates.io-anomapay--erc20--forwarder--bindings-blue?logo=rust)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/bindings/LICENSE)
 
 # AnomaPay ERC20 Forwarder Bindings
 
