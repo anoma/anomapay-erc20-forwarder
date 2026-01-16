@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ProtocolAdapter} from "anoma-pa-evm-1.0.0-rc.8/src/ProtocolAdapter.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-1.0.0/src/ProtocolAdapter.sol";
 
 import {IEmergencyMigratable} from "../interfaces/IEmergencyMigratable.sol";
 import {ForwarderBase} from "./ForwarderBase.sol";

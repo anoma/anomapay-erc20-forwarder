@@ -22,23 +22,23 @@ libs = ["dependencies"]
 auto_detect_remappings = false
 remappings = [
     "@openzeppelin-contracts-5.5.0/=dependencies/@openzeppelin-contracts-5.5.0/",
-    "anoma-pa-evm-1.0.0-rc.8/=dependencies/anoma-pa-evm-1.0.0-rc.8/",
-    "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-1.0.0-rc.8/dependencies/elliptic-curve-solidity-0.2.5/",
+    "anoma-pa-evm-1.0.0/=dependencies/anoma-pa-evm-1.0.0/",
+    "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-1.0.0/dependencies/elliptic-curve-solidity-0.2.5/",
     "forge-std-1.14.0/=dependencies/forge-std-1.14.0/",
-    "openzeppelin/contracts/=dependencies/anoma-pa-evm-1.0.0-rc.8/dependencies/risc0-risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
-    "risc0-risc0-ethereum-3.0.1/=dependencies/anoma-pa-evm-1.0.0-rc.8/dependencies/risc0-risc0-ethereum-3.0.1/",
+    "openzeppelin/contracts/=dependencies/anoma-pa-evm-1.0.0/dependencies/risc0-risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
+    "risc0-risc0-ethereum-3.0.1/=dependencies/anoma-pa-evm-1.0.0/dependencies/risc0-risc0-ethereum-3.0.1/",
     "solady-0.1.26/=dependencies/solady-0.1.26/",
     "solmate/=dependencies/uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/lib/solmate/",
     "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/=dependencies/uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/",
 ]
 ignored_warnings_from = [
-    "dependencies/anoma-pa-evm-1.0.0-rc.8/dependencies/risc0-risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
+    "dependencies/anoma-pa-evm-1.0.0/dependencies/risc0-risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
     "dependencies/solady-0.1.26/src/utils",                                                       # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
 [dependencies]
 "@openzeppelin-contracts" = "5.5.0"
-"anoma-pa-evm" = "1.0.0-rc.8"
+"anoma-pa-evm" = "1.0.0"
 "forge-std" = "1.14.0"
 "solady" = "0.1.26"
 "uniswap-permit2" = "0x000000000022D473030F116dDEE9F6B43aC78BA3"
