@@ -4,11 +4,32 @@ use std::collections::HashMap;
 
 /// Returns a map of ERC20 forwarder contract deployments for all supported chains.
 pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Address> {
-    use NamedChain::*;
-    HashMap::from([(
-        Sepolia,
-        address!("0x4cc6b4d6C4A720957Aa685e05bCC543cAE3D1E96"),
-    )])
+    HashMap::from([
+        (
+            NamedChain::Sepolia,
+            address!("0xa04942494174eD85A11416E716262eC0AE0a065d"),
+        ),
+        (
+            NamedChain::Mainnet,
+            address!("0x0D38C332135f9f0de4dcc4a6F9c918b72e2A1Df3"),
+        ),
+        (
+            NamedChain::BaseSepolia,
+            address!("0xA73Ce304460F17C3530b58BA95bCD3B89Bd38D69"),
+        ),
+        (
+            NamedChain::Base,
+            address!("0xA73Ce304460F17C3530b58BA95bCD3B89Bd38D69"),
+        ),
+        (
+            NamedChain::Optimism,
+            address!("0xA73Ce304460F17C3530b58BA95bCD3B89Bd38D69"),
+        ),
+        (
+            NamedChain::Arbitrum,
+            address!("0xA73Ce304460F17C3530b58BA95bCD3B89Bd38D69"),
+        ),
+    ])
 }
 
 /// Returns the address of the ERC20 forwarder contract  deployed on the provided chain, if any.
