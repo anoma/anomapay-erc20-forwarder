@@ -96,13 +96,16 @@ For each chain, you want to deploy to, do the following:
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  just contracts-simulate <CHAIN_NAME>
+  just contracts-simulate <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
+
+  where `<TOKEN_TRANSFER_CIRCUIT_ID>` can be found in the [`anoma/anomapay-backend` `transfer_library`](https://github.com/anoma/anomapay-backend/blob/main/simple_transfer/transfer_library/src/lib.rs)
+  and `<PROTOCOL_ADAPTER_ADDRESS>` can be found in [`anoma/pa-evm` `bindings`](https://github.com/anoma/pa-evm/blob/main/bindings/src/addresses.rs). **Make sure that you are using the right versions, respectively!**
 
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  just contracts-deploy deployer <CHAIN_NAME>
+  just contracts-deploy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
 - [ ] Export the address of the newly deployed ERC20 forwarder contract with
@@ -246,13 +249,16 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  just contracts-simulate <CHAIN_NAME>
+  just contracts-simulate <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
+
+  where `<TOKEN_TRANSFER_CIRCUIT_ID>` can be found in the [`anoma/anomapay-backend` `transfer_library`](https://github.com/anoma/anomapay-backend/blob/main/simple_transfer/transfer_library/src/lib.rs)
+  and `<PROTOCOL_ADAPTER_ADDRESS>` can be found in [`anoma/pa-evm` `bindings`](https://github.com/anoma/pa-evm/blob/main/bindings/src/addresses.rs). **Make sure that you are using the right versions, respectively!**
 
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  just contracts-deploy deployer <CHAIN_NAME>
+  just contracts-deploy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
 - [ ] Export the address of the newly deployed ERC20 forwarder contract with
