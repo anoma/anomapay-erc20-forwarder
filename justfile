@@ -43,7 +43,7 @@ contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
         --rpc-url {{chain}} {{ args }}
 
-# Deploy protocol adapter
+# Deploy ERC20 forwarder
 contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args:
     cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
@@ -52,13 +52,13 @@ contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
     cd contracts && forge verify-contract {{address}} \
-        src/ProtocolAdapter.sol:ProtocolAdapter \
+        src/ERC20Forwarder.sol:ERC20Forwarder \
         --chain {{chain}} --verifier sourcify {{ args }}
 
 # Verify on etherscan
 contracts-verify-etherscan address chain *args:
     cd contracts && forge verify-contract {{address}} \
-        src/ProtocolAdapter.sol:ProtocolAdapter \
+        src/ERC20Forwarder.sol:ERC20Forwarder \
         --chain {{chain}} --verifier etherscan {{ args }}
 
 # Verify on both sourcify and etherscan
@@ -69,6 +69,10 @@ contracts-publish version *args:
     cd contracts && forge soldeer push anomapay-erc20-forwarder~{{version}} {{ args }}
 
 # --- Bindings ---
+
+# Clean bindings
+bindings-clean:
+    cd bindings && cargo clean
 
 # Build bindings
 bindings-build *args:
