@@ -36,18 +36,18 @@ contracts-gen-bindings:
         --overwrite
 
 # Simulate deployment (dry-run)
-contracts-simulate chain *args:
+contracts-simulate chain protocol-adapter token-transfer-circuit-id *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "EMERGENCY_STOP_CALLER: $EMERGENCY_STOP_CALLER"
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
+    @echo "EMERGENCY_COMMITTEE: $EMERGENCY_COMMITTEE"
+    cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
+        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy protocol adapter
-contracts-deploy deployer chain *args:
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
-        --broadcast --rpc-url {{chain}} --account {{ deployer }} {{ args }}
+contracts-deploy deployer chain protocol-adapter token-transfer-circuit-id deployer *args:
+    cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
+        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
+         --broadcast --rpc-url {{chain}} {{ args }} --account {{ deployer }} {{ args }}
 
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
