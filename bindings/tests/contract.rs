@@ -9,6 +9,8 @@ use anoma_pa_evm_bindings::helpers::alchemy_url;
 use anomapay_erc20_forwarder_bindings::addresses::erc20_forwarder_deployments_map;
 use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder;
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance;
+use std::thread::sleep;
+use std::time::Duration;
 
 #[tokio::test]
 async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
@@ -28,6 +30,8 @@ async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
             fwd_referenced_protocol_adapter, deployed_protocol_adapter,
             "Protocol adapter address mismatch on network '{chain}'."
         );
+
+        sleep(Duration::from_secs(2));
     }
 }
 
@@ -52,6 +56,8 @@ async fn deployed_forwarders_reference_the_expected_logic_ref() {
             actual_logic_ref, expected_logic_ref,
             "Logic address mismatch on network '{chain}': expected {expected_logic_ref}, actual: {actual_logic_ref}."
         );
+
+        sleep(Duration::from_secs(2));
     }
 }
 

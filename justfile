@@ -36,29 +36,29 @@ contracts-gen-bindings:
         --overwrite
 
 # Simulate deployment (dry-run)
-contracts-simulate chain *args:
+contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "EMERGENCY_STOP_CALLER: $EMERGENCY_STOP_CALLER"
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
+    @echo "EMERGENCY_COMMITTEE: $EMERGENCY_COMMITTEE"
+    cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
+        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
         --rpc-url {{chain}} {{ args }}
 
-# Deploy protocol adapter
-contracts-deploy deployer chain *args:
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
-        --broadcast --rpc-url {{chain}} --account {{ deployer }} {{ args }}
+# Deploy ERC20 forwarder
+contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args:
+    cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
+        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
+         --broadcast --rpc-url {{chain}} {{ args }} --account {{deployer}} {{ args }}
 
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
     cd contracts && forge verify-contract {{address}} \
-        src/ProtocolAdapter.sol:ProtocolAdapter \
+        src/ERC20Forwarder.sol:ERC20Forwarder \
         --chain {{chain}} --verifier sourcify {{ args }}
 
 # Verify on etherscan
 contracts-verify-etherscan address chain *args:
     cd contracts && forge verify-contract {{address}} \
-        src/ProtocolAdapter.sol:ProtocolAdapter \
+        src/ERC20Forwarder.sol:ERC20Forwarder \
         --chain {{chain}} --verifier etherscan {{ args }}
 
 # Verify on both sourcify and etherscan
@@ -69,6 +69,10 @@ contracts-publish version *args:
     cd contracts && forge soldeer push anomapay-erc20-forwarder~{{version}} {{ args }}
 
 # --- Bindings ---
+
+# Clean bindings
+bindings-clean:
+    cd bindings && cargo clean
 
 # Build bindings
 bindings-build *args:
