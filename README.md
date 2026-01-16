@@ -1,4 +1,5 @@
 [![Contracts Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml) [![soldeer.xyz](https://img.shields.io/badge/soldeer.xyz-anomapay--erc20--forwarder-blue?logo=ethereum)](https://soldeer.xyz/project/anoma-pa-evm) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/bindings/LICENSE)
+
 [![Bindings Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/bindings.yml) [![crates.io](https://img.shields.io/badge/crates.io-anomapay--erc20--forwarder--bindings-blue?logo=rust)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/bindings/LICENSE)
 
 # AnomaPay ERC20 Forwarder
