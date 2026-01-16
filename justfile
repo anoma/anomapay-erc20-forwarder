@@ -44,10 +44,10 @@ contracts-simulate chain *args:
         --rpc-url {{chain}} {{ args }}
 
 # Deploy protocol adapter
-contracts-deploy chain *args:
+contracts-deploy deployer chain *args:
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
-        --broadcast --rpc-url {{chain}} --account deployer {{ args }}
+        --broadcast --rpc-url {{chain}} --account {{ deployer }} {{ args }}
 
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
@@ -66,7 +66,7 @@ contracts-verify address chain: (contracts-verify-sourcify address chain) (contr
 
 # Publish contracts
 contracts-publish version *args:
-    cd contracts && forge soldeer push anoma-pa-evm~{{version}} {{ args }}
+    cd contracts && forge soldeer push anomapay-erc20-forwarder~{{version}} {{ args }}
 
 # --- Bindings ---
 

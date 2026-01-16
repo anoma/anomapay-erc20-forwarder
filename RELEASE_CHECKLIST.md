@@ -21,7 +21,7 @@ We distinguish between three release cases:
 
   - `bindings/A.B.C` version
 
-## Deploying a new Protocol Adapter Version
+## Deploying a new ERC20 Forwarder Version
 
 ### 1. Prerequisites
 
@@ -33,9 +33,9 @@ We distinguish between three release cases:
   just contracts-deps
   ```
 
-- [ ] Check that the dependencies are up-to-date, have no known vulnerabilities in the dependencies
+- [ ] Check that the dependencies are up-to-date and have no known vulnerabilities in the dependencies
 
-- [ ] Check the bindings are up-to-date with
+- [ ] Check that the bindings are up-to-date with
 
   ```sh
   just bindings-check
@@ -108,7 +108,7 @@ For each chain, you want to deploy to, do the following:
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  just contracts-deploy <CHAIN_NAME>
+  just contracts-deploy deployer <CHAIN_NAME>
   ```
 
 - [ ] Export the address of the newly deployed ERC20 forwarder contract with
@@ -154,42 +154,29 @@ For each chain, you want to deploy to, do the following:
   - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the ERC20 forwarder version number and
   - [ ] `bindings/A.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
 
-  ```sh
-  just contracts-publish <X.Y.Z>
-  just bindings-publish <A.0.0>
-  ```
-
-- [ ] Create new [GH releases](https://github.com/anoma/pa-evm/releases) for both packages.
+- [ ] Create new [GH releases](https://github.com/anoma/anomapay-erc20-forwarder/releases) for both packages.
 
 ### 6. Publish a new `contracts` package
-
-- [ ] Go to the `contracts` directory
 
 - [ ] Publish the `contracts` package on https://soldeer.xyz/ with
 
   ```sh
-  forge soldeer push anomapay-erc20-forwarder~<X.Y.Z> --dry-run
+  just contracts-publish <X.Y.Z> --dry-run
   ```
 
   where `<X.Y.Z>` is the `_ERC20_FORWARDER_VERSION` number and check the resulting `contracts.zip` file. If everything is correct, remove the `--dry-run` flag and publish the package.
 
-Alternatively, you can run `just contracts-publish <X.Y.Z> --dry-run` and run similar checks as above.
-
 ### 7. Publish a new `bindings` package
-
-- [ ] Go to the `bindings` directory
 
 - [ ] Publish the `anomapay-erc20-forwarder-bindings` package on https://crates.io/ with
 
   ```sh
-  cargo publish --dry-run
+  just bindings-publish --dry-run
   ```
 
   and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
 
-Alternatively, you can run `just bindings-publish --dry-run` and run similar checks as above.
-
-## Deploying an existing Protocol Adapter Version to new Chains
+## Deploying an existing ERC20 Forwarder Version to new Chains
 
 ### 1. Prerequisites
 
@@ -201,19 +188,13 @@ Alternatively, you can run `just bindings-publish --dry-run` and run similar che
   just contracts-deps
   ```
 
-- [ ] Check that the dependencies are up-to-date, have no known vulnerabilities in the dependencies
+- [ ] Check that the dependencies are up-to-date and have no known vulnerabilities in the dependencies
 
-- [ ] Check that the Rust bindings are up-to-date by regenerating them with
+- [ ] Check that the bindings are up-to-date with
 
   ```sh
-  forge bind \
-    --select '^(ERC20Forwarder)$' \
-    --bindings-path ../bindings/src/generated/ \
-    --module \
-    --overwrite
+  just bindings-check
   ```
-
-  and running `git status`, which should shown no changes.
 
 - [ ] Checkout a new git branch branching off from `main`.
 
@@ -256,11 +237,9 @@ Alternatively, you can run `just bindings-publish --dry-run` and run similar che
 
 ### 2. Build the contracts
 
-- [ ] Change the directory with `cd contracts`
+- [ ] Run `just contracts-build`
 
-- [ ] Run `forge clean && forge build`
-
-- [ ] Run the test suite with `forge test`
+- [ ] Run the test suite with `just contracts-test`
 
 ### 3. Deploy and Verify the ERC20 Forwarder
 
@@ -269,20 +248,13 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
-  --sig "run(bool,address,bytes32,address)" <IS_TEST_DEPLOYMENT> <PROTOCOL_ADAPTER> <CARRIER_LOGIC_REF> <EMERGENCY_COMMITTEE> \
-  --rpc-url <CHAIN_NAME>
+  just contracts-simulate <CHAIN_NAME>
   ```
-
-  > ![NOTE]
-  > For chains that the ERC20 forwarder of this version has already been deployed to, the simulation will fail since the deterministic address is already taken.
 
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
-  --sig "run(bool,address,bytes32,address)" <IS_TEST_DEPLOYMENT> <PROTOCOL_ADAPTER> <CARRIER_LOGIC_REF> <EMERGENCY_COMMITTEE> \
-  --rpc-url <CHAIN_NAME> --broadcast --account deployer
+  just contracts-deploy deployer <CHAIN_NAME>
   ```
 
 - [ ] Export the address of the newly deployed ERC20 forwarder contract with
@@ -296,17 +268,13 @@ For each **new** chain, you want to deploy to, do the following:
   - [ ] sourcify
 
     ```sh
-    forge verify-contract $FWD_ADDRESS \
-      src/ERC20Forwarder.sol:ERC20Forwarder \
-      --chain <CHAIN> --verifier sourcify
+    just contracts-verify-sourcify <FWD_ADDRESS> <CHAIN>
     ```
 
   - [ ] Etherscan
 
     ```sh
-    forge verify-contract $FWD_ADDRESS \
-      src/ERC20Forwarder.sol:ERC20Forwarder \
-      --chain <CHAIN> --verifier etherscan
+    just contracts-verify-etherscan <FWD_ADDRESS> <CHAIN>
     ```
 
   and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
@@ -316,53 +284,63 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] Add the **new** address and chain name pairs in the
 
   ```rust
-  pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Address>
+  pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address>
   ```
 
   function in `./bindings/src/addresses.rs`.
 
 - [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
-- [ ] Run `cargo build` and check that the `Cargo.lock` file reflects the version number change.
+- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
-- [ ] Run the tests with `cargo test`.
+- [ ] Run the tests with `just bindings-test`.
 
 - [ ] After merging, create a new `bindings/A.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
-- [ ] Create a new [GH release](https://github.com/anoma/pa-evm/releases).
+- [ ] Create a new [GH release](https://github.com/anoma/anomapay-erc20-forwarder/releases).
 
 ### 5. Publish a new `bindings` package
-
-- [ ] Go to the `bindings` directory
 
 - [ ] Publish the `anomapay-erc20-forwarder-bindings` package on https://crates.io/ with
 
   ```sh
-  cargo publish --dry-run
+  just bindings-publish --dry-run
   ```
 
   and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
 
 ## Maintaining the Bindings
 
-### 1. Create a new `bindings` GitHub Release
+### 1. Prerequisites
 
-- [ ] Run the tests with `cargo test`.
+- [ ] Check that the bindings are up-to-date with
 
-- [ ] Commit the changes and open a PR to `main`.
+  ```sh
+  just bindings-check
+  ```
 
-- [ ] After merging, create a new `bindings/A.B.C` tag, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers, respectively and `C` is the last `PATCH` version number incremented by 1.
+- [ ] Checkout a new git branch branching off from `main`.
 
-- [ ] Create a new [GH release](https://github.com/anoma/pa-evm/releases).
+- [ ] Check that there are no staged or unstaged changes by running `git status`.
 
-### 2. Publish a new `bindings` package
+### 2. Create a new `bindings` GitHub Release
 
-- [ ] Go to the `bindings` directory
+- [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.C`, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers and `C` is the last `PATCH` version number incremented by 1.
+
+- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
+
+- [ ] Run the tests with `just bindings-test`.
+
+- [ ] After merging, create a new `bindings/A.B.C` tag, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers, respectively, and `C` is the last `PATCH` version number incremented by 1.
+
+- [ ] Create a new [GH release](https://github.com/anoma/anomapay-erc20-forwarder/releases).
+
+### 3. Publish a new `bindings` package
 
 - [ ] Publish the `anomapay-erc20-forwarder-bindings` package on https://crates.io/ with
 
   ```sh
-  cargo publish --dry-run
+  just bindings-publish --dry-run
   ```
 
   and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
