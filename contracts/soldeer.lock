@@ -7,10 +7,10 @@ integrity = "da8336cf949f0e0667ae8360af849681e3a3e76d7e61e7a86b1a3414a158aeea"
 
 [[dependencies]]
 name = "anoma-pa-evm"
-version = "1.0.0-rc.8"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/1_0_0-rc_8_14-01-2026_16:52:25_contracts.zip"
-checksum = "ac60a66930a2246ecdb47215f92a475906669f5110b5f96c73e1176123fd279b"
-integrity = "748c6c1635bffc3e05a2ae76532804cf1075bd17d62efef3ab20177656f0ec0d"
+version = "1.0.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/1_0_0_16-01-2026_15:32:02_contracts.zip"
+checksum = "04601c50ea1db87d8e93829420ef384e38427977b5ff8d1c9bf39ab894a62a04"
+integrity = "721baa0cc8d160ecd82b7be9accf7d42d6dbe2c3ffb7e0853715710597df4c4f"
 
 [[dependencies]]
 name = "forge-std"
@@ -31,4 +31,4 @@ name = "uniswap-permit2"
 version = "0x000000000022D473030F116dDEE9F6B43aC78BA3"
 url = "https://soldeer-revisions.s3.amazonaws.com/uniswap-permit2/0x000000000022D473030F116dDEE9F6B43aC78BA3_11-11-2024_08:00:23_permit2.zip"
 checksum = "d4fb59a5d0b9bb91c6800b55a0fa4037dcf4d2a17e55750ffb369572a4dd5906"
-integrity = "38baa5ecdbd2156a13837cd8117944e7b863fe8ad1e6d1f7a447819c64430426"
+integrity = "c6fa9c30931ddeec407e136f0953ccb2189090956f9d0403d7658c23eb44fdbd"
