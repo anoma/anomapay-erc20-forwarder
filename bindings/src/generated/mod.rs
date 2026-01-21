@@ -4,3 +4,8 @@
 //! Do not manually edit these files.
 //! These files may be overwritten by the codegen system at any time.
 pub mod r#erc20_forwarder;
+pub mod r#erc20_forwarder_v2;
+pub mod r#erc20_forwarder_v3;
+pub mod r#i_emergency_migratable;
+pub mod r#i_logic_ref_specific;
+pub mod r#i_protocol_adapter_specific;
