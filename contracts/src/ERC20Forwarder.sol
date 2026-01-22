@@ -135,8 +135,6 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
         (WrapData memory data) = abi.decode(wrapInput, (WrapData));
 
-        emit Wrapped({token: token, from: data.owner, amount: amount});
-
         _PERMIT2.permitWitnessTransferFrom({
             permit: ISignatureTransfer.PermitTransferFrom({
                 permitted: ISignatureTransfer.TokenPermissions({token: token, amount: amount}),
@@ -149,6 +147,11 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             witnessTypeString: ERC20ForwarderPermit2._WITNESS_TYPE_STRING,
             signature: abi.encodePacked(data.r, data.s, data.v)
         });
+
+        // NOTE: The event ordering is protected by the `nonReentrant` modifier in `ForwarderBase.forwardCall` and
+        // `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
+        // slither-disable-next-line reentrancy-events
+        emit Wrapped({token: token, from: data.owner, amount: amount});
     }
 
     /// @notice Unwraps an ERC20 token and transfers funds to the recipient using the `SafeERC20.safeTransfer`.
@@ -160,9 +163,12 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
         (UnwrapData memory data) = abi.decode(unwrapInput, (UnwrapData));
 
-        emit Unwrapped({token: token, to: data.receiver, amount: amount});
-
         IERC20(token).safeTransfer({to: data.receiver, value: amount});
+
+        // NOTE: The event ordering is protected by the `nonReentrant` modifier in `ForwarderBase.forwardCall` and
+        // `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
+        // slither-disable-next-line reentrancy-events
+        emit Unwrapped({token: token, to: data.receiver, amount: amount});
     }
 
     /// @notice Forwards an emergency call wrapping or unwrapping ERC20 tokens based on the provided input.
