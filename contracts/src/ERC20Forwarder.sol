@@ -102,8 +102,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
         bytes calldata specificInput = input[_GENERIC_INPUT_OFFSET:];
 
-        // The balance read before the external call is protected against reentrancy attacks through `nonReentrant`
-        // modifiers in `ForwarderBase.forwardCall` and `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
+        // NOTE: The balance read before the external call is reentrancy-protected by the `nonReentrant` modifier in
+        // `ForwarderBase.forwardCall` and `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
         // slither-disable-next-line reentrancy-balance
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 balanceDelta = 0;
