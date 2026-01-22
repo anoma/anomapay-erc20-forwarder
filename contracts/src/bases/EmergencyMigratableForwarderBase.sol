@@ -39,7 +39,7 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
     }
 
     /// @inheritdoc IEmergencyMigratable
-    function forwardEmergencyCall(bytes calldata input) external returns (bytes memory output) {
+    function forwardEmergencyCall(bytes calldata input) external nonReentrant returns (bytes memory output) {
         if (_emergencyCaller == address(0)) {
             revert EmergencyCallerNotSet();
         }

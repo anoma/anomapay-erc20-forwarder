@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.5.0/utils/ReentrancyGuardTransient.sol";
 import {IForwarder} from "anoma-pa-evm-1.0.0/src/interfaces/IForwarder.sol";
 import {IVersion} from "anoma-pa-evm-1.0.0/src/interfaces/IVersion.sol";
 
@@ -12,7 +13,13 @@ import {Versioning} from "../libs/Versioning.sol";
 /// @author Anoma Foundation, 2025
 /// @notice A base contract for a protocol-adapter- and logic-reference-specific forwarder contract.
 /// @custom:security-contact security@anoma.foundation
-abstract contract ForwarderBase is IForwarder, IVersion, IProtocolAdapterSpecific, ILogicRefSpecific {
+abstract contract ForwarderBase is
+    IForwarder,
+    IVersion,
+    IProtocolAdapterSpecific,
+    ILogicRefSpecific,
+    ReentrancyGuardTransient
+{
     /// @notice The protocol adapter contract that can forward calls.
     address internal immutable _PROTOCOL_ADAPTER;
 
@@ -37,7 +44,7 @@ abstract contract ForwarderBase is IForwarder, IVersion, IProtocolAdapterSpecifi
     }
 
     /// @inheritdoc IForwarder
-    function forwardCall(bytes32 logicRef, bytes calldata input) external returns (bytes memory output) {
+    function forwardCall(bytes32 logicRef, bytes calldata input) external nonReentrant returns (bytes memory output) {
         _checkCaller(_PROTOCOL_ADAPTER);
 
         if (_LOGIC_REF != logicRef) {
