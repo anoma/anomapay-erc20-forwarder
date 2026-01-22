@@ -646,23 +646,23 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         vm.prank(address(_paV3));
 
-        vm.expectEmit(address(_fwdV3));
-        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: address(_fwdV2), amount: _TRANSFER_AMOUNT});
-
-        vm.expectEmit(address(_fwdV2));
-        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: address(_fwdV1), amount: _TRANSFER_AMOUNT});
+        vm.expectEmit(address(_erc20));
+        emit IERC20.Transfer({from: address(_fwdV1), to: address(_fwdV2), value: _TRANSFER_AMOUNT});
 
         vm.expectEmit(address(_fwdV1));
         emit ERC20Forwarder.Unwrapped({token: address(_erc20), to: address(_fwdV2), amount: _TRANSFER_AMOUNT});
 
+        vm.expectEmit(address(_fwdV2));
+        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: address(_fwdV1), amount: _TRANSFER_AMOUNT});
+
         vm.expectEmit(address(_erc20));
-        emit IERC20.Transfer({from: address(_fwdV1), to: address(_fwdV2), value: _TRANSFER_AMOUNT});
+        emit IERC20.Transfer({from: address(_fwdV2), to: address(_fwdV3), value: _TRANSFER_AMOUNT});
 
         vm.expectEmit(address(_fwdV2));
         emit ERC20Forwarder.Unwrapped({token: address(_erc20), to: address(_fwdV3), amount: _TRANSFER_AMOUNT});
 
-        vm.expectEmit(address(_erc20));
-        emit IERC20.Transfer({from: address(_fwdV2), to: address(_fwdV3), value: _TRANSFER_AMOUNT});
+        vm.expectEmit(address(_fwdV3));
+        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: address(_fwdV2), amount: _TRANSFER_AMOUNT});
 
         _fwdV3.forwardCall({logicRef: _logicRefV3, input: _defaultMigrateV1Input});
 
@@ -679,14 +679,14 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         vm.prank(address(_paV3));
 
-        vm.expectEmit(address(_fwdV3));
-        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: address(_fwdV2), amount: _TRANSFER_AMOUNT});
+        vm.expectEmit(address(_erc20));
+        emit IERC20.Transfer({from: address(_fwdV2), to: address(_fwdV3), value: _TRANSFER_AMOUNT});
 
         vm.expectEmit(address(_fwdV2));
         emit ERC20Forwarder.Unwrapped({token: address(_erc20), to: address(_fwdV3), amount: _TRANSFER_AMOUNT});
 
-        vm.expectEmit(address(_erc20));
-        emit IERC20.Transfer({from: address(_fwdV2), to: address(_fwdV3), value: _TRANSFER_AMOUNT});
+        vm.expectEmit(address(_fwdV3));
+        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: address(_fwdV2), amount: _TRANSFER_AMOUNT});
 
         _fwdV3.forwardCall({logicRef: _logicRefV3, input: _defaultMigrateV2Input});
 
