@@ -29,7 +29,7 @@ contracts-test *args:
 
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
-    cd contracts && forge bind \
+    cd contracts && forge clean && forge bind \
         --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC20ForwarderV3|IProtocolAdapterSpecific|ILogicRefSpecific|IEmergencyMigratable)$' \
         --bindings-path ../bindings/src/generated/ \
         --module \
