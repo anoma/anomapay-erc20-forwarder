@@ -31,7 +31,7 @@ async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
             "Protocol adapter address mismatch on network '{chain}'."
         );
 
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(3));
     }
 }
 
@@ -57,7 +57,7 @@ async fn deployed_forwarders_reference_the_expected_logic_ref() {
             "Logic address mismatch on network '{chain}': expected {expected_logic_ref}, actual: {actual_logic_ref}."
         );
 
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(3));
     }
 }
 
