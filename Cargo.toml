@@ -13,7 +13,7 @@ edition = "2024"
 [workspace.dependencies]
 alloy = { version = "1.4.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.27"
-anoma-pa-evm-bindings = "1.0.0"
+anoma-pa-evm-bindings = "2.0.0"
 dotenvy = { version = "0.15.7" }
 serde = { version = "1.0.228", default-features = false }
 thiserror = "2.0.17"
