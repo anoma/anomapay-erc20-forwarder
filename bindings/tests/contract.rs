@@ -47,9 +47,9 @@ async fn deployed_forwarders_reference_the_expected_logic_ref() {
             .expect("Couldn't get logic ref");
 
         // The token transfer circuit verifying key taken from
-        // https://github.com/anoma/anomapay-backend/blob/4df12690df83ff966a13f5318652af588f716f13/simple_transfer/transfer_library/src/lib.rs#L27.
+        // https://github.com/anoma/anomapay-backend/blob/ec5f9bc0466feb5abf2da5ad7d9a5c365a4d0a8f/simple_transfer/transfer_library/src/lib.rs#L27.
         let expected_logic_ref =
-            b256!("0x997819ee983b526a59a6a510be3c01357aaf86f8d98bc9aa13ec4a1693e9245d");
+            b256!("0xbc12323668c37c3d381ca798f11116f35fb1639d12239b29da7810df3985e7ad");
 
         // Check that the logic ref in the deployed forwarder matches the expected one from the transfer library.
         assert_eq!(

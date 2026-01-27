@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts-5.5.0/utils/types/Time.sol";
-import {IForwarder} from "anoma-pa-evm-1.0.0/src/interfaces/IForwarder.sol";
-import {ProtocolAdapter} from "anoma-pa-evm-1.0.0/src/ProtocolAdapter.sol";
-import {DeployRiscZeroContracts} from "anoma-pa-evm-1.0.0/test/script/DeployRiscZeroContracts.s.sol";
+import {IForwarder} from "anoma-pa-evm-1.1.0/src/interfaces/IForwarder.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-1.1.0/src/ProtocolAdapter.sol";
+import {DeployRiscZeroContracts} from "anoma-pa-evm-1.1.0/test/script/DeployRiscZeroContracts.s.sol";
 import {Test, Vm, stdError} from "forge-std-1.14.0/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";

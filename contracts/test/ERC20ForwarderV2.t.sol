@@ -3,11 +3,11 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.5.0/token/ERC20/IERC20.sol";
 import {Time} from "@openzeppelin-contracts-5.5.0/utils/types/Time.sol";
-import {ProtocolAdapter} from "anoma-pa-evm-1.0.0/src/ProtocolAdapter.sol";
-import {CommitmentTree} from "anoma-pa-evm-1.0.0/src/state/CommitmentTree.sol";
-import {NullifierSet} from "anoma-pa-evm-1.0.0/src/state/NullifierSet.sol";
-import {Transaction} from "anoma-pa-evm-1.0.0/src/Types.sol";
-import {DeployRiscZeroContracts} from "anoma-pa-evm-1.0.0/test/script/DeployRiscZeroContracts.s.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-1.1.0/src/ProtocolAdapter.sol";
+import {CommitmentTree} from "anoma-pa-evm-1.1.0/src/state/CommitmentTree.sol";
+import {NullifierSet} from "anoma-pa-evm-1.1.0/src/state/NullifierSet.sol";
+import {Transaction} from "anoma-pa-evm-1.1.0/src/Types.sol";
+import {DeployRiscZeroContracts} from "anoma-pa-evm-1.1.0/test/script/DeployRiscZeroContracts.s.sol";
 import {Vm} from "forge-std-1.14.0/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";

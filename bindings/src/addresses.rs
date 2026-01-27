@@ -7,27 +7,27 @@ pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Address> {
     HashMap::from([
         (
             NamedChain::Sepolia,
-            address!("0xa04942494174eD85A11416E716262eC0AE0a065d"),
+            address!("0x0A62bE41E66841f693f922991C4e40C89cb0CFDF"),
         ),
         (
             NamedChain::Mainnet,
-            address!("0x0D38C332135f9f0de4dcc4a6F9c918b72e2A1Df3"),
+            address!("0x775C81A47F2618a8594a7a7f4A3Df2a300337559"),
         ),
         (
             NamedChain::BaseSepolia,
-            address!("0xA73Ce304460F17C3530b58BA95bCD3B89Bd38D69"),
+            address!("0xfAa9DE773Be11fc759A16F294d32BB2261bF818B"),
         ),
         (
             NamedChain::Base,
-            address!("0xA73Ce304460F17C3530b58BA95bCD3B89Bd38D69"),
+            address!("0xfAa9DE773Be11fc759A16F294d32BB2261bF818B"),
         ),
         (
             NamedChain::Optimism,
-            address!("0xA73Ce304460F17C3530b58BA95bCD3B89Bd38D69"),
+            address!("0xfAa9DE773Be11fc759A16F294d32BB2261bF818B"),
         ),
         (
             NamedChain::Arbitrum,
-            address!("0xA73Ce304460F17C3530b58BA95bCD3B89Bd38D69"),
+            address!("0xfAa9DE773Be11fc759A16F294d32BB2261bF818B"),
         ),
     ])
 }
