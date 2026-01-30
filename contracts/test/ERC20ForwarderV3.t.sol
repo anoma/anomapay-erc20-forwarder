@@ -694,6 +694,11 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         assertEq(_erc20.balanceOf(address(_fwdV3)), _TRANSFER_AMOUNT);
     }
 
+    /// @dev Skipped: V3 tests focus on migration, emergency event tested in ERC20ForwarderTest.
+    function test_forwardEmergencyCall_emits_the_EmergencyCallExecuted_event() public override {
+        vm.skip(true);
+    }
+
     function _deployContracts()
         internal
         returns (ProtocolAdapter paV1, ProtocolAdapter paV2, ProtocolAdapter paV3, ERC20Forwarder fwdV1)

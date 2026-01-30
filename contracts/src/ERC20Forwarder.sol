@@ -77,6 +77,11 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param amount The token amount being withdrawn from the ERC20 forwarder contract.
     event Unwrapped(address indexed token, address indexed to, uint128 amount);
 
+    /// @notice Emitted when an emergency call is executed, before the actual wrap/unwrap operation.
+    /// @param caller The emergency caller executing the call.
+    /// @param inputHash The keccak256 hash of the input data for correlation with Wrapped/Unwrapped events.
+    event EmergencyCallExecuted(address indexed caller, bytes32 inputHash);
+
     error BalanceMismatch(uint256 expected, uint256 actual);
     error InvalidInputLength(uint256 expected, uint256 actual);
 
@@ -176,6 +181,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @return output The output of the emergency call.
     /// @dev This function internally uses the `SafeERC20` library.
     function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
+        emit EmergencyCallExecuted({caller: msg.sender, inputHash: keccak256(input)});
         output = _forwardCall(input);
     }
 
