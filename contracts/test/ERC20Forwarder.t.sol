@@ -406,6 +406,27 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _logicRef, input: _defaultWrapInput});
     }
 
+    function test_forwardEmergencyCall_emits_the_EmergencyCallExecuted_event() public virtual {
+        address emergencyCaller = address(uint160(42));
+
+        // Stop the protocol adapter
+        vm.prank(_pa.owner());
+        _pa.emergencyStop();
+
+        // Set the emergency caller
+        vm.prank(_EMERGENCY_COMMITTEE);
+        ERC20Forwarder(address(_fwd)).setEmergencyCaller(emergencyCaller);
+
+        // Mint tokens to the forwarder for unwrap
+        _erc20.mint({to: address(_fwd), value: _TRANSFER_AMOUNT});
+
+        // Expect the EmergencyCallExecuted event
+        vm.prank(emergencyCaller);
+        vm.expectEmit(address(_fwd));
+        emit ERC20Forwarder.EmergencyCallExecuted({caller: emergencyCaller, inputHash: keccak256(_defaultUnwrapInput)});
+        ERC20Forwarder(address(_fwd)).forwardEmergencyCall({input: _defaultUnwrapInput});
+    }
+
     function test_witness_typeHash_complies_with_eip712() public pure {
         assertEq(ERC20ForwarderPermit2._WITNESS_TYPEHASH, vm.eip712HashType(ERC20ForwarderPermit2._WITNESS_TYPE_DEF));
     }

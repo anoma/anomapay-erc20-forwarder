@@ -385,6 +385,11 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         assertEq(_erc20.balanceOf(address(_fwdV2)), _TRANSFER_AMOUNT);
     }
 
+    /// @dev Skipped: V2 tests focus on migration, emergency event tested in ERC20ForwarderTest.
+    function test_forwardEmergencyCall_emits_the_EmergencyCallExecuted_event() public override {
+        vm.skip(true);
+    }
+
     function _deployContracts() internal returns (ProtocolAdapter paV1, ProtocolAdapter paV2, ERC20Forwarder fwdV1) {
         paV1 = new ProtocolAdapter(_router, _verifier.SELECTOR(), _EMERGENCY_COMMITTEE);
         paV2 = new ProtocolAdapter(_router, _verifier.SELECTOR(), _EMERGENCY_COMMITTEE);
