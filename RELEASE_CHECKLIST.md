@@ -75,13 +75,7 @@ We distinguish between three release cases:
 
 - [ ] Bump the `_ERC20_FORWARDER_VERSION` constant in [`./contracts/src/libs/Versioning.sol`](./contracts/src/libs/Versioning.sol) to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
 
-- [ ] Remove all chain name and address pairs in the
-
-  ```rust
-  pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Address>
-  ```
-
-  function in [`./bindings/src/addresses.rs`](./bindings/src/addresses.rs).
+- [ ] Remove all entries from [`./deployments.json`](./deployments.json) (replace the array contents with `[]`).
 
 ### 3. Build the Contracts
 
@@ -100,7 +94,7 @@ For each chain, you want to deploy to, do the following:
   ```
 
   where `<TOKEN_TRANSFER_CIRCUIT_ID>` can be found in the [`anoma/anomapay-backend` `transfer_library`](https://github.com/anoma/anomapay-backend/blob/main/simple_transfer/transfer_library/src/lib.rs)
-  and `<PROTOCOL_ADAPTER_ADDRESS>` can be found in [`anoma/pa-evm` `bindings`](https://github.com/anoma/pa-evm/blob/main/bindings/src/addresses.rs). **Make sure that you are using the right versions, respectively!**
+  and `<PROTOCOL_ADAPTER_ADDRESS>` can be found in [`anoma/pa-evm` `deployments.json`](https://github.com/anoma/pa-evm/blob/main/deployments.json). **Make sure that you are using the right versions, respectively!**
 
 - [ ] After successful simulation, **deploy** the contract by running
 
@@ -132,13 +126,19 @@ For each chain, you want to deploy to, do the following:
 
 ### 5. Update the Deployments Map and Create a new `contracts` and `bindings` GitHub Release
 
-- [ ] Add the **new** address and chain name pairs in the
+- [ ] Add a deployment entry to [`./deployments.json`](./deployments.json) for each chain deployed. Example:
 
-  ```rust
-  pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Address>
+  ```json
+  {
+    "network": "mainnet",
+    "chainId": 1,
+    "contractAddress": "0x...",
+    "version": "X.Y.Z",
+    "protocolAdapterAddress": "0x..."
+  }
   ```
 
-  function in [`./bindings/src/addresses.rs`](./bindings/src/addresses.rs).
+  The `protocolAdapterAddress` records which protocol adapter this forwarder is linked to. No extra tools or scripts are needed — the JSON is embedded at compile time by `addresses.rs`.
 
 - [ ] Change the `bindings` package version number in the [`./bindings/Cargo.toml`](./bindings/Cargo.toml) file to `A.0.0`, where `A` is the last `MAJOR` version number incremented by 1.
 
@@ -146,9 +146,9 @@ For each chain, you want to deploy to, do the following:
 
 - [ ] Regenerate the bindings with `just contracts-gen-bindings`.
 
-- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
+- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change. This also validates the JSON in `deployments.json` at compile time.
 
-- [ ] Run the tests with `just bindings-test`.
+- [ ] Run the tests with `just bindings-test`. This runs integrity checks on `deployments.json` (valid chain IDs, valid addresses, no duplicates).
 
 - [ ] After merging, create new tags for:
 
@@ -253,7 +253,7 @@ For each **new** chain, you want to deploy to, do the following:
   ```
 
   where `<TOKEN_TRANSFER_CIRCUIT_ID>` can be found in the [`anoma/anomapay-backend` `transfer_library`](https://github.com/anoma/anomapay-backend/blob/main/simple_transfer/transfer_library/src/lib.rs)
-  and `<PROTOCOL_ADAPTER_ADDRESS>` can be found in [`anoma/pa-evm` `bindings`](https://github.com/anoma/pa-evm/blob/main/bindings/src/addresses.rs). **Make sure that you are using the right versions, respectively!**
+  and `<PROTOCOL_ADAPTER_ADDRESS>` can be found in [`anoma/pa-evm` `deployments.json`](https://github.com/anoma/pa-evm/blob/main/deployments.json). **Make sure that you are using the right versions, respectively!**
 
 - [ ] After successful simulation, **deploy** the contract by running
 
@@ -285,19 +285,25 @@ For each **new** chain, you want to deploy to, do the following:
 
 ### 4. Update the Deployments Map and Create a new `bindings` GitHub Release
 
-- [ ] Add the **new** address and chain name pairs in the
+- [ ] Add a deployment entry to [`./deployments.json`](./deployments.json) for each **new** chain deployed. Example:
 
-  ```rust
-  pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address>
+  ```json
+  {
+    "network": "base",
+    "chainId": 8453,
+    "contractAddress": "0x...",
+    "version": "X.Y.Z",
+    "protocolAdapterAddress": "0x..."
+  }
   ```
 
-  function in `./bindings/src/addresses.rs`.
+  No extra tools or scripts are needed — the JSON is embedded at compile time by `addresses.rs`.
 
 - [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
-- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
+- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change. This also validates the JSON in `deployments.json` at compile time.
 
-- [ ] Run the tests with `just bindings-test`.
+- [ ] Run the tests with `just bindings-test`. This runs integrity checks on `deployments.json` (valid chain IDs, valid addresses, no duplicates).
 
 - [ ] After merging, create a new `bindings/A.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
