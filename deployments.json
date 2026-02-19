@@ -40,5 +40,17 @@
     "contractAddress": "0xfAa9DE773Be11fc759A16F294d32BB2261bF818B",
     "version": "1.0.1",
     "protocolAdapterAddress": "0x094FCC095323080e71a037b2B1e3519c07dd84F8"
+  },
+  {
+    "network": "bnb",
+    "chainId": 56,
+    "contractAddress": "0xDe6A308ed57AF26BFf059e6C550BD4908aC1840e",
+    "version": "1.0.1"
+  },
+  {
+    "network": "bnb-testnet",
+    "chainId": 97,
+    "contractAddress": "0x3d84A760a45fEc574C6970972E98F4e613817369",
+    "version": "1.0.1"
   }
 ]
