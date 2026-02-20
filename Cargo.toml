@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["bindings"]
+members = ["bindings", "record-deployment"]
 
 [workspace.package]
 keywords = ["anoma", "evm", "protocol-adapter", "erc20", "forwarder"]
