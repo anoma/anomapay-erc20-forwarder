@@ -117,18 +117,28 @@ forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
 Append the
 
 - `--broadcast` flag to deploy to the network
-- `--verify` flag for subsequent contract verification (https://sourcify.dev/ by default, Etherscan if an `ETHERSCAN_API_KEY` environment variable is set)
+- `--verify` flag for subsequent contract verification (Sourcify by default; set `ETHERSCAN_API_KEY` to also verify on Etherscan)
+- `--slow` flag to add 15 seconds of waiting time between verification attempts
 - `--account <ACCOUNT_NAME>` flag to use a previously imported keystore (see `cast wallet --help` for more info)
 
 #### Block Explorer Verification
 
-For post-deployment verification on Etherscan run
+For post-deployment verification on **Sourcify** run
 
 ```sh
 forge verify-contract \
    <ADDRESS> \
    src/ERC20Forwarder.sol:ERC20Forwarder \
-   --chain sepolia
+   --chain sepolia \
+   --verifier sourcify
 ```
 
-after replacing `<ADDRESS>` with the respective contract address.
+For **Etherscan** (requires `ETHERSCAN_API_KEY`) run
+
+```sh
+forge verify-contract \
+   <ADDRESS> \
+   src/ERC20Forwarder.sol:ERC20Forwarder \
+   --chain sepolia \
+   --verifier etherscan
+```
