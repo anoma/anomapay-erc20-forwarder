@@ -90,6 +90,20 @@ bindings-check: contracts-gen-bindings
 bindings-publish *args:
     cd bindings && cargo publish {{ args }}
 
+# --- Record Deployment ---
+
+# Record deployment from broadcast artifact into deployments.json
+record-deployment chain version protocol-adapter:
+    cargo run -p record-deployment -- {{chain}} {{version}} {{protocol-adapter}}
+    @echo "==> Validating..."
+    @just bindings-build
+    @just bindings-test --test deployments
+
+# Deploy and record in one step
+deploy-and-record deployer token-transfer-circuit-id chain protocol-adapter version *args:
+    just contracts-deploy {{deployer}} {{token-transfer-circuit-id}} {{chain}} {{protocol-adapter}} {{args}}
+    just record-deployment {{chain}} {{version}} {{protocol-adapter}}
+
 # --- All ---
 
 # Build all (contracts + bindings)
