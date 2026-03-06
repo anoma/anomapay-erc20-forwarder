@@ -67,5 +67,7 @@ optimism = "https://opt-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 optimism-sepolia = "https://opt-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 aurora = "https://mainnet.aurora.dev"
 aurora-testnet = "https://testnet.aurora.dev"
+bnb = "https://bsc-dataseed.binance.org"
+bnb-testnet = "https://data-seed-prebsc-1-s1.bnbchain.org:8545"
 
 localhost = "http://localhost:8545"
