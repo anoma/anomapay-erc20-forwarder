@@ -11,8 +11,8 @@ interface IEmergencyMigratable {
     /// @return output The `bytes` encoded output of the call.
     function forwardEmergencyCall(bytes memory input) external returns (bytes memory output);
 
-    /// @notice Sets the emergency caller. This function can only be called by the address
-    /// set by emergency committee if the RISC Zero emergency stop is active.
+    /// @notice Sets the emergency caller. This function can only be called once by the specified emegrency committee
+    /// in the case the appropriate protocol adapter of RiscZero verifier has been stopped.
     /// @param newEmergencyCaller The emergency caller to set.
     function setEmergencyCaller(address newEmergencyCaller) external;
 
