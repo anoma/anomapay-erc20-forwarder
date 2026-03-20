@@ -6,6 +6,6 @@ pragma solidity ^0.8.30;
 /// @notice A library containing the version number of the ERC20 forwarder.
 /// @custom:security-contact security@anoma.foundation
 library Versioning {
-    /// @notice The semantic version number of the Anoma protocol adapter.
+    /// @notice The semantic version number of the ERC20 forwarder.
     bytes32 internal constant _ERC20_FORWARDER_VERSION = "1.0.1";
 }
