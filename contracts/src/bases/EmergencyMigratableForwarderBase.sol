@@ -12,8 +12,8 @@ import {ForwarderBase} from "./ForwarderBase.sol";
 /// supports emergency migration to a future protocol adapter version.
 /// @custom:security-contact security@anoma.foundation
 abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, ForwarderBase {
-    /// @notice The emergency committee address allowed to set an emergency caller in case the RISC Zero has caused
-    /// the protocol adapter to stop.
+    /// @notice The emergency committee address allowed to set an emergency caller in case either the protocol adapter
+    /// or the appropriate RiscZero verifier has stopped.
     address internal immutable _EMERGENCY_COMMITTEE;
 
     /// @notice The emergency caller that the emergency committee can set once.
@@ -26,8 +26,8 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
     /// @notice Initializes the contract.
     /// @param protocolAdapter The protocol adapter contract that can forward calls.
     /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
-    /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter has
-    /// been stopped.
+    /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter or
+    /// the appropriate RiscZero verifier has stopped.
     constructor(address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
         ForwarderBase(protocolAdapter, logicRef)
     {
