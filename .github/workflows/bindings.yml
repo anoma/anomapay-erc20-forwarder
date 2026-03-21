@@ -14,6 +14,8 @@ jobs:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
       RPC_URL_BINANCE_SMART_CHAIN: https://bsc-dataseed.binance.org
       RPC_URL_BINANCE_SMART_CHAIN_TESTNET: https://data-seed-prebsc-1-s1.bnbchain.org:8545
+      RPC_URL_AURORA: https://mainnet.aurora.dev
+      RPC_URL_AURORA_TESTNET: https://testnet.aurora.dev
 
     steps:
       - name: Checkout repository

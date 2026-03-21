@@ -37,6 +37,14 @@ pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Address> {
             NamedChain::BinanceSmartChainTestnet,
             address!("0x3d84A760a45fEc574C6970972E98F4e613817369"),
         ),
+        (
+            NamedChain::Aurora,
+            address!("0xDe6A308ed57AF26BFf059e6C550BD4908aC1840e"),
+        ),
+        (
+            NamedChain::AuroraTestnet,
+            address!("0xdF8aE9b68932Ea8e8487570b81B27440f19C997a"),
+        ),
     ])
 }
 
