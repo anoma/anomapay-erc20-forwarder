@@ -23,6 +23,21 @@ contracts-clean:
 contracts-build *args:
     cd contracts && forge build {{ args }}
 
+# Lint contracts (forge lint + solhint)
+contracts-lint:
+    cd contracts && forge lint --deny warnings
+    cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
+    cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
+    cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
+
+# Format contracts
+contracts-fmt *args:
+    cd contracts && forge fmt {{ args }}
+
+# Check contract formatting
+contracts-fmt-check:
+    cd contracts && forge fmt --check
+
 # Run contract tests
 contracts-test *args:
     cd contracts && forge test {{ args }}
@@ -69,6 +84,19 @@ contracts-publish version *args:
     cd contracts && forge soldeer push anomapay-erc20-forwarder~{{version}} {{ args }}
 
 # --- Bindings ---
+
+# Lint bindings (clippy)
+bindings-lint:
+    cd bindings && cargo clippy --no-deps -- -Dwarnings
+    cd bindings && cargo clippy --no-deps --tests -- -Dwarnings
+
+# Format bindings
+bindings-fmt *args:
+    cd bindings && cargo fmt {{ args }}
+
+# Check bindings formatting
+bindings-fmt-check:
+    cd bindings && cargo fmt -- --check
 
 # Clean bindings
 bindings-clean:
