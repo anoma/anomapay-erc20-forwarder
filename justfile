@@ -64,6 +64,19 @@ contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
          --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
+# Simulate deployment v2 (dry-run)
+contracts-simulate-v2 logic-ref-v2 chain protocol-adapter-v2 erc20-forwarder-v1 *args:
+    @echo "EMERGENCY_COMMITTEE: $EMERGENCY_COMMITTEE"
+    cd contracts && forge script script/DeployERC20ForwarderV2.s.sol:DeployERC20ForwarderV2 \
+        --sig "run(address,bytes32,address,address)" {{protocol-adapter-v2}} {{logic-ref-v2}} $EMERGENCY_COMMITTEE {{erc20-forwarder-v1}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Deploy ERC20 forwarder v2
+contracts-deploy-v2 deployer logic-ref-v2 chain protocol-adapter-v2 erc20-forwarder-v1 *args:
+    cd contracts && forge script script/DeployERC20ForwarderV2.s.sol:DeployERC20ForwarderV2 \
+        --sig "run(address,bytes32,address,address)" {{protocol-adapter-v2}} {{logic-ref-v2}} $EMERGENCY_COMMITTEE {{erc20-forwarder-v1}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
     cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} \
