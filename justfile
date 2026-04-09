@@ -140,6 +140,27 @@ all-build:
     @echo "==> Building bindings..."
     @just bindings-build
 
+# Lint all (contracts + bindings)
+all-lint:
+    @echo "==> Linting contracts..."
+    @just contracts-lint
+    @echo "==> Linting bindings..."
+    @just bindings-lint
+
+# Format all (contracts + bindings)
+all-fmt:
+    @echo "==> Formatting contracts..."
+    @just contracts-fmt
+    @echo "==> Formatting bindings..."
+    @just bindings-fmt
+
+# Check formatting (contracts + bindings)
+all-fmt-check:
+    @echo "==> Checking contracts formatting..."
+    @just contracts-fmt-check
+    @echo "==> Checking bindings formatting..."
+    @just bindings-fmt-check
+
 # Test all (contracts + bindings)
 all-test:
     @echo "==> Testing contracts..."
