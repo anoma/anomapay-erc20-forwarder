@@ -47,7 +47,7 @@ contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
 contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args:
     cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
-         --broadcast --rpc-url {{chain}} {{ args }} --account {{deployer}} {{ args }}
+         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
