@@ -30,6 +30,12 @@ contracts-lint:
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
 
+# Run slither on contracts
+contracts-static-analysis:
+    cd contracts && slither .
+    @echo "Removing slither compilation artifacts..."
+    forge clean
+
 # Format contracts
 contracts-fmt *args:
     cd contracts && forge fmt {{ args }}
@@ -45,6 +51,7 @@ contracts-test *args:
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     cd contracts && forge clean && forge bind \
+        --skip test --skip script \
         --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC20ForwarderV3|IProtocolAdapterSpecific|ILogicRefSpecific|IEmergencyMigratable)$' \
         --bindings-path ../bindings/src/generated/ \
         --module \
@@ -98,19 +105,6 @@ contracts-publish version *args:
 
 # --- Bindings ---
 
-# Lint bindings (clippy)
-bindings-lint:
-    cd bindings && cargo clippy --no-deps -- -Dwarnings
-    cd bindings && cargo clippy --no-deps --tests -- -Dwarnings
-
-# Format bindings
-bindings-fmt *args:
-    cd bindings && cargo fmt {{ args }}
-
-# Check bindings formatting
-bindings-fmt-check:
-    cd bindings && cargo fmt -- --check
-
 # Clean bindings
 bindings-clean:
     cd bindings && cargo clean
@@ -131,14 +125,20 @@ bindings-check: contracts-gen-bindings
 bindings-publish *args:
     cd bindings && cargo publish {{ args }}
 
-# --- All ---
+# Lint bindings (clippy)
+bindings-lint:
+    cd bindings && cargo clippy --no-deps -- -Dwarnings
+    cd bindings && cargo clippy --no-deps --tests -- -Dwarnings
 
-# Build all (contracts + bindings)
-all-build:
-    @echo "==> Building contracts..."
-    @just contracts-build
-    @echo "==> Building bindings..."
-    @just bindings-build
+# Format bindings
+bindings-fmt:
+    cargo fmt
+
+# Check bindings formatting
+bindings-fmt-check:
+    cargo fmt -- --check
+
+# --- All ---
 
 # Lint all (contracts + bindings)
 all-lint:
@@ -154,12 +154,19 @@ all-fmt:
     @echo "==> Formatting bindings..."
     @just bindings-fmt
 
-# Check formatting (contracts + bindings)
+# Check formatting for all (contracts + bindings)
 all-fmt-check:
-    @echo "==> Checking contracts formatting..."
+    @echo "==> Checking contract formatting..."
     @just contracts-fmt-check
     @echo "==> Checking bindings formatting..."
     @just bindings-fmt-check
+
+# Build all (contracts + bindings)
+all-build:
+    @echo "==> Building contracts..."
+    @just contracts-build
+    @echo "==> Building bindings..."
+    @just bindings-build
 
 # Test all (contracts + bindings)
 all-test:
@@ -168,8 +175,14 @@ all-test:
     @echo "==> Testing bindings..."
     @just bindings-test
 
-# Prerequisites check
+# Prerequisites check (mirrors CI)
 all-check:
     git status
+    @echo "==> Static analysis with slither..."
+    @just contracts-static-analysis
+    @echo "==> Checking formatting..."
+    @just all-fmt-check
+    @echo "==> Linting..."
+    @just all-lint
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
