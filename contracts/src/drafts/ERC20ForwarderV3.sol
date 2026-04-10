@@ -63,16 +63,15 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         ERC20Forwarder erc20ForwarderV1,
         ERC20ForwarderV2 erc20ForwarderV2
     ) ERC20ForwarderV2(protocolAdapterV3, logicRefV3, emergencyCommittee, erc20ForwarderV1) {
-        if (address(erc20ForwarderV2) == address(0)) {
-            revert ZeroNotAllowed();
-        }
+        require(address(erc20ForwarderV2) != address(0), ZeroNotAllowed());
         _ERC20_FORWARDER_V2 = erc20ForwarderV2;
         _PROTOCOL_ADAPTER_V2 = erc20ForwarderV2.getProtocolAdapter();
 
         // Check that the protocol adapter v2 is stopped before capturing the final commitment tree root.
-        if (!IProtocolAdapter(_PROTOCOL_ADAPTER_V2).isEmergencyStopped()) {
-            revert UnstoppedProtocolAdapterV2({protocolAdapterV2: _PROTOCOL_ADAPTER_V2});
-        }
+        require(
+            IProtocolAdapter(_PROTOCOL_ADAPTER_V2).isEmergencyStopped(),
+            UnstoppedProtocolAdapterV2({protocolAdapterV2: _PROTOCOL_ADAPTER_V2})
+        );
 
         _COMMITMENT_TREE_ROOT_V2 = ICommitmentTree(_PROTOCOL_ADAPTER_V1).latestCommitmentTreeRoot();
         _LOGIC_REFERENCE_V2 = erc20ForwarderV2.getLogicRef();
@@ -111,9 +110,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
             balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         }
 
-        if (balanceDelta != amount) {
-            revert BalanceMismatch({expected: amount, actual: balanceDelta});
-        }
+        require(balanceDelta == amount, BalanceMismatch({expected: amount, actual: balanceDelta}));
 
         output = "";
     }
@@ -160,27 +157,31 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         (MigrateV2Data memory data) = abi.decode(migrateV2Input, (MigrateV2Data));
 
         // Check that the resource being upgraded is not in the protocol adapter v2 nullifier set.
-        if (INullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(data.nullifier)) {
-            revert ResourceAlreadyConsumed(data.nullifier);
-        }
+        require(
+            !INullifierSet(_PROTOCOL_ADAPTER_V2).isNullifierContained(data.nullifier),
+            ResourceAlreadyConsumed(data.nullifier)
+        );
 
         // Add the nullifier to the this contract's nullifier set. The call will revert if the nullifier already exists.
         _addNullifier(data.nullifier);
 
         // Check that the root matches the final protocol adapter v2 commitment tree root.
-        if (data.rootV2 != _COMMITMENT_TREE_ROOT_V2) {
-            revert InvalidMigrationCommitmentTreeRootV2({expected: _COMMITMENT_TREE_ROOT_V2, actual: data.rootV2});
-        }
+        require(
+            data.rootV2 == _COMMITMENT_TREE_ROOT_V2,
+            InvalidMigrationCommitmentTreeRootV2({expected: _COMMITMENT_TREE_ROOT_V2, actual: data.rootV2})
+        );
 
         // Check that logicRef matches the logic reference associated with the ERC20 forwarder v2.
-        if (data.logicRefV2 != _LOGIC_REFERENCE_V2) {
-            revert InvalidMigrationLogicRefV2({expected: _LOGIC_REFERENCE_V2, actual: data.logicRefV2});
-        }
+        require(
+            data.logicRefV2 == _LOGIC_REFERENCE_V2,
+            InvalidMigrationLogicRefV2({expected: _LOGIC_REFERENCE_V2, actual: data.logicRefV2})
+        );
 
         // Check that forwarder matches the ERC20 forwarder v2.
-        if (data.forwarderV2 != address(_ERC20_FORWARDER_V2)) {
-            revert InvalidForwarderV2({expected: address(_ERC20_FORWARDER_V2), actual: data.forwarderV2});
-        }
+        require(
+            data.forwarderV2 == address(_ERC20_FORWARDER_V2),
+            InvalidForwarderV2({expected: address(_ERC20_FORWARDER_V2), actual: data.forwarderV2})
+        );
 
         // Forwards the call to transfer the ERC20 tokens from the ERC20 forwarder v2 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v2 contract indicating that funds have been withdrawn
