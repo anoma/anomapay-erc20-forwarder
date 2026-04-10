@@ -950,9 +950,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-evm-bindings"
-version = "2.1.1"
+version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1dbf0621123467e041b84774c1e4a76044dbcdba98509327afd302c4c03b9b9"
+checksum = "d1512b1ddbeed06a0639024fdd0eacbe048c5ae8732dff7300bc1cdf4722595b"
 dependencies = [
  "alloy",
  "alloy-chains",
