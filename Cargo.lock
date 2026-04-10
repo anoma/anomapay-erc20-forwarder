@@ -950,9 +950,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-evm-bindings"
-version = "2.0.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "278c9719fa1695253cfb183b3ce41bd0520e21cbcc1d14b0a3da9ee5e5ad3992"
+checksum = "c1dbf0621123467e041b84774c1e4a76044dbcdba98509327afd302c4c03b9b9"
 dependencies = [
  "alloy",
  "alloy-chains",
@@ -964,9 +964,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-rm-risc0"
-version = "1.0.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26e987cb8962ddb8e72b43a32aadfb36c2d9abe9829c91d7b97fa742b3a1b998"
+checksum = "d3d19fa05e0ecdb7bf6205e6cb31aff30b531b113f455da6eac8db3550f171b1"
 dependencies = [
  "bincode",
  "bytemuck",
