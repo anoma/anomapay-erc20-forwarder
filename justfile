@@ -51,15 +51,15 @@ contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args
 
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
-    cd contracts && forge verify-contract {{address}} \
+    cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} \
         src/ERC20Forwarder.sol:ERC20Forwarder \
-        --chain {{chain}} --verifier sourcify {{ args }}
+        --chain {{chain}} --verifier sourcify --watch {{ args }}
 
 # Verify on etherscan
 contracts-verify-etherscan address chain *args:
     cd contracts && forge verify-contract {{address}} \
         src/ERC20Forwarder.sol:ERC20Forwarder \
-        --chain {{chain}} --verifier etherscan {{ args }}
+        --chain {{chain}} --verifier etherscan --watch {{ args }}
 
 # Verify on both sourcify and etherscan
 contracts-verify address chain: (contracts-verify-sourcify address chain) (contracts-verify-etherscan address chain)
