@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Transaction} from "anoma-pa-evm-1.1.0/src/Types.sol";
 import {Parsing} from "anoma-pa-evm-1.1.0/test/libs/parsing.sol";
-import {Vm} from "forge-std-1.14.0/src/Test.sol";
+import {Vm} from "forge-std-1.15.0/src/Test.sol";
 
 library TransactionExample {
     using Parsing for Vm;

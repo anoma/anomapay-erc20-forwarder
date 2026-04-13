@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.5.0/utils/ReentrancyGuardTransient.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.6.1/utils/ReentrancyGuardTransient.sol";
 import {IForwarder} from "anoma-pa-evm-1.1.0/src/interfaces/IForwarder.sol";
 import {IVersion} from "anoma-pa-evm-1.1.0/src/interfaces/IVersion.sol";
 

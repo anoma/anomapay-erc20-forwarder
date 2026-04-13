@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Script} from "forge-std-1.14.0/src/Script.sol";
+import {Script} from "forge-std-1.15.0/src/Script.sol";
 import {IPermit2} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
 
 contract DeployPermit2 is Script {
