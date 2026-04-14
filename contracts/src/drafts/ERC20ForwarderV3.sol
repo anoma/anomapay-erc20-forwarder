@@ -110,6 +110,8 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
             balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         }
 
+        // Check that the exact `amount` passed with the inputs is transferred.
+        // slither-disable-next-line incorrect-equality
         require(balanceDelta == amount, BalanceMismatch({expected: amount, actual: balanceDelta}));
 
         output = "";

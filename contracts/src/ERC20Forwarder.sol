@@ -116,6 +116,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             balanceDelta = balanceBefore - token.balanceOf(address(this));
         }
 
+        // Check that the exact `amount` passed with the inputs is transferred.
+        // slither-disable-next-line incorrect-equality
         require(balanceDelta == amount, BalanceMismatch({expected: amount, actual: balanceDelta}));
 
         output = "";
