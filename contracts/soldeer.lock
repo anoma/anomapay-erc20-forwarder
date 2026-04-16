@@ -7,9 +7,10 @@ integrity = "bce03af7ada1eee21a7fff393f238bcd7cd75a022a4db55ffb6b0dbb32433d35"
 
 [[dependencies]]
 name = "anoma-pa-evm"
-version = "nightly"
-git = "git@github.com:anoma/pa-evm.git"
-rev = "80a9956b657d2cbe01af0b8a03688f65158c51b5"
+version = "1.2.0-rc.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/1_2_0-rc_0_16-04-2026_16:51:32_contracts.zip"
+checksum = "eb650fe4fc1ed36fce1f754ed60661416a2e7285f48025adba0647e725bed83b"
+integrity = "6aab0aa8fd7b1874ecbbdae261ecd901da6211745fda914541b0709728631f89"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"

@@ -2,8 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
-import {IForwarder} from "anoma-pa-evm-nightly/src/interfaces/IForwarder.sol";
-import {ProtocolAdapter} from "anoma-pa-evm-nightly/src/ProtocolAdapter.sol";
+import {IForwarder} from "anoma-pa-evm-1.2.0-rc.0/src/interfaces/IForwarder.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-1.2.0-rc.0/src/ProtocolAdapter.sol";
 import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.1/script/DeployRiscZeroContracts.s.sol";
 import {Test, Vm, stdError} from "forge-std-1.15.0/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
@@ -67,7 +67,7 @@ contract ERC20ForwarderTest is Test {
         _erc20FeeSub = new ERC20WithFeeExample({isFeeAdded: false});
 
         // Get the Permit2 contract
-        _permit2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3); //_permit2Contract();
+        _permit2 = _permit2Contract();
 
         // Deploy RISC Zero contracts
         (RiscZeroVerifierRouter router,, RiscZeroGroth16Verifier verifier) =

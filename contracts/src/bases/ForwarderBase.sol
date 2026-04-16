@@ -2,8 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.6.1/utils/ReentrancyGuardTransient.sol";
-import {IForwarder} from "anoma-pa-evm-nightly/src/interfaces/IForwarder.sol";
-import {IVersion} from "anoma-pa-evm-nightly/src/interfaces/IVersion.sol";
+import {IForwarder} from "anoma-pa-evm-1.2.0-rc.0/src/interfaces/IForwarder.sol";
+import {IVersion} from "anoma-pa-evm-1.2.0-rc.0/src/interfaces/IVersion.sol";
 
 import {ILogicRefSpecific} from "../interfaces/ILogicRefSpecific.sol";
 import {IProtocolAdapterSpecific} from "../interfaces/IProtocolAdapterSpecific.sol";
