@@ -96,6 +96,12 @@ contracts-verify-etherscan address chain *args:
         src/ERC20Forwarder.sol:ERC20Forwarder \
         --chain {{chain}} --verifier etherscan --watch {{ args }}
 
+# Verify on custom explorer
+contracts-verify-custom address chain verifier-url *args:
+    cd contracts && forge verify-contract {{address}} \
+        src/ERC20Forwarder.sol:ERC20Forwarder \
+        --chain {{chain}} --verifier-url {{verifier-url}}  --watch {{ args }}
+
 # Verify on both sourcify and etherscan
 contracts-verify address chain: (contracts-verify-sourcify address chain) (contracts-verify-etherscan address chain)
 
