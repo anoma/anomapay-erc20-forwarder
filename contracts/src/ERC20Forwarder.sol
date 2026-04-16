@@ -116,9 +116,9 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             balanceDelta = balanceBefore - token.balanceOf(address(this));
         }
 
-        if (balanceDelta != amount) {
-            revert BalanceMismatch({expected: amount, actual: balanceDelta});
-        }
+        // Check that the exact `amount` passed with the inputs is transferred.
+        // slither-disable-next-line incorrect-equality
+        require(balanceDelta == amount, BalanceMismatch({expected: amount, actual: balanceDelta}));
 
         output = "";
     }
@@ -183,8 +183,6 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param input The input data to check.
     /// @param expectedLength The expected length.
     function _checkLength(bytes calldata input, uint256 expectedLength) internal pure {
-        if (input.length != expectedLength) {
-            revert InvalidInputLength({expected: expectedLength, actual: input.length});
-        }
+        require(input.length == expectedLength, InvalidInputLength({expected: expectedLength, actual: input.length}));
     }
 }

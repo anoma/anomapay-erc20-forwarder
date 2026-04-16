@@ -62,17 +62,16 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         address emergencyCommittee,
         ERC20Forwarder erc20ForwarderV1
     ) ERC20Forwarder(protocolAdapterV2, logicRefV2, emergencyCommittee) {
-        if (address(erc20ForwarderV1) == address(0)) {
-            revert ZeroNotAllowed();
-        }
+        require(address(erc20ForwarderV1) != address(0), ZeroNotAllowed());
 
         _ERC20_FORWARDER_V1 = erc20ForwarderV1;
         _PROTOCOL_ADAPTER_V1 = erc20ForwarderV1.getProtocolAdapter();
 
         // Check that the protocol adapter v1 is stopped before capturing the final commitment tree root.
-        if (!IProtocolAdapter(_PROTOCOL_ADAPTER_V1).isEmergencyStopped()) {
-            revert UnstoppedProtocolAdapterV1({protocolAdapterV1: _PROTOCOL_ADAPTER_V1});
-        }
+        require(
+            IProtocolAdapter(_PROTOCOL_ADAPTER_V1).isEmergencyStopped(),
+            UnstoppedProtocolAdapterV1({protocolAdapterV1: _PROTOCOL_ADAPTER_V1})
+        );
 
         _COMMITMENT_TREE_ROOT_V1 = ICommitmentTree(_PROTOCOL_ADAPTER_V1).latestCommitmentTreeRoot();
         _LOGIC_REFERENCE_V1 = erc20ForwarderV1.getLogicRef();
@@ -109,9 +108,9 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
             balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         }
 
-        if (balanceDelta != amount) {
-            revert BalanceMismatch({expected: amount, actual: balanceDelta});
-        }
+        // Check that the exact `amount` passed with the inputs is transferred.
+        // slither-disable-next-line incorrect-equality
+        require(balanceDelta == amount, BalanceMismatch({expected: amount, actual: balanceDelta}));
 
         output = "";
     }
@@ -127,27 +126,31 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         (MigrateV1Data memory data) = abi.decode(migrateV1Input, (MigrateV1Data));
 
         // Check that the resource being upgraded is not in the protocol adapter v1 nullifier set.
-        if (INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(data.nullifier)) {
-            revert ResourceAlreadyConsumed(data.nullifier);
-        }
+        require(
+            !INullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(data.nullifier),
+            ResourceAlreadyConsumed(data.nullifier)
+        );
 
         // Add the nullifier to the this contract's nullifier set. The call will revert if the nullifier already exists.
         _addNullifier(data.nullifier);
 
         // Check that the root matches the final protocol adapter V1 commitment tree root.
-        if (data.rootV1 != _COMMITMENT_TREE_ROOT_V1) {
-            revert InvalidMigrationCommitmentTreeRootV1({expected: _COMMITMENT_TREE_ROOT_V1, actual: data.rootV1});
-        }
+        require(
+            data.rootV1 == _COMMITMENT_TREE_ROOT_V1,
+            InvalidMigrationCommitmentTreeRootV1({expected: _COMMITMENT_TREE_ROOT_V1, actual: data.rootV1})
+        );
 
         // Check that logicRef matches the logic reference associated with the ERC20 forwarder v1.
-        if (data.logicRefV1 != _LOGIC_REFERENCE_V1) {
-            revert InvalidMigrationLogicRefV1({expected: _LOGIC_REFERENCE_V1, actual: data.logicRefV1});
-        }
+        require(
+            data.logicRefV1 == _LOGIC_REFERENCE_V1,
+            InvalidMigrationLogicRefV1({expected: _LOGIC_REFERENCE_V1, actual: data.logicRefV1})
+        );
 
         // Check that forwarder matches the ERC20 forwarder v1.
-        if (data.forwarderV1 != address(_ERC20_FORWARDER_V1)) {
-            revert InvalidForwarderV1({expected: address(_ERC20_FORWARDER_V1), actual: data.forwarderV1});
-        }
+        require(
+            data.forwarderV1 == address(_ERC20_FORWARDER_V1),
+            InvalidForwarderV1({expected: address(_ERC20_FORWARDER_V1), actual: data.forwarderV1})
+        );
 
         // Forwards a call to transfer the ERC20 tokens from the ERC20 forwarder v1 to this contract.
         // This emits the `Unwrapped` event on the ERC20 forwarder v1 contract indicating that funds have been withdrawn

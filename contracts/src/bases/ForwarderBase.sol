@@ -34,9 +34,7 @@ abstract contract ForwarderBase is
     /// @param protocolAdapter The protocol adapter contract that can forward calls.
     /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
     constructor(address protocolAdapter, bytes32 logicRef) {
-        if (protocolAdapter == address(0) || logicRef == bytes32(0)) {
-            revert ZeroNotAllowed();
-        }
+        require(protocolAdapter != address(0) && logicRef != bytes32(0), ZeroNotAllowed());
 
         _PROTOCOL_ADAPTER = protocolAdapter;
 
@@ -47,9 +45,7 @@ abstract contract ForwarderBase is
     function forwardCall(bytes32 logicRef, bytes calldata input) external nonReentrant returns (bytes memory output) {
         _checkCaller(_PROTOCOL_ADAPTER);
 
-        if (_LOGIC_REF != logicRef) {
-            revert UnauthorizedLogicRef({expected: _LOGIC_REF, actual: logicRef});
-        }
+        require(_LOGIC_REF == logicRef, UnauthorizedLogicRef({expected: _LOGIC_REF, actual: logicRef}));
 
         output = _forwardCall(input);
     }
@@ -81,8 +77,6 @@ abstract contract ForwarderBase is
     /// @notice Checks that an expected caller is calling the function and reverts otherwise.
     /// @param expected The expected caller.
     function _checkCaller(address expected) internal view {
-        if (msg.sender != expected) {
-            revert UnauthorizedCaller({expected: expected, actual: msg.sender});
-        }
+        require(msg.sender == expected, UnauthorizedCaller({expected: expected, actual: msg.sender}));
     }
 }

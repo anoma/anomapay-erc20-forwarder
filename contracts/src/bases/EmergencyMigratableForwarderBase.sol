@@ -31,18 +31,14 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
     constructor(address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
         ForwarderBase(protocolAdapter, logicRef)
     {
-        if (emergencyCommittee == address(0)) {
-            revert ZeroNotAllowed();
-        }
+        require(emergencyCommittee != address(0), ZeroNotAllowed());
 
         _EMERGENCY_COMMITTEE = emergencyCommittee;
     }
 
     /// @inheritdoc IEmergencyMigratable
     function forwardEmergencyCall(bytes calldata input) external nonReentrant returns (bytes memory output) {
-        if (_emergencyCaller == address(0)) {
-            revert EmergencyCallerNotSet();
-        }
+        require(_emergencyCaller != address(0), EmergencyCallerNotSet());
 
         _checkCaller(_emergencyCaller);
 
@@ -55,13 +51,9 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
     function setEmergencyCaller(address newEmergencyCaller) external {
         _checkCaller(_EMERGENCY_COMMITTEE);
 
-        if (newEmergencyCaller == address(0)) {
-            revert ZeroNotAllowed();
-        }
+        require(newEmergencyCaller != address(0), ZeroNotAllowed());
 
-        if (_emergencyCaller != address(0)) {
-            revert EmergencyCallerAlreadySet(_emergencyCaller);
-        }
+        require(_emergencyCaller == address(0), EmergencyCallerAlreadySet(_emergencyCaller));
 
         _checkEmergencyStopped();
 
@@ -84,8 +76,6 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
 
     /// @notice Checks that the protocol adapter has been emergency stopped.
     function _checkEmergencyStopped() internal view {
-        if (!ProtocolAdapter(_PROTOCOL_ADAPTER).isEmergencyStopped()) {
-            revert ProtocolAdapterNotStopped();
-        }
+        require(ProtocolAdapter(_PROTOCOL_ADAPTER).isEmergencyStopped(), ProtocolAdapterNotStopped());
     }
 }
