@@ -67,7 +67,7 @@ contract ERC20ForwarderTest is Test {
         _erc20FeeSub = new ERC20WithFeeExample({isFeeAdded: false});
 
         // Get the Permit2 contract
-        _permit2 = _permit2Contract();
+        _permit2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3); //_permit2Contract();
 
         // Deploy RISC Zero contracts
         (RiscZeroVerifierRouter router,, RiscZeroGroth16Verifier verifier) =
