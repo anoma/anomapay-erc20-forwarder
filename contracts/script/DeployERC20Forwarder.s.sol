@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IVersion} from "anoma-pa-evm-1.1.0/src/interfaces/IVersion.sol";
+import {IVersion} from "anoma-pa-evm-nightly/src/interfaces/IVersion.sol";
 
 import {Script} from "forge-std-1.15.0/src/Script.sol";
 
