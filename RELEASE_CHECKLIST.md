@@ -134,7 +134,7 @@ For each chain, you want to deploy to, do the following:
 
 - [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
-- [ ] Run the tests with `just bindings-test`. This runs integrity checks on `deployments.json` (valid chain IDs, valid addresses, no duplicates).
+- [ ] Run the tests with `just bindings-test`.
 
 - [ ] After merging, create new tags for:
   - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the ERC20 forwarder version number and
@@ -275,7 +275,7 @@ For each **new** chain, you want to deploy to, do the following:
 
 - [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
-- [ ] Run the tests with `just bindings-test`. This runs integrity checks on `deployments.json` (valid chain IDs, valid addresses, no duplicates).
+- [ ] Run the tests with `just bindings-test`.
 
 - [ ] After merging, create a new `bindings/A.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
