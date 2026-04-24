@@ -9,16 +9,13 @@ Releases of the packages contained in this monorepo follow the [SemVer conventio
 We distinguish between three release cases:
 
 - Deploying a **new** ERC20 forwarder version to multiple new chains resulting in a new
-
   - `contracts/X.Y.Z` version
   - `bindings/A.0.0` version
 
 - Deploying an **existing** ERC20 forwarder version to multiple new chains resulting in a new
-
   - `bindings/A.B.0` version
 
 - Maintaining the bindings resulting in a new
-
   - `bindings/A.B.C` version
 
 ## Deploying a new ERC20 Forwarder Version
@@ -109,7 +106,6 @@ For each chain, you want to deploy to, do the following:
   ```
 
 - [ ] Verify the contract on
-
   - [ ] sourcify
 
     ```sh
@@ -126,17 +122,7 @@ For each chain, you want to deploy to, do the following:
 
 ### 5. Update the Deployments Map and Create a new `contracts` and `bindings` GitHub Release
 
-- [ ] Add a deployment entry to [`./deployments.json`](./deployments.json) for each chain deployed. Example:
-
-  ```json
-  {
-    "network": "mainnet",
-    "chainId": 1,
-    "contractAddress": "0x...",
-    "version": "X.Y.Z",
-    "protocolAdapterAddress": "0x..."
-  }
-  ```
+- [ ] Add a deployment entry to [`./deployments.json`](./deployments.json) for each chain deployed.
 
   The `protocolAdapterAddress` records which protocol adapter this forwarder is linked to. No extra tools or scripts are needed — the JSON is embedded at compile time by `addresses.rs`.
 
@@ -146,12 +132,11 @@ For each chain, you want to deploy to, do the following:
 
 - [ ] Regenerate the bindings with `just contracts-gen-bindings`.
 
-- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change. This also validates the JSON in `deployments.json` at compile time.
+- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
 - [ ] Run the tests with `just bindings-test`. This runs integrity checks on `deployments.json` (valid chain IDs, valid addresses, no duplicates).
 
 - [ ] After merging, create new tags for:
-
   - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the ERC20 forwarder version number and
   - [ ] `bindings/A.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
 
@@ -268,7 +253,6 @@ For each **new** chain, you want to deploy to, do the following:
   ```
 
 - [ ] Verify the contract on
-
   - [ ] sourcify
 
     ```sh
@@ -285,23 +269,11 @@ For each **new** chain, you want to deploy to, do the following:
 
 ### 4. Update the Deployments Map and Create a new `bindings` GitHub Release
 
-- [ ] Add a deployment entry to [`./deployments.json`](./deployments.json) for each **new** chain deployed. Example:
-
-  ```json
-  {
-    "network": "base",
-    "chainId": 8453,
-    "contractAddress": "0x...",
-    "version": "X.Y.Z",
-    "protocolAdapterAddress": "0x..."
-  }
-  ```
-
-  No extra tools or scripts are needed — the JSON is embedded at compile time by `addresses.rs`.
+- [ ] Add a deployment entry to [`./deployments.json`](./deployments.json) for each **new** chain deployed.
 
 - [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
-- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change. This also validates the JSON in `deployments.json` at compile time.
+- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
 - [ ] Run the tests with `just bindings-test`. This runs integrity checks on `deployments.json` (valid chain IDs, valid addresses, no duplicates).
 
