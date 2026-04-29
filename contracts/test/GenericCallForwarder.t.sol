@@ -17,6 +17,7 @@ import {
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
 import {GenericCallForwarder} from "../src/GenericCallForwarder.sol";
+import {INativeTokenReceiver} from "../src/interfaces/INativeTokenReceiver.sol";
 
 import {Permit2Signature} from "./libs/Permit2Signature.sol";
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
@@ -41,7 +42,7 @@ contract GenericCallForwarderTest is Test {
     IForwarder internal _genericCallFwd;
 
     IPermit2 internal _permit2;
-    WETH _weth;
+    WETH internal _weth;
 
     ISignatureTransfer.PermitTransferFrom internal _defaultPermit;
     bytes32 internal _defaultPermitSigR;
@@ -173,7 +174,7 @@ contract GenericCallForwarderTest is Test {
 
             vm.prank(address(_pa));
             vm.expectEmit(address(_genericCallFwd));
-            emit GenericCallForwarder.NativeTokenDeposited({sender: address(_weth), amount: _TRANSFER_AMOUNT});
+            emit INativeTokenReceiver.NativeTokenReceived({sender: address(_weth), amount: _TRANSFER_AMOUNT});
 
             bytes memory output2 = _genericCallFwd.forwardCall({
                 logicRef: _genericCallResourceLogicRef, input: _unwrapWethAndTransferEthInput

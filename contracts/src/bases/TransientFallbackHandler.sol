@@ -24,9 +24,11 @@ abstract contract TransientFallbackHandler is IFallbackHandler {
 
     /// @notice The ERC-7201 (see https://eips.ethereum.org/EIPS/eip-7201) storage location of the transient mapping
     /// between callback selectors and magic numbers.
-    /// @dev Obtained from `keccak256(abi.encode(uint256(keccak256("anoma.transient.callbackMagicNumbers")) - 1)) & ~bytes32(uint256(0xff))`.
-    bytes32 internal constant _CALLBACK_MAGIC_NUMBERS_SLOT =
-        0x1dae74dd10e2457c24ce9c2801f2181050f9946aca5d39fefd0bdb1ea627da00;
+    /// @dev Obtained from
+    // solhint-disable-next-line max-line-length
+    /// keccak256(abi.encode(uint256(keccak256("anoma.transient.selectorsToMagicNumbersMapping")) - 1)) & ~bytes32(uint256(0xff)).
+    bytes32 internal constant _SELECTOR_TO_MAGIC_NUMBERS_MAPPING =
+        0x01253fac32f5e751b951b222de7ecaceaacff877d50c81f3faa99e9c47e1ac00;
 
     /// @notice The magic number referring to unregistered callbacks.
     bytes4 internal constant _UNREGISTERED_CALLBACK = bytes4(0);
@@ -36,18 +38,29 @@ abstract contract TransientFallbackHandler is IFallbackHandler {
     /// @param magicNumber The magic number to be registered for the callback function selector.
     error UnregisteredSelector(bytes4 selector, bytes4 magicNumber);
 
+    /// @notice The fallback function being able handle different ERC standards by responding to registered function
+    /// selectors with magic numbers.
+    /// @param data An alias being equivalent to `msg.data`. This feature of the fallback function was introduced with
+    /// the solidity compiler version 0.7.6 (see https://github.com/ethereum/solidity/releases/tag/v0.7.6).
+    /// @return magicNumber The bytes-encoded magic number registered for the selector of the function selector
+    /// that is triggering the fallback.
+    fallback(bytes calldata data) external returns (bytes memory magicNumber) {
+        magicNumber = abi.encode(_handleFallback(msg.sig, data));
+    }
+
     /// @inheritdoc IFallbackHandler
     function registerSelector(bytes4 selector, bytes4 magicNumber) external {
-        _CALLBACK_MAGIC_NUMBERS_SLOT.deriveMapping(bytes32(selector)).asBytes32().tstore(bytes32(magicNumber));
+        _SELECTOR_TO_MAGIC_NUMBERS_MAPPING.deriveMapping(bytes32(selector)).asBytes32().tstore(bytes32(magicNumber));
     }
 
     /// @notice Handles callbacks to adaptively support ERC standards.
-    /// @dev This function is supposed to be called via `_handleFallback(msg.sig, msg.data)` in the `fallback()` function of the inheriting contract.
+    /// @dev This function is supposed to be called via `_handleFallback(msg.sig, msg.data)` in the `fallback()`
+    /// function of the inheriting contract.
     /// @param selector The function selector of the callback function.
     /// @param data The calldata.
     /// @return magicNumber The magic number registered for the function selector triggering the fallback.
     function _handleFallback(bytes4 selector, bytes memory data) internal returns (bytes4 magicNumber) {
-        magicNumber = bytes4(_CALLBACK_MAGIC_NUMBERS_SLOT.deriveMapping(bytes32(selector)).asBytes32().tload());
+        magicNumber = bytes4(_SELECTOR_TO_MAGIC_NUMBERS_MAPPING.deriveMapping(bytes32(selector)).asBytes32().tload());
 
         require(
             magicNumber != _UNREGISTERED_CALLBACK, UnregisteredSelector({selector: selector, magicNumber: magicNumber})
