@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {TransientCallbackHandler} from "../src/bases/TransientCallbackHandler.sol";
+import {TransientFallbackHandler} from "../src/bases/TransientFallbackHandler.sol";
 
 import {Test} from "forge-std-1.15.0/src/Test.sol";
 
-contract TransientCallbackHandlerTest is Test, TransientCallbackHandler {
+contract TransientFallbackHandlerTest is Test, TransientFallbackHandler {
     function setUp() public {}
 
     function test_magic_numbers_storage_slot() public pure {

@@ -4,13 +4,13 @@ pragma solidity ^0.8.30;
 import {IERC1271} from "@openzeppelin-contracts-5.6.1/interfaces/IERC1271.sol";
 
 import {ForwarderBase} from "./bases/ForwarderBase.sol";
-import {TransientCallbackHandler} from "./bases/TransientCallbackHandler.sol";
+import {TransientFallbackHandler} from "./bases/TransientFallbackHandler.sol";
 
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025
 /// @notice The ERC20 token forwarder contract allowing to swap ERC20 tokens on a DEX router.
 /// @custom:security-contact security@anoma.foundation
-contract GenericCallForwarder is IERC1271, ForwarderBase, TransientCallbackHandler {
+contract GenericCallForwarder is IERC1271, ForwarderBase, TransientFallbackHandler {
     /// @notice The action struct to be consumed by the DAO's `execute` function resulting in an external call.
     /// @param to The address to call.
     /// @param value The native token value to be sent with the call.
@@ -90,11 +90,14 @@ contract GenericCallForwarder is IERC1271, ForwarderBase, TransientCallbackHandl
         output = "";
     }
 
-    /// @notice Fallback to handle future versions of the [ERC-165](https://eips.ethereum.org/EIPS/eip-165) standard.
-    /// @param input An alias being equivalent to `msg.data`. This feature of the fallback function was introduced with the [solidity compiler version 0.7.6](https://github.com/ethereum/solidity/releases/tag/v0.7.6)
-    /// @return The magic number registered for the function selector triggering the fallback.
-    fallback(bytes calldata input) external returns (bytes memory) {
-        bytes4 magicNumber = _handleCallback(msg.sig, input); // TODO
-        return abi.encode(magicNumber);
+    /// @notice The fallback function being able handle different ERC standards by responding to registered function
+    /// selectors with magic numbers.
+    /// @param data An alias being equivalent to `msg.data`. This feature of the fallback function was introduced with
+    /// the solidity compiler version 0.7.6 (see https://github.com/ethereum/solidity/releases/tag/v0.7.6).
+    /// @return encodedMagicNumber The bytes-encoded magic number registered for the selector of the function selector
+    /// that is triggering the fallback.
+    fallback(bytes calldata data) external returns (bytes memory encodedMagicNumber) {
+        bytes4 magicNumber = _handleFallback(msg.sig, data);
+        encodedMagicNumber = abi.encode(magicNumber);
     }
 }
