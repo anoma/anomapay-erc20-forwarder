@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/utils/SafeERC20.sol";
+import {SafeCast} from "@openzeppelin-contracts-5.6.1/utils/math/SafeCast.sol";
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
 import {IForwarder} from "anoma-pa-evm-1.2.0-rc.0/src/interfaces/IForwarder.sol";
 import {ProtocolAdapter} from "anoma-pa-evm-1.2.0-rc.0/src/ProtocolAdapter.sol";
@@ -9,6 +12,9 @@ import {Test, Vm} from "forge-std-1.15.0/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {WETH} from "solady-0.1.26/src/tokens/WETH.sol";
+import {
+    IAllowanceTransfer
+} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IAllowanceTransfer.sol";
 import {
     IPermit2,
     ISignatureTransfer
@@ -19,6 +25,7 @@ import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
 import {GenericCallForwarder} from "../src/GenericCallForwarder.sol";
 import {INativeTokenReceiver} from "../src/interfaces/INativeTokenReceiver.sol";
 
+import {ERC20Example} from "./examples/ERC20.e.sol";
 import {Permit2Signature} from "./libs/Permit2Signature.sol";
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 
@@ -121,21 +128,114 @@ contract GenericCallForwarderTest is Test {
         );
     }
 
-    /*function test_calls_allow_swapping_fund_on_a_dex() public {
-        _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
-        uint256 startBalanceAlice = _erc20.balanceOf(_alice);
-        uint256 startBalanceForwarder = _erc20.balanceOf(address(_erc20Fwd));
+    function test_calls_allow_swapping_fund_on_a_dex() public {
+        uint128 minAmountOut = _TRANSFER_AMOUNT / 2;
+        ERC20Example tokenA = new ERC20Example();
+        ERC20Example tokenB = new ERC20Example();
+        MockDexRouter dexRouter = new MockDexRouter(address(_permit2));
+        tokenB.mint(address(dexRouter), minAmountOut);
 
-        vm.prank(_alice);
-        _erc20.approve(address(_permit2), type(uint256).max);
+        // Fund ERC20Forwarder with tokenA
+        tokenA.mint(address(_erc20Fwd), _TRANSFER_AMOUNT);
 
-        vm.prank(address(_pa));
-        bytes memory output = _erc20Fwd.forwardCall({logicRef: _logicRef, input: _defaultWrapInput});
+        assertEq(tokenA.balanceOf(address(_erc20Fwd)), _TRANSFER_AMOUNT);
+        assertEq(tokenA.balanceOf(address(_genericCallFwd)), 0);
+        assertEq(tokenB.balanceOf(address(_genericCallFwd)), 0);
+        assertEq(tokenB.balanceOf(address(_erc20Fwd)), 0);
 
-        assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
-        assertEq(_erc20.balanceOf(_alice), startBalanceAlice - _TRANSFER_AMOUNT);
-        assertEq(_erc20.balanceOf(address(_erc20Fwd)), startBalanceForwarder + _TRANSFER_AMOUNT);
-    }*/
+        // Unwrap tokenA from ERC20Forwarder into GenericCallForwarder
+        {
+            bytes memory unwrapInput = abi.encode(
+                ERC20Forwarder.CallType.Unwrap,
+                address(tokenA),
+                _TRANSFER_AMOUNT,
+                ERC20Forwarder.UnwrapData({receiver: address(_genericCallFwd)})
+            );
+
+            vm.prank(address(_pa));
+            bytes memory output1 = _erc20Fwd.forwardCall({logicRef: _erc20ResourceLogicRef, input: unwrapInput});
+            assertEq(keccak256(output1), keccak256(_EXPECTED_OUTPUT));
+        }
+
+        assertEq(tokenA.balanceOf(address(_erc20Fwd)), 0);
+        assertEq(tokenA.balanceOf(address(_genericCallFwd)), _TRANSFER_AMOUNT);
+
+        // Swap tokenA for tokenB via MockDexRouter and approve Permit2 to pull tokenB for the subsequent wrap
+        {
+            uint48 expiration = uint48(Time.timestamp() + 5 minutes);
+
+            address[] memory path = new address[](2);
+            path[0] = address(tokenA);
+            path[1] = address(tokenB);
+
+            GenericCallForwarder.Call[] memory calls = new GenericCallForwarder.Call[](4);
+
+            // 3a: Approve Permit2 to spend tokenA, then grant DEX router a Permit2 allowance to pull it
+            calls[0] = GenericCallForwarder.Call({
+                to: address(tokenA),
+                value: 0,
+                data: abi.encodeCall(IERC20.approve, (address(_permit2), _TRANSFER_AMOUNT))
+            });
+            calls[1] = GenericCallForwarder.Call({
+                to: address(_permit2),
+                value: 0,
+                data: abi.encodeCall(
+                    IAllowanceTransfer.approve,
+                    (address(tokenA), address(dexRouter), uint160(_TRANSFER_AMOUNT), expiration)
+                )
+            });
+
+            // 3b: Swap _TRANSFER_AMOUNT of tokenA for minAmountOut of tokenB
+            calls[2] = GenericCallForwarder.Call({
+                to: address(dexRouter),
+                value: 0,
+                data: abi.encodeCall(
+                    MockDexRouter.swapExactTokensForTokens,
+                    (_TRANSFER_AMOUNT, minAmountOut, path, address(_genericCallFwd), expiration)
+                )
+            });
+
+            // 3c: Approve Permit2 to spend tokenB so ERC20Forwarder can wrap it via permitWitnessTransferFrom
+            calls[3] = GenericCallForwarder.Call({
+                to: address(tokenB), value: 0, data: abi.encodeCall(IERC20.approve, (address(_permit2), minAmountOut))
+            });
+
+            vm.prank(address(_pa));
+            bytes memory output2 =
+                _genericCallFwd.forwardCall({logicRef: _genericCallResourceLogicRef, input: abi.encode(calls)});
+            assertEq(keccak256(output2), keccak256(_EXPECTED_OUTPUT));
+        }
+
+        assertEq(tokenA.balanceOf(address(_genericCallFwd)), 0);
+        assertEq(tokenB.balanceOf(address(_genericCallFwd)), minAmountOut);
+        assertEq(tokenB.balanceOf(address(_erc20Fwd)), 0);
+
+        // Wrap tokenB from GenericCallForwarder into ERC20Forwarder.
+        // GenericCallForwarder implements ERC-1271 and always returns the magic value, so any r, s, v bytes are valid.
+        {
+            bytes memory wrapTokenBInput = abi.encode(
+                ERC20Forwarder.CallType.Wrap,
+                address(tokenB),
+                minAmountOut,
+                ERC20Forwarder.WrapData({
+                    nonce: 456,
+                    deadline: Time.timestamp() + 5 minutes,
+                    owner: address(_genericCallFwd),
+                    actionTreeRoot: _ACTION_TREE_ROOT,
+                    r: bytes32(0),
+                    s: bytes32(0),
+                    v: 27
+                })
+            );
+
+            vm.prank(address(_pa));
+            bytes memory output3 = _erc20Fwd.forwardCall({logicRef: _erc20ResourceLogicRef, input: wrapTokenBInput});
+            assertEq(keccak256(output3), keccak256(_EXPECTED_OUTPUT));
+        }
+
+        assertEq(tokenB.balanceOf(address(_genericCallFwd)), 0);
+        assertEq(tokenB.balanceOf(address(_erc20Fwd)), minAmountOut);
+    }
 
     function test_calls_allow_to_unwrap_native_tokens() public {
         // Fund ERC20 Forwarder with WETH
@@ -185,5 +285,27 @@ contract GenericCallForwarderTest is Test {
         assertEq(_weth.balanceOf(address(_erc20Fwd)), 0);
         assertEq(_weth.balanceOf(address(_genericCallFwd)), 0);
         assertEq(_alice.balance, _TRANSFER_AMOUNT);
+    }
+}
+
+contract MockDexRouter {
+    using SafeERC20 for IERC20;
+
+    IAllowanceTransfer internal immutable _PERMIT2;
+
+    constructor(address permit2) {
+        _PERMIT2 = IAllowanceTransfer(permit2);
+    }
+
+    function swapExactTokensForTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 /*deadline*/
+    ) external returns (uint256 amountOut) {
+        _PERMIT2.transferFrom(msg.sender, address(this), SafeCast.toUint160(amountIn), path[0]);
+        amountOut = amountOutMin;
+        IERC20(path[path.length - 1]).safeTransfer(to, amountOut);
     }
 }
