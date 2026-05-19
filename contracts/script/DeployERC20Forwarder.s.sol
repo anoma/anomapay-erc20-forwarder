@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IVersion} from "anoma-pa-evm-1.2.0-rc.0/src/interfaces/IVersion.sol";
-
 import {Script} from "forge-std-1.15.0/src/Script.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
-import {Versioning} from "../src/libs/Versioning.sol";
 
 /// @title DeployERC20Forwarder
 /// @author Anoma Foundation, 2025
@@ -34,15 +31,9 @@ contract DeployERC20Forwarder is Script {
                 })
             );
         } else {
-            bytes32 paVersion = IVersion(protocolAdapter).getVersion();
-
             // Deploy deterministically.
             erc20Forwarder = address(
-                new ERC20Forwarder{
-                    salt: keccak256(
-                        abi.encode("ERC20Forwarder", Versioning._ERC20_FORWARDER_VERSION, "ProtocolAdapter", paVersion)
-                    )
-                }({
+                new ERC20Forwarder{salt: keccak256("ERC20Forwarder")}({
                     protocolAdapter: protocolAdapter, logicRef: logicRef, emergencyCommittee: emergencyCommittee
                 })
             );

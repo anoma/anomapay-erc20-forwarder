@@ -5,13 +5,8 @@ import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
 import {ForwarderBase} from "anoma-forwarder-bases-1.0.0-rc.0/src/ForwarderBase.sol";
 import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.0/src/interfaces/IForwarder.sol";
-import {ProtocolAdapter} from "anoma-pa-evm-1.2.0-rc.0/src/ProtocolAdapter.sol";
-import {CommitmentTree} from "anoma-pa-evm-1.2.0-rc.0/src/state/CommitmentTree.sol";
 import {NullifierSet} from "anoma-pa-evm-1.2.0-rc.0/src/state/NullifierSet.sol";
-import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.1/script/DeployRiscZeroContracts.s.sol";
 import {Vm} from "forge-std-1.15.0/src/Test.sol";
-import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
-import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {
     ISignatureTransfer
 } from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
@@ -21,24 +16,20 @@ import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
 import {ERC20Example, ERC20WithFeeExample} from "../test/examples/ERC20.e.sol";
 import {ERC20ForwarderTest} from "./ERC20Forwarder.t.sol";
-import {TransactionExample} from "./examples/Transaction.e.sol";
+import {ProtocolAdapterMock} from "./examples/ProtocolAdapter.m.sol";
 import {Permit2Signature} from "./libs/Permit2Signature.sol";
 
 contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using Permit2Signature for Vm;
-    using TransactionExample for Vm;
 
     bytes32 internal constant _NULLIFIER = bytes32(type(uint256).max);
 
     bytes32 internal _logicRefV1;
     bytes32 internal _logicRefV2;
 
-    RiscZeroVerifierRouter internal _router;
-    RiscZeroGroth16Verifier internal _verifier;
-
-    ProtocolAdapter internal _paV1;
-    ProtocolAdapter internal _paV2;
+    ProtocolAdapterMock internal _paV1;
+    ProtocolAdapterMock internal _paV2;
 
     ERC20Forwarder internal _fwdV1;
     ERC20ForwarderV2 internal _fwdV2;
@@ -56,9 +47,6 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         // Get the Permit2 contract
         _permit2 = _permit2Contract();
-
-        // Deploy RISC Zero contracts
-        (_router,, _verifier) = new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
 
         _logicRefV1 = bytes32(uint256(1));
         _logicRefV2 = bytes32(uint256(2));
@@ -136,7 +124,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
                 nullifier: _NULLIFIER,
-                rootV1: CommitmentTree(_paV1).latestCommitmentTreeRoot(),
+                rootV1: _paV1.latestCommitmentTreeRoot(),
                 logicRefV1: _logicRefV1,
                 forwarderV1: address(_fwdV1)
             })
@@ -154,7 +142,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     }
 
     function test_constructor_reverts_if_the_protocol_adapter_v1_has_not_been_stopped() public {
-        (ProtocolAdapter paV1, ProtocolAdapter paV2, ERC20Forwarder fwdV1) = _deployContracts();
+        (ProtocolAdapterMock paV1, ProtocolAdapterMock paV2, ERC20Forwarder fwdV1) = _deployContracts();
 
         vm.expectRevert(
             abi.encodeWithSelector(ERC20ForwarderV2.UnstoppedProtocolAdapterV1.selector, address(paV1)), address(_fwdV2)
@@ -168,10 +156,9 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     }
 
     function test_migrateV1_reverts_if_the_v1_resource_to_migrate_has_already_been_consumed() public {
-        (ProtocolAdapter paV1, ProtocolAdapter paV2, ERC20Forwarder fwdV1) = _deployContracts();
+        (ProtocolAdapterMock paV1, ProtocolAdapterMock paV2, ERC20Forwarder fwdV1) = _deployContracts();
 
-        NullifierSet nfSet = NullifierSet(paV1);
-        bytes32 nullifier = nfSet.nullifierAtIndex(nfSet.nullifierCount() - 1);
+        paV1.mockAddNullifier(_NULLIFIER);
 
         // Stop the PAv1.
         vm.prank(paV1.owner());
@@ -192,7 +179,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             ERC20ForwarderV2.CallTypeV2.MigrateV1,
             address(_erc20),
             uint128(0),
-            nullifier,
+            _NULLIFIER,
             bytes32(0),
             bytes32(0),
             address(0)
@@ -200,7 +187,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         vm.prank(address(paV2));
         vm.expectRevert(
-            abi.encodeWithSelector(ERC20ForwarderV2.ResourceAlreadyConsumed.selector, nullifier), address(fwdV2)
+            abi.encodeWithSelector(ERC20ForwarderV2.ResourceAlreadyConsumed.selector, _NULLIFIER), address(fwdV2)
         );
         fwdV2.forwardCall({logicRef: _logicRefV2, input: input});
     }
@@ -220,7 +207,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
-        bytes32 expectedCommitmentTreeRootV1 = CommitmentTree(_paV1).latestCommitmentTreeRoot();
+        bytes32 expectedCommitmentTreeRootV1 = _paV1.latestCommitmentTreeRoot();
         bytes32 incorrectCommitmentTreeRootV1 = bytes32(type(uint256).max / 2);
 
         bytes memory migrateV1InputWithIncorrectCommitmentTreeRootV1 = abi.encode( /*  callType */
@@ -266,7 +253,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
                 nullifier: _NULLIFIER,
-                rootV1: CommitmentTree(_paV1).latestCommitmentTreeRoot(),
+                rootV1: _paV1.latestCommitmentTreeRoot(),
                 logicRefV1: incorrectLogicRefV1,
                 forwarderV1: address(_fwdV1)
             })
@@ -298,7 +285,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
                 nullifier: _NULLIFIER,
-                rootV1: CommitmentTree(_paV1).latestCommitmentTreeRoot(),
+                rootV1: _paV1.latestCommitmentTreeRoot(),
                 logicRefV1: _logicRefV1,
                 forwarderV1: incorrectForwarderV1
             })
@@ -326,7 +313,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             /* migrate v1 data */
             ERC20ForwarderV2.MigrateV1Data({
                 nullifier: _NULLIFIER,
-                rootV1: CommitmentTree(_paV1).latestCommitmentTreeRoot(),
+                rootV1: _paV1.latestCommitmentTreeRoot(),
                 logicRefV1: _logicRefV1,
                 forwarderV1: address(_fwdV1)
             })
@@ -381,13 +368,16 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         assertEq(_erc20.balanceOf(address(_fwdV2)), _TRANSFER_AMOUNT);
     }
 
-    function _deployContracts() internal returns (ProtocolAdapter paV1, ProtocolAdapter paV2, ERC20Forwarder fwdV1) {
-        paV1 = new ProtocolAdapter(_router, _verifier.SELECTOR(), _EMERGENCY_COMMITTEE);
-        paV2 = new ProtocolAdapter(_router, _verifier.SELECTOR(), _EMERGENCY_COMMITTEE);
+    function _deployContracts()
+        internal
+        returns (ProtocolAdapterMock paV1, ProtocolAdapterMock paV2, ERC20Forwarder fwdV1)
+    {
+        paV1 = new ProtocolAdapterMock(_EMERGENCY_COMMITTEE);
+        paV2 = new ProtocolAdapterMock(_EMERGENCY_COMMITTEE);
         fwdV1 = new ERC20Forwarder({
             protocolAdapter: address(paV1), emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _logicRefV1
         });
 
-        paV1.execute(vm.exampleTransactionA());
+        paV1.mockLatestCommitmentTreeRoot(keccak256("paV1 latest root"));
     }
 }
