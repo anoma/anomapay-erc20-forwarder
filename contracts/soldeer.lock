@@ -6,11 +6,18 @@ checksum = "a3b6bc661be858c7c27f60a1708cbebe8c71034b4cc1e9fe270d0a05b069352f"
 integrity = "bce03af7ada1eee21a7fff393f238bcd7cd75a022a4db55ffb6b0dbb32433d35"
 
 [[dependencies]]
+name = "anoma-forwarder-bases"
+version = "1.0.0-rc.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/1_0_0-rc_0_19-05-2026_20:21:54_contracts.zip"
+checksum = "aa9a6a1d82a5a0913e5a25292d13837c4b7b0e7317dda170e979b99f4ffd3b96"
+integrity = "ade39d2193db3e5d26b49beda770b2c7e9a538e141b5bfb44286e7aec7853718"
+
+[[dependencies]]
 name = "anoma-pa-evm"
 version = "1.2.0-rc.0"
 url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/1_2_0-rc_0_16-04-2026_16:51:32_contracts.zip"
 checksum = "eb650fe4fc1ed36fce1f754ed60661416a2e7285f48025adba0647e725bed83b"
-integrity = "2ae2cf10a21b34c7b6bcdd3e7b10db0e0e98dbdcccd0bf86eab6e93cd40e8972"
+integrity = "7d3a3e1cd3bf252f0f72cfb6b492652ffc0bc87ea6874ca17ba4bc1093bdf18b"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"
@@ -38,4 +45,4 @@ name = "uniswap-permit2"
 version = "0x000000000022D473030F116dDEE9F6B43aC78BA3"
 url = "https://soldeer-revisions.s3.amazonaws.com/uniswap-permit2/0x000000000022D473030F116dDEE9F6B43aC78BA3_11-11-2024_08:00:23_permit2.zip"
 checksum = "d4fb59a5d0b9bb91c6800b55a0fa4037dcf4d2a17e55750ffb369572a4dd5906"
-integrity = "4ba54c3e6b4079d5928dfe765296d763c064f1a1e891bfeecfb3a2297251e1d4"
+integrity = "45ba9ddd55b9c1b7d19e0e4c119aac99d9c3b3ca228f6ad38f32f0eb5496dfe7"
