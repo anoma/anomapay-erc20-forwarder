@@ -6,7 +6,6 @@ import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
 import {ProtocolAdapter} from "anoma-pa-evm-1.2.0-rc.0/src/ProtocolAdapter.sol";
 import {CommitmentTree} from "anoma-pa-evm-1.2.0-rc.0/src/state/CommitmentTree.sol";
 import {NullifierSet} from "anoma-pa-evm-1.2.0-rc.0/src/state/NullifierSet.sol";
-import {Transaction} from "anoma-pa-evm-1.2.0-rc.0/src/Types.sol";
 import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.1/script/DeployRiscZeroContracts.s.sol";
 import {Vm} from "forge-std-1.15.0/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
@@ -170,12 +169,8 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     function test_migrateV1_reverts_if_the_v1_resource_to_migrate_has_already_been_consumed() public {
         (ProtocolAdapter paV1, ProtocolAdapter paV2, ERC20Forwarder fwdV1) = _deployContracts();
 
-        Transaction memory txn = vm.exampleTransaction();
-        bytes32 nullifier = txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
-
-        assertEq(paV1.isNullifierContained(nullifier), false);
-        paV1.execute(txn);
-        assertEq(paV1.isNullifierContained(nullifier), true);
+        NullifierSet nfSet = NullifierSet(paV1);
+        bytes32 nullifier = nfSet.nullifierAtIndex(nfSet.nullifierCount() - 1);
 
         // Stop the PAv1.
         vm.prank(paV1.owner());
@@ -391,5 +386,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         fwdV1 = new ERC20Forwarder({
             protocolAdapter: address(paV1), emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _logicRefV1
         });
+
+        paV1.execute(vm.exampleTransactionA());
     }
 }
