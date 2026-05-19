@@ -6,6 +6,7 @@ import {SafeERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/utils/SafeERC
 import {
     EmergencyMigratableForwarderBase
 } from "anoma-forwarder-bases-1.0.0-rc.0/src/EmergencyMigratableForwarderBase.sol";
+import {Version} from "anoma-forwarder-bases-1.0.0-rc.0/src/Version.sol";
 import {
     IPermit2,
     ISignatureTransfer
@@ -19,7 +20,7 @@ import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 /// - wrap ERC20 tokens into ERC20 resources using Uniswap's Permit2 and
 /// - unwrap ERC20 tokens from ERC20 resources.
 /// @custom:security-contact security@anoma.foundation
-contract ERC20Forwarder is EmergencyMigratableForwarderBase {
+contract ERC20Forwarder is Version, EmergencyMigratableForwarderBase {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using SafeERC20 for IERC20;
 
@@ -88,6 +89,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter has
     /// been stopped.
     constructor(address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
+        Version("1.1.0-rc.0")
         EmergencyMigratableForwarderBase(protocolAdapter, logicRef, emergencyCommittee)
     {}
 
