@@ -3,6 +3,8 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
+import {ForwarderBase} from "anoma-forwarder-bases-1.0.0-rc.0/src/ForwarderBase.sol";
+import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.0/src/interfaces/IForwarder.sol";
 import {ProtocolAdapter} from "anoma-pa-evm-1.2.0-rc.0/src/ProtocolAdapter.sol";
 import {CommitmentTree} from "anoma-pa-evm-1.2.0-rc.0/src/state/CommitmentTree.sol";
 import {NullifierSet} from "anoma-pa-evm-1.2.0-rc.0/src/state/NullifierSet.sol";
@@ -14,7 +16,6 @@ import {
     ISignatureTransfer
 } from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
 
-import {ForwarderBase} from "../src/bases/ForwarderBase.sol";
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
@@ -77,7 +78,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             erc20ForwarderV1: _fwdV1
         });
-        _fwd = _fwdV2;
+        _fwd = IForwarder(address(_fwdV2));
 
         // Set the ERC20ForwarderV2 as the emergency caller of ERC20ForwarderV1.
         vm.prank(_EMERGENCY_COMMITTEE);
