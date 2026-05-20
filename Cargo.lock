@@ -966,9 +966,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-evm-bindings"
-version = "3.0.0-rc.0"
+version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "126cf02f0103b5644a4c9210e8dbd6936c9f5fa3d058ac6385c1437be6711ce2"
+checksum = "d1512b1ddbeed06a0639024fdd0eacbe048c5ae8732dff7300bc1cdf4722595b"
 dependencies = [
  "alloy",
  "alloy-chains",
@@ -999,7 +999,7 @@ dependencies = [
 
 [[package]]
 name = "anomapay-erc20-forwarder-bindings"
-version = "3.0.0-rc.0"
+version = "3.0.0-rc.1"
 dependencies = [
  "alloy",
  "alloy-chains",
