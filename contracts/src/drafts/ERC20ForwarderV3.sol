@@ -73,7 +73,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
             UnstoppedProtocolAdapterV2({protocolAdapterV2: _PROTOCOL_ADAPTER_V2})
         );
 
-        _COMMITMENT_TREE_ROOT_V2 = ICommitmentTree(_PROTOCOL_ADAPTER_V1).latestCommitmentTreeRoot();
+        _COMMITMENT_TREE_ROOT_V2 = ICommitmentTree(_PROTOCOL_ADAPTER_V2).latestCommitmentTreeRoot();
         _LOGIC_REFERENCE_V2 = erc20ForwarderV2.getLogicRef();
     }
 

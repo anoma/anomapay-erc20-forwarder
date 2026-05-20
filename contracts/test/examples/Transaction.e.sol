@@ -8,9 +8,15 @@ import {Vm} from "forge-std-1.15.0/src/Test.sol";
 library TransactionExample {
     using Parsing for Vm;
 
-    function exampleTransaction(Vm vm) public view returns (Transaction memory txn) {
+    function exampleTransactionA(Vm vm) public view returns (Transaction memory txn) {
         txn = vm.parseTransaction(
             "dependencies/anoma-pa-evm-1.2.0-rc.0/test/examples/transactions/test_tx_reg_01_01.bin"
+        );
+    }
+
+    function exampleTransactionB(Vm vm) public view returns (Transaction memory txn) {
+        txn = vm.parseTransaction(
+            "dependencies/anoma-pa-evm-1.2.0-rc.0/test/examples/transactions/test_tx_reg_02_02.bin"
         );
     }
 }
