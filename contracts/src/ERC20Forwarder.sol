@@ -89,7 +89,7 @@ contract ERC20Forwarder is Version, EmergencyMigratableForwarderBase {
     /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter has
     /// been stopped.
     constructor(address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
-        Version("1.1.0-rc.0")
+        Version("1.1.0-rc.1")
         EmergencyMigratableForwarderBase(protocolAdapter, logicRef, emergencyCommittee)
     {}
 
