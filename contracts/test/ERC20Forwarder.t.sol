@@ -14,8 +14,8 @@ import {
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
 import {ERC20Example, ERC20WithFeeExample} from "../test/examples/ERC20.e.sol";
-import {ProtocolAdapterMock} from "./examples/ProtocolAdapter.m.sol";
 import {Permit2Signature} from "./libs/Permit2Signature.sol";
+import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 
 contract ERC20ForwarderTest is Test {
