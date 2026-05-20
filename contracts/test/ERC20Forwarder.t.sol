@@ -404,10 +404,6 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _logicRef, input: _defaultWrapInput});
     }
 
-    function test_witness_typeHash_complies_with_eip712() public pure {
-        assertEq(ERC20ForwarderPermit2._WITNESS_TYPEHASH, vm.eip712HashType(ERC20ForwarderPermit2._WITNESS_TYPE_DEF));
-    }
-
     function test_check_that_the_current_version_is_a_not_a_major_release() public view {
         int256 lt = -1;
         //int256 eq = 0;
@@ -415,6 +411,10 @@ contract ERC20ForwarderTest is Test {
 
         assertEq(SemVerLib.cmp(IVersion(address(_fwd)).getVersion(), "1.0.0"), gt);
         assertEq(SemVerLib.cmp(IVersion(address(_fwd)).getVersion(), "2.0.0"), lt);
+    }
+
+    function test_witness_typeHash_complies_with_eip712() public pure {
+        assertEq(ERC20ForwarderPermit2._WITNESS_TYPEHASH, vm.eip712HashType(ERC20ForwarderPermit2._WITNESS_TYPE_DEF));
     }
 
     function test_witness_structHash_complies_with_eip712() public pure {
