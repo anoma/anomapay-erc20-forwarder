@@ -72,7 +72,7 @@ We distinguish between three release cases:
 
 - [ ] Bump the version number in the `getVersion()` function in [`./contracts/src/ERC20Forwarder.sol`](./contracts/src/ERC20Forwarder.sol) to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
 
-- [ ] Remove all entries from [`./deployments.json`](./deployments.json) (replace the array contents with `[]`).
+- [ ] Remove all entries from [`./bindings/deployments.json`](./bindings/deployments.json) (replace the array contents with `[]`).
 
 ### 3. Test the Contracts
 
@@ -89,7 +89,7 @@ For each chain, you want to deploy to, do the following:
   ```
 
   where `<TOKEN_TRANSFER_CIRCUIT_ID>` can be found in the [`anoma/anomapay-backend` `transfer_library`](https://github.com/anoma/anomapay-backend/blob/main/simple_transfer/transfer_library/src/lib.rs)
-  and `<PROTOCOL_ADAPTER_ADDRESS>` can be found in [`anoma/pa-evm` `deployments.json`](https://github.com/anoma/pa-evm/blob/main/deployments.json). **Make sure that you are using the right versions, respectively!**
+  and `<PROTOCOL_ADAPTER_ADDRESS>` can be found in [`anoma/pa-evm` `bindings/deployments.json`](https://github.com/anoma/pa-evm/blob/main/bindings/deployments.json). **Make sure that you are using the right versions, respectively!**
 
 - [ ] After successful simulation, **deploy** the contract by running
 
@@ -120,7 +120,7 @@ For each chain, you want to deploy to, do the following:
 
 ### 5. Update the Deployments Map and Create a new `contracts` and `bindings` GitHub Release
 
-- [ ] Add a deployment entry to [`./deployments.json`](./deployments.json) for each chain deployed.
+- [ ] Add a deployment entry to [`./bindings/deployments.json`](./bindings/deployments.json) for each chain deployed.
 
   The `protocolAdapterAddress` records which protocol adapter this forwarder is linked to. No extra tools or scripts are needed — the JSON is embedded at compile time by `addresses.rs`.
 
@@ -267,7 +267,7 @@ For each **new** chain, you want to deploy to, do the following:
 
 ### 4. Update the Deployments Map and Create a new `bindings` GitHub Release
 
-- [ ] Add a deployment entry to [`./deployments.json`](./deployments.json) for each **new** chain deployed.
+- [ ] Add a deployment entry to [`./bindings/deployments.json`](./bindings/deployments.json) for each **new** chain deployed.
 
 - [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
