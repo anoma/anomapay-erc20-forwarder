@@ -90,7 +90,7 @@ To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forg
 
 ```sh
 forge bind \
-  --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC20ForwarderV3|IProtocolAdapterSpecific|ILogicRefSpecific|IEmergencyMigratable)$' \
+  --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC20ForwarderV3)$' \
   --bindings-path ../bindings/src/generated/ \
   --module \
   --overwrite

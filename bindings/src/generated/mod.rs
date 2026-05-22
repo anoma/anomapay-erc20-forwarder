@@ -6,6 +6,3 @@
 pub mod erc20_forwarder;
 pub mod erc20_forwarder_v2;
 pub mod erc20_forwarder_v3;
-pub mod i_emergency_migratable;
-pub mod i_logic_ref_specific;
-pub mod i_protocol_adapter_specific;
