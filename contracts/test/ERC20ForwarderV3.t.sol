@@ -168,7 +168,9 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
     }
 
     function test_constructor_reverts_if_the_erc20_forwarder_v2_address_is_zero() public {
-        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwdV3));
+        address predicted = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, predicted);
         new ERC20ForwarderV3({
             protocolAdapterV3: address(_paV3),
             logicRefV3: _logicRefV3,
@@ -197,8 +199,10 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
         vm.prank(_EMERGENCY_COMMITTEE);
         fwdV1.setEmergencyCaller(address(fwdV2));
 
+        address predicted = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+
         vm.expectRevert(
-            abi.encodeWithSelector(ERC20ForwarderV3.UnstoppedProtocolAdapterV2.selector, address(paV2)), address(fwdV2)
+            abi.encodeWithSelector(ERC20ForwarderV3.UnstoppedProtocolAdapterV2.selector, address(paV2)), predicted
         );
         new ERC20ForwarderV3({
             protocolAdapterV3: address(paV3),
