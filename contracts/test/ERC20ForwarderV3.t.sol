@@ -3,10 +3,10 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
-import {ForwarderBase} from "anoma-forwarder-bases-1.0.0-rc.0/src/ForwarderBase.sol";
-import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.0/src/interfaces/IForwarder.sol";
-import {NullifierSet} from "anoma-pa-evm-1.2.0-rc.0/src/state/NullifierSet.sol";
-import {Vm} from "forge-std-1.15.0/src/Test.sol";
+import {ForwarderBase} from "anoma-forwarder-bases-1.0.0-rc.2/src/ForwarderBase.sol";
+import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.2/src/interfaces/IForwarder.sol";
+import {NullifierSet} from "anoma-pa-evm-1.2.0-rc.1/src/state/NullifierSet.sol";
+import {Vm} from "forge-std-1.16.1/src/Test.sol";
 import {
     ISignatureTransfer
 } from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";

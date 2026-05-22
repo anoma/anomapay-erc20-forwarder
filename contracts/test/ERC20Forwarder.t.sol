@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
-import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.0/src/interfaces/IForwarder.sol";
-import {IVersion} from "anoma-forwarder-bases-1.0.0-rc.0/src/interfaces/IVersion.sol";
-import {Test, Vm, stdError} from "forge-std-1.15.0/src/Test.sol";
+import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.2/src/interfaces/IForwarder.sol";
+import {IVersion} from "anoma-forwarder-bases-1.0.0-rc.2/src/interfaces/IVersion.sol";
+import {Test, Vm, stdError} from "forge-std-1.16.1/src/Test.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 import {
     IPermit2,
