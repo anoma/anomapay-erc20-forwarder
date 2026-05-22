@@ -2,12 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
-import {IForwarder} from "anoma-pa-evm-1.2.0-rc.0/src/interfaces/IForwarder.sol";
-import {ProtocolAdapter} from "anoma-pa-evm-1.2.0-rc.0/src/ProtocolAdapter.sol";
-import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.1/script/DeployRiscZeroContracts.s.sol";
-import {Test, Vm, stdError} from "forge-std-1.15.0/src/Test.sol";
-import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
-import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.2/src/interfaces/IForwarder.sol";
+import {IVersion} from "anoma-forwarder-bases-1.0.0-rc.2/src/interfaces/IVersion.sol";
+import {Test, Vm, stdError} from "forge-std-1.16.1/src/Test.sol";
+import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 import {
     IPermit2,
     ISignatureTransfer
@@ -15,9 +13,9 @@ import {
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
-
 import {ERC20Example, ERC20WithFeeExample} from "../test/examples/ERC20.e.sol";
 import {Permit2Signature} from "./libs/Permit2Signature.sol";
+import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 
 contract ERC20ForwarderTest is Test {
@@ -36,7 +34,7 @@ contract ERC20ForwarderTest is Test {
     address internal _alice;
     uint256 internal _alicePrivateKey;
 
-    ProtocolAdapter internal _pa;
+    ProtocolAdapterMock internal _pa;
     IForwarder internal _fwd;
     IPermit2 internal _permit2;
     ERC20Example internal _erc20;
@@ -69,17 +67,17 @@ contract ERC20ForwarderTest is Test {
         // Get the Permit2 contract
         _permit2 = _permit2Contract();
 
-        // Deploy RISC Zero contracts
-        (RiscZeroVerifierRouter router,, RiscZeroGroth16Verifier verifier) =
-            new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
-
         // Deploy the protocol adapter
-        _pa = new ProtocolAdapter(router, verifier.SELECTOR(), _EMERGENCY_COMMITTEE);
+        _pa = new ProtocolAdapterMock(_EMERGENCY_COMMITTEE);
 
         // Deploy the ERC20 forwarder
-        _fwd = new ERC20Forwarder({
-            protocolAdapter: address(_pa), emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _logicRef
-        });
+        _fwd = IForwarder(
+            address(
+                new ERC20Forwarder({
+                    protocolAdapter: address(_pa), emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _logicRef
+                })
+            )
+        );
 
         _defaultPermit = ISignatureTransfer.PermitTransferFrom({
             permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: _TRANSFER_AMOUNT}),
@@ -404,6 +402,15 @@ contract ERC20ForwarderTest is Test {
         vm.expectEmit(address(_fwd));
         emit ERC20Forwarder.Wrapped({token: address(_erc20), from: _alice, amount: _TRANSFER_AMOUNT});
         _fwd.forwardCall({logicRef: _logicRef, input: _defaultWrapInput});
+    }
+
+    function test_check_that_the_current_version_is_a_not_a_major_release() public view {
+        int256 lt = -1;
+        //int256 eq = 0;
+        int256 gt = 1;
+
+        assertEq(SemVerLib.cmp(IVersion(address(_fwd)).getVersion(), "1.0.0"), gt);
+        assertEq(SemVerLib.cmp(IVersion(address(_fwd)).getVersion(), "2.0.0"), lt);
     }
 
     function test_witness_typeHash_complies_with_eip712() public pure {

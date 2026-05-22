@@ -4,11 +4,14 @@ pragma solidity ^0.8.30;
 import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/utils/SafeERC20.sol";
 import {
+    EmergencyMigratableForwarderBase
+} from "anoma-forwarder-bases-1.0.0-rc.2/src/EmergencyMigratableForwarderBase.sol";
+import {IVersion} from "anoma-forwarder-bases-1.0.0-rc.2/src/interfaces/IVersion.sol";
+import {
     IPermit2,
     ISignatureTransfer
 } from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
 
-import {EmergencyMigratableForwarderBase} from "./bases/EmergencyMigratableForwarderBase.sol";
 import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 
 /// @title ERC20Forwarder
@@ -17,7 +20,7 @@ import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 /// - wrap ERC20 tokens into ERC20 resources using Uniswap's Permit2 and
 /// - unwrap ERC20 tokens from ERC20 resources.
 /// @custom:security-contact security@anoma.foundation
-contract ERC20Forwarder is EmergencyMigratableForwarderBase {
+contract ERC20Forwarder is IVersion, EmergencyMigratableForwarderBase {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using SafeERC20 for IERC20;
 
@@ -88,6 +91,11 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     constructor(address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
         EmergencyMigratableForwarderBase(protocolAdapter, logicRef, emergencyCommittee)
     {}
+
+    /// @inheritdoc IVersion
+    function getVersion() external pure override returns (bytes32 version) {
+        version = "1.1.0-rc.0";
+    }
 
     // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
 
