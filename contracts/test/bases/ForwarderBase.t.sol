@@ -54,12 +54,14 @@ contract ForwarderBaseTest is Test {
     }
 
     function test_constructor_reverts_if_the_protocol_adapter_address_is_zero() public {
-        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        address predicted = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, predicted);
         new ForwarderExample({protocolAdapter: address(0), logicRef: _LOGIC_REF});
     }
 
     function test_constructor_reverts_if_the_logic_ref_is_zero() public {
-        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, address(_fwd));
+        address predicted = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, predicted);
         new ForwarderExample({protocolAdapter: _pa, logicRef: bytes32(0)});
     }
 
