@@ -1,6 +1,6 @@
 [![Contracts Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml) [![soldeer.xyz](https://img.shields.io/badge/soldeer.xyz-anomapay--erc20--forwarder-blue?logo=ethereum)](https://soldeer.xyz/project/anomapay-erc20-forwarder) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/contracts/LICENSE)
 
-[![Bindings Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/bindings.yml) [![crates.io](https://img.shields.io/badge/crates.io-anomapay--erc20--forwarder--bindings-blue?logo=rust)](https://crates.io/crates/anoma-anomapay-erc20-forwarder-bindings) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/bindings/LICENSE)
+[![Crates Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/crates.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/crates.yml) [![crates.io](https://img.shields.io/badge/crates.io-anomapay--erc20--forwarder--bindings-blue?logo=rust)](https://crates.io/crates/anomapay-erc20-forwarder-bindings) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/crates/bindings/LICENSE)
 
 # AnomaPay ERC20 Forwarder
 
@@ -13,8 +13,10 @@ This monorepo is structured as follows:
 ```
 .
 ├── audits
-├── bindings
 ├── contracts
+├── crates
+│   ├── bindings
+│   └── integration-test
 ├── Cargo.lock
 ├── Cargo.toml
 ├── README.md
@@ -23,8 +25,10 @@ This monorepo is structured as follows:
 
 The [contracts](./contracts/) folder contains the contracts written in [Solidity](https://soliditylang.org/) as well as [Foundry forge](https://book.getfoundry.sh/forge/) tests and deploy scripts.
 
-The [bindings](./bindings/) folder provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs)
-library.
+The [crates](./crates/) folder contains the Rust workspace:
+
+- [bindings](./crates/bindings/) provides [Rust](https://www.rust-lang.org/) bindings for the forwarder contract and exposes its deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs) library.
+- [integration-test](./crates/integration-test/) contains the Rust integration and e2e tests that deploy the forwarder against a local or forked chain and exercise the wrap / transfer / unwrap lifecycle with risc0-proven transactions.
 
 ## Audits
 
