@@ -33,6 +33,10 @@ pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Address> {
             NamedChain::BinanceSmartChain,
             address!("0xDe6A308ed57AF26BFf059e6C550BD4908aC1840e"),
         ),
+        (
+            NamedChain::Monad,
+            address!("0x23dc44E1a1c3d5432EeC8A1c027e22ccDC0A8F54"),
+        ),
     ])
 }
 
