@@ -1,1 +1,7 @@
-[]
+[
+  {
+    "chainId": 84532,
+    "proxy": "0x84e3A4E2C036ef73e19683f381d84ee5B68eD237",
+    "implementation": "0x0edcF781Bf802d1b36B0Fe05DDf80F106513f230"
+  }
+]

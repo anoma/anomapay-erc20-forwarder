@@ -7,7 +7,7 @@ use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::protocol_adapter_address;
 use anoma_pa_evm_bindings::helpers::alchemy_url;
 use anomapay_erc20_forwarder_bindings::addresses::erc20_forwarder_deployments_map;
-use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder;
+use anomapay_erc20_forwarder_bindings::contract::{erc20_forwarder, erc1967_implementation};
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder;
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance;
 
@@ -59,46 +59,64 @@ async fn deployed_forwarders_reference_the_expected_logic_ref() {
 }
 
 #[tokio::test]
-async fn versions_of_deployed_forwarders_match_the_expected_version() {
-    // Iterate over all supported chains
-    for chain in erc20_forwarder_deployments_map().keys() {
-        let existing_fwd = fwd_instance(chain).await;
+async fn proxies_point_to_the_deployed_implementation() {
+    for (chain, deployment) in erc20_forwarder_deployments_map() {
+        let provider = anvil_fork(&chain).await;
 
-        // Deploy the current implementation to read its compiled-in version. `getVersion` is `pure`, so the bare
-        // implementation (no proxy/initialization) is enough; the initializer arguments are irrelevant here.
-        let current_fwd = erc20_forwarder::ERC20Forwarder::deploy(existing_fwd.provider())
+        let onchain_implementation = erc1967_implementation(&provider, deployment.proxy)
             .await
-            .expect("Couldn't deploy erc20 forwarder");
+            .expect("Couldn't read the ERC-1967 implementation slot");
 
-        let expected_version = current_fwd
+        // Check that the proxy's implementation slot matches the implementation recorded in deployments.json.
+        assert_eq!(
+            onchain_implementation, deployment.implementation,
+            "ERC-1967 implementation mismatch on network '{chain}': the proxy points to {onchain_implementation}, but deployments.json records {}.",
+            deployment.implementation
+        );
+    }
+}
+
+#[tokio::test]
+async fn deployed_implementations_carry_the_expected_version() {
+    for (chain, deployment) in erc20_forwarder_deployments_map() {
+        let provider = anvil_fork(&chain).await;
+
+        // `getVersion` is `pure`, so it can be read straight from the implementation contract.
+        let actual_version =
+            erc20_forwarder::ERC20Forwarder::new(deployment.implementation, &provider)
+                .getVersion()
+                .call()
+                .await
+                .expect("Couldn't get the deployed implementation version");
+
+        // Deploy the current implementation to read its compiled-in version.
+        let expected_version = erc20_forwarder::ERC20Forwarder::deploy(&provider)
+            .await
+            .expect("Couldn't deploy erc20 forwarder")
             .getVersion()
             .call()
             .await
             .expect("Couldn't get version");
 
-        let actual_version: alloy::primitives::FixedBytes<32> = existing_fwd
-            .getVersion()
-            .call()
-            .await
-            .expect("Couldn't get protocol adapter version");
-
-        //  Check that the deployed ERC20 forwarder version matches the expected version.
         assert_eq!(
             decode_bytes32_to_utf8(actual_version),
             decode_bytes32_to_utf8(expected_version),
-            "ERC20 forwarder version mismatch on network '{chain}'."
+            "ERC20 forwarder implementation version mismatch on network '{chain}'."
         );
     }
 }
 
-async fn fwd_instance(chain: &NamedChain) -> ERC20ForwarderInstance<DynProvider> {
+async fn anvil_fork(chain: &NamedChain) -> DynProvider {
     let rpc_url = alchemy_url(chain).unwrap();
 
-    let provider = ProviderBuilder::new()
+    ProviderBuilder::new()
         .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url))
         .expect("Couldn't create anvil provider")
-        .erased();
-    erc20_forwarder(&provider).await.unwrap()
+        .erased()
+}
+
+async fn fwd_instance(chain: &NamedChain) -> ERC20ForwarderInstance<DynProvider> {
+    erc20_forwarder(&anvil_fork(chain).await).await.unwrap()
 }
 
 fn decode_bytes32_to_utf8(encoded_string: B256) -> String {
