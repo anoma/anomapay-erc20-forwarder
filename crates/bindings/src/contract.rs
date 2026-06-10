@@ -1,4 +1,4 @@
-use crate::addresses::erc20_forwarder_address;
+use crate::addresses::erc20_forwarder_proxy_address;
 use crate::generated::erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance;
 use alloy::providers::{DynProvider, Provider};
 use alloy_chains::NamedChain;
@@ -19,7 +19,7 @@ pub enum BindingsError {
     UnsupportedChain(String),
 }
 
-pub async fn erc20_forwarder(
+pub async fn erc20_forwarder_proxy(
     provider: &DynProvider,
 ) -> BindingsResult<ERC20ForwarderInstance<DynProvider>> {
     let chain_id = provider
@@ -30,7 +30,7 @@ pub async fn erc20_forwarder(
     let named_chain =
         NamedChain::try_from(chain_id).map_err(|_| BindingsError::ChainIdUnknown(chain_id))?;
 
-    match erc20_forwarder_address(&named_chain) {
+    match erc20_forwarder_proxy_address(&named_chain) {
         Some(address) => Ok(ERC20ForwarderInstance::new(address, provider.clone())),
         None => Err(BindingsError::UnsupportedChain(named_chain.to_string())),
     }

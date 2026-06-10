@@ -1,7 +1,7 @@
 use alloy::primitives::Address;
 use alloy_chains::NamedChain;
 use anomapay_erc20_forwarder_bindings::addresses::{
-    erc20_forwarder_address, erc20_forwarder_deployments_map,
+    erc20_forwarder_deployments_map, erc20_forwarder_proxy_address,
 };
 use std::collections::HashSet;
 
@@ -9,7 +9,8 @@ use std::collections::HashSet;
 #[serde(rename_all = "camelCase")]
 struct RawEntry {
     chain_id: u64,
-    contract_address: String,
+    proxy: String,
+    implementation: String,
 }
 
 fn raw_entries() -> Vec<RawEntry> {
@@ -32,15 +33,17 @@ fn all_entries_have_valid_chain_ids() {
 #[test]
 fn all_entries_have_valid_addresses() {
     for entry in raw_entries() {
-        entry
-            .contract_address
-            .parse::<Address>()
-            .unwrap_or_else(|_| {
+        for (label, address) in [
+            ("proxy", &entry.proxy),
+            ("implementation", &entry.implementation),
+        ] {
+            address.parse::<Address>().unwrap_or_else(|_| {
                 panic!(
-                    "invalid contract address '{}' for chain ID '{}'",
-                    entry.contract_address, entry.chain_id
+                    "invalid {label} address '{address}' for chain ID '{}'",
+                    entry.chain_id
                 )
             });
+        }
     }
 }
 
@@ -75,8 +78,8 @@ fn each_chain_is_individually_addressable() {
     let map = erc20_forwarder_deployments_map();
     for chain in map.keys() {
         assert!(
-            erc20_forwarder_address(chain).is_some(),
-            "erc20_forwarder_address returned None for chain '{chain}'"
+            erc20_forwarder_proxy_address(chain).is_some(),
+            "erc20_forwarder_proxy_address returned None for chain '{chain}'"
         );
     }
 }

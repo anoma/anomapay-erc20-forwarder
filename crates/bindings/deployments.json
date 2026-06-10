@@ -1,10 +1,7 @@
 [
   {
     "chainId": 84532,
-    "contractAddress": "0x64f20B63447dF92504638D2E69A5926FF9bF3a5e"
-  },
-  {
-    "chainId": 42431,
-    "contractAddress": "0xe03077876CBBA03CfDDeEBEbf2fc7aB3fa4DD31A"
+    "proxy": "0x40821601f840e09b05d3B75aDe402F0DCA4aEbF4",
+    "implementation": "0x1e40bEeaD8d06146a780a5adebb0874c163Bb439"
   }
 ]
