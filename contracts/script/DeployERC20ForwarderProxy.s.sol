@@ -21,7 +21,7 @@ contract DeployERC20Forwarder is Script {
     /// @param owner The initial owner of the contract having the upgrade authority.
     function run(bool isTestDeployment, address protocolAdapter, bytes32 logicRef, address owner)
         public
-        returns (address erc20Forwarder)
+        returns (address proxy, address implementation)
     {
         Options memory opts;
         Upgrades.validateImplementation("ERC20Forwarder.sol:ERC20Forwarder", opts);
@@ -31,12 +31,13 @@ contract DeployERC20Forwarder is Script {
         vm.startBroadcast();
 
         if (isTestDeployment) {
-            erc20Forwarder =
-                address(new ERC1967Proxy({implementation: address(new ERC20Forwarder()), _data: initializeCalldata}));
+            implementation = address(new ERC20Forwarder());
+            proxy = address(new ERC1967Proxy({implementation: implementation, _data: initializeCalldata}));
         } else {
-            erc20Forwarder = address(
+            implementation = address(new ERC20Forwarder{salt: "ERC20Forwarder"}());
+            proxy = address(
                 new ERC1967Proxy{salt: "ERC20ForwarderProxy"}({
-                    implementation: address(new ERC20Forwarder{salt: "ERC20Forwarder"}()), _data: initializeCalldata
+                    implementation: implementation, _data: initializeCalldata
                 })
             );
         }

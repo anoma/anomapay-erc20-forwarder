@@ -98,42 +98,26 @@ For each chain, you want to deploy to, do the following:
   ```
 
 - [ ] Export the addresses of the newly deployed contracts. The deployment produces **two** contracts: the **proxy**
-  (`ERC1967Proxy`) is the ERC20 forwarder address that users interact with and that goes into `deployments.json` (it is
-  the returned `erc20ForwarderProxy`), and the **implementation** (`ERC20Forwarder`) is the logic contract the proxy
-  delegates to. They must be verified separately, against different sources.
+      (`ERC1967Proxy`) is the ERC20 forwarder address that users interact with and that goes into `deployments.json` (it is
+      the returned `erc20ForwarderProxy`), and the **implementation** (`ERC20Forwarder`) is the logic contract the proxy
+      delegates to. They must be verified separately, against different sources.
 
   ```sh
-  export FWD_ADDRESS=<PROXY_ADDRESS>
+  export PROXY_ADDRESS=<PROXY_ADDRESS>
   export IMPL_ADDRESS=<IMPLEMENTATION_ADDRESS>
   ```
 
-- [ ] Verify the **implementation** (`ERC20Forwarder`) on
-  - [ ] sourcify
+- [ ] Verify the **implementation** (`ERC20Forwarder`)
 
-    ```sh
-    just contracts-verify-impl-sourcify <IMPL_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-impl <IMPL_ADDRESS> <CHAIN>
+  ```
 
-  - [ ] Etherscan
+- [ ] Verify the **proxy** (`ERC1967Proxy`). The recipe encodes the proxy constructor args from these inputs.
 
-    ```sh
-    just contracts-verify-impl-etherscan <IMPL_ADDRESS> <CHAIN>
-    ```
-
-- [ ] Verify the **proxy** (`ERC1967Proxy`) on
-  - [ ] sourcify
-
-    ```sh
-    just contracts-verify-proxy-sourcify <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
-    ```
-
-  - [ ] Etherscan
-
-    ```sh
-    just contracts-verify-proxy-etherscan <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
-    ```
-
-  The recipe encodes the proxy constructor args from these inputs.
+  ```sh
+  just contracts-verify-proxy <PROXY_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
+  ```
 
   Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
@@ -264,42 +248,26 @@ For each **new** chain, you want to deploy to, do the following:
   ```
 
 - [ ] Export the addresses of the newly deployed contracts. The deployment produces **two** contracts: the **proxy**
-  (`ERC1967Proxy`) is the ERC20 forwarder address that users interact with and that goes into `deployments.json` (it is
-  the returned `erc20ForwarderProxy`), and the **implementation** (`ERC20Forwarder`) is the logic contract the proxy
-  delegates to. They must be verified separately, against different sources.
+      (`ERC1967Proxy`) is the ERC20 forwarder address that users interact with and that goes into `deployments.json` (it is
+      the returned `erc20ForwarderProxy`), and the **implementation** (`ERC20Forwarder`) is the logic contract the proxy
+      delegates to. They must be verified separately, against different sources.
 
   ```sh
-  export FWD_ADDRESS=<PROXY_ADDRESS>
+  export PROXY_ADDRESS=<PROXY_ADDRESS>
   export IMPL_ADDRESS=<IMPLEMENTATION_ADDRESS>
   ```
 
-- [ ] Verify the **implementation** (`ERC20Forwarder`) on
-  - [ ] sourcify
+- [ ] Verify the **implementation** (`ERC20Forwarder`).
 
-    ```sh
-    just contracts-verify-impl-sourcify <IMPL_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-impl <IMPL_ADDRESS> <CHAIN>
+  ```
 
-  - [ ] Etherscan
+- [ ] Verify the **proxy** (`ERC1967Proxy`).
 
-    ```sh
-    just contracts-verify-impl-etherscan <IMPL_ADDRESS> <CHAIN>
-    ```
-
-- [ ] Verify the **proxy** (`ERC1967Proxy`) on
-  - [ ] sourcify
-
-    ```sh
-    just contracts-verify-proxy-sourcify <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
-    ```
-
-  - [ ] Etherscan
-
-    ```sh
-    just contracts-verify-proxy-etherscan <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
-    ```
-
-  The recipe encodes the proxy constructor args from these inputs.
+  ```sh
+  just contracts-verify-proxy <PROXY_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
+  ```
 
   Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
