@@ -5,7 +5,6 @@ use alloy::primitives::{Address, B256};
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::protocol_adapter_address;
-use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter::ProtocolAdapterInstance;
 use anoma_pa_evm_bindings::helpers::alchemy_url;
 use anomapay_erc20_forwarder_bindings::addresses::erc20_forwarder_deployments_map;
 use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder;
@@ -65,27 +64,11 @@ async fn versions_of_deployed_forwarders_match_the_expected_version() {
     for chain in erc20_forwarder_deployments_map().keys() {
         let existing_fwd = fwd_instance(chain).await;
 
-        let existing_pa_address = existing_fwd
-            .getProtocolAdapter()
-            .call()
+        // Deploy the current implementation to read its compiled-in version. `getVersion` is `pure`, so the bare
+        // implementation (no proxy/initialization) is enough; the initializer arguments are irrelevant here.
+        let current_fwd = erc20_forwarder::ERC20Forwarder::deploy(existing_fwd.provider())
             .await
-            .expect("Couldn't get protocol adapter");
-
-        let existing_pa_owner =
-            ProtocolAdapterInstance::new(existing_pa_address, existing_fwd.provider().clone())
-                .owner()
-                .call()
-                .await
-                .expect("Couldn't get PA owner");
-
-        let current_fwd = erc20_forwarder::ERC20Forwarder::deploy(
-            existing_fwd.provider(),
-            existing_pa_address,
-            token_transfer_id(),
-            existing_pa_owner,
-        )
-        .await
-        .expect("Couldn't deploy erc20 forwarder");
+            .expect("Couldn't deploy erc20 forwarder");
 
         let expected_version = current_fwd
             .getVersion()

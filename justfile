@@ -30,6 +30,22 @@ contracts-lint:
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
 
+# Checks that the storage layout of contracts in `src` is empty.
+# `skip` is a space-separated list of contract names to ignore (non-upgradeable bases).
+contracts-storage-check *skip:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd contracts
+    for sol in src/*.sol; do
+        name="$(basename "$sol" .sol)"
+        case " {{ skip }} " in *" $name "*) continue ;; esac
+        if [ "$(forge inspect "$name" storageLayout --json | jq '.storage == []')" != true ]; then
+            printf '{{RED}}%s has a non-empty storage layout; upgrade-safe contracts must use ERC-7201 namespaced storage.{{NORMAL}}\n' "$sol"
+            exit 1
+        fi
+    done
+    printf '{{GREEN}}All contracts in `src` use namespaced storage (empty storage layout).{{NORMAL}}\n'
+
 # Run slither on contracts
 contracts-static-analysis:
     cd contracts && slither .
@@ -46,13 +62,13 @@ contracts-fmt-check:
 
 # Run contract tests
 contracts-test *args:
-    cd contracts && forge test {{ args }}
+    cd contracts && forge test --force {{ args }}
 
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     cd contracts && forge clean && forge bind \
         --skip test --skip script \
-        --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC20ForwarderV3)$' \
+        --select '^(ERC20Forwarder|ERC20ForwarderV2)$' \
         --bindings-path ../bindings/src/generated/ \
         --module \
         --overwrite
@@ -60,11 +76,11 @@ contracts-gen-bindings:
 # Simulate deployment (dry-run)
 contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "EMERGENCY_COMMITTEE: $EMERGENCY_COMMITTEE"
+    @echo "OWNER: $OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
-        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
+        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $OWNER \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy ERC20 forwarder
@@ -72,21 +88,26 @@ contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
-        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
+        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $OWNER \
          --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate deployment v2 (dry-run)
-contracts-simulate-v2 logic-ref-v2 chain protocol-adapter-v2 erc20-forwarder-v1 *args:
-    @echo "EMERGENCY_COMMITTEE: $EMERGENCY_COMMITTEE"
-    cd contracts && forge script script/DeployERC20ForwarderV2.s.sol:DeployERC20ForwarderV2 \
-        --sig "run(address,bytes32,address,address)" {{protocol-adapter-v2}} {{logic-ref-v2}} $EMERGENCY_COMMITTEE {{erc20-forwarder-v1}} \
-        --rpc-url {{chain}} {{ args }}
+# Simulate upgrade (dry-run)
+contracts-simulate-upgrade proxy logic-ref-v2 chain *args:
+    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
+    @echo "OWNER: $OWNER"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/UpgradeERC20Forwarder.s.sol:UpgradeERC20Forwarder \
+        --sig "run(bool,address,bytes32)" $IS_TEST_DEPLOYMENT {{proxy}} {{logic-ref-v2}} \
+        --rpc-url {{chain}} --sender $OWNER {{ args }}
 
-# Deploy ERC20 forwarder v2
-contracts-deploy-v2 deployer logic-ref-v2 chain protocol-adapter-v2 erc20-forwarder-v1 *args:
-    cd contracts && forge script script/DeployERC20ForwarderV2.s.sol:DeployERC20ForwarderV2 \
-        --sig "run(address,bytes32,address,address)" {{protocol-adapter-v2}} {{logic-ref-v2}} $EMERGENCY_COMMITTEE {{erc20-forwarder-v1}} \
-        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+# Upgrade ERC20 forwarder to the V2 implementation
+contracts-upgrade deployer proxy logic-ref-v2 chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/UpgradeERC20Forwarder.s.sol:UpgradeERC20Forwarder \
+        --sig "run(bool,address,bytes32)" $IS_TEST_DEPLOYMENT {{proxy}} {{logic-ref-v2}} \
+         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
@@ -188,6 +209,8 @@ all-test:
 # Prerequisites check (mirrors CI)
 all-check:
     git status
+    @echo "==> Checking storage layouts..."
+    @just contracts-storage-check
     @echo "==> Static analysis with slither..."
     @just contracts-static-analysis
     @echo "==> Checking formatting..."

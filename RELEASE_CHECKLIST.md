@@ -50,10 +50,10 @@ We distinguish between three release cases:
   export IS_TEST_DEPLOYMENT=false
   ```
 
-- [ ] Check that the emergency committee address is set up correctly and export it with
+- [ ] Check that the owner address is set up correctly and export it with
 
   ```sh
-  export EMERGENCY_COMMITTEE=<ADDRESS>
+  export OWNER=<ADDRESS>
   ```
 
 - [ ] Set the Alchemy RPC provider by exporting
@@ -202,10 +202,10 @@ For each chain, you want to deploy to, do the following:
   export IS_TEST_DEPLOYMENT=false
   ```
 
-- [ ] Check that the emergency committee address is set up correctly and export it with
+- [ ] Check that the owner address is set up correctly and export it with
 
   ```sh
-  export EMERGENCY_COMMITTEE=<ADDRESS>
+  export OWNER=<ADDRESS>
   ```
 
 - [ ] Set the Alchemy RPC provider by exporting
