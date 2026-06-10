@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
-import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.3/src/interfaces/IForwarder.sol";
 import {IVersion} from "anoma-forwarder-bases-1.0.0-rc.3/src/interfaces/IVersion.sol";
 import {Test, Vm, stdError} from "forge-std-1.16.1/src/Test.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.1/src/Upgrades.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 import {
     IPermit2,
@@ -23,11 +23,12 @@ contract ERC20ForwarderTest is Test {
     using Permit2Signature for Vm;
 
     uint256 internal constant _GENERIC_INPUT_OFFSET = 3 * 32;
-
-    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
     uint128 internal constant _TRANSFER_AMOUNT = 1000;
     bytes internal constant _EXPECTED_OUTPUT = "";
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(uint256(0));
+
+    address internal immutable _PA_OWNER = makeAddr("pa owner");
+    address internal immutable _FORWARDER_OWNER = makeAddr("forwarder owner");
 
     bytes32 internal _logicRef;
 
@@ -35,7 +36,7 @@ contract ERC20ForwarderTest is Test {
     uint256 internal _alicePrivateKey;
 
     ProtocolAdapterMock internal _pa;
-    IForwarder internal _fwd;
+    ERC20Forwarder internal _fwd;
     IPermit2 internal _permit2;
     ERC20Example internal _erc20;
     ERC20WithFeeExample internal _erc20FeeAdd;
@@ -414,14 +415,13 @@ contract ERC20ForwarderTest is Test {
         _logicRef = bytes32(uint256(1));
 
         // Deploy the protocol adapter
-        _pa = new ProtocolAdapterMock(_EMERGENCY_COMMITTEE);
+        _pa = new ProtocolAdapterMock(_PA_OWNER);
 
         // Deploy the ERC20 forwarder
-        _fwd = IForwarder(
-            address(
-                new ERC20Forwarder({
-                    protocolAdapter: address(_pa), emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _logicRef
-                })
+        _fwd = ERC20Forwarder(
+            Upgrades.deployUUPSProxy(
+                "ERC20Forwarder.sol:ERC20Forwarder",
+                abi.encodeCall(ERC20Forwarder.initialize, (address(_pa), _logicRef, _FORWARDER_OWNER))
             )
         );
     }

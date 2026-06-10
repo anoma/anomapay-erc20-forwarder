@@ -6,6 +6,13 @@ checksum = "a3b6bc661be858c7c27f60a1708cbebe8c71034b4cc1e9fe270d0a05b069352f"
 integrity = "bce03af7ada1eee21a7fff393f238bcd7cd75a022a4db55ffb6b0dbb32433d35"
 
 [[dependencies]]
+name = "@openzeppelin-contracts-upgradeable"
+version = "5.6.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts-upgradeable/5_6_1_15-03-2026_09:19:56_contracts-upgradeable.zip"
+checksum = "f6257dbc993c2499fe08fdc93f66e12459fe3458ee62ce716b92e1d95ee0b504"
+integrity = "2f539b6241258fc3c127c97225b3cb1b5e9225e422d2c1cb233c52a6f5c29002"
+
+[[dependencies]]
 name = "anoma-forwarder-bases"
 version = "1.0.0-rc.3"
 url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/1_0_0-rc_3_11-06-2026_11:53:46_contracts.zip"
@@ -17,7 +24,7 @@ name = "anoma-pa-evm"
 version = "1.2.0-rc.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/1_2_0-rc_1_22-05-2026_10:05:03_contracts.zip"
 checksum = "c68d08430c58681669d9442b314afe130425008f06e888d9fa0dc2f948f70e12"
-integrity = "e0d7bc6e5598ebf010eb18363e76dffcfa528211edff44eadacd44fd5c70646c"
+integrity = "f902c3f0e9ac88f0ce99b3de94b8b7e42315a95cbb6deee045f3ede7b5bc542f"
 
 [[dependencies]]
 name = "forge-std"
@@ -25,6 +32,13 @@ version = "1.16.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_16_1_08-05-2026_08:51:16_forge-std-1.16.zip"
 checksum = "839b61832925c7152c7b6dffbfa4998d9e606211179bd8f604733124e8a7cb57"
 integrity = "60e55d10150354ca4a1e2985c5456c834b92b82ef85ab0e1d92a7786cddbd219"
+
+[[dependencies]]
+name = "openzeppelin-foundry-upgrades"
+version = "0.4.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/openzeppelin-foundry-upgrades/0_4_1_01-06-2026_15:47:35_oz-pkg.zip"
+checksum = "934bc0ecb0f2509c7392c4a7375e6f4a58e532028c16ec42525d77ef9a1abd95"
+integrity = "f129a0da6ad83c1e65109daeca385eaafd66d8831dba728f2e35aac67a0f7b71"
 
 [[dependencies]]
 name = "solady"
@@ -38,4 +52,4 @@ name = "uniswap-permit2"
 version = "0x000000000022D473030F116dDEE9F6B43aC78BA3"
 url = "https://soldeer-revisions.s3.amazonaws.com/uniswap-permit2/0x000000000022D473030F116dDEE9F6B43aC78BA3_11-11-2024_08:00:23_permit2.zip"
 checksum = "d4fb59a5d0b9bb91c6800b55a0fa4037dcf4d2a17e55750ffb369572a4dd5906"
-integrity = "775a6885592b17bdc4556ca41127bf30c0d117264a6a494e37865f1ca28bcb0c"
+integrity = "d27a9b2a135f1a5e049607461d15fa24b55c21d584f84a6752a975789772a5de"

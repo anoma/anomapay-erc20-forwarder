@@ -50,10 +50,10 @@ We distinguish between three release cases:
   export IS_TEST_DEPLOYMENT=false
   ```
 
-- [ ] Check that the emergency committee address is set up correctly and export it with
+- [ ] Check that the owner address is set up correctly and export it with
 
   ```sh
-  export EMERGENCY_COMMITTEE=<ADDRESS>
+  export OWNER=<ADDRESS>
   ```
 
 - [ ] Set the Alchemy RPC provider by exporting
@@ -97,26 +97,29 @@ For each chain, you want to deploy to, do the following:
   just contracts-deploy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
-- [ ] Export the address of the newly deployed ERC20 forwarder contract with
+- [ ] Export the addresses of the newly deployed contracts. The deployment produces **two** contracts: the **proxy**
+      (`ERC1967Proxy`) is the ERC20 forwarder address that users interact with and that goes into `deployments.json` (it is
+      the returned `erc20ForwarderProxy`), and the **implementation** (`ERC20Forwarder`) is the logic contract the proxy
+      delegates to. They must be verified separately, against different sources.
 
   ```sh
-  export FWD_ADDRESS=<ADDRESS>
+  export PROXY_ADDRESS=<PROXY_ADDRESS>
+  export IMPL_ADDRESS=<IMPLEMENTATION_ADDRESS>
   ```
 
-- [ ] Verify the contract on
-  - [ ] sourcify
+- [ ] Verify the **implementation** (`ERC20Forwarder`)
 
-    ```sh
-    just contracts-verify-sourcify <FWD_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-impl <IMPL_ADDRESS> <CHAIN>
+  ```
 
-  - [ ] Etherscan
+- [ ] Verify the **proxy** (`ERC1967Proxy`). The recipe encodes the proxy constructor args from these inputs.
 
-    ```sh
-    just contracts-verify-etherscan <FWD_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-proxy <PROXY_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
+  ```
 
-  and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
+  Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
 ### 5. Update the Deployments Map and Create a new `contracts` and `bindings` GitHub Release
 
@@ -202,10 +205,10 @@ For each chain, you want to deploy to, do the following:
   export IS_TEST_DEPLOYMENT=false
   ```
 
-- [ ] Check that the emergency committee address is set up correctly and export it with
+- [ ] Check that the owner address is set up correctly and export it with
 
   ```sh
-  export EMERGENCY_COMMITTEE=<ADDRESS>
+  export OWNER=<ADDRESS>
   ```
 
 - [ ] Set the Alchemy RPC provider by exporting
@@ -244,26 +247,29 @@ For each **new** chain, you want to deploy to, do the following:
   just contracts-deploy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
-- [ ] Export the address of the newly deployed ERC20 forwarder contract with
+- [ ] Export the addresses of the newly deployed contracts. The deployment produces **two** contracts: the **proxy**
+      (`ERC1967Proxy`) is the ERC20 forwarder address that users interact with and that goes into `deployments.json` (it is
+      the returned `erc20ForwarderProxy`), and the **implementation** (`ERC20Forwarder`) is the logic contract the proxy
+      delegates to. They must be verified separately, against different sources.
 
   ```sh
-  export FWD_ADDRESS=<ADDRESS>
+  export PROXY_ADDRESS=<PROXY_ADDRESS>
+  export IMPL_ADDRESS=<IMPLEMENTATION_ADDRESS>
   ```
 
-- [ ] Verify the contract on
-  - [ ] sourcify
+- [ ] Verify the **implementation** (`ERC20Forwarder`).
 
-    ```sh
-    just contracts-verify-sourcify <FWD_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-impl <IMPL_ADDRESS> <CHAIN>
+  ```
 
-  - [ ] Etherscan
+- [ ] Verify the **proxy** (`ERC1967Proxy`).
 
-    ```sh
-    just contracts-verify-etherscan <FWD_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-proxy <PROXY_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
+  ```
 
-  and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
+  Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
 ### 4. Update the Deployments Map and Create a new `bindings` GitHub Release
 

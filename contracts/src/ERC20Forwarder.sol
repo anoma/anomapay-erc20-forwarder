@@ -3,9 +3,7 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/utils/SafeERC20.sol";
-import {
-    EmergencyMigratableForwarderBase
-} from "anoma-forwarder-bases-1.0.0-rc.3/src/EmergencyMigratableForwarderBase.sol";
+import {ForwarderBaseUpgradeable} from "anoma-forwarder-bases-1.0.0-rc.3/src/ForwarderBaseUpgradeable.sol";
 import {IVersion} from "anoma-forwarder-bases-1.0.0-rc.3/src/interfaces/IVersion.sol";
 import {
     IPermit2,
@@ -20,7 +18,7 @@ import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 /// - wrap ERC20 tokens into ERC20 resources using Uniswap's Permit2 and
 /// - unwrap ERC20 tokens from ERC20 resources.
 /// @custom:security-contact security@anoma.foundation
-contract ERC20Forwarder is IVersion, EmergencyMigratableForwarderBase {
+contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using SafeERC20 for IERC20;
 
@@ -83,21 +81,34 @@ contract ERC20Forwarder is IVersion, EmergencyMigratableForwarderBase {
     error BalanceMismatch(uint256 expected, uint256 actual);
     error InvalidInputLength(uint256 expected, uint256 actual);
 
+    /// @notice Disables the initializers on the implementation contract to prevent it from being left uninitialized.
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that can forward calls.
-    /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
-    /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter has
-    /// been stopped.
-    constructor(address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
-        EmergencyMigratableForwarderBase(protocolAdapter, logicRef, emergencyCommittee)
-    {}
+    /// @param logicRef The reference to the ERC20 resource logic function triggering the forward calls.
+    /// @param initialOwner The initial owner of the contract having the upgrade authority.
+    function initialize( /* solhint-disable-line comprehensive-interface*/
+        address protocolAdapter,
+        bytes32 logicRef,
+        address initialOwner
+    )
+        external
+        virtual
+        initializer
+    {
+        __ForwarderBaseUpgradeable_init({
+            protocolAdapter: protocolAdapter, logicRef: logicRef, initialOwner: initialOwner
+        });
+    }
 
     /// @inheritdoc IVersion
     function getVersion() external pure override returns (bytes32 version) {
         version = "1.1.0-rc.2";
     }
-
-    // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
 
     /// @notice Forwards a call wrapping or unwrapping ERC20 tokens based on the provided input.
     /// @param input Contains data to
@@ -130,8 +141,6 @@ contract ERC20Forwarder is IVersion, EmergencyMigratableForwarderBase {
 
         output = "";
     }
-
-    // slither-disable-end dead-code
 
     /// @notice Wraps an ERC20 token and transfers funds from the user that must have authorized the call using
     /// `Permit2.permitWitnessTransferFrom`.
@@ -177,14 +186,6 @@ contract ERC20Forwarder is IVersion, EmergencyMigratableForwarderBase {
         // `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
         // slither-disable-next-line reentrancy-events
         emit Unwrapped({token: token, to: data.receiver, amount: amount});
-    }
-
-    /// @notice Forwards an emergency call wrapping or unwrapping ERC20 tokens based on the provided input.
-    /// @param input Contains data to withdraw or send ERC20 tokens from or to a user, respectively.
-    /// @return output The output of the emergency call.
-    /// @dev This function internally uses the `SafeERC20` library.
-    function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
-        output = _forwardCall(input);
     }
 
     /// @notice Checks that the length of an input is the expected length.
