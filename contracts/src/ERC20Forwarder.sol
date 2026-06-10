@@ -110,8 +110,6 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
         version = "1.1.0-rc.2";
     }
 
-    // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
-
     /// @notice Forwards a call wrapping or unwrapping ERC20 tokens based on the provided input.
     /// @param input Contains data to
     /// - wrap ERC20 tokens into resources using Uniswap Permit2 and
@@ -143,8 +141,6 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
 
         output = "";
     }
-
-    // slither-disable-end dead-code
 
     /// @notice Wraps an ERC20 token and transfers funds from the user that must have authorized the call using
     /// `Permit2.permitWitnessTransferFrom`.
