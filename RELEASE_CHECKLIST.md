@@ -97,26 +97,45 @@ For each chain, you want to deploy to, do the following:
   just contracts-deploy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
-- [ ] Export the address of the newly deployed ERC20 forwarder contract with
+- [ ] Export the addresses of the newly deployed contracts. The deployment produces **two** contracts: the **proxy**
+  (`ERC1967Proxy`) is the ERC20 forwarder address that users interact with and that goes into `deployments.json` (it is
+  the returned `erc20ForwarderProxy`), and the **implementation** (`ERC20Forwarder`) is the logic contract the proxy
+  delegates to. They must be verified separately, against different sources.
 
   ```sh
-  export FWD_ADDRESS=<ADDRESS>
+  export FWD_ADDRESS=<PROXY_ADDRESS>
+  export IMPL_ADDRESS=<IMPLEMENTATION_ADDRESS>
   ```
 
-- [ ] Verify the contract on
+- [ ] Verify the **implementation** (`ERC20Forwarder`) on
   - [ ] sourcify
 
     ```sh
-    just contracts-verify-sourcify <FWD_ADDRESS> <CHAIN>
+    just contracts-verify-impl-sourcify <IMPL_ADDRESS> <CHAIN>
     ```
 
   - [ ] Etherscan
 
     ```sh
-    just contracts-verify-etherscan <FWD_ADDRESS> <CHAIN>
+    just contracts-verify-impl-etherscan <IMPL_ADDRESS> <CHAIN>
     ```
 
-  and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
+- [ ] Verify the **proxy** (`ERC1967Proxy`) on
+  - [ ] sourcify
+
+    ```sh
+    just contracts-verify-proxy-sourcify <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN>
+    ```
+
+  - [ ] Etherscan
+
+    ```sh
+    just contracts-verify-proxy-etherscan <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN>
+    ```
+
+  The recipe encodes the proxy constructor args from these inputs and `$OWNER`.
+
+  Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
 ### 5. Update the Deployments Map and Create a new `contracts` and `bindings` GitHub Release
 
@@ -244,26 +263,45 @@ For each **new** chain, you want to deploy to, do the following:
   just contracts-deploy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
-- [ ] Export the address of the newly deployed ERC20 forwarder contract with
+- [ ] Export the addresses of the newly deployed contracts. The deployment produces **two** contracts: the **proxy**
+  (`ERC1967Proxy`) is the ERC20 forwarder address that users interact with and that goes into `deployments.json` (it is
+  the returned `erc20ForwarderProxy`), and the **implementation** (`ERC20Forwarder`) is the logic contract the proxy
+  delegates to. They must be verified separately, against different sources.
 
   ```sh
-  export FWD_ADDRESS=<ADDRESS>
+  export FWD_ADDRESS=<PROXY_ADDRESS>
+  export IMPL_ADDRESS=<IMPLEMENTATION_ADDRESS>
   ```
 
-- [ ] Verify the contract on
+- [ ] Verify the **implementation** (`ERC20Forwarder`) on
   - [ ] sourcify
 
     ```sh
-    just contracts-verify-sourcify <FWD_ADDRESS> <CHAIN>
+    just contracts-verify-impl-sourcify <IMPL_ADDRESS> <CHAIN>
     ```
 
   - [ ] Etherscan
 
     ```sh
-    just contracts-verify-etherscan <FWD_ADDRESS> <CHAIN>
+    just contracts-verify-impl-etherscan <IMPL_ADDRESS> <CHAIN>
     ```
 
-  and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
+- [ ] Verify the **proxy** (`ERC1967Proxy`) on
+  - [ ] sourcify
+
+    ```sh
+    just contracts-verify-proxy-sourcify <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN>
+    ```
+
+  - [ ] Etherscan
+
+    ```sh
+    just contracts-verify-proxy-etherscan <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN>
+    ```
+
+  The recipe encodes the proxy constructor args from these inputs and `$OWNER`.
+
+  Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
 ### 4. Update the Deployments Map and Create a new `bindings` GitHub Release
 

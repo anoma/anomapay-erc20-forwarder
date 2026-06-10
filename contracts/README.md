@@ -109,7 +109,7 @@ forge doc
 To simulate deployment on sepolia, run
 
 ```sh
-forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
+forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20Forwarder \
   --sig "run(bool,address,bytes32,address)" <IS_TEST_DEPLOYMENT> <PROTOCOL_ADAPTER> <CARRIER_LOGIC_REF> <EMERGENCY_COMMITTEE> \
   --rpc-url sepolia
 ```

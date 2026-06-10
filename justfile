@@ -79,7 +79,7 @@ contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
     @echo "OWNER: $OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
+    cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20Forwarder \
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $OWNER \
         --rpc-url {{chain}} {{ args }}
 
@@ -87,7 +87,7 @@ contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
 contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
+    cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20Forwarder \
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $OWNER \
          --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
@@ -97,7 +97,7 @@ contracts-simulate-upgrade proxy logic-ref-v2 chain *args:
     @echo "OWNER: $OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/UpgradeERC20Forwarder.s.sol:UpgradeERC20Forwarder \
+    cd contracts && forge script script/UpgradeERC20ForwarderProxy.s.sol:UpgradeERC20Forwarder \
         --sig "run(bool,address,bytes32)" $IS_TEST_DEPLOYMENT {{proxy}} {{logic-ref-v2}} \
         --rpc-url {{chain}} --sender $OWNER {{ args }}
 
@@ -105,30 +105,54 @@ contracts-simulate-upgrade proxy logic-ref-v2 chain *args:
 contracts-upgrade deployer proxy logic-ref-v2 chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/UpgradeERC20Forwarder.s.sol:UpgradeERC20Forwarder \
+    cd contracts && forge script script/UpgradeERC20ForwarderProxy.s.sol:UpgradeERC20Forwarder \
         --sig "run(bool,address,bytes32)" $IS_TEST_DEPLOYMENT {{proxy}} {{logic-ref-v2}} \
          --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Verify on sourcify
-contracts-verify-sourcify address chain *args:
+# Verify the implementation on sourcify
+contracts-verify-impl-sourcify address chain *args:
     cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} \
         src/ERC20Forwarder.sol:ERC20Forwarder \
         --chain {{chain}} --verifier sourcify --watch {{ args }}
 
-# Verify on etherscan
-contracts-verify-etherscan address chain *args:
+# Verify the implementation on etherscan
+contracts-verify-impl-etherscan address chain *args:
     cd contracts && forge verify-contract {{address}} \
         src/ERC20Forwarder.sol:ERC20Forwarder \
         --chain {{chain}} --verifier etherscan --watch {{ args }}
 
-# Verify on custom explorer
-contracts-verify-custom address chain verifier-url *args:
+# Verify the implementation on a custom explorer
+contracts-verify-impl-custom address chain verifier-url *args:
     cd contracts && forge verify-contract {{address}} \
         src/ERC20Forwarder.sol:ERC20Forwarder \
         --chain {{chain}} --verifier-url {{verifier-url}}  --watch {{ args }}
 
-# Verify on both sourcify and etherscan
-contracts-verify address chain: (contracts-verify-sourcify address chain) (contracts-verify-etherscan address chain)
+# Verify the implementation on both sourcify and etherscan
+contracts-verify-impl address chain: (contracts-verify-impl-sourcify address chain) (contracts-verify-impl-etherscan address chain)
+
+# Verify the ERC1967 proxy on sourcify (encodes the constructor args from the deploy inputs; uses $OWNER)
+contracts-verify-proxy-sourcify proxy implementation protocol-adapter logic-ref chain *args:
+    cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{proxy}} \
+        dependencies/@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy \
+        --chain {{chain}} --verifier sourcify --watch \
+        --constructor-args "$(cast abi-encode 'c(address,bytes)' {{implementation}} "$(cast calldata 'initialize(address,bytes32,address)' {{protocol-adapter}} {{logic-ref}} $OWNER)")" {{ args }}
+
+# Verify the ERC1967 proxy on etherscan (encodes the constructor args from the deploy inputs; uses $OWNER)
+contracts-verify-proxy-etherscan proxy implementation protocol-adapter logic-ref chain *args:
+    cd contracts && forge verify-contract {{proxy}} \
+        dependencies/@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy \
+        --chain {{chain}} --verifier etherscan --watch \
+        --constructor-args "$(cast abi-encode 'c(address,bytes)' {{implementation}} "$(cast calldata 'initialize(address,bytes32,address)' {{protocol-adapter}} {{logic-ref}} $OWNER)")" {{ args }}
+
+# Verify the ERC1967 proxy on a custom explorer (encodes the constructor args from the deploy inputs; uses $OWNER)
+contracts-verify-proxy-custom proxy implementation protocol-adapter logic-ref chain verifier-url *args:
+    cd contracts && forge verify-contract {{proxy}} \
+        dependencies/@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy \
+        --chain {{chain}} --verifier-url {{verifier-url}}  --watch \
+        --constructor-args "$(cast abi-encode 'c(address,bytes)' {{implementation}} "$(cast calldata 'initialize(address,bytes32,address)' {{protocol-adapter}} {{logic-ref}} $OWNER)")" {{ args }}
+
+# Verify the ERC1967 proxy on both sourcify and etherscan
+contracts-verify-proxy proxy implementation protocol-adapter logic-ref chain: (contracts-verify-proxy-sourcify proxy implementation protocol-adapter logic-ref chain) (contracts-verify-proxy-etherscan proxy implementation protocol-adapter logic-ref chain)
 
 # Publish contracts
 contracts-publish version *args:
