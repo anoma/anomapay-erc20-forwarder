@@ -124,16 +124,16 @@ For each chain, you want to deploy to, do the following:
   - [ ] sourcify
 
     ```sh
-    just contracts-verify-proxy-sourcify <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN>
+    just contracts-verify-proxy-sourcify <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
     ```
 
   - [ ] Etherscan
 
     ```sh
-    just contracts-verify-proxy-etherscan <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN>
+    just contracts-verify-proxy-etherscan <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
     ```
 
-  The recipe encodes the proxy constructor args from these inputs and `$OWNER`.
+  The recipe encodes the proxy constructor args from these inputs.
 
   Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
@@ -290,16 +290,16 @@ For each **new** chain, you want to deploy to, do the following:
   - [ ] sourcify
 
     ```sh
-    just contracts-verify-proxy-sourcify <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN>
+    just contracts-verify-proxy-sourcify <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
     ```
 
   - [ ] Etherscan
 
     ```sh
-    just contracts-verify-proxy-etherscan <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN>
+    just contracts-verify-proxy-etherscan <FWD_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
     ```
 
-  The recipe encodes the proxy constructor args from these inputs and `$OWNER`.
+  The recipe encodes the proxy constructor args from these inputs.
 
   Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
