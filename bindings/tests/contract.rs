@@ -7,7 +7,7 @@ use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::protocol_adapter_address;
 use anoma_pa_evm_bindings::helpers::alchemy_url;
 use anomapay_erc20_forwarder_bindings::addresses::erc20_forwarder_deployments_map;
-use anomapay_erc20_forwarder_bindings::contract::{erc20_forwarder, erc1967_implementation};
+use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder_proxy;
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder;
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance;
 
@@ -19,7 +19,7 @@ fn token_transfer_id() -> B256 {
 async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
     // Iterate over all supported chains
     for chain in erc20_forwarder_deployments_map().keys() {
-        let fwd_referenced_protocol_adapter: Address = fwd_instance(chain)
+        let fwd_referenced_protocol_adapter: Address = fwd_proxy_instance(chain)
             .await
             .getProtocolAdapter()
             .call()
@@ -41,7 +41,7 @@ async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
 async fn deployed_forwarders_reference_the_expected_logic_ref() {
     // Iterate over all supported chains
     for chain in erc20_forwarder_deployments_map().keys() {
-        let actual_logic_ref = fwd_instance(chain)
+        let actual_logic_ref = fwd_proxy_instance(chain)
             .await
             .getLogicRef()
             .call()
@@ -61,16 +61,17 @@ async fn deployed_forwarders_reference_the_expected_logic_ref() {
 #[tokio::test]
 async fn proxies_point_to_the_deployed_implementation() {
     for (chain, deployment) in erc20_forwarder_deployments_map() {
-        let provider = anvil_fork(&chain).await;
-
-        let onchain_implementation = erc1967_implementation(&provider, deployment.proxy)
+        let onchain_implementation = fwd_proxy_instance(&chain)
             .await
-            .expect("Couldn't read the ERC-1967 implementation slot");
+            .getImplementation()
+            .call()
+            .await
+            .expect("Couldn't get the implementation address");
 
-        // Check that the proxy's implementation slot matches the implementation recorded in deployments.json.
+        // Check that the proxy's implementation matches the one recorded in deployments.json.
         assert_eq!(
             onchain_implementation, deployment.implementation,
-            "ERC-1967 implementation mismatch on network '{chain}': the proxy points to {onchain_implementation}, but deployments.json records {}.",
+            "implementation mismatch on network '{chain}': the proxy points to {onchain_implementation}, but deployments.json records {}.",
             deployment.implementation
         );
     }
@@ -115,8 +116,10 @@ async fn anvil_fork(chain: &NamedChain) -> DynProvider {
         .erased()
 }
 
-async fn fwd_instance(chain: &NamedChain) -> ERC20ForwarderInstance<DynProvider> {
-    erc20_forwarder(&anvil_fork(chain).await).await.unwrap()
+async fn fwd_proxy_instance(chain: &NamedChain) -> ERC20ForwarderInstance<DynProvider> {
+    erc20_forwarder_proxy(&anvil_fork(chain).await)
+        .await
+        .unwrap()
 }
 
 fn decode_bytes32_to_utf8(encoded_string: B256) -> String {
