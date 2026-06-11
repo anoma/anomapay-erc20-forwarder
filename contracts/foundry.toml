@@ -23,7 +23,7 @@ libs = ["dependencies"]
 auto_detect_remappings = false
 remappings = [
     "@openzeppelin-contracts-5.6.1/=dependencies/@openzeppelin-contracts-5.6.1/",
-    "anoma-forwarder-bases-1.0.0-rc.2/=dependencies/anoma-forwarder-bases-1.0.0-rc.2/",
+    "anoma-forwarder-bases-1.0.0-rc.3/=dependencies/anoma-forwarder-bases-1.0.0-rc.3/",
     "anoma-pa-evm-1.2.0-rc.1/=dependencies/anoma-pa-evm-1.2.0-rc.1/",
     "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-1.2.0-rc.1/dependencies/elliptic-curve-solidity-0.2.5/",
     "forge-std-1.16.1/=dependencies/forge-std-1.16.1/",
@@ -41,7 +41,7 @@ ignored_warnings_from = [
 
 [dependencies]
 "@openzeppelin-contracts" = "5.6.1"
-"anoma-forwarder-bases" = "1.0.0-rc.2"
+"anoma-forwarder-bases" = "1.0.0-rc.3"
 "anoma-pa-evm" = "1.2.0-rc.1"
 "forge-std" = "1.16.1"
 "solady" = "0.1.26"
