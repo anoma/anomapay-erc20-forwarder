@@ -1,6 +1,6 @@
 [package]
 name = "anomapay-erc20-forwarder-bindings"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 description = "The AnomaPay ERC20 forwarder contract bindings and deployments."
 keywords.workspace = true
 authors.workspace = true
