@@ -78,7 +78,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
             deadline: Time.timestamp() + 5 minutes
         });
 
-        (_defaultPermitSigR, _defaultPermitSigS, _defaultPermitSigV) = vm.permitWitnessTransferFromSignature({
+        (bytes32 r, bytes32 s, uint8 v) = vm.permitWitnessTransferFromSignature({
             domainSeparator: _permit2.DOMAIN_SEPARATOR(),
             permit: _defaultPermit,
             privateKey: _alicePrivateKey,
@@ -99,9 +99,9 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
                 deadline: _defaultPermit.deadline,
                 owner: _alice,
                 actionTreeRoot: _ACTION_TREE_ROOT,
-                r: _defaultPermitSigR,
-                s: _defaultPermitSigS,
-                v: _defaultPermitSigV
+                r: r,
+                s: s,
+                v: v
             })
         );
 

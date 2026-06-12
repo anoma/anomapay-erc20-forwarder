@@ -42,9 +42,6 @@ contract ERC20ForwarderTest is Test {
     ERC20WithFeeExample internal _erc20FeeSub;
 
     ISignatureTransfer.PermitTransferFrom internal _defaultPermit;
-    bytes32 internal _defaultPermitSigR;
-    bytes32 internal _defaultPermitSigS;
-    uint8 internal _defaultPermitSigV;
     bytes internal _defaultWrapInput;
     bytes internal _defaultUnwrapInput;
 
@@ -85,7 +82,7 @@ contract ERC20ForwarderTest is Test {
             deadline: Time.timestamp() + 5 minutes
         });
 
-        (_defaultPermitSigR, _defaultPermitSigS, _defaultPermitSigV) = vm.permitWitnessTransferFromSignature({
+        (bytes32 r, bytes32 s, uint8 v) = vm.permitWitnessTransferFromSignature({
             domainSeparator: _permit2.DOMAIN_SEPARATOR(),
             permit: _defaultPermit,
             privateKey: _alicePrivateKey,
@@ -106,9 +103,9 @@ contract ERC20ForwarderTest is Test {
                 deadline: _defaultPermit.deadline,
                 owner: _alice,
                 actionTreeRoot: _ACTION_TREE_ROOT,
-                r: _defaultPermitSigR,
-                s: _defaultPermitSigS,
-                v: _defaultPermitSigV
+                r: r,
+                s: s,
+                v: v
             })
         );
 
