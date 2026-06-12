@@ -2,28 +2,17 @@
 pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
-import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
 import {ForwarderBase} from "anoma-forwarder-bases-1.0.0-rc.3/src/ForwarderBase.sol";
 import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.3/src/interfaces/IForwarder.sol";
 import {NullifierSet} from "anoma-pa-evm-1.2.0-rc.1/src/state/NullifierSet.sol";
-import {Vm} from "forge-std-1.16.1/src/Test.sol";
-import {
-    ISignatureTransfer
-} from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
 
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
 import {ERC20ForwarderV3} from "../src/drafts/ERC20ForwarderV3.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
-import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
-import {ERC20Example, ERC20WithFeeExample} from "../test/examples/ERC20.e.sol";
 import {ERC20ForwarderTest} from "./ERC20Forwarder.t.sol";
-import {Permit2Signature} from "./libs/Permit2Signature.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 
 contract ERC20ForwarderV3Test is ERC20ForwarderTest {
-    using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
-    using Permit2Signature for Vm;
-
     bytes32 internal constant _NULLIFIER = bytes32(type(uint256).max);
 
     bytes32 internal _logicRefV1;
@@ -42,99 +31,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
     bytes internal _defaultMigrateV2Input;
 
     function setUp() public override {
-        _alicePrivateKey = 0xc522337787f3037e9d0dcba4dc4c0e3d4eb7b1c65598d51c425574e8ce64d140;
-        _alice = vm.addr(_alicePrivateKey);
-
-        // Deploy token and mint for alice
-        _erc20 = new ERC20Example();
-        _erc20FeeAdd = new ERC20WithFeeExample({isFeeAdded: true});
-        _erc20FeeSub = new ERC20WithFeeExample({isFeeAdded: false});
-
-        // Get the Permit2 contract
-        _permit2 = _permit2Contract();
-
-        _logicRefV1 = bytes32(uint256(1));
-        _logicRefV2 = bytes32(uint256(2));
-        _logicRefV3 = bytes32(uint256(3));
-        _logicRef = _logicRefV3;
-
-        (_paV1, _paV2, _paV3, _fwdV1) = _deployContracts();
-        _pa = _paV3;
-
-        // Stop the PAv1.
-        vm.prank(_paV1.owner());
-        _paV1.emergencyStop();
-
-        _fwdV2 = new ERC20ForwarderV2({
-            protocolAdapterV2: address(_paV2),
-            logicRefV2: _logicRefV2,
-            emergencyCommittee: _EMERGENCY_COMMITTEE,
-            erc20ForwarderV1: _fwdV1
-        });
-
-        // Stop the PAv2.
-        vm.prank(_paV2.owner());
-        _paV2.emergencyStop();
-
-        _fwdV3 = new ERC20ForwarderV3({
-            protocolAdapterV3: address(_paV3),
-            logicRefV3: _logicRefV3,
-            emergencyCommittee: _EMERGENCY_COMMITTEE,
-            erc20ForwarderV1: _fwdV1,
-            erc20ForwarderV2: _fwdV2
-        });
-        _fwd = IForwarder(address(_fwdV3));
-
-        // Set the ERC20ForwarderV2 as the emergency caller of ERC20ForwarderV1.
-        vm.prank(_EMERGENCY_COMMITTEE);
-        _fwdV1.setEmergencyCaller(address(_fwdV2));
-
-        // Set the ERC20ForwarderV3 as the emergency caller of ERC20ForwarderV2.
-        vm.prank(_EMERGENCY_COMMITTEE);
-        _fwdV2.setEmergencyCaller(address(_fwdV3));
-
-        _defaultPermit = ISignatureTransfer.PermitTransferFrom({
-            permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: _TRANSFER_AMOUNT}),
-            nonce: 123,
-            deadline: Time.timestamp() + 5 minutes
-        });
-
-        (bytes32 r, bytes32 s, uint8 v) = vm.permitWitnessTransferFromSignature({
-            domainSeparator: _permit2.DOMAIN_SEPARATOR(),
-            permit: _defaultPermit,
-            privateKey: _alicePrivateKey,
-            spender: address(_fwd),
-            witness: ERC20ForwarderPermit2.Witness(_ACTION_TREE_ROOT).hash()
-        });
-
-        _defaultWrapInput = abi.encode(
-            /*       callType */
-            ERC20Forwarder.CallType.Wrap,
-            /*          token */
-            _defaultPermit.permitted.token,
-            /*         amount */
-            _defaultPermit.permitted.amount,
-            /*      wrap data */
-            ERC20Forwarder.WrapData({
-                nonce: _defaultPermit.nonce,
-                deadline: _defaultPermit.deadline,
-                owner: _alice,
-                actionTreeRoot: _ACTION_TREE_ROOT,
-                r: r,
-                s: s,
-                v: v
-            })
-        );
-
-        _defaultUnwrapInput = abi.encode( /* callType */
-            ERC20Forwarder.CallType.Unwrap,
-            /*    token */
-            address(_erc20),
-            /*   amount */
-            _TRANSFER_AMOUNT,
-            /* unwrap data */
-            ERC20Forwarder.UnwrapData({receiver: _alice})
-        );
+        super.setUp();
 
         _defaultMigrateV1Input = abi.encode( /*  callType */
             ERC20ForwarderV3.CallTypeV3.MigrateV1,
@@ -677,6 +574,48 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
 
         assertEq(_erc20.balanceOf(address(_fwdV2)), 0);
         assertEq(_erc20.balanceOf(address(_fwdV3)), _TRANSFER_AMOUNT);
+    }
+
+    function _deployProtocolAdapterAndForwarders() internal override {
+        _logicRefV1 = bytes32(uint256(1));
+        _logicRefV2 = bytes32(uint256(2));
+        _logicRefV3 = bytes32(uint256(3));
+        _logicRef = _logicRefV3;
+
+        (_paV1, _paV2, _paV3, _fwdV1) = _deployContracts();
+        _pa = _paV3;
+
+        // Stop the PAv1.
+        vm.prank(_paV1.owner());
+        _paV1.emergencyStop();
+
+        _fwdV2 = new ERC20ForwarderV2({
+            protocolAdapterV2: address(_paV2),
+            logicRefV2: _logicRefV2,
+            emergencyCommittee: _EMERGENCY_COMMITTEE,
+            erc20ForwarderV1: _fwdV1
+        });
+
+        // Stop the PAv2.
+        vm.prank(_paV2.owner());
+        _paV2.emergencyStop();
+
+        _fwdV3 = new ERC20ForwarderV3({
+            protocolAdapterV3: address(_paV3),
+            logicRefV3: _logicRefV3,
+            emergencyCommittee: _EMERGENCY_COMMITTEE,
+            erc20ForwarderV1: _fwdV1,
+            erc20ForwarderV2: _fwdV2
+        });
+        _fwd = IForwarder(address(_fwdV3));
+
+        // Set the ERC20ForwarderV2 as the emergency caller of ERC20ForwarderV1.
+        vm.prank(_EMERGENCY_COMMITTEE);
+        _fwdV1.setEmergencyCaller(address(_fwdV2));
+
+        // Set the ERC20ForwarderV3 as the emergency caller of ERC20ForwarderV2.
+        vm.prank(_EMERGENCY_COMMITTEE);
+        _fwdV2.setEmergencyCaller(address(_fwdV3));
     }
 
     function _deployContracts()
