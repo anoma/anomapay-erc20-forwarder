@@ -42,9 +42,6 @@ contract ERC20ForwarderTest is Test {
     ERC20WithFeeExample internal _erc20FeeSub;
 
     ISignatureTransfer.PermitTransferFrom internal _defaultPermit;
-    bytes32 internal _defaultPermitSigR;
-    bytes32 internal _defaultPermitSigS;
-    uint8 internal _defaultPermitSigV;
     bytes internal _defaultWrapInput;
     bytes internal _defaultUnwrapInput;
 
@@ -54,12 +51,10 @@ contract ERC20ForwarderTest is Test {
     error InvalidNonce();
 
     function setUp() public virtual {
-        _logicRef = bytes32(uint256(1));
-
         _alicePrivateKey = 0xc522337787f3037e9d0dcba4dc4c0e3d4eb7b1c65598d51c425574e8ce64d140;
         _alice = vm.addr(_alicePrivateKey);
 
-        // Deploy token and mint for alice
+        // Deploy the tokens
         _erc20 = new ERC20Example();
         _erc20FeeAdd = new ERC20WithFeeExample({isFeeAdded: true});
         _erc20FeeSub = new ERC20WithFeeExample({isFeeAdded: false});
@@ -67,17 +62,8 @@ contract ERC20ForwarderTest is Test {
         // Get the Permit2 contract
         _permit2 = _permit2Contract();
 
-        // Deploy the protocol adapter
-        _pa = new ProtocolAdapterMock(_EMERGENCY_COMMITTEE);
-
-        // Deploy the ERC20 forwarder
-        _fwd = IForwarder(
-            address(
-                new ERC20Forwarder({
-                    protocolAdapter: address(_pa), emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _logicRef
-                })
-            )
-        );
+        // Deploy the protocol adapter(s) and forwarder(s) of the version under test
+        _deployProtocolAdapterAndForwarders();
 
         _defaultPermit = ISignatureTransfer.PermitTransferFrom({
             permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: _TRANSFER_AMOUNT}),
@@ -85,7 +71,7 @@ contract ERC20ForwarderTest is Test {
             deadline: Time.timestamp() + 5 minutes
         });
 
-        (_defaultPermitSigR, _defaultPermitSigS, _defaultPermitSigV) = vm.permitWitnessTransferFromSignature({
+        (bytes32 r, bytes32 s, uint8 v) = vm.permitWitnessTransferFromSignature({
             domainSeparator: _permit2.DOMAIN_SEPARATOR(),
             permit: _defaultPermit,
             privateKey: _alicePrivateKey,
@@ -106,9 +92,9 @@ contract ERC20ForwarderTest is Test {
                 deadline: _defaultPermit.deadline,
                 owner: _alice,
                 actionTreeRoot: _ACTION_TREE_ROOT,
-                r: _defaultPermitSigR,
-                s: _defaultPermitSigS,
-                v: _defaultPermitSigV
+                r: r,
+                s: s,
+                v: v
             })
         );
 
@@ -420,6 +406,24 @@ contract ERC20ForwarderTest is Test {
     function test_witness_structHash_complies_with_eip712() public pure {
         ERC20ForwarderPermit2.Witness memory witness = ERC20ForwarderPermit2.Witness({actionTreeRoot: bytes32(0)});
         assertEq(witness.hash(), vm.eip712HashStruct(ERC20ForwarderPermit2._WITNESS_TYPE_DEF, abi.encode(witness)));
+    }
+
+    /// @notice Deploys the protocol adapter(s) and forwarder(s) of the version under test
+    /// and assigns `_logicRef`, `_pa`, and `_fwd`.
+    function _deployProtocolAdapterAndForwarders() internal virtual {
+        _logicRef = bytes32(uint256(1));
+
+        // Deploy the protocol adapter
+        _pa = new ProtocolAdapterMock(_EMERGENCY_COMMITTEE);
+
+        // Deploy the ERC20 forwarder
+        _fwd = IForwarder(
+            address(
+                new ERC20Forwarder({
+                    protocolAdapter: address(_pa), emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _logicRef
+                })
+            )
+        );
     }
 
     function _permit2Contract() internal virtual returns (IPermit2 permit2) {
