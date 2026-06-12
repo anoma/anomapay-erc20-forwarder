@@ -18,4 +18,5 @@ dotenvy = { workspace = true }
 
 [dev-dependencies]
 anoma-pa-evm-bindings = { workspace = true }
+transfer_library = { workspace = true }
 tokio = { workspace = true }

@@ -1,7 +1,7 @@
 #[cfg(test)]
 extern crate dotenvy;
 
-use alloy::primitives::{Address, B256, b256};
+use alloy::primitives::{Address, B256};
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::protocol_adapter_address;
@@ -12,10 +12,9 @@ use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder;
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder;
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance;
 
-// The token transfer circuit verifying key taken from
-// https://github.com/anoma/anomapay-backend/blob/ec5f9bc0466feb5abf2da5ad7d9a5c365a4d0a8f/simple_transfer/transfer_library/src/lib.rs#L27.
-const TOKEN_TRANSFER_CIRCUIT_ID: B256 =
-    b256!("0xbc12323668c37c3d381ca798f11116f35fb1639d12239b29da7810df3985e7ad");
+fn token_transfer_id() -> B256 {
+    B256::from_slice(transfer_library::TOKEN_TRANSFER_ID.as_bytes())
+}
 
 #[tokio::test]
 async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
@@ -52,8 +51,10 @@ async fn deployed_forwarders_reference_the_expected_logic_ref() {
 
         // Check that the logic ref in the deployed forwarder matches the expected one from the transfer library.
         assert_eq!(
-            actual_logic_ref, TOKEN_TRANSFER_CIRCUIT_ID,
-            "Logic address mismatch on network '{chain}': expected {TOKEN_TRANSFER_CIRCUIT_ID}, actual: {actual_logic_ref}."
+            actual_logic_ref,
+            token_transfer_id(),
+            "Logic address mismatch on network '{chain}': expected {}, actual: {actual_logic_ref}.",
+            token_transfer_id()
         );
     }
 }
@@ -80,7 +81,7 @@ async fn versions_of_deployed_forwarders_match_the_expected_version() {
         let current_fwd = erc20_forwarder::ERC20Forwarder::deploy(
             existing_fwd.provider(),
             existing_pa_address,
-            TOKEN_TRANSFER_CIRCUIT_ID,
+            token_transfer_id(),
             existing_pa_owner,
         )
         .await
