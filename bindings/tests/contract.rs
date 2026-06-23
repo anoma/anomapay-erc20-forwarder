@@ -5,7 +5,7 @@ use alloy::primitives::{Address, b256};
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::protocol_adapter_address;
-use anoma_pa_evm_bindings::helpers::alchemy_url;
+use anoma_pa_evm_bindings::helpers::rpc_url;
 use anomapay_erc20_forwarder_bindings::addresses::erc20_forwarder_deployments_map;
 use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder;
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance;
@@ -56,7 +56,7 @@ async fn deployed_forwarders_reference_the_expected_logic_ref() {
 }
 
 async fn fwd_instance(chain: &NamedChain) -> ERC20ForwarderInstance<DynProvider> {
-    let rpc_url = alchemy_url(chain).unwrap();
+    let rpc_url = rpc_url(chain).unwrap();
 
     let provider = ProviderBuilder::new()
         .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url))
