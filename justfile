@@ -61,12 +61,14 @@ contracts-gen-bindings:
 contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
     @echo "EMERGENCY_COMMITTEE: $EMERGENCY_COMMITTEE"
+    @just contracts-clean
     cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy ERC20 forwarder
 contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args:
+    @just contracts-clean
     cd contracts && forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $EMERGENCY_COMMITTEE \
          --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
