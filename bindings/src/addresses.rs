@@ -37,6 +37,18 @@ pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Address> {
             NamedChain::Monad,
             address!("0x23dc44E1a1c3d5432EeC8A1c027e22ccDC0A8F54"),
         ),
+        (
+            NamedChain::StableMainnet,
+            address!("0x334E41aA1df8f521E3cC64b5fa19b666b8251CDC"), // NOTE: Non-deterministic deployment
+        ),
+        (
+            NamedChain::MegaEth,
+            address!("0x334E41aA1df8f521E3cC64b5fa19b666b8251CDC"), // NOTE: Non-deterministic deployment
+        ),
+        (
+            NamedChain::Aurora,
+            address!("0x334E41aA1df8f521E3cC64b5fa19b666b8251CDC"), // NOTE: Non-deterministic deployment
+        ),
     ])
 }
 
