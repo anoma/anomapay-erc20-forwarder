@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
 import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.4/src/interfaces/IForwarder.sol";
 import {IVersion} from "anoma-forwarder-bases-1.0.0-rc.4/src/interfaces/IVersion.sol";
+import {ERC20Example} from "anoma-forwarder-bases-1.0.0-rc.4/test/examples/ERC20Example.sol";
 import {Test, Vm, stdError} from "forge-std-1.16.1/src/Test.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 import {
@@ -13,7 +14,7 @@ import {
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
-import {ERC20Example, ERC20WithFeeExample} from "../test/examples/ERC20.e.sol";
+import {ERC20WithFeeExample} from "../test/examples/ERC20WithFeeExample.sol";
 import {Permit2Signature} from "./libs/Permit2Signature.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
