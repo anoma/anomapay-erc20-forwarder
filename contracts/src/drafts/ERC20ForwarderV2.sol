@@ -50,6 +50,9 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     error InvalidForwarderV1(address expected, address actual);
     error UnstoppedProtocolAdapterV1(address protocolAdapterV1);
 
+    /// @notice Thrown if the zero address is provided as the ERC20 forwarder during initialization.
+    error ZeroERC20ForwarderNotAllowed();
+
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapterV2 The protocol adapter v2 that can forward calls.
     /// @param logicRefV2 The reference to the logic function of the resource v2 triggering the forward calls.
@@ -62,7 +65,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         address emergencyCommittee,
         ERC20Forwarder erc20ForwarderV1
     ) ERC20Forwarder(protocolAdapterV2, logicRefV2, emergencyCommittee) {
-        require(address(erc20ForwarderV1) != address(0), ZeroNotAllowed());
+        require(address(erc20ForwarderV1) != address(0), ZeroERC20ForwarderNotAllowed());
 
         _ERC20_FORWARDER_V1 = erc20ForwarderV1;
         _PROTOCOL_ADAPTER_V1 = erc20ForwarderV1.getProtocolAdapter();
