@@ -94,7 +94,7 @@ contract ERC20Forwarder is IVersion, EmergencyMigratableForwarderBase {
 
     /// @inheritdoc IVersion
     function getVersion() external pure override returns (bytes32 version) {
-        version = "1.1.0-rc.2";
+        version = "1.1.0-rc.3";
     }
 
     // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
