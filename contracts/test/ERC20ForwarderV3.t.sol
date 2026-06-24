@@ -2,8 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
-import {ForwarderBase} from "anoma-forwarder-bases-1.0.0-rc.3/src/ForwarderBase.sol";
-import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.3/src/interfaces/IForwarder.sol";
+import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.4/src/interfaces/IForwarder.sol";
 import {NullifierSet} from "anoma-pa-evm-1.2.0-rc.1/src/state/NullifierSet.sol";
 
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
@@ -67,7 +66,7 @@ contract ERC20ForwarderV3Test is ERC20ForwarderTest {
     function test_constructor_reverts_if_the_erc20_forwarder_v2_address_is_zero() public {
         address predicted = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
-        vm.expectRevert(ForwarderBase.ZeroNotAllowed.selector, predicted);
+        vm.expectRevert(ERC20ForwarderV2.ZeroERC20ForwarderNotAllowed.selector, predicted);
         new ERC20ForwarderV3({
             protocolAdapterV3: address(_paV3),
             logicRefV3: _logicRefV3,

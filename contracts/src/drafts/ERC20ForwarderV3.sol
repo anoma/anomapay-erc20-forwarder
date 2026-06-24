@@ -63,7 +63,7 @@ contract ERC20ForwarderV3 is ERC20ForwarderV2 {
         ERC20Forwarder erc20ForwarderV1,
         ERC20ForwarderV2 erc20ForwarderV2
     ) ERC20ForwarderV2(protocolAdapterV3, logicRefV3, emergencyCommittee, erc20ForwarderV1) {
-        require(address(erc20ForwarderV2) != address(0), ZeroNotAllowed());
+        require(address(erc20ForwarderV2) != address(0), ZeroERC20ForwarderNotAllowed());
         _ERC20_FORWARDER_V2 = erc20ForwarderV2;
         _PROTOCOL_ADAPTER_V2 = erc20ForwarderV2.getProtocolAdapter();
 
