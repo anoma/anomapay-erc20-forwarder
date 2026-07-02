@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
-import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.4/src/interfaces/IForwarder.sol";
+import {IForwarder} from "anoma-forwarder-bases-1.0.0/src/interfaces/IForwarder.sol";
 import {NullifierSet} from "anoma-pa-evm-1.2.0-rc.1/src/state/NullifierSet.sol";
 
 import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";

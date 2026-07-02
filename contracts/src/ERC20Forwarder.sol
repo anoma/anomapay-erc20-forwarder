@@ -3,10 +3,8 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/utils/SafeERC20.sol";
-import {
-    EmergencyMigratableForwarderBase
-} from "anoma-forwarder-bases-1.0.0-rc.4/src/EmergencyMigratableForwarderBase.sol";
-import {IVersion} from "anoma-forwarder-bases-1.0.0-rc.4/src/interfaces/IVersion.sol";
+import {EmergencyMigratableForwarderBase} from "anoma-forwarder-bases-1.0.0/src/EmergencyMigratableForwarderBase.sol";
+import {IVersion} from "anoma-forwarder-bases-1.0.0/src/interfaces/IVersion.sol";
 import {
     IPermit2,
     ISignatureTransfer
@@ -94,7 +92,7 @@ contract ERC20Forwarder is IVersion, EmergencyMigratableForwarderBase {
 
     /// @inheritdoc IVersion
     function getVersion() external pure override returns (bytes32 version) {
-        version = "1.1.0-rc.3";
+        version = "1.1.0-rc.4";
     }
 
     // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
