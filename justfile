@@ -153,21 +153,21 @@ contracts-verify-impl address chain: (contracts-verify-impl-sourcify address cha
 # Verify the ERC1967 proxy on sourcify (encodes the constructor args from the deploy inputs)
 contracts-verify-proxy-sourcify proxy implementation protocol-adapter logic-ref owner chain *args:
     cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{proxy}} \
-        dependencies/@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy \
+        dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy \
         --chain {{chain}} --verifier sourcify --watch \
         --constructor-args "$(cast abi-encode 'c(address,bytes)' {{implementation}} "$(cast calldata 'initialize(address,bytes32,address)' {{protocol-adapter}} {{logic-ref}} {{owner}})")" {{ args }}
 
 # Verify the ERC1967 proxy on etherscan (encodes the constructor args from the deploy inputs)
 contracts-verify-proxy-etherscan proxy implementation protocol-adapter logic-ref owner chain *args:
     cd contracts && forge verify-contract {{proxy}} \
-        dependencies/@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy \
+        dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy \
         --chain {{chain}} --verifier etherscan --watch \
         --constructor-args "$(cast abi-encode 'c(address,bytes)' {{implementation}} "$(cast calldata 'initialize(address,bytes32,address)' {{protocol-adapter}} {{logic-ref}} {{owner}})")" {{ args }}
 
 # Verify the ERC1967 proxy on a custom explorer (encodes the constructor args from the deploy inputs)
 contracts-verify-proxy-custom proxy implementation protocol-adapter logic-ref owner chain verifier-url *args:
     cd contracts && forge verify-contract {{proxy}} \
-        dependencies/@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy \
+        dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy \
         --chain {{chain}} --verifier-url {{verifier-url}}  --watch \
         --constructor-args "$(cast abi-encode 'c(address,bytes)' {{implementation}} "$(cast calldata 'initialize(address,bytes32,address)' {{protocol-adapter}} {{logic-ref}} {{owner}})")" {{ args }}
 

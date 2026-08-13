@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin-contracts-5.6.1/token/ERC20/utils/SafeERC20.sol";
-import {ForwarderBaseUpgradeable} from "anoma-forwarder-bases-1.0.0/src/ForwarderBaseUpgradeable.sol";
-import {IVersion} from "anoma-forwarder-bases-1.0.0/src/interfaces/IVersion.sol";
+import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/utils/SafeERC20.sol";
+import {ForwarderBaseUpgradeable} from "anoma-forwarder-bases-2.0.0/src/ForwarderBaseUpgradeable.sol";
+import {IVersion} from "anoma-forwarder-bases-2.0.0/src/interfaces/IVersion.sol";
 import {
     IPermit2,
     ISignatureTransfer
