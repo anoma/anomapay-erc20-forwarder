@@ -76,8 +76,25 @@ contracts-gen-bindings:
         --module \
         --overwrite
 
-# Simulate deployment (dry-run)
-contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
+# Simulate the implementation deployment (dry-run)
+contracts-simulate-impl chain *args:
+    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/DeployERC20ForwarderImplementation.s.sol:DeployERC20ForwarderImplementation \
+        --sig "run(bool)" $IS_TEST_DEPLOYMENT \
+        --rpc-url {{chain}} {{ args }}
+
+# Deploy the ERC20 forwarder implementation
+contracts-deploy-impl deployer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/DeployERC20ForwarderImplementation.s.sol:DeployERC20ForwarderImplementation \
+        --sig "run(bool)" $IS_TEST_DEPLOYMENT \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the implementation and proxy deployment (dry-run)
+contracts-simulate-proxy token-transfer-circuit-id chain protocol-adapter *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
     @echo "FWD_OWNER: $FWD_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
@@ -86,8 +103,8 @@ contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $FWD_OWNER \
         --rpc-url {{chain}} {{ args }}
 
-# Deploy ERC20 forwarder
-contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args:
+# Deploy the ERC20 forwarder implementation and proxy
+contracts-deploy-proxy deployer token-transfer-circuit-id chain protocol-adapter *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \

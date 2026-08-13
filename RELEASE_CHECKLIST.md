@@ -85,7 +85,7 @@ For each chain, you want to deploy to, do the following:
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  just contracts-simulate <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
+  just contracts-simulate-proxy <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
   where `<TOKEN_TRANSFER_CIRCUIT_ID>` can be found in the [`anoma/anomapay-backend` `transfer_library`](https://github.com/anoma/anomapay-backend/blob/main/simple_transfer/transfer_library/src/lib.rs)
@@ -94,7 +94,7 @@ For each chain, you want to deploy to, do the following:
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  just contracts-deploy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
+  just contracts-deploy-proxy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
 - [ ] Export the addresses of the newly deployed contracts. The deployment produces **two** contracts: the **proxy**
@@ -235,7 +235,7 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  just contracts-simulate <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
+  just contracts-simulate-proxy <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
   where `<TOKEN_TRANSFER_CIRCUIT_ID>` can be found in the [`anoma/anomapay-backend` `transfer_library`](https://github.com/anoma/anomapay-backend/blob/main/simple_transfer/transfer_library/src/lib.rs)
@@ -244,7 +244,7 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  just contracts-deploy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
+  just contracts-deploy-proxy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
 - [ ] Export the addresses of the newly deployed contracts. The deployment produces **two** contracts: the **proxy**
