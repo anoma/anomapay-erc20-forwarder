@@ -79,11 +79,11 @@ contracts-gen-bindings:
 # Simulate deployment (dry-run)
 contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "OWNER: $OWNER"
+    @echo "FWD_OWNER: $FWD_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20Forwarder \
-        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $OWNER \
+        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $FWD_OWNER \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy ERC20 forwarder
@@ -91,18 +91,18 @@ contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20Forwarder \
-        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $OWNER \
+        --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $FWD_OWNER \
          --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate upgrade (dry-run)
 contracts-simulate-upgrade proxy logic-ref-v2 chain *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "OWNER: $OWNER"
+    @echo "FWD_OWNER: $FWD_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/UpgradeERC20ForwarderProxy.s.sol:UpgradeERC20Forwarder \
         --sig "run(bool,address,bytes32)" $IS_TEST_DEPLOYMENT {{proxy}} {{logic-ref-v2}} \
-        --rpc-url {{chain}} --sender $OWNER {{ args }}
+        --rpc-url {{chain}} --sender $FWD_OWNER {{ args }}
 
 # Upgrade ERC20 forwarder to the V2 implementation
 contracts-upgrade deployer proxy logic-ref-v2 chain *args:

@@ -53,7 +53,7 @@ We distinguish between three release cases:
 - [ ] Check that the owner address is set up correctly and export it with
 
   ```sh
-  export OWNER=<ADDRESS>
+  export FWD_OWNER=<ADDRESS>
   ```
 
 - [ ] Set the Alchemy RPC provider by exporting
@@ -116,7 +116,7 @@ For each chain, you want to deploy to, do the following:
 - [ ] Verify the **proxy** (`ERC1967Proxy`). The recipe encodes the proxy constructor args from these inputs.
 
   ```sh
-  just contracts-verify-proxy <PROXY_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
+  just contracts-verify-proxy <PROXY_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <FWD_OWNER> <CHAIN>
   ```
 
   Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
@@ -208,7 +208,7 @@ For each chain, you want to deploy to, do the following:
 - [ ] Check that the owner address is set up correctly and export it with
 
   ```sh
-  export OWNER=<ADDRESS>
+  export FWD_OWNER=<ADDRESS>
   ```
 
 - [ ] Set the Alchemy RPC provider by exporting
@@ -266,7 +266,7 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] Verify the **proxy** (`ERC1967Proxy`).
 
   ```sh
-  just contracts-verify-proxy <PROXY_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <OWNER> <CHAIN>
+  just contracts-verify-proxy <PROXY_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <FWD_OWNER> <CHAIN>
   ```
 
   Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
