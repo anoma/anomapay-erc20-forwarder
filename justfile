@@ -82,7 +82,7 @@ contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
     @echo "FWD_OWNER: $FWD_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20Forwarder \
+    cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $FWD_OWNER \
         --rpc-url {{chain}} {{ args }}
 
@@ -90,7 +90,7 @@ contracts-simulate token-transfer-circuit-id chain protocol-adapter *args:
 contracts-deploy deployer token-transfer-circuit-id chain protocol-adapter *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20Forwarder \
+    cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \
         --sig "run(bool,address,bytes32,address)" $IS_TEST_DEPLOYMENT {{protocol-adapter}} {{token-transfer-circuit-id}} $FWD_OWNER \
          --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 

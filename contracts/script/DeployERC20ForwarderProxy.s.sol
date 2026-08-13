@@ -8,11 +8,11 @@ import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.1/src/Upgrades.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 
-/// @title DeployERC20Forwarder
+/// @title DeployERC20ForwarderProxy
 /// @author Anoma Foundation, 2025
 /// @notice A script to deploy the ERC20 forwarder proxy and implementation contract.
 /// @custom:security-contact security@anoma.foundation
-contract DeployERC20Forwarder is Script {
+contract DeployERC20ForwarderProxy is Script {
     /// @notice Deploys the ERC20 forwarder proxy and implementation contract.
     /// @param isTestDeployment Whether the deployment is a test deployment or not. If set to `false`, the ERC20
     /// forwarder proxy and implementation contracts are deployed deterministically.
