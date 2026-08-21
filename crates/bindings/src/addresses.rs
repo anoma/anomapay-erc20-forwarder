@@ -4,57 +4,64 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
+/// The deployment environment of a recorded ERC20 forwarder proxy.
+///
+/// A release version of this crate describes both environments; a prerelease describes staging only, because
+/// production trails on the previous release until the release candidate cycle ends.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Environment {
+    /// The staging environment, owned by the deployment wallet and running what the `staging` branch promoted.
+    Staging,
+    /// The production environment, owned by a Safe and running the release the `main` branch promoted.
+    Production,
+}
+
+#[derive(Deserialize)]
+struct Proxy {
+    address: String,
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct DeploymentEntry {
     chain_id: u64,
-    proxy: String,
-    implementation: String,
+    proxy: Proxy,
 }
 
-/// A deployed ERC20 forwarder: the `proxy` that users interact with and the `implementation` it delegates to.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Erc20ForwarderDeployment {
-    /// The ERC1967 proxy address users interact with.
-    pub proxy: Address,
-    /// The implementation (logic) contract the proxy delegates to.
-    pub implementation: Address,
+#[derive(Deserialize)]
+struct Deployments {
+    staging: Vec<DeploymentEntry>,
+    production: Vec<DeploymentEntry>,
 }
 
-static DEPLOYMENTS: LazyLock<HashMap<NamedChain, Erc20ForwarderDeployment>> = LazyLock::new(|| {
-    let entries: Vec<DeploymentEntry> = serde_json::from_str(include_str!("../deployments.json"))
-        .expect("deployments.json: invalid JSON");
+static DEPLOYMENTS: LazyLock<HashMap<Environment, HashMap<NamedChain, Address>>> =
+    LazyLock::new(|| {
+        let deployments: Deployments = serde_json::from_str(include_str!("../deployments.json"))
+            .expect("deployments.json: invalid JSON");
 
-    entries
-        .into_iter()
-        .filter_map(|e| {
-            let chain = NamedChain::try_from(e.chain_id).ok()?;
-            let proxy: Address = e.proxy.parse().ok()?;
-            let implementation: Address = e.implementation.parse().ok()?;
-            Some((
-                chain,
-                Erc20ForwarderDeployment {
-                    proxy,
-                    implementation,
-                },
-            ))
-        })
-        .collect()
-});
+        let to_map = |entries: Vec<DeploymentEntry>| {
+            entries
+                .into_iter()
+                .filter_map(|e| {
+                    let chain = NamedChain::try_from(e.chain_id).ok()?;
+                    let proxy: Address = e.proxy.address.parse().ok()?;
+                    Some((chain, proxy))
+                })
+                .collect()
+        };
 
-/// Returns a map of ERC20 forwarder deployments for all supported chains.
-pub fn erc20_forwarder_deployments_map() -> HashMap<NamedChain, Erc20ForwarderDeployment> {
-    DEPLOYMENTS.clone()
+        HashMap::from([
+            (Environment::Staging, to_map(deployments.staging)),
+            (Environment::Production, to_map(deployments.production)),
+        ])
+    });
+
+/// Returns a map of the ERC20 forwarder proxies recorded for the environment.
+pub fn erc20_forwarder_deployments_map(environment: Environment) -> HashMap<NamedChain, Address> {
+    DEPLOYMENTS[&environment].clone()
 }
 
-/// Returns the ERC20 forwarder proxy address deployed on the provided chain, if any.
-///
-/// This is the address users interact with.
-pub fn erc20_forwarder_proxy_address(chain: &NamedChain) -> Option<Address> {
-    DEPLOYMENTS.get(chain).map(|d| d.proxy)
-}
-
-/// Returns the ERC20 forwarder implementation address deployed on the provided chain, if any.
-pub fn erc20_forwarder_implementation_address(chain: &NamedChain) -> Option<Address> {
-    DEPLOYMENTS.get(chain).map(|d| d.implementation)
+/// Returns the ERC20 forwarder proxy recorded for the environment on the provided chain, if any.
+pub fn erc20_forwarder_address(environment: Environment, chain: &NamedChain) -> Option<Address> {
+    DEPLOYMENTS[&environment].get(chain).cloned()
 }

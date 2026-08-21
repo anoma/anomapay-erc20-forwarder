@@ -66,7 +66,7 @@ forge coverage
 
 Append the
 
-- `--no-match-coverage "(script|test)"` flag to exclude scripts, and tests
+- `--no-match-coverage "(script|test|draft)"` flag to exclude scripts, tests, and drafts
 - `--report lcov` flag to generate the `lcov.info` file that can be used by code review tooling.
 
 #### Linting & Static Analysis
@@ -90,8 +90,9 @@ To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forg
 
 ```sh
 forge bind \
-  --select '^(ERC20Forwarder)$' \
-  --bindings-path ../bindings/src/generated/ \
+  --skip test \
+  --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC1967Proxy)$' \
+  --bindings-path ../crates/bindings/src/generated/ \
   --module \
   --overwrite
 ```
@@ -110,7 +111,7 @@ To simulate deployment on sepolia, run
 
 ```sh
 forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \
-  --sig "run(bool,address,bytes32,address)" <IS_TEST_DEPLOYMENT> <PROTOCOL_ADAPTER> <CARRIER_LOGIC_REF> <EMERGENCY_COMMITTEE> \
+  --sig "run(bool,address,bytes32)" <IS_PRODUCTION> <PROTOCOL_ADAPTER> <LOGIC_REF> \
   --rpc-url sepolia
 ```
 
