@@ -21,10 +21,17 @@ integrity = "f6be62d3e2b5703900cfb51d76f253023d23f725cc9ee0b97a730e7cd27df238"
 
 [[dependencies]]
 name = "anoma-pa-evm"
-version = "2.0.0-alpha.5"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/1_2_0-rc_2_03-08-2026_07:44:20_contracts.zip"
-checksum = "8f54c5e300d49645f7071d5b28ed7a0876979a0753faeeb2d92d58875c2fa17a"
-integrity = "f7098b2ea7007839823b05d0586618f7d82cbf9e227080ed5ec056822dfb55b1"
+version = "2.0.0-rc.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/2_0_0-rc_0_20-08-2026_15:02:27_contracts.zip"
+checksum = "6a4e19dddb0e2185a691d49ced68fce8ace422c322f9a60c65016c087cd18c57"
+integrity = "d7f2d3ba8d6a10ab803342ae7d840968f7f873c2b3ea3509ad6834b7e39bf61e"
+
+[[dependencies]]
+name = "anoma-risc0-deployments"
+version = "1.2.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_2_1_07-08-2026_12:38:36_contracts.zip"
+checksum = "666fd7e4ad6f99d4cb82fb844109a194aa52d1f4c12f63f7d5079fbafe88c3fb"
+integrity = "ddede64660f8fe10b4cfb0c0a1de4c81308371c467f01ed92a36480361aa7b18"
 
 [[dependencies]]
 name = "forge-std"
@@ -39,6 +46,12 @@ version = "0.4.2"
 url = "https://soldeer-revisions.s3.amazonaws.com/openzeppelin-foundry-upgrades/0_4_2_05-08-2026_15:52:28_openzeppelin-foundry-upgrades.zip"
 checksum = "52618e6037df7c02671d94599647ef4caccbcad043ad8d663551275bc47f5a2e"
 integrity = "64c8d2d87ba2d2e3ee5946f3638d386e05d0f37b137b0588058b7bbdf7fb233d"
+
+[[dependencies]]
+name = "safe-utils"
+version = "0.0.22"
+git = "https://github.com/Recon-Fuzz/safe-utils.git"
+rev = "273945a35ade03a78648a350140aace72707d5a7"
 
 [[dependencies]]
 name = "solady"
