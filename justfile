@@ -117,23 +117,37 @@ contracts-deploy-proxy deployer chain protocol-adapter logic-ref *args:
         --sig "run(bool,address,bytes32)" $IS_PRODUCTION {{protocol-adapter}} {{logic-ref}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate upgrade (dry-run)
-contracts-simulate-upgrade proxy logic-ref-v2 chain *args:
-    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "FWD_OWNER: $FWD_OWNER"
+# Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally (sender = the staging proxy owner)
+contracts-simulate-staging-upgrade sender proxy implementation chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/UpgradeERC20ForwarderProxy.s.sol:UpgradeERC20Forwarder \
-        --sig "run(bool,address,bytes32)" $IS_TEST_DEPLOYMENT {{proxy}} {{logic-ref-v2}} \
-        --rpc-url {{chain}} --sender $FWD_OWNER {{ args }}
+    cd contracts && forge script script/staging/ExecuteERC20ForwarderUpgrade.s.sol:ExecuteERC20ForwarderUpgrade \
+        --sig "run(address,address)" {{proxy}} {{implementation}} \
+        --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
-# Upgrade ERC20 forwarder to the V2 implementation
-contracts-upgrade deployer proxy logic-ref-v2 chain *args:
+# Execute the staging upgrade to the deployed implementation as the proxy owner
+contracts-execute-staging-upgrade deployer proxy implementation chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/UpgradeERC20ForwarderProxy.s.sol:UpgradeERC20Forwarder \
-        --sig "run(bool,address,bytes32)" $IS_TEST_DEPLOYMENT {{proxy}} {{logic-ref-v2}} \
-         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+    cd contracts && forge script script/staging/ExecuteERC20ForwarderUpgrade.s.sol:ExecuteERC20ForwarderUpgrade \
+        --sig "run(address,address)" {{proxy}} {{implementation}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the production upgrade proposal (dry-run): simulates the Safe executing the upgrade
+contracts-simulate-production-upgrade-proposal proxy proposer implementation chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/production/ProposeERC20ForwarderUpgrade.s.sol:ProposeERC20ForwarderUpgrade \
+        --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose the production upgrade to the deployed implementation to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-upgrade deployer proxy proposer implementation chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/production/ProposeERC20ForwarderUpgrade.s.sol:ProposeERC20ForwarderUpgrade \
+        --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Verify a contract on sourcify (e.g. contract=src/ERC20Forwarder.sol:ERC20Forwarder)
 contracts-verify-sourcify address contract chain *args:
