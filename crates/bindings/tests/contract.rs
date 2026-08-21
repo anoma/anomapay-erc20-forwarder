@@ -82,10 +82,10 @@ async fn deployed_implementations_carry_the_expected_version() {
     for (chain, deployment) in erc20_forwarder_deployments_map() {
         let provider = anvil_fork(&chain).await;
 
-        // `getVersion` is `pure`, so it can be read straight from the implementation contract.
+        // `VERSION` is a constant, so it can be read straight from the implementation contract.
         let actual_version =
             erc20_forwarder::ERC20Forwarder::new(deployment.implementation, &provider)
-                .getVersion()
+                .VERSION()
                 .call()
                 .await
                 .expect("Couldn't get the deployed implementation version");
@@ -94,14 +94,13 @@ async fn deployed_implementations_carry_the_expected_version() {
         let expected_version = erc20_forwarder::ERC20Forwarder::deploy(&provider)
             .await
             .expect("Couldn't deploy erc20 forwarder")
-            .getVersion()
+            .VERSION()
             .call()
             .await
             .expect("Couldn't get version");
 
         assert_eq!(
-            decode_bytes32_to_utf8(actual_version),
-            decode_bytes32_to_utf8(expected_version),
+            actual_version, expected_version,
             "ERC20 forwarder implementation version mismatch on network '{chain}'."
         );
     }
@@ -120,16 +119,4 @@ async fn fwd_proxy_instance(chain: &NamedChain) -> ERC20ForwarderInstance<DynPro
     erc20_forwarder_proxy(&anvil_fork(chain).await)
         .await
         .unwrap()
-}
-
-fn decode_bytes32_to_utf8(encoded_string: B256) -> String {
-    let bytes = alloy::hex::decode(encoded_string.to_string()).expect("Couldn't decode hex string");
-
-    let trimmed = bytes
-        .split(|b| *b == 0)
-        .next()
-        .expect("No null byte found in bytes");
-    str::from_utf8(trimmed)
-        .expect("Conversion to UTF-8 failed.")
-        .to_string()
 }

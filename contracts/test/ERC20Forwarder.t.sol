@@ -2,10 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts-5.7.0/utils/types/Time.sol";
-import {IVersion} from "anoma-forwarder-bases-2.0.0/src/interfaces/IVersion.sol";
 import {ERC20Example} from "anoma-forwarder-bases-2.0.0/test/examples/ERC20Example.sol";
 import {Test, Vm, stdError} from "forge-std-1.16.2/src/Test.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 import {
     IPermit2,
@@ -397,8 +397,18 @@ contract ERC20ForwarderTest is Test {
         //int256 eq = 0;
         int256 gt = 1;
 
-        assertEq(SemVerLib.cmp(IVersion(address(_fwd)).getVersion(), "1.0.0"), gt);
-        assertEq(SemVerLib.cmp(IVersion(address(_fwd)).getVersion(), "2.0.0"), lt);
+        assertEq(
+            SemVerLib.cmp(LibString.toSmallString(_fwd.VERSION()), "1.0.0"), gt, "version should be greater than 1.0.0"
+        );
+        assertEq(
+            SemVerLib.cmp(LibString.toSmallString(_fwd.VERSION()), "2.0.0"), lt, "version should be less than 2.0.0"
+        );
+    }
+
+    /// @dev `toSmallString` reverts if the version does not fit into `bytes32`, which `SemVerLib` comparisons
+    /// and the deployment canaries rely on.
+    function test_VERSION_fits_into_bytes32() public view {
+        LibString.toSmallString(_fwd.VERSION());
     }
 
     function test_witness_typeHash_complies_with_eip712() public pure {

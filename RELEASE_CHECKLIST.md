@@ -70,7 +70,7 @@ We distinguish between three release cases:
 
 ### 2. Bump the Version
 
-- [ ] Bump the version number in the `getVersion()` function in [`./contracts/src/ERC20Forwarder.sol`](./contracts/src/ERC20Forwarder.sol) to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
+- [ ] Bump the version number in the `VERSION` constant in [`./contracts/src/ERC20Forwarder.sol`](./contracts/src/ERC20Forwarder.sol) to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
 
 - [ ] Remove all entries from [`./bindings/deployments.json`](./bindings/deployments.json) (replace the array contents with `[]`).
 

@@ -4,7 +4,6 @@ pragma solidity ^0.8.30;
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/utils/SafeERC20.sol";
 import {ForwarderBaseUpgradeable} from "anoma-forwarder-bases-2.0.0/src/ForwarderBaseUpgradeable.sol";
-import {IVersion} from "anoma-forwarder-bases-2.0.0/src/interfaces/IVersion.sol";
 import {
     IPermit2,
     ISignatureTransfer
@@ -18,7 +17,7 @@ import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 /// - wrap ERC20 tokens into ERC20 resources using Uniswap's Permit2 and
 /// - unwrap ERC20 tokens from ERC20 resources.
 /// @custom:security-contact security@anoma.foundation
-contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
+contract ERC20Forwarder is ForwarderBaseUpgradeable {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using SafeERC20 for IERC20;
 
@@ -66,6 +65,10 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
     IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
+    /// @notice The version of the ERC20 forwarder implementation.
+    /// @dev The semantic version, short enough to fit into `bytes32` as a small string.
+    string public constant VERSION = "1.1.0-rc.5";
+
     /// @notice Emitted when ERC20 tokens get wrapped.
     /// @param token The ERC20 token address.
     /// @param from The address from which tokens were withdrawn.
@@ -103,11 +106,6 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
         __ForwarderBaseUpgradeable_init({
             protocolAdapter: protocolAdapter, logicRef: logicRef, initialOwner: initialOwner
         });
-    }
-
-    /// @inheritdoc IVersion
-    function getVersion() external pure override returns (bytes32 version) {
-        version = "1.1.0-rc.5";
     }
 
     /// @notice Forwards a call wrapping or unwrapping ERC20 tokens based on the provided input.
