@@ -1,3 +1,7 @@
+//! Deployment checks against the live environments. They run on the promotion gate: the
+//! `VERIFY_*` flags arm them per environment, because between a version bump on `next` and the
+//! environment's upgrade the source and the deployments legitimately disagree.
+
 #[cfg(test)]
 extern crate dotenvy;
 
@@ -10,7 +14,25 @@ use anomapay_erc20_forwarder_bindings::addresses::{Environment, erc20_forwarder_
 use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder;
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder;
 
-const ENVIRONMENTS: [Environment; 2] = [Environment::Staging, Environment::Production];
+const ENVIRONMENTS: [(Environment, &str); 2] = [
+    (Environment::Staging, "VERIFY_STAGING_DEPLOYMENTS"),
+    (Environment::Production, "VERIFY_PRODUCTION_DEPLOYMENTS"),
+];
+
+/// Returns the environments whose flag arms the gate, printing a skip note for the rest.
+fn armed_environments() -> Vec<Environment> {
+    ENVIRONMENTS
+        .into_iter()
+        .filter_map(|(environment, flag)| {
+            if std::env::var(flag).as_deref() == Ok("true") {
+                Some(environment)
+            } else {
+                eprintln!("skipped: {flag} is not set");
+                None
+            }
+        })
+        .collect()
+}
 
 fn token_transfer_id() -> B256 {
     B256::from_slice(transfer_library::TOKEN_TRANSFER_ID.as_bytes())
@@ -18,7 +40,7 @@ fn token_transfer_id() -> B256 {
 
 #[tokio::test]
 async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
-    for environment in ENVIRONMENTS {
+    for environment in armed_environments() {
         for chain in erc20_forwarder_deployments_map(environment).keys() {
             let referenced_protocol_adapter = fwd_instance(chain, environment)
                 .await
@@ -41,7 +63,7 @@ async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
 
 #[tokio::test]
 async fn deployed_forwarders_reference_the_expected_logic_ref() {
-    for environment in ENVIRONMENTS {
+    for environment in armed_environments() {
         for chain in erc20_forwarder_deployments_map(environment).keys() {
             let actual_logic_ref = fwd_instance(chain, environment)
                 .await
@@ -62,7 +84,7 @@ async fn deployed_forwarders_reference_the_expected_logic_ref() {
 
 #[tokio::test]
 async fn versions_of_deployed_forwarders_match_the_expected_version() {
-    for environment in ENVIRONMENTS {
+    for environment in armed_environments() {
         for chain in erc20_forwarder_deployments_map(environment).keys() {
             let existing_fwd = fwd_instance(chain, environment).await;
 
