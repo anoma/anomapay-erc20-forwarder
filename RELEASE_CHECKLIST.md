@@ -50,10 +50,10 @@ We distinguish between three release cases:
   export IS_TEST_DEPLOYMENT=false
   ```
 
-- [ ] Check that the emergency committee address is set up correctly and export it with
+- [ ] Check that the owner address is set up correctly and export it with
 
   ```sh
-  export EMERGENCY_COMMITTEE=<ADDRESS>
+  export FWD_OWNER=<ADDRESS>
   ```
 
 - [ ] Set the Alchemy RPC provider by exporting
@@ -70,7 +70,7 @@ We distinguish between three release cases:
 
 ### 2. Bump the Version
 
-- [ ] Bump the version number in the `getVersion()` function in [`./contracts/src/ERC20Forwarder.sol`](./contracts/src/ERC20Forwarder.sol) to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
+- [ ] Bump the version number in the `VERSION` constant in [`./contracts/src/ERC20Forwarder.sol`](./contracts/src/ERC20Forwarder.sol) to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
 
 - [ ] Remove all entries from [`./bindings/deployments.json`](./bindings/deployments.json) (replace the array contents with `[]`).
 
@@ -85,7 +85,7 @@ For each chain, you want to deploy to, do the following:
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  just contracts-simulate <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
+  just contracts-simulate-proxy <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
   where `<TOKEN_TRANSFER_CIRCUIT_ID>` can be found in the [`anoma/anomapay-backend` `transfer_library`](https://github.com/anoma/anomapay-backend/blob/main/simple_transfer/transfer_library/src/lib.rs)
@@ -94,29 +94,32 @@ For each chain, you want to deploy to, do the following:
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  just contracts-deploy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
+  just contracts-deploy-proxy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
-- [ ] Export the address of the newly deployed ERC20 forwarder contract with
+- [ ] Export the addresses of the newly deployed contracts. The deployment produces **two** contracts: the **proxy**
+      (`ERC1967Proxy`) is the ERC20 forwarder address that users interact with and that goes into `deployments.json` (it is
+      the returned `erc20ForwarderProxy`), and the **implementation** (`ERC20Forwarder`) is the logic contract the proxy
+      delegates to. They must be verified separately, against different sources.
 
   ```sh
-  export FWD_ADDRESS=<ADDRESS>
+  export PROXY_ADDRESS=<PROXY_ADDRESS>
+  export IMPL_ADDRESS=<IMPLEMENTATION_ADDRESS>
   ```
 
-- [ ] Verify the contract on
-  - [ ] sourcify
+- [ ] Verify the **implementation** (`ERC20Forwarder`)
 
-    ```sh
-    just contracts-verify-sourcify <FWD_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-impl <IMPL_ADDRESS> <CHAIN>
+  ```
 
-  - [ ] Etherscan
+- [ ] Verify the **proxy** (`ERC1967Proxy`). The recipe encodes the proxy constructor args from these inputs.
 
-    ```sh
-    just contracts-verify-etherscan <FWD_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-proxy <PROXY_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <FWD_OWNER> <CHAIN>
+  ```
 
-  and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
+  Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
 ### 5. Update the Deployments Map and Create a new `contracts` and `bindings` GitHub Release
 
@@ -202,10 +205,10 @@ For each chain, you want to deploy to, do the following:
   export IS_TEST_DEPLOYMENT=false
   ```
 
-- [ ] Check that the emergency committee address is set up correctly and export it with
+- [ ] Check that the owner address is set up correctly and export it with
 
   ```sh
-  export EMERGENCY_COMMITTEE=<ADDRESS>
+  export FWD_OWNER=<ADDRESS>
   ```
 
 - [ ] Set the Alchemy RPC provider by exporting
@@ -232,7 +235,7 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  just contracts-simulate <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
+  just contracts-simulate-proxy <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
   where `<TOKEN_TRANSFER_CIRCUIT_ID>` can be found in the [`anoma/anomapay-backend` `transfer_library`](https://github.com/anoma/anomapay-backend/blob/main/simple_transfer/transfer_library/src/lib.rs)
@@ -241,29 +244,32 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  just contracts-deploy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
+  just contracts-deploy-proxy deployer <TOKEN_TRANSFER_CIRCUIT_ID> <CHAIN_NAME> <PROTOCOL_ADAPTER_ADDRESS>
   ```
 
-- [ ] Export the address of the newly deployed ERC20 forwarder contract with
+- [ ] Export the addresses of the newly deployed contracts. The deployment produces **two** contracts: the **proxy**
+      (`ERC1967Proxy`) is the ERC20 forwarder address that users interact with and that goes into `deployments.json` (it is
+      the returned `erc20ForwarderProxy`), and the **implementation** (`ERC20Forwarder`) is the logic contract the proxy
+      delegates to. They must be verified separately, against different sources.
 
   ```sh
-  export FWD_ADDRESS=<ADDRESS>
+  export PROXY_ADDRESS=<PROXY_ADDRESS>
+  export IMPL_ADDRESS=<IMPLEMENTATION_ADDRESS>
   ```
 
-- [ ] Verify the contract on
-  - [ ] sourcify
+- [ ] Verify the **implementation** (`ERC20Forwarder`).
 
-    ```sh
-    just contracts-verify-sourcify <FWD_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-impl <IMPL_ADDRESS> <CHAIN>
+  ```
 
-  - [ ] Etherscan
+- [ ] Verify the **proxy** (`ERC1967Proxy`).
 
-    ```sh
-    just contracts-verify-etherscan <FWD_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-proxy <PROXY_ADDRESS> <IMPL_ADDRESS> <PROTOCOL_ADAPTER_ADDRESS> <TOKEN_TRANSFER_CIRCUIT_ID> <FWD_OWNER> <CHAIN>
+  ```
 
-  and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
+  Check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
 ### 4. Update the Deployments Map and Create a new `bindings` GitHub Release
 
