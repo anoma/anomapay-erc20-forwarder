@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts-5.7.0/utils/types/Time.sol";
-import {ERC20Example} from "anoma-forwarder-bases-2.0.0/test/examples/ERC20Example.sol";
+import {ERC20Example} from "anoma-forwarder-bases-3.0.0/test/examples/ERC20Example.sol";
 import {Test, Vm, stdError} from "forge-std-1.16.2/src/Test.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
