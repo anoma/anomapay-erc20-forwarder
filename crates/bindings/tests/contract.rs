@@ -1,15 +1,38 @@
+//! Deployment checks against the live environments. They run on the promotion gate: the
+//! `VERIFY_*` flags arm them per environment, because between a version bump on `next` and the
+//! environment's upgrade the source and the deployments legitimately disagree.
+
 #[cfg(test)]
 extern crate dotenvy;
 
-use alloy::primitives::{Address, B256};
+use alloy::primitives::B256;
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::protocol_adapter_address;
 use anoma_pa_evm_bindings::helpers::alchemy_url;
-use anomapay_erc20_forwarder_bindings::addresses::erc20_forwarder_deployments_map;
-use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder_proxy;
+use anomapay_erc20_forwarder_bindings::addresses::{Environment, erc20_forwarder_deployments_map};
+use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder;
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder;
-use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance;
+
+const ENVIRONMENTS: [(Environment, &str); 2] = [
+    (Environment::Staging, "VERIFY_STAGING_DEPLOYMENTS"),
+    (Environment::Production, "VERIFY_PRODUCTION_DEPLOYMENTS"),
+];
+
+/// Returns the environments whose flag arms the gate, printing a skip note for the rest.
+fn armed_environments() -> Vec<Environment> {
+    ENVIRONMENTS
+        .into_iter()
+        .filter_map(|(environment, flag)| {
+            if std::env::var(flag).as_deref() == Ok("true") {
+                Some(environment)
+            } else {
+                eprintln!("skipped: {flag} is not set");
+                None
+            }
+        })
+        .collect()
+}
 
 fn token_transfer_id() -> B256 {
     B256::from_slice(transfer_library::TOKEN_TRANSFER_ID.as_bytes())
@@ -17,106 +40,88 @@ fn token_transfer_id() -> B256 {
 
 #[tokio::test]
 async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
-    // Iterate over all supported chains
-    for chain in erc20_forwarder_deployments_map().keys() {
-        let fwd_referenced_protocol_adapter: Address = fwd_proxy_instance(chain)
-            .await
-            .getProtocolAdapter()
-            .call()
-            .await
-            .expect("Couldn't get protocol adapter address");
+    for environment in armed_environments() {
+        for chain in erc20_forwarder_deployments_map(environment).keys() {
+            let referenced_protocol_adapter = fwd_instance(chain, environment)
+                .await
+                .getProtocolAdapter()
+                .call()
+                .await
+                .expect("Couldn't get protocol adapter address");
 
-        let deployed_protocol_adapter = protocol_adapter_address(chain).unwrap();
-        println!("{deployed_protocol_adapter}");
+            // `anoma-pa-evm-bindings` 3.0.0-rc.2 records one proxy per chain; later versions key it by environment.
+            let deployed_protocol_adapter = protocol_adapter_address(chain)
+                .unwrap_or_else(|| panic!("no protocol adapter recorded for network '{chain}'"));
 
-        //  Check that the referenced and deployed protocol adapter addresses match.
-        assert_eq!(
-            fwd_referenced_protocol_adapter, deployed_protocol_adapter,
-            "Protocol adapter address mismatch on network '{chain}'."
-        );
+            assert_eq!(
+                referenced_protocol_adapter, deployed_protocol_adapter,
+                "Protocol adapter address mismatch on network '{chain}' of environment {environment:?}."
+            );
+        }
     }
 }
 
 #[tokio::test]
 async fn deployed_forwarders_reference_the_expected_logic_ref() {
-    // Iterate over all supported chains
-    for chain in erc20_forwarder_deployments_map().keys() {
-        let actual_logic_ref = fwd_proxy_instance(chain)
-            .await
-            .getLogicRef()
-            .call()
-            .await
-            .expect("Couldn't get logic ref");
+    for environment in armed_environments() {
+        for chain in erc20_forwarder_deployments_map(environment).keys() {
+            let actual_logic_ref = fwd_instance(chain, environment)
+                .await
+                .getLogicRef()
+                .call()
+                .await
+                .expect("Couldn't get logic ref");
 
-        // Check that the logic ref in the deployed forwarder matches the expected one from the transfer library.
-        assert_eq!(
-            actual_logic_ref,
-            token_transfer_id(),
-            "Logic address mismatch on network '{chain}': expected {}, actual: {actual_logic_ref}.",
-            token_transfer_id()
-        );
+            assert_eq!(
+                actual_logic_ref,
+                token_transfer_id(),
+                "Logic ref mismatch on network '{chain}' of environment {environment:?}: expected {}, actual: {actual_logic_ref}.",
+                token_transfer_id()
+            );
+        }
     }
 }
 
 #[tokio::test]
-async fn proxies_point_to_the_deployed_implementation() {
-    for (chain, deployment) in erc20_forwarder_deployments_map() {
-        let onchain_implementation = fwd_proxy_instance(&chain)
-            .await
-            .getImplementation()
-            .call()
-            .await
-            .expect("Couldn't get the implementation address");
+async fn versions_of_deployed_forwarders_match_the_expected_version() {
+    for environment in armed_environments() {
+        for chain in erc20_forwarder_deployments_map(environment).keys() {
+            let existing_fwd = fwd_instance(chain, environment).await;
 
-        // Check that the proxy's implementation matches the one recorded in deployments.json.
-        assert_eq!(
-            onchain_implementation, deployment.implementation,
-            "implementation mismatch on network '{chain}': the proxy points to {onchain_implementation}, but deployments.json records {}.",
-            deployment.implementation
-        );
-    }
-}
-
-#[tokio::test]
-async fn deployed_implementations_carry_the_expected_version() {
-    for (chain, deployment) in erc20_forwarder_deployments_map() {
-        let provider = anvil_fork(&chain).await;
-
-        // `VERSION` is a constant, so it can be read straight from the implementation contract.
-        let actual_version =
-            erc20_forwarder::ERC20Forwarder::new(deployment.implementation, &provider)
+            // `VERSION` is a constant, so the freshly deployed implementation answers
+            // it without being put behind a proxy and initialized.
+            let expected_version = erc20_forwarder::ERC20Forwarder::deploy(existing_fwd.provider())
+                .await
+                .expect("Couldn't deploy the ERC20 forwarder implementation")
                 .VERSION()
                 .call()
                 .await
-                .expect("Couldn't get the deployed implementation version");
+                .expect("Couldn't get version");
 
-        // Deploy the current implementation to read its compiled-in version.
-        let expected_version = erc20_forwarder::ERC20Forwarder::deploy(&provider)
-            .await
-            .expect("Couldn't deploy erc20 forwarder")
-            .VERSION()
-            .call()
-            .await
-            .expect("Couldn't get version");
+            let actual_version = existing_fwd
+                .VERSION()
+                .call()
+                .await
+                .expect("Couldn't get the deployed ERC20 forwarder version");
 
-        assert_eq!(
-            actual_version, expected_version,
-            "ERC20 forwarder implementation version mismatch on network '{chain}'."
-        );
+            assert_eq!(
+                actual_version, expected_version,
+                "ERC20 forwarder version mismatch on network '{chain}' of environment {environment:?}."
+            );
+        }
     }
 }
 
-async fn anvil_fork(chain: &NamedChain) -> DynProvider {
-    let rpc_url = alchemy_url(chain).unwrap();
+async fn fwd_instance(
+    chain: &NamedChain,
+    environment: Environment,
+) -> erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance<DynProvider> {
+    let rpc_url = alchemy_url(chain).expect("Couldn't get RPC URL for chain");
 
-    ProviderBuilder::new()
+    let provider = ProviderBuilder::new()
         .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url))
-        .expect("Couldn't create anvil provider")
-        .erased()
-}
-
-async fn fwd_proxy_instance(chain: &NamedChain) -> ERC20ForwarderInstance<DynProvider> {
-    erc20_forwarder_proxy(&anvil_fork(chain).await)
+        .expect("Couldn't create anvil provider");
+    erc20_forwarder(&provider.erased(), environment)
         .await
-        .unwrap()
+        .expect("Couldn't get ERC20 forwarder instance")
 }

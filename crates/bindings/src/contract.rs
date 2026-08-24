@@ -1,37 +1,24 @@
-use crate::addresses::erc20_forwarder_proxy_address;
+use crate::addresses::{Environment, erc20_forwarder_address};
+use crate::error::{BindingsError, BindingsResult};
 use crate::generated::erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance;
 use alloy::providers::{DynProvider, Provider};
 use alloy_chains::NamedChain;
-use serde::Serialize;
-use thiserror::Error;
 
-pub type BindingsResult<T> = Result<T, BindingsError>;
-
-#[derive(Error, Debug, Serialize)]
-pub enum BindingsError {
-    #[error("The RPC transport returned an error.")]
-    RpcTransportError(String),
-    #[error("The chain ID {0} is not in the list of named chains.")]
-    ChainIdUnknown(u64),
-    #[error(
-        "The current protocol adapter version has not been deployed on the provided chain '{0}'."
-    )]
-    UnsupportedChain(String),
-}
-
-pub async fn erc20_forwarder_proxy(
+/// Returns an ERC20 forwarder instance of the environment for the given provider.
+pub async fn erc20_forwarder(
     provider: &DynProvider,
+    environment: Environment,
 ) -> BindingsResult<ERC20ForwarderInstance<DynProvider>> {
-    let chain_id = provider
-        .get_chain_id()
-        .await
-        .map_err(|err| BindingsError::RpcTransportError(err.to_string()))?;
+    let named_chain = NamedChain::try_from(
+        provider
+            .get_chain_id()
+            .await
+            .map_err(BindingsError::RpcTransportError)?,
+    )
+    .map_err(|_| BindingsError::ChainIdUnknown)?;
 
-    let named_chain =
-        NamedChain::try_from(chain_id).map_err(|_| BindingsError::ChainIdUnknown(chain_id))?;
-
-    match erc20_forwarder_proxy_address(&named_chain) {
+    match erc20_forwarder_address(environment, &named_chain) {
         Some(address) => Ok(ERC20ForwarderInstance::new(address, provider.clone())),
-        None => Err(BindingsError::UnsupportedChain(named_chain.to_string())),
+        None => Err(BindingsError::UnsupportedChain(named_chain)),
     }
 }
