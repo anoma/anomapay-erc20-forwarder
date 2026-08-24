@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ERC20Forwarder} from "../ERC20Forwarder.sol";
+import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 
 /// @title ERC20ForwarderV2
 /// @author Anoma Foundation, 2025

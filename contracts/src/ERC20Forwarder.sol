@@ -67,7 +67,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "1.1.0-rc.5";
+    string public constant override VERSION = "2.0.0-rc.0";
 
     /// @notice Emitted when ERC20 tokens get wrapped.
     /// @param token The ERC20 token address.
