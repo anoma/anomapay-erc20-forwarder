@@ -5,4 +5,3 @@
 //! These files may be overwritten by the codegen system at any time.
 pub mod erc1967_proxy;
 pub mod erc20_forwarder;
-pub mod erc20_forwarder_v2;

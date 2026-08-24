@@ -10,8 +10,8 @@ import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
-import {ERC20ForwarderV2} from "../src/drafts/ERC20ForwarderV2.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
+import {ERC20ForwarderV2} from "./examples/ERC20ForwarderV2.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 
 contract ERC20ForwarderUpgradeTest is Test {

@@ -79,7 +79,7 @@ contracts-gen-bindings:
     # `--select` keeps the script contracts themselves out of the bindings.
     cd contracts && forge clean && forge bind \
         --skip test \
-        --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC1967Proxy)$' \
+        --select '^(ERC20Forwarder|ERC1967Proxy)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
