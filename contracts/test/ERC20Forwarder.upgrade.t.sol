@@ -5,7 +5,7 @@ import {IERC1967} from "@openzeppelin-contracts-5.7.0/interfaces/IERC1967.sol";
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin-contracts-5.7.0/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
-import {ILogicRefSpecific} from "anoma-forwarder-bases-2.0.0/src/interfaces/ILogicRefSpecific.sol";
+import {ILogicRefSpecific} from "anoma-forwarder-bases-3.0.0/src/interfaces/ILogicRefSpecific.sol";
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";

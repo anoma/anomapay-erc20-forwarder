@@ -8,7 +8,7 @@ extern crate dotenvy;
 use alloy::primitives::B256;
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy_chains::NamedChain;
-use anoma_pa_evm_bindings::addresses::protocol_adapter_address;
+use anoma_pa_evm_bindings::addresses::{Environment as PaEnvironment, protocol_adapter_address};
 use anoma_pa_evm_bindings::helpers::alchemy_url;
 use anomapay_erc20_forwarder_bindings::addresses::{Environment, erc20_forwarder_deployments_map};
 use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder;
@@ -18,6 +18,14 @@ const ENVIRONMENTS: [(Environment, &str); 2] = [
     (Environment::Staging, "VERIFY_STAGING_DEPLOYMENTS"),
     (Environment::Production, "VERIFY_PRODUCTION_DEPLOYMENTS"),
 ];
+
+/// Maps the forwarder's environment onto the protocol adapter bindings' equivalent.
+fn pa_environment(environment: Environment) -> PaEnvironment {
+    match environment {
+        Environment::Staging => PaEnvironment::Staging,
+        Environment::Production => PaEnvironment::Production,
+    }
+}
 
 /// Returns the environments whose flag arms the gate, printing a skip note for the rest.
 fn armed_environments() -> Vec<Environment> {
@@ -49,9 +57,11 @@ async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
                 .await
                 .expect("Couldn't get protocol adapter address");
 
-            // `anoma-pa-evm-bindings` 3.0.0-rc.2 records one proxy per chain; later versions key it by environment.
-            let deployed_protocol_adapter = protocol_adapter_address(chain)
-                .unwrap_or_else(|| panic!("no protocol adapter recorded for network '{chain}'"));
+            // The forwarder settles through the protocol adapter proxy of the same environment.
+            let deployed_protocol_adapter =
+                protocol_adapter_address(pa_environment(environment), chain).unwrap_or_else(|| {
+                    panic!("no protocol adapter recorded for network '{chain}'")
+                });
 
             assert_eq!(
                 referenced_protocol_adapter, deployed_protocol_adapter,

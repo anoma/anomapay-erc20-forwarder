@@ -11,9 +11,9 @@ homepage = "https://anomapay.app/"
 edition = "2024"
 
 [workspace.dependencies]
-alloy = { version = "2.0.5", features = ["full", "eip712", "node-bindings"] }
-alloy-chains = "0.2.33"
-anoma-pa-evm-bindings = "3.0.0-rc.2"
+alloy = { version = "2.4.1", features = ["full", "eip712", "node-bindings"] }
+alloy-chains = "0.2.36"
+anoma-pa-evm-bindings = { git = "https://github.com/anoma/pa-evm", rev = "843a24499ad9002329dee0a68bc76ab4340c076a" }
 anoma-rm-risc0 = { version = "1.1.1", default-features = false }
 anoma-rm-risc0-gadgets = "1.1.1"
 anyhow = "1.0"
