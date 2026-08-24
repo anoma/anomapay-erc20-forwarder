@@ -23,7 +23,7 @@ contract DeployERC20ForwarderProxy is Script {
     address public constant PROXY_OWNER_STAGING = 0x61462bE56782568376f9cB069382EFa72764a407;
 
     /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
-    address public constant PROXY_OWNER_PRODUCTION = 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10;
+    address public constant PROXY_OWNER_PRODUCTION = 0xc703402252Ce1251aa07e0815D50060d27fdd6C4;
 
     /// @notice The deployments recorded per environment, relative to the Foundry root.
     string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";

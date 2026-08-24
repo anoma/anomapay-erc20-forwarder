@@ -24,7 +24,7 @@ The ERC20 forwarder runs in two environments, recorded per chain in [`./crates/b
 | Environment  | Proxy owner                                                        | Upgraded by                     | Branch    |
 | ------------ | ------------------------------------------------------------------ | ------------------------------- | --------- |
 | `staging`    | the deployment wallet `0x61462bE56782568376f9cB069382EFa72764a407` | the deployment wallet, directly | `staging` |
-| `production` | the Safe multisig `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`     | its signers, from a proposal    | `main`    |
+| `production` | the Safe multisig `0xc703402252Ce1251aa07e0815D50060d27fdd6C4`     | its signers, from a proposal    | `main`    |
 
 Each environment's forwarder is initialized with the protocol adapter proxy of the **same** environment, so a staging forwarder settles through the staging protocol adapter and a production forwarder through the production one.
 
@@ -254,7 +254,7 @@ For each chain in the `production` section of the record:
 > [!IMPORTANT]
 > The procedure hands over to the Safe signers here. Everything below waits on people outside this checklist.
 
-- [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global/home?safe=0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10).
+- [ ] Ask the signers of `0xc703402252Ce1251aa07e0815D50060d27fdd6C4` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global/home?safe=0xc703402252Ce1251aa07e0815D50060d27fdd6C4).
 
 - [ ] Once executed, confirm the upgrade with
 
