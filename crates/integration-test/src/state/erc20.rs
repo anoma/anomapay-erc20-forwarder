@@ -1,0 +1,65 @@
+use alloy::primitives::Address;
+use anoma_pa_testkit::environment::Environment;
+use anoma_pa_testkit::environment::State;
+use anoma_pa_testkit::environment::StateBuilder;
+use anyhow::Context;
+
+pub const KEY_PREFIX_ERC20_ADDR: &str = "evm.erc20.addr";
+
+/// Tokens are keyed by symbol, so one environment can hold several of them.
+#[inline]
+pub fn erc20_addr_key(symbol: &str) -> String {
+    format!("{KEY_PREFIX_ERC20_ADDR}.{symbol}")
+}
+
+#[inline]
+pub fn insert_erc20_address(builder: &mut StateBuilder, symbol: &str, address: Address) {
+    builder.insert(erc20_addr_key(symbol), address);
+}
+
+#[inline]
+pub fn erc20_address<E>(env: &E, symbol: &str) -> anyhow::Result<Address>
+where
+    E: Environment,
+{
+    erc20_address_in_state(env.state(), symbol)
+}
+
+#[inline]
+pub fn erc20_address_in_state(state: &State, symbol: &str) -> anyhow::Result<Address> {
+    state
+        .get::<Address>(&erc20_addr_key(symbol))
+        .copied()
+        .with_context(|| format!("failed to look-up {symbol} ERC-20 in state"))
+}
+
+#[cfg(test)]
+mod tests {
+    use anoma_pa_testkit::mocks::MockEnvironment;
+
+    use super::*;
+
+    #[test]
+    fn erc20_addr_key_format() {
+        assert_eq!(erc20_addr_key("weth"), "evm.erc20.addr.weth");
+    }
+
+    #[test]
+    fn insert_and_resolve_erc20_address() {
+        let expected = Address::from([0x11; 20]);
+
+        let state = {
+            let mut builder = StateBuilder::new();
+
+            insert_erc20_address(&mut builder, "weth", expected);
+
+            builder.finalize()
+        };
+
+        let mut env = MockEnvironment::new();
+        env.expect_state().return_const(state);
+
+        let resolved = erc20_address(&env, "weth").expect("must resolve stored token address");
+        assert_eq!(resolved, expected);
+    }
+}
