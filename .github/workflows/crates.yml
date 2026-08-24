@@ -1,0 +1,60 @@
+name: Crates
+
+on:
+  push:
+    branches: [main, staging, next]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Crates Tests
+    runs-on: macos-latest
+    env:
+      ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+      QUEUE_BASE_URL: ${{ secrets.QUEUE_BASE_URL }}
+      QUEUE_AUTH_TOKEN: ${{ secrets.QUEUE_AUTH_TOKEN }}
+      RISC0_SKIP_BUILD_KERNELS: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Show Rust version
+        run: rustc --version
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.7.1
+
+      - name: Show Foundry version
+        run: forge --version
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run rustfmt
+        run: just crates-fmt-check
+
+      - name: Build
+        run: just crates-build
+
+      - name: Lint
+        run: just crates-lint
+
+      # The deployment promotion gate runs on pull requests into an environment branch, where the recorded
+      # deployments and the source are meant to agree. Elsewhere the gated tests skip and no chain is forked.
+      - name: Run Tests
+        run: just crates-test
+        env:
+          VERIFY_STAGING_DEPLOYMENTS: ${{ github.base_ref == 'staging' }}
+          VERIFY_PRODUCTION_DEPLOYMENTS: ${{ github.base_ref == 'main' }}

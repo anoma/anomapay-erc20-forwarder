@@ -2,7 +2,7 @@ name: Contracts
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging, next]
   pull_request:
   workflow_dispatch:
 
@@ -22,6 +22,8 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.7.1
 
       - name: Show Foundry version
         run: forge --version
@@ -55,13 +57,20 @@ jobs:
       - name: Run Slither Static Analyzer
         run: just contracts-static-analysis
 
+      - name: Run storage check
+        run: just contracts-storage-check
+
       - name: Run Forge fmt
         run: just contracts-fmt-check
 
       - name: Check that bindings are up-to-date
         run: just bindings-check
 
+      # The deployment promotion gate runs on pull requests into an environment branch, where the recorded
+      # deployments and the source are meant to agree. Elsewhere the gated tests skip and no chain is forked.
       - name: Run Forge tests
         run: just contracts-test
         env:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+          VERIFY_STAGING_DEPLOYMENTS: ${{ github.base_ref == 'staging' }}
+          VERIFY_PRODUCTION_DEPLOYMENTS: ${{ github.base_ref == 'main' }}

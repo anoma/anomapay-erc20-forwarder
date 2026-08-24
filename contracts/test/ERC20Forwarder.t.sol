@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Time} from "@openzeppelin-contracts-5.5.0/utils/types/Time.sol";
-import {IForwarder} from "anoma-pa-evm-1.1.0/src/interfaces/IForwarder.sol";
-import {ProtocolAdapter} from "anoma-pa-evm-1.1.0/src/ProtocolAdapter.sol";
-import {DeployRiscZeroContracts} from "anoma-pa-evm-1.1.0/test/script/DeployRiscZeroContracts.s.sol";
-import {Test, Vm, stdError} from "forge-std-1.14.0/src/Test.sol";
-import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
-import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {Time} from "@openzeppelin-contracts-5.7.0/utils/types/Time.sol";
+import {ERC20Example} from "anoma-forwarder-bases-3.0.0/test/examples/ERC20Example.sol";
+import {Test, Vm, stdError} from "forge-std-1.16.2/src/Test.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
+import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 import {
     IPermit2,
     ISignatureTransfer
@@ -15,9 +14,9 @@ import {
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {ERC20ForwarderPermit2} from "../src/ERC20ForwarderPermit2.sol";
-
-import {ERC20Example, ERC20WithFeeExample} from "../test/examples/ERC20.e.sol";
+import {ERC20WithFeeExample} from "../test/examples/ERC20WithFeeExample.sol";
 import {Permit2Signature} from "./libs/Permit2Signature.sol";
+import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 
 contract ERC20ForwarderTest is Test {
@@ -25,28 +24,26 @@ contract ERC20ForwarderTest is Test {
     using Permit2Signature for Vm;
 
     uint256 internal constant _GENERIC_INPUT_OFFSET = 3 * 32;
-
-    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
     uint128 internal constant _TRANSFER_AMOUNT = 1000;
     bytes internal constant _EXPECTED_OUTPUT = "";
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(uint256(0));
+
+    address internal immutable _PA_OWNER = makeAddr("pa owner");
+    address internal immutable _FORWARDER_OWNER = makeAddr("forwarder owner");
 
     bytes32 internal _logicRef;
 
     address internal _alice;
     uint256 internal _alicePrivateKey;
 
-    ProtocolAdapter internal _pa;
-    IForwarder internal _fwd;
+    ProtocolAdapterMock internal _pa;
+    ERC20Forwarder internal _fwd;
     IPermit2 internal _permit2;
     ERC20Example internal _erc20;
     ERC20WithFeeExample internal _erc20FeeAdd;
     ERC20WithFeeExample internal _erc20FeeSub;
 
     ISignatureTransfer.PermitTransferFrom internal _defaultPermit;
-    bytes32 internal _defaultPermitSigR;
-    bytes32 internal _defaultPermitSigS;
-    uint8 internal _defaultPermitSigV;
     bytes internal _defaultWrapInput;
     bytes internal _defaultUnwrapInput;
 
@@ -56,12 +53,10 @@ contract ERC20ForwarderTest is Test {
     error InvalidNonce();
 
     function setUp() public virtual {
-        _logicRef = bytes32(uint256(1));
-
         _alicePrivateKey = 0xc522337787f3037e9d0dcba4dc4c0e3d4eb7b1c65598d51c425574e8ce64d140;
         _alice = vm.addr(_alicePrivateKey);
 
-        // Deploy token and mint for alice
+        // Deploy the tokens
         _erc20 = new ERC20Example();
         _erc20FeeAdd = new ERC20WithFeeExample({isFeeAdded: true});
         _erc20FeeSub = new ERC20WithFeeExample({isFeeAdded: false});
@@ -69,17 +64,8 @@ contract ERC20ForwarderTest is Test {
         // Get the Permit2 contract
         _permit2 = _permit2Contract();
 
-        // Deploy RISC Zero contracts
-        (RiscZeroVerifierRouter router,, RiscZeroGroth16Verifier verifier) =
-            new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
-
-        // Deploy the protocol adapter
-        _pa = new ProtocolAdapter(router, verifier.SELECTOR(), _EMERGENCY_COMMITTEE);
-
-        // Deploy the ERC20 forwarder
-        _fwd = new ERC20Forwarder({
-            protocolAdapter: address(_pa), emergencyCommittee: _EMERGENCY_COMMITTEE, logicRef: _logicRef
-        });
+        // Deploy the protocol adapter(s) and forwarder(s) of the version under test
+        _deployProtocolAdapterAndForwarders();
 
         _defaultPermit = ISignatureTransfer.PermitTransferFrom({
             permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: _TRANSFER_AMOUNT}),
@@ -87,7 +73,7 @@ contract ERC20ForwarderTest is Test {
             deadline: Time.timestamp() + 5 minutes
         });
 
-        (_defaultPermitSigR, _defaultPermitSigS, _defaultPermitSigV) = vm.permitWitnessTransferFromSignature({
+        (bytes32 r, bytes32 s, uint8 v) = vm.permitWitnessTransferFromSignature({
             domainSeparator: _permit2.DOMAIN_SEPARATOR(),
             permit: _defaultPermit,
             privateKey: _alicePrivateKey,
@@ -108,9 +94,9 @@ contract ERC20ForwarderTest is Test {
                 deadline: _defaultPermit.deadline,
                 owner: _alice,
                 actionTreeRoot: _ACTION_TREE_ROOT,
-                r: _defaultPermitSigR,
-                s: _defaultPermitSigS,
-                v: _defaultPermitSigV
+                r: r,
+                s: s,
+                v: v
             })
         );
 
@@ -406,6 +392,25 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _logicRef, input: _defaultWrapInput});
     }
 
+    function test_check_that_the_current_version_is_a_not_a_major_release() public view {
+        int256 lt = -1;
+        //int256 eq = 0;
+        int256 gt = 1;
+
+        assertEq(
+            SemVerLib.cmp(LibString.toSmallString(_fwd.VERSION()), "1.0.0"), gt, "version should be greater than 1.0.0"
+        );
+        assertEq(
+            SemVerLib.cmp(LibString.toSmallString(_fwd.VERSION()), "2.0.0"), lt, "version should be less than 2.0.0"
+        );
+    }
+
+    /// @dev `toSmallString` reverts if the version does not fit into `bytes32`, which `SemVerLib` comparisons
+    /// and the deployment canaries rely on.
+    function test_VERSION_fits_into_bytes32() public view {
+        LibString.toSmallString(_fwd.VERSION());
+    }
+
     function test_witness_typeHash_complies_with_eip712() public pure {
         assertEq(ERC20ForwarderPermit2._WITNESS_TYPEHASH, vm.eip712HashType(ERC20ForwarderPermit2._WITNESS_TYPE_DEF));
     }
@@ -413,6 +418,23 @@ contract ERC20ForwarderTest is Test {
     function test_witness_structHash_complies_with_eip712() public pure {
         ERC20ForwarderPermit2.Witness memory witness = ERC20ForwarderPermit2.Witness({actionTreeRoot: bytes32(0)});
         assertEq(witness.hash(), vm.eip712HashStruct(ERC20ForwarderPermit2._WITNESS_TYPE_DEF, abi.encode(witness)));
+    }
+
+    /// @notice Deploys the protocol adapter(s) and forwarder(s) of the version under test
+    /// and assigns `_logicRef`, `_pa`, and `_fwd`.
+    function _deployProtocolAdapterAndForwarders() internal virtual {
+        _logicRef = bytes32(uint256(1));
+
+        // Deploy the protocol adapter
+        _pa = new ProtocolAdapterMock(_PA_OWNER);
+
+        // Deploy the ERC20 forwarder
+        _fwd = ERC20Forwarder(
+            Upgrades.deployUUPSProxy(
+                "ERC20Forwarder.sol:ERC20Forwarder",
+                abi.encodeCall(ERC20Forwarder.initialize, (address(_pa), _logicRef, _FORWARDER_OWNER))
+            )
+        );
     }
 
     function _permit2Contract() internal virtual returns (IPermit2 permit2) {

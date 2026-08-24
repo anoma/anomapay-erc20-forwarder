@@ -1,4 +1,4 @@
-[![Contracts Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml) [![soldeer.xyz](https://img.shields.io/badge/soldeer.xyz-anomapay--erc20--forwarder-blue?logo=ethereum)](https://soldeer.xyz/project/anoma-pa-evm) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/bindings/LICENSE)
+[![Contracts Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml) [![soldeer.xyz](https://img.shields.io/badge/soldeer.xyz-anomapay--erc20--forwarder-blue?logo=ethereum)](https://soldeer.xyz/project/anomapay-erc20-forwarder) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/contracts/LICENSE)
 
 # ERC20Forwarder Contract
 
@@ -66,8 +66,8 @@ forge coverage
 
 Append the
 
-- `--no-match-coverage "(script|test)"` to exclude scripts, tests, and drafts,
-- `--report lcov` to generate the `lcov.info` file that can be used by code review tooling.
+- `--no-match-coverage "(script|test|draft)"` flag to exclude scripts, tests, and drafts
+- `--report lcov` flag to generate the `lcov.info` file that can be used by code review tooling.
 
 #### Linting & Static Analysis
 
@@ -90,8 +90,9 @@ To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forg
 
 ```sh
 forge bind \
-  --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC20ForwarderV3|IProtocolAdapterSpecific|ILogicRefSpecific|IEmergencyMigratable)$' \
-  --bindings-path ../bindings/src/generated/ \
+  --skip test \
+  --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC1967Proxy)$' \
+  --bindings-path ../crates/bindings/src/generated/ \
   --module \
   --overwrite
 ```
@@ -109,8 +110,8 @@ forge doc
 To simulate deployment on sepolia, run
 
 ```sh
-forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
-  --sig "run(bool,address,bytes32,address)" <IS_TEST_DEPLOYMENT> <PROTOCOL_ADAPTER> <CARRIER_LOGIC_REF> <EMERGENCY_COMMITTEE> \
+forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \
+  --sig "run(bool,address,bytes32)" <IS_PRODUCTION> <PROTOCOL_ADAPTER> <LOGIC_REF> \
   --rpc-url sepolia
 ```
 
