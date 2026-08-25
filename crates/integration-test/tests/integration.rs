@@ -199,6 +199,47 @@ async fn transfer_negative_invalid_permit_signature_len<Env: Environment>(
 #[rstest]
 #[case::local(
     setup_anomapay_erc20_local(),
+    expect_integration_panic(Needle::Static("Invalid resource nonce"))
+)]
+#[tokio::test]
+async fn transfer_negative_invalid_created_nonce<Env: Environment>(
+    #[future(awt)]
+    #[case]
+    env_with_setup: anyhow::Result<Env>,
+    #[case] assert_err: impl FnOnce(anyhow::Result<Env::Transaction>) -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
+    let env = env_with_setup.context("env setup failed")?;
+    let chain_id = chain_id(&env)?;
+    let forwarder = erc20_forwarder_v1_address(&env)?;
+    let token = erc20_address(&env, "example")?;
+
+    let wrap = wrap::build(
+        chain_id,
+        forwarder,
+        token,
+        1,
+        41,
+        wrap::Overrides::default(),
+    )
+    .await
+    .context("failed to build wrap action")?;
+
+    let bad = transfer::build(
+        wrap.created_persistent,
+        forwarder,
+        token,
+        43,
+        None,
+        transfer::Overrides::invalid_created_nonce(),
+    )
+    .context("failed to build invalid transfer action")?;
+
+    assert_err(prove_actions(&env, &[bad.witnesses]).await)
+}
+
+#[rstest]
+#[case::local(
+    setup_anomapay_erc20_local(),
     expect_integration_panic(Needle::Static("Invalid signature"))
 )]
 #[tokio::test]

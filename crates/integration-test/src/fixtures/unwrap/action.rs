@@ -1,8 +1,8 @@
 use alloy::primitives::Address;
-use anoma_rm_risc0::action_tree::MerkleTree as ArmTree;
+use anoma_rm_risc0::action_tree::ActionTree as ArmTree;
 use anoma_rm_risc0::compliance::ComplianceWitness;
 use anoma_rm_risc0::merkle_path::MerklePath;
-use anoma_rm_risc0::resource::Resource;
+use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource};
 use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
 use transfer_witness::AUTH_SIGNATURE_DOMAIN;
 use transfer_witness::ForwarderInfo;
@@ -116,24 +116,21 @@ pub fn build(
         None,
     );
 
-    let compliance = match merkle_path {
-        Some(path) => ComplianceWitness::from_resources_with_path(
-            consumed,
-            owner.nf_key.clone(),
-            path,
-            created,
-        ),
-        None => ComplianceWitness::from_resources(
-            consumed,
-            *anoma_rm_risc0::compliance::INITIAL_ROOT,
-            owner.nf_key.clone(),
-            created,
-        ),
+    let consumed_witness = match merkle_path {
+        Some(path) => {
+            ConsumedResourceWitness::from_resource_with_path(consumed, owner.nf_key.clone(), path)
+        }
+        None => ConsumedResourceWitness::from_resource(consumed, owner.nf_key.clone()),
     };
+    let compliance = ComplianceWitness::from_resources(
+        &[consumed_witness],
+        &[created],
+        crate::fixtures::resource::kind_table(),
+    );
 
     Ok(ActionData {
         witnesses: ActionWitnesses {
-            compliance_witnesses: vec![Box::new(compliance)],
+            compliance_witness: Box::new(compliance),
             logic_witnesses: vec![
                 Box::new(logic::Witness::new(consumed_logic)),
                 Box::new(logic::Witness::new(created_logic)),
