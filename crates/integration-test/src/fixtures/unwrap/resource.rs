@@ -52,10 +52,8 @@ pub(super) fn created(
     seed: u8,
     overrides: &Overrides,
 ) -> anyhow::Result<Resource> {
-    let nonce: [u8; 32] = consumed_nullifier
-        .as_bytes()
-        .try_into()
-        .context("nullifier must be 32 bytes")?;
+    let nonce = Resource::derive_nonce_from_nullifiers(0, &[consumed_nullifier])
+        .context("failed to derive the created resource nonce")?;
 
     let label_ref = overrides
         .created_label_ref

@@ -2,9 +2,9 @@ use std::ops::Add;
 use std::time::Duration;
 
 use alloy::primitives::{Address, B256, U256};
-use anoma_rm_risc0::action_tree::MerkleTree as ArmTree;
+use anoma_rm_risc0::action_tree::ActionTree as ArmTree;
 use anoma_rm_risc0::compliance::ComplianceWitness;
-use anoma_rm_risc0::resource::Resource;
+use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource};
 use transfer_witness::EncryptionInfo;
 use transfer_witness::ForwarderInfo;
 use transfer_witness::LabelInfo;
@@ -130,15 +130,17 @@ pub async fn build(
     );
 
     let compliance = ComplianceWitness::from_resources(
-        consumed,
-        *anoma_rm_risc0::compliance::INITIAL_ROOT,
-        sender.nf_key.clone(),
-        created,
+        &[ConsumedResourceWitness::from_resource(
+            consumed,
+            sender.nf_key.clone(),
+        )],
+        &[created],
+        crate::fixtures::resource::kind_table(),
     );
 
     Ok(ActionData {
         witnesses: ActionWitnesses {
-            compliance_witnesses: vec![Box::new(compliance)],
+            compliance_witness: Box::new(compliance),
             logic_witnesses: vec![
                 Box::new(logic::Witness::new(consumed_logic)),
                 Box::new(logic::Witness::new(created_logic)),

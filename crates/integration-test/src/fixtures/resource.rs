@@ -3,6 +3,7 @@
 
 use alloy::primitives::Address;
 use anoma_rm_risc0::Digest;
+use anoma_rm_risc0::compliance::KindTableEntry;
 use anoma_rm_risc0::resource::Resource;
 use anyhow::Context;
 use transfer_witness::ValueInfo;
@@ -11,6 +12,15 @@ use transfer_witness::calculate_persistent_value_ref;
 
 use crate::logic;
 use anoma_pa_testkit::fixtures::identities::Keychain;
+
+/// The kind table the fixtures prove against. Empty, so every kind falls back to
+/// hash-to-curve and the commitment matches the protocol adapter's initial
+/// `_EMPTY_KIND_TABLE_COMMITMENT`. Proving against a non-empty table additionally
+/// requires `init_kind_table_from_file` — `Transaction::verify` fails with
+/// `KindTableNotLoaded` without it — and the adapter's stored commitment to agree.
+pub(crate) fn kind_table() -> Vec<KindTableEntry> {
+    Vec::new()
+}
 
 /// The persistent token-transfer resource: label committed to
 /// (forwarder, token), value committed to the owner's auth + encryption keys,
@@ -23,10 +33,8 @@ pub(crate) fn persistent(
     quantity: u128,
     rand_seed: [u8; 32],
 ) -> anyhow::Result<Resource> {
-    let nonce: [u8; 32] = consumed_nullifier
-        .as_bytes()
-        .try_into()
-        .context("nullifier must be 32 bytes")?;
+    let nonce = Resource::derive_nonce_from_nullifiers(0, &[consumed_nullifier])
+        .context("failed to derive the created resource nonce")?;
 
     Ok(Resource {
         logic_ref: logic::verifying_key(),
