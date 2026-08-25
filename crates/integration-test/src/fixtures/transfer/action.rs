@@ -51,7 +51,7 @@ pub fn build(
     }
 
     let consumed_nf = consumed.nullifier(&sender.nf_key)?;
-    let created = persistent(
+    let mut created = persistent(
         &receiver,
         consumed_nf,
         forwarder,
@@ -59,6 +59,9 @@ pub fn build(
         consumed.quantity,
         [seed.wrapping_add(51); 32],
     )?;
+    if let Some(nonce) = overrides.created_nonce {
+        created.nonce = nonce;
+    }
 
     let action_tree_root = ArmTree::new(vec![consumed_nf, created.commitment()]).root()?;
 
