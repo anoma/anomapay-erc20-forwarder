@@ -112,8 +112,8 @@ pub fn build(
         None => ConsumedResourceWitness::from_resource(consumed, sender.nf_key.clone()),
     };
     let compliance = ComplianceWitness::from_resources(
-        &[consumed_witness],
-        &[created],
+        vec![consumed_witness],
+        vec![created],
         crate::fixtures::resource::kind_table(),
     );
 
