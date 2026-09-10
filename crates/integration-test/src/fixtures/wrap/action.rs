@@ -130,11 +130,11 @@ pub async fn build(
     );
 
     let compliance = ComplianceWitness::from_resources(
-        &[ConsumedResourceWitness::from_resource(
+        vec![ConsumedResourceWitness::from_resource(
             consumed,
             sender.nf_key.clone(),
         )],
-        &[created],
+        vec![created],
         crate::fixtures::resource::kind_table(),
     );
 
