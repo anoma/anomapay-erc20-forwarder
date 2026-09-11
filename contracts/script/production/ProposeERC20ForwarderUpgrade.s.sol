@@ -19,23 +19,36 @@ contract ProposeERC20ForwarderUpgrade is ProductionScript {
     /// @param newImplementation The implementation contract to upgrade to, which must be the one this source version
     /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
     /// compares two independent derivations.
-    function run(address proxy, address proposer, address newImplementation) public {
-        DeployERC20ForwarderImplementation implementationScript = new DeployERC20ForwarderImplementation();
-        address predictedImplementation = implementationScript.predict();
+    function run(
+        address proxy,
+        address proposer,
+        address newImplementation
+    ) public {
+        DeployERC20ForwarderImplementation implementationDeployScript = new DeployERC20ForwarderImplementation();
+        address predictedImplementation = implementationDeployScript.predict();
 
         require(
             newImplementation == predictedImplementation,
-            DeployERC20ForwarderImplementation.UnexpectedImplementation(predictedImplementation, newImplementation)
+            DeployERC20ForwarderImplementation.UnexpectedImplementation(
+                predictedImplementation,
+                newImplementation
+            )
         );
         require(
             newImplementation.code.length != 0,
-            DeployERC20ForwarderImplementation.ImplementationNotDeployed(newImplementation)
+            DeployERC20ForwarderImplementation.ImplementationNotDeployed(
+                newImplementation
+            )
         );
 
         _propose({
             proxy: proxy,
             callData: abi.encodeCall(
-                UUPSUpgradeable.upgradeToAndCall, (newImplementation, implementationScript.INITIALIZATION_DATA())
+                UUPSUpgradeable.upgradeToAndCall,
+                (
+                    newImplementation,
+                    implementationDeployScript.INITIALIZATION_DATA()
+                )
             ),
             proposer: proposer
         });

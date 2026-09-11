@@ -17,16 +17,20 @@ contract DeployERC20ForwarderProxy is Script {
     bytes32 public constant PROXY_SALT_STAGING = "ERC20ForwarderProxyStaging";
 
     /// @notice The CREATE2 salt for the production environment proxy deployment.
-    bytes32 public constant PROXY_SALT_PRODUCTION = "ERC20ForwarderProxyProduction";
+    bytes32 public constant PROXY_SALT_PRODUCTION =
+        "ERC20ForwarderProxyProduction";
 
     /// @notice The staging environment proxy owner — the deployment wallet, upgrading instantly.
-    address public constant PROXY_OWNER_STAGING = 0x61462bE56782568376f9cB069382EFa72764a407;
+    address public constant PROXY_OWNER_STAGING =
+        0x61462bE56782568376f9cB069382EFa72764a407;
 
     /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
-    address public constant PROXY_OWNER_PRODUCTION = 0xc703402252Ce1251aa07e0815D50060d27fdd6C4;
+    address public constant PROXY_OWNER_PRODUCTION =
+        0xc703402252Ce1251aa07e0815D50060d27fdd6C4;
 
     /// @notice The deployments recorded per environment, relative to the Foundry root.
-    string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";
+    string internal constant _DEPLOYMENTS_PATH =
+        "../crates/bindings/deployments.json";
 
     /// @notice Thrown if the environment already has a deployment recorded for this chain.
     error DeploymentAlreadyRecorded(string environment, uint256 chainId);
@@ -46,19 +50,30 @@ contract DeployERC20ForwarderProxy is Script {
     /// @return implementation The ERC20 forwarder implementation contract the proxy delegates to.
     /// @return initializerData The proxy constructor's initializer data, to record in `deployments.json`.
     /// @return creationCode The ERC-1967 proxy creation code, to record in `deployments.json`.
-    function run(bool isProduction, address protocolAdapter, bytes32 logicRef)
+    function run(
+        bool isProduction,
+        address protocolAdapter,
+        bytes32 logicRef
+    )
         public
-        returns (address proxy, address implementation, bytes memory initializerData, bytes memory creationCode)
+        returns (
+            address proxy,
+            address implementation,
+            bytes memory initializerData,
+            bytes memory creationCode
+        )
     {
-        DeployERC20ForwarderImplementation implementationScript = new DeployERC20ForwarderImplementation();
+        DeployERC20ForwarderImplementation implementationDeployScript = new DeployERC20ForwarderImplementation();
 
-        bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+        bytes32 salt = isProduction
+            ? PROXY_SALT_PRODUCTION
+            : PROXY_SALT_STAGING;
 
         // Checks
         {
             _requireUnrecorded(isProduction);
 
-            implementation = implementationScript.predict();
+            implementation = implementationDeployScript.predict();
 
             (proxy, initializerData, creationCode) = _predict({
                 salt: salt,
@@ -67,16 +82,24 @@ contract DeployERC20ForwarderProxy is Script {
                 logicRef: logicRef,
                 isProduction: isProduction
             });
-            require(proxy.code.length == 0, ProxyAlreadyDeployed({proxy: proxy}));
+            require(
+                proxy.code.length == 0,
+                ProxyAlreadyDeployed({proxy: proxy})
+            );
         }
 
         // Deployment
         if (implementation.code.length == 0) {
-            implementationScript.run();
+            implementationDeployScript.run();
         }
 
         vm.startBroadcast();
-        proxy = address(new ERC1967Proxy{salt: salt}({implementation: implementation, _data: initializerData}));
+        proxy = address(
+            new ERC1967Proxy{salt: salt}({
+                implementation: implementation,
+                _data: initializerData
+            })
+        );
         vm.stopBroadcast();
     }
 
@@ -86,15 +109,18 @@ contract DeployERC20ForwarderProxy is Script {
     /// @param logicRef The reference to the ERC20 resource logic function triggering the forward calls.
     /// @return proxy The predicted ERC20 forwarder proxy contract address.
     /// @return implementation The predicted implementation contract address the proxy commits to.
-    function predict(bool isProduction, address protocolAdapter, bytes32 logicRef)
-        public
-        returns (address proxy, address implementation)
-    {
-        bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+    function predict(
+        bool isProduction,
+        address protocolAdapter,
+        bytes32 logicRef
+    ) public returns (address proxy, address implementation) {
+        bytes32 salt = isProduction
+            ? PROXY_SALT_PRODUCTION
+            : PROXY_SALT_STAGING;
 
         implementation = new DeployERC20ForwarderImplementation().predict();
 
-        (proxy,,) = _predict({
+        (proxy, , ) = _predict({
             salt: salt,
             implementation: implementation,
             protocolAdapter: protocolAdapter,
@@ -106,7 +132,9 @@ contract DeployERC20ForwarderProxy is Script {
     /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
     /// @param isProduction Whether to name the production or the staging environment.
     /// @return name The environment name.
-    function environmentName(bool isProduction) public pure returns (string memory name) {
+    function environmentName(
+        bool isProduction
+    ) public pure returns (string memory name) {
         name = isProduction ? "production" : "staging";
     }
 
@@ -116,15 +144,22 @@ contract DeployERC20ForwarderProxy is Script {
         string memory json = vm.readFile(_DEPLOYMENTS_PATH);
         string memory environment = environmentName(isProduction);
 
-        for (uint256 i = 0;; ++i) {
+        for (uint256 i = 0; ; ++i) {
             // solhint-disable-next-line func-named-parameters
-            string memory entry = string.concat(".", environment, "[", vm.toString(i), "]");
+            string memory entry = string.concat(
+                ".",
+                environment,
+                "[",
+                vm.toString(i),
+                "]"
+            );
             if (!vm.keyExistsJson(json, entry)) {
                 return;
             }
 
             require(
-                vm.parseJsonUint(json, string.concat(entry, ".chainId")) != block.chainid,
+                vm.parseJsonUint(json, string.concat(entry, ".chainId")) !=
+                    block.chainid,
                 DeploymentAlreadyRecorded(environment, block.chainid)
             );
         }
@@ -145,17 +180,35 @@ contract DeployERC20ForwarderProxy is Script {
         address protocolAdapter,
         bytes32 logicRef,
         bool isProduction
-    ) internal pure returns (address proxy, bytes memory initializerData, bytes memory creationCode) {
+    )
+        internal
+        pure
+        returns (
+            address proxy,
+            bytes memory initializerData,
+            bytes memory creationCode
+        )
+    {
         initializerData = abi.encodeCall(
             ERC20Forwarder.initialize,
-            (protocolAdapter, logicRef, isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING)
+            (
+                protocolAdapter,
+                logicRef,
+                isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING
+            )
         );
         creationCode = type(ERC1967Proxy).creationCode;
 
-        bytes memory constructorArgs = abi.encode(implementation, initializerData);
+        bytes memory constructorArgs = abi.encode(
+            implementation,
+            initializerData
+        );
 
         bytes memory initCode = abi.encodePacked(creationCode, constructorArgs);
 
-        proxy = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
+        proxy = vm.computeCreate2Address({
+            salt: salt,
+            initCodeHash: keccak256(initCode)
+        });
     }
 }
