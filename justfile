@@ -33,7 +33,7 @@ contracts-build *args:
 
 # Lint contracts (forge lint + solhint)
 contracts-lint:
-    cd contracts && forge lint --deny warnings
+    cd contracts && forge lint --deny notes
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
@@ -77,8 +77,10 @@ contracts-gen-bindings:
     # The script directory is built (not skipped) because `ERC1967Proxy` only
     # enters the compilation graph through `DeployERC20ForwarderProxy.s.sol`;
     # `--select` keeps the script contracts themselves out of the bindings.
-    cd contracts && forge clean && forge bind \
-        --skip test \
+    # `forge bind` builds without bytecode, which drops the `deploy` helpers, so
+    # build first and let it read those artifacts.
+    cd contracts && forge clean && forge build --skip test && forge bind \
+        --skip-build \
         --select '^(ERC20Forwarder|ERC1967Proxy)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
