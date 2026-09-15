@@ -61,6 +61,13 @@ ignored_warnings_from = [
     "dependencies/solady-0.1.26/src/utils",                                                       # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
+[lint]
+exclude_lints = [
+    "internal-function-used-once", # Unreliable while `ignore` hides the call sites in the tests.
+    "reentrancy-events",           # Duplicates Slither, where the reviewed sites carry `slither-disable-next-line`.
+]
+ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
+
 [dependencies]
 "@openzeppelin-contracts" = "5.7.0"
 "@openzeppelin-contracts-upgradeable" = "5.7.0"
