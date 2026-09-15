@@ -10,9 +10,18 @@ use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::{Environment as PaEnvironment, protocol_adapter_address};
 use anoma_pa_evm_bindings::helpers::alchemy_url;
-use anomapay_erc20_forwarder_bindings::addresses::{Environment, erc20_forwarder_deployments_map};
+use anomapay_erc20_forwarder_bindings::addresses::{
+    Environment, erc20_forwarder_deployments_map, erc20_forwarder_v1_deployments_map,
+};
 use anomapay_erc20_forwarder_bindings::contract::erc20_forwarder;
 use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder;
+
+alloy::sol! {
+    #[sol(rpc)]
+    interface IERC20ForwarderV1 {
+        function getLogicRef() external view returns (bytes32 logicRef);
+    }
+}
 
 const ENVIRONMENTS: [(Environment, &str); 2] = [
     (Environment::Staging, "VERIFY_STAGING_DEPLOYMENTS"),
@@ -119,6 +128,31 @@ async fn versions_of_deployed_forwarders_match_the_expected_version() {
                 "ERC20 forwarder version mismatch on network '{chain}' of environment {environment:?}."
             );
         }
+    }
+}
+
+#[tokio::test]
+async fn v1_forwarders_accept_the_recorded_logic_ref() {
+    // A V1 forwarder is immutable and belongs to no environment, so any armed environment checks all of them.
+    if armed_environments().is_empty() {
+        return;
+    }
+
+    for (chain, v1) in erc20_forwarder_v1_deployments_map() {
+        let rpc_url = alchemy_url(&chain).expect("Couldn't get RPC URL for chain");
+        let provider = ProviderBuilder::new().connect_http(rpc_url);
+
+        let actual_logic_ref = IERC20ForwarderV1::new(v1.address, &provider)
+            .getLogicRef()
+            .call()
+            .await
+            .expect("Couldn't get logic ref");
+
+        assert_eq!(
+            actual_logic_ref, v1.logic_ref,
+            "V1 logic ref mismatch on network '{chain}': recorded {}, actual: {actual_logic_ref}.",
+            v1.logic_ref
+        );
     }
 }
 

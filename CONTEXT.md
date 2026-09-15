@@ -41,7 +41,11 @@ The two environments. Staging is owned by the deployment wallet and upgraded dir
 Moving a commit unchanged from `next` to `staging`, or from `staging` to `main`. The pull request opening one carries the gate proving the environment it targets runs that commit's source. Changes only ever flow this way.
 
 **Deployment record**:
-`crates/bindings/deployments.json` — the proxy address of each environment on each chain, plus the genesis fields pinning how that address was derived. Written once per chain at its first deploy and never edited; what an environment currently runs is read from the chain, not from here.
+`crates/bindings/deployments.json` — the proxy address of each environment on each chain, plus the genesis fields pinning how that address was derived, and the V1 forwarder of each chain that ran a v1 protocol adapter. Written once per chain at its first deploy and never edited; what an environment currently runs is read from the chain, not from here.
+
+**V1 forwarder**:
+The immutable ERC20 forwarder that ran with a chain's v1 protocol adapter, recorded with the logic ref it accepts. It belongs to no environment.
+_Avoid_: retired forwarder, legacy forwarder
 
 ## Note on upstream names
 
