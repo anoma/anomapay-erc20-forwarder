@@ -20,8 +20,8 @@ contract ProposeERC20ForwarderUpgrade is ProductionScript {
     /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
     /// compares two independent derivations.
     function run(address proxy, address proposer, address newImplementation) public {
-        DeployERC20ForwarderImplementation implementationScript = new DeployERC20ForwarderImplementation();
-        address predictedImplementation = implementationScript.predict();
+        DeployERC20ForwarderImplementation implementationDeployScript = new DeployERC20ForwarderImplementation();
+        address predictedImplementation = implementationDeployScript.predict();
 
         require(
             newImplementation == predictedImplementation,
@@ -35,7 +35,7 @@ contract ProposeERC20ForwarderUpgrade is ProductionScript {
         _propose({
             proxy: proxy,
             callData: abi.encodeCall(
-                UUPSUpgradeable.upgradeToAndCall, (newImplementation, implementationScript.INITIALIZATION_DATA())
+                UUPSUpgradeable.upgradeToAndCall, (newImplementation, implementationDeployScript.INITIALIZATION_DATA())
             ),
             proposer: proposer
         });

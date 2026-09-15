@@ -50,7 +50,7 @@ contract DeployERC20ForwarderProxy is Script {
         public
         returns (address proxy, address implementation, bytes memory initializerData, bytes memory creationCode)
     {
-        DeployERC20ForwarderImplementation implementationScript = new DeployERC20ForwarderImplementation();
+        DeployERC20ForwarderImplementation implementationDeployScript = new DeployERC20ForwarderImplementation();
 
         bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
 
@@ -58,7 +58,7 @@ contract DeployERC20ForwarderProxy is Script {
         {
             _requireUnrecorded(isProduction);
 
-            implementation = implementationScript.predict();
+            implementation = implementationDeployScript.predict();
 
             (proxy, initializerData, creationCode) = _predict({
                 salt: salt,
@@ -72,7 +72,7 @@ contract DeployERC20ForwarderProxy is Script {
 
         // Deployment
         if (implementation.code.length == 0) {
-            implementationScript.run();
+            implementationDeployScript.run();
         }
 
         vm.startBroadcast();

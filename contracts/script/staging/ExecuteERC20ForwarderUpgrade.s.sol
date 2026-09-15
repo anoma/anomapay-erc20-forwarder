@@ -21,8 +21,8 @@ contract ExecuteERC20ForwarderUpgrade is StagingScript {
     /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
     /// compares two independent derivations.
     function run(address proxy, address newImplementation) public {
-        DeployERC20ForwarderImplementation implementationScript = new DeployERC20ForwarderImplementation();
-        address predictedImplementation = implementationScript.predict();
+        DeployERC20ForwarderImplementation implementationDeployScript = new DeployERC20ForwarderImplementation();
+        address predictedImplementation = implementationDeployScript.predict();
 
         require(
             newImplementation == predictedImplementation,
@@ -36,7 +36,7 @@ contract ExecuteERC20ForwarderUpgrade is StagingScript {
         _checkSenderAuthorization({proxy: proxy});
 
         vm.startBroadcast();
-        UUPSUpgradeable(proxy).upgradeToAndCall(newImplementation, implementationScript.INITIALIZATION_DATA());
+        UUPSUpgradeable(proxy).upgradeToAndCall(newImplementation, implementationDeployScript.INITIALIZATION_DATA());
         vm.stopBroadcast();
     }
 }
