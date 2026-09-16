@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {RecordedDeployments} from "../../../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../../src/ERC20Forwarder.sol";
 import {DeploymentsFixture} from "../../fixtures/DeploymentsFixture.sol";
 
@@ -23,7 +24,7 @@ contract DeploymentsStagingTest is DeploymentsFixture {
     }
 
     function test_recorded_deployments_run_a_release_or_release_candidate_version() public onlyStaging {
-        Deployment[] memory deployments = _recordedDeployments({isProduction: false});
+        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments({isProduction: false});
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             _selectForkAt(deployments[i].chainId);

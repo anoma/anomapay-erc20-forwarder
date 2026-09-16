@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {Script} from "forge-std-1.16.2/src/Script.sol";
 
+import {RecordedDeployments} from "../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {DeployERC20ForwarderImplementation} from "./DeployERC20ForwarderImplementation.s.sol";
 
@@ -24,9 +25,6 @@ contract DeployERC20ForwarderProxy is Script {
 
     /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
     address public constant PROXY_OWNER_PRODUCTION = 0xc703402252Ce1251aa07e0815D50060d27fdd6C4;
-
-    /// @notice The deployments recorded per environment, relative to the Foundry root.
-    string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";
 
     /// @notice Thrown if the environment already has a deployment recorded for this chain.
     error DeploymentAlreadyRecorded(string environment, uint256 chainId);
@@ -56,7 +54,10 @@ contract DeployERC20ForwarderProxy is Script {
 
         // Checks
         {
-            _requireUnrecorded(isProduction);
+            require(
+                !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
+                DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
+            );
 
             implementation = implementationDeployScript.predict();
 
@@ -108,26 +109,6 @@ contract DeployERC20ForwarderProxy is Script {
     /// @return name The environment name.
     function environmentName(bool isProduction) public pure returns (string memory name) {
         name = isProduction ? "production" : "staging";
-    }
-
-    /// @notice Checks that the environment has no deployment recorded for this chain yet.
-    /// @param isProduction Whether to check the production or the staging environment.
-    function _requireUnrecorded(bool isProduction) internal view {
-        string memory json = vm.readFile(_DEPLOYMENTS_PATH);
-        string memory environment = environmentName(isProduction);
-
-        for (uint256 i = 0;; ++i) {
-            // solhint-disable-next-line func-named-parameters
-            string memory entry = string.concat(".", environment, "[", vm.toString(i), "]");
-            if (!vm.keyExistsJson(json, entry)) {
-                return;
-            }
-
-            require(
-                vm.parseJsonUint(json, string.concat(entry, ".chainId")) != block.chainid,
-                DeploymentAlreadyRecorded(environment, block.chainid)
-            );
-        }
     }
 
     /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.

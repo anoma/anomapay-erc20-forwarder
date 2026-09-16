@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 
+import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployERC20ForwarderProxy} from "../../script/DeployERC20ForwarderProxy.s.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
@@ -34,7 +35,7 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
     }
 
     function test_run_reverts_if_the_chain_has_a_recorded_deployment() public {
-        Deployment[] memory deployments = _recordedDeployments({isProduction: false});
+        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments({isProduction: false});
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             vm.chainId(deployments[i].chainId);

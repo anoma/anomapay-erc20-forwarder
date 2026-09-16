@@ -5,35 +5,15 @@ import {SupportedNetworks} from "anoma-risc0-deployments-1.2.2/src/SupportedNetw
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
+import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployERC20ForwarderImplementation} from "../../script/DeployERC20ForwarderImplementation.s.sol";
 import {DeployERC20ForwarderProxy} from "../../script/DeployERC20ForwarderProxy.s.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 
 /// @notice A test fixture providing the ERC20 forwarder deployments recorded per environment in `deployments.json` —
-/// the single source of truth for the deterministic deployments.
+/// the single source of truth for the deterministic deployments — through the generated `RecordedDeployments` library.
 abstract contract DeploymentsFixture is SupportedNetworks, Test {
     using LibString for *;
-
-    /// @notice An ERC20 forwarder proxy recorded in `deployments.json`.
-    /// @dev The genesis fields pin the first deployment: the ERC-1967 proxy creation code and constructor arguments
-    /// determine the address together with the environment salt, and none of them can be recovered from the chain
-    /// once the proxy is upgraded.
-    struct ProxyData {
-        address addr;
-        bytes creationCode;
-        address initialImplementation;
-        bytes initializerData;
-    }
-
-    /// @notice An ERC20 forwarder deployment recorded in `deployments.json`.
-    /// @dev Fields are ordered alphabetically by their JSON key so the struct decodes from `vm.parseJson`, which
-    /// encodes object values in that order — the Solidity names themselves are irrelevant.
-    struct Deployment {
-        uint256 chainId;
-        ProxyData proxy;
-    }
-
-    string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";
 
     /// @notice Checks that every recorded proxy sits at the address its genesis deployment determines under the
     /// environment salt — the check that the first deployment of an environment used the right salt.
@@ -43,10 +23,10 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
             ? new DeployERC20ForwarderProxy().PROXY_SALT_PRODUCTION()
             : new DeployERC20ForwarderProxy().PROXY_SALT_STAGING();
 
-        Deployment[] memory deployments = _recordedDeployments(isProduction);
+        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments(isProduction);
 
         for (uint256 i = 0; i < deployments.length; ++i) {
-            ProxyData memory recordedProxy = deployments[i].proxy;
+            RecordedDeployments.Proxy memory recordedProxy = deployments[i].proxy;
 
             bytes memory constructorArgs =
                 abi.encode(recordedProxy.initialImplementation, recordedProxy.initializerData);
@@ -70,11 +50,11 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     /// it runs.
     /// @param isProduction Whether to check the production or the staging environment.
     function _expectSourceImplementations(bool isProduction) internal {
-        Deployment[] memory deployments = _recordedDeployments(isProduction);
+        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments(isProduction);
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             uint256 chainId = deployments[i].chainId;
-            ProxyData memory proxy = deployments[i].proxy;
+            RecordedDeployments.Proxy memory proxy = deployments[i].proxy;
             string memory context = _deploymentContext({isProduction: isProduction, chainId: chainId});
 
             // Predicted before the fork is selected, because selecting one discards the script deployed here.
@@ -99,13 +79,15 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
         vm.selectFork(vm.createFork(networkName));
     }
 
-    /// @notice Reads the deployments of an environment recorded in `deployments.json`.
-    /// @param isProduction Whether to read the production or the staging environment.
+    /// @notice Returns the deployments of an environment, as `RecordedDeployments` records them.
+    /// @param isProduction Whether to return the production or the staging environment.
     /// @return deployments The recorded deployments.
-    function _recordedDeployments(bool isProduction) internal view returns (Deployment[] memory deployments) {
-        string memory environment = string.concat(".", _environmentName(isProduction));
-
-        deployments = abi.decode(vm.parseJson(vm.readFile(_DEPLOYMENTS_PATH), environment), (Deployment[]));
+    function _recordedDeployments(bool isProduction)
+        internal
+        pure
+        returns (RecordedDeployments.Deployment[] memory deployments)
+    {
+        deployments = isProduction ? RecordedDeployments.production() : RecordedDeployments.staging();
     }
 
     /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.

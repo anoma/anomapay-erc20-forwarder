@@ -64,6 +64,9 @@ jobs:
       - name: Check that bindings are up-to-date
         run: just bindings-check
 
+      - name: Check that the recorded deployments library is up-to-date
+        run: just contracts-deployments-check
+
       # The deployment promotion gate runs on pull requests into an environment branch, where the recorded
       # deployments and the source are meant to agree. Elsewhere the gated tests skip and no chain is forked.
       - name: Run Forge tests

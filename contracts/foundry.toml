@@ -22,12 +22,9 @@ src = "src"
 test = "test"
 out = "out"
 script = "script"
-# Let tests read build artifacts (needed by `openzeppelin-foundry-upgrades`) and the
-# recorded deployments. Setting `fs_permissions` replaces the implicit artifact access.
-fs_permissions = [
-    { access = "read", path = "out" },
-    { access = "read", path = "../crates/bindings/deployments.json" },
-]
+# Let tests read build artifacts (needed by `openzeppelin-foundry-upgrades`). Setting
+# `fs_permissions` replaces the implicit artifact access.
+fs_permissions = [{ access = "read", path = "out" }]
 libs = ["dependencies"]
 auto_detect_remappings = false
 remappings = [
