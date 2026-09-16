@@ -8,6 +8,7 @@ import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/inter
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployERC20ForwarderProxy} from "../../script/DeployERC20ForwarderProxy.s.sol";
+import {DeployERC20ForwarderMigration} from "../../script/migration/DeployERC20ForwarderMigration.s.sol";
 import {MigrateERC20ForwarderAssets} from "../../script/migration/MigrateERC20ForwarderAssets.s.sol";
 import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
 import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
@@ -47,7 +48,9 @@ contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
 
         address forwarderV1 = RecordedDeployments.forwarderV1(_CHAIN_ID);
         address forwarderV2 = RecordedDeployments.forwarderProxy({isProduction: false, chainId: _CHAIN_ID});
-        address safe = new DeployERC20ForwarderProxy().PROXY_OWNER_PRODUCTION();
+        DeployERC20ForwarderProxy proxyDeployScript = new DeployERC20ForwarderProxy();
+        address committee = proxyDeployScript.PROXY_OWNER_PRODUCTION();
+        address wallet = proxyDeployScript.PROXY_OWNER_STAGING();
         _requireStoppedProtocolAdapterV1(forwarderV1);
 
         IERC20[] memory tokens = _tokens();
@@ -55,17 +58,16 @@ contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
         uint256[] memory balancesV2 = _balances({tokens: tokens, account: forwarderV2});
 
         // Deployed through the script, so its checks run against the chain the migration acts on.
-        MigrateERC20ForwarderAssets script = new MigrateERC20ForwarderAssets();
-        ERC20ForwarderMigration migration = script.run(false);
-        assertEq(migration.owner(), safe, "the Safe does not own the migration");
+        ERC20ForwarderMigration migration = new DeployERC20ForwarderMigration().run(false);
+        assertEq(migration.owner(), wallet, "the deployment wallet does not own the migration");
 
         // Read after the deployment: the address the migration lands on may hold a balance of its own already.
         uint256[] memory balancesBeforeMigration = _balances({tokens: tokens, account: address(migration)});
 
-        vm.prank(safe);
+        vm.prank(committee);
         IEmergencyMigratable(forwarderV1).setEmergencyCaller(address(migration));
 
-        vm.prank(safe);
+        vm.prank(wallet);
         migration.migrate(tokens);
 
         for (uint256 i = 0; i < tokens.length; ++i) {
@@ -84,7 +86,7 @@ contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
             );
         }
 
-        script.verify({isProduction: false, migration: migration, tokens: tokens});
+        new MigrateERC20ForwarderAssets().verify({isProduction: false, migration: migration, tokens: tokens});
     }
 
     /// @notice Reverts unless the v1 protocol adapter of the forwarder is stopped, which both its emergency calls

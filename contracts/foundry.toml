@@ -62,7 +62,6 @@ ignored_warnings_from = [
 [lint]
 exclude_lints = [
     "internal-function-used-once", # Unreliable while `ignore` hides the call sites in the tests.
-    "reentrancy-events",           # Duplicates Slither, where the reviewed sites carry `slither-disable-next-line`.
 ]
 ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
 

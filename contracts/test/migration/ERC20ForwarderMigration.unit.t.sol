@@ -64,11 +64,11 @@ contract ERC20ForwarderMigrationUnitTest is Test {
         _migration.migrate(_tokens);
     }
 
-    function test_migrate_emits_no_event_for_a_zero_balance() public {
-        vm.recordLogs();
-        _migration.migrate(_tokens);
+    function test_migrate_emits_the_event_for_a_zero_balance() public {
+        vm.expectEmit(address(_migration));
+        emit IERC20ForwarderMigration.ERC20TokenMigrated(address(_forwarderV1), _forwarderV2, address(_token), 0);
 
-        assertEq(vm.getRecordedLogs().length, 0, "a token without a balance emitted an event");
+        _migration.migrate(_tokens);
     }
 
     function test_migrate_moves_a_token_left_out_of_an_earlier_batch() public {
@@ -197,16 +197,12 @@ contract ERC20ForwarderMigrationUnitTest is Test {
         new ERC20ForwarderMigration(address(_forwarderV1), _forwarderV2, address(0));
     }
 
-    function test_transferOwnership_moves_the_migration_only_once_the_successor_accepts() public {
+    function test_transferOwnership_moves_the_migration_to_the_successor() public {
         address successor = makeAddr("successor");
         _token.mint(address(_forwarderV1), _AMOUNT);
 
         _migration.transferOwnership(successor);
-        assertEq(_migration.owner(), address(this), "the transfer moved the ownership before acceptance");
-
-        vm.prank(successor);
-        _migration.acceptOwnership();
-        assertEq(_migration.owner(), successor, "the acceptance did not move the ownership");
+        assertEq(_migration.owner(), successor, "the transfer did not move the ownership");
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         _migration.migrate(_tokens);
@@ -214,10 +210,5 @@ contract ERC20ForwarderMigrationUnitTest is Test {
         vm.prank(successor);
         _migration.migrate(_tokens);
         assertEq(_token.balanceOf(_forwarderV2), _AMOUNT, "the successor could not migrate");
-    }
-
-    function test_renounceOwnership_reverts() public {
-        vm.expectRevert(ERC20ForwarderMigration.RenunciationDisabled.selector);
-        _migration.renounceOwnership();
     }
 }

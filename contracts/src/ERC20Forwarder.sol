@@ -165,7 +165,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
 
         // NOTE: The event ordering is protected by the `nonReentrant` modifier in `ForwarderBase.forwardCall` and
         // `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
-        // slither-disable-next-line reentrancy-events
+        // forge-lint: disable-next-line(reentrancy-events)
         emit Wrapped({token: token, from: data.owner, amount: amount});
     }
 

@@ -161,7 +161,7 @@ contracts-simulate-migration sender chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+    cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
         --sig "run(bool)" $IS_PRODUCTION \
         --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
@@ -169,7 +169,7 @@ contracts-simulate-migration sender chain *args:
 contracts-deploy-migration deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+    cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
         --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
@@ -186,17 +186,17 @@ contracts-propose-migration-caller deployer migration proposer chain *args:
         --sig "proposeCaller(bool,address,address)" $IS_PRODUCTION {{migration}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the custody move proposal (dry-run): simulates the Safe executing the move (tokens = '[0x…,0x…]')
-contracts-simulate-migration-proposal migration tokens proposer chain *args:
+# Simulate the custody move (dry-run): moves it locally as the deployment wallet (tokens = '[0x…,0x…]')
+contracts-simulate-migration-move sender migration tokens chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
-        --sig "proposeMigration(bool,address,address[],address)" $IS_PRODUCTION {{migration}} {{tokens}} {{proposer}} \
-        --rpc-url {{chain}} {{ args }}
+        --sig "executeMigration(bool,address,address[])" $IS_PRODUCTION {{migration}} {{tokens}} \
+        --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
-# Propose the custody move to the Safe owning the migration contract (proposer = unlocked deployer)
-contracts-propose-migration deployer migration tokens proposer chain *args:
+# Move the custody to the recorded V2 forwarder as the deployment wallet owning the migration contract
+contracts-execute-migration deployer migration tokens chain *args:
     cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
-        --sig "proposeMigration(bool,address,address[],address)" $IS_PRODUCTION {{migration}} {{tokens}} {{proposer}} \
+        --sig "executeMigration(bool,address,address[])" $IS_PRODUCTION {{migration}} {{tokens}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Check the moved custody of one chain against the chain, reading the emergency caller and the V1 token balances
