@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {SupportedNetworks} from "anoma-risc0-deployments-1.2.2/src/SupportedNetworks.sol";
 import {Script} from "forge-std-1.16.2/src/Script.sol";
+import {Vm} from "forge-std-1.16.2/src/Vm.sol";
 import {LibBytes} from "solady-0.1.26/src/utils/LibBytes.sol";
-import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 import {IERC20ForwarderV1} from "./../../src/migration/IERC20ForwarderV1.sol";
 
 /// @notice Verifies V1 deployment and Wrapped token coverage.
@@ -12,6 +12,8 @@ contract AuditERC20ForwarderTokens is Script, SupportedNetworks {
     error InvalidDeployment();
     error MissingWrappedToken(address token);
     error InvalidBlockSpan();
+    error InvalidAuditRange();
+    error UnexpectedWrappedEventCount(uint256 expected, uint256 actual);
 
     /// @notice Audits deployment and events through the current block, read-only.
     /// @param deploymentTransaction V1 creation tx; zero uses the recorded tx.
@@ -24,30 +26,39 @@ contract AuditERC20ForwarderTokens is Script, SupportedNetworks {
         returns (address committee, uint256 wrappedEvents, uint256 throughBlock)
     {
         require(blockSpan > 0, InvalidBlockSpan());
+        return _run(deploymentTransaction, blockSpan, _rpcBlockNumber());
+    }
+
+    function _run(bytes32 deploymentTransaction, uint256 blockSpan, uint256 auditThroughBlock)
+        internal
+        returns (address committee, uint256 wrappedEvents, uint256 throughBlock)
+    {
+        throughBlock = auditThroughBlock;
         string memory json = vm.readFile("script/migration/tokens.json");
         string memory key = string.concat(".chains.", vm.toString(block.chainid));
         IERC20ForwarderV1 v1 = IERC20ForwarderV1(vm.parseJsonAddress(json, string.concat(key, ".forwarderV1")));
         address[] memory tokens = vm.parseJsonAddressArray(json, string.concat(key, ".tokens"));
+        uint256 recordedBlock = vm.parseJsonUint(json, string.concat(key, ".audit.blockNumber"));
+        uint256 expectedEvents = vm.parseJsonUint(json, string.concat(key, ".audit.wrappedEventCount"));
         if (deploymentTransaction == bytes32(0)) {
             deploymentTransaction = vm.parseJsonBytes32(json, string.concat(key, ".audit.deploymentTransaction"));
         }
         uint256 deploymentBlock;
-        (committee, deploymentBlock) = _deployment(v1, deploymentTransaction);
-        throughBlock = block.number;
-        for (uint256 start = deploymentBlock; start <= throughBlock;) {
-            uint256 end = start + (blockSpan - 1 < throughBlock - start ? blockSpan - 1 : throughBlock - start);
-            string memory bounds = string.concat(",\"fromBlock\":\"", LibString.toMinimalHexString(start), "\"");
-            bounds = string.concat(bounds, ",\"toBlock\":\"", LibString.toMinimalHexString(end));
-            bounds = string.concat(bounds, "\"}]");
-            string memory filter = string.concat("[{\"address\":\"", vm.toString(address(v1)), "\",\"topics\":[\"");
-            filter = string.concat(filter, vm.toString(keccak256("Wrapped(address,address,uint128)")), "\"]");
-            filter = string.concat(filter, bounds);
-            wrappedEvents += _checkLogs(_rpc("eth_getLogs", filter), tokens);
-            start = end + 1;
+        (committee, deploymentBlock) = _deployment(v1, deploymentTransaction, throughBlock);
+        require(deploymentBlock <= recordedBlock && recordedBlock <= throughBlock, InvalidAuditRange());
+
+        wrappedEvents = _scan({
+            v1: v1, tokens: tokens, fromBlock: deploymentBlock, throughBlock: recordedBlock, blockSpan: blockSpan
+        });
+        _checkExpectedEvents(expectedEvents, wrappedEvents);
+        if (recordedBlock < throughBlock) {
+            wrappedEvents += _scan({
+                v1: v1, tokens: tokens, fromBlock: recordedBlock + 1, throughBlock: throughBlock, blockSpan: blockSpan
+            });
         }
     }
 
-    function _deployment(IERC20ForwarderV1 v1, bytes32 deploymentTransaction)
+    function _deployment(IERC20ForwarderV1 v1, bytes32 deploymentTransaction, uint256 throughBlock)
         internal
         returns (address committee, uint256 deploymentBlock)
     {
@@ -56,10 +67,19 @@ contract AuditERC20ForwarderTokens is Script, SupportedNetworks {
         string memory receipt = _rpc("eth_getTransactionReceipt", params);
         deploymentBlock = vm.parseUint(vm.parseJsonString(receipt, ".blockNumber"));
         require(
-            vm.parseUint(vm.parseJsonString(receipt, ".status")) == 1 && deploymentBlock <= block.number,
+            vm.parseUint(vm.parseJsonString(receipt, ".status")) == 1 && deploymentBlock <= throughBlock,
             InvalidDeployment()
         );
         committee = _committee(v1, transaction, receipt);
+    }
+
+    function _rpcBlockNumber() internal returns (uint256 rpcBlockNumber) {
+        string[] memory command = new string[](4);
+        command[0] = "cast";
+        command[1] = "block-number";
+        command[2] = "--rpc-url";
+        command[3] = vm.rpcUrl(vm.envOr("MIGRATION_FORK_RPC", _supportedNetworks[block.chainid]));
+        rpcBlockNumber = vm.parseUint(string(vm.ffi(command)));
     }
 
     function _rpc(string memory method, string memory params) internal returns (string memory json) {
@@ -72,6 +92,35 @@ contract AuditERC20ForwarderTokens is Script, SupportedNetworks {
         command[5] = "--rpc-url";
         command[6] = vm.rpcUrl(vm.envOr("MIGRATION_FORK_RPC", _supportedNetworks[block.chainid]));
         json = string(vm.ffi(command));
+    }
+
+    function _scan(
+        IERC20ForwarderV1 v1,
+        address[] memory tokens,
+        uint256 fromBlock,
+        uint256 throughBlock,
+        uint256 blockSpan
+    ) internal view returns (uint256 wrappedEvents) {
+        for (uint256 start = fromBlock; start <= throughBlock;) {
+            uint256 end = start + (blockSpan - 1 < throughBlock - start ? blockSpan - 1 : throughBlock - start);
+            wrappedEvents += _summarizeLogs(v1, tokens, start, end);
+            start = end + 1;
+        }
+    }
+
+    function _summarizeLogs(IERC20ForwarderV1 v1, address[] memory tokens, uint256 fromBlock, uint256 toBlock)
+        internal
+        view
+        returns (uint256 count)
+    {
+        bytes32[] memory topics = new bytes32[](1);
+        topics[0] = keccak256("Wrapped(address,address,uint128)");
+        Vm.EthGetLogs[] memory entries = vm.eth_getLogs(fromBlock, toBlock, address(v1), topics);
+        count = entries.length;
+        for (uint256 i = 0; i < count; ++i) {
+            require(entries[i].topics.length > 1, InvalidDeployment());
+            _checkToken(address(uint160(uint256(entries[i].topics[1]))), tokens);
+        }
     }
 
     function _committee(IERC20ForwarderV1 v1, string memory transaction, string memory receipt)
@@ -103,21 +152,16 @@ contract AuditERC20ForwarderTokens is Script, SupportedNetworks {
         require(created == address(v1), InvalidDeployment());
     }
 
-    function _checkLogs(string memory entries, address[] memory tokens) internal view returns (uint256 count) {
-        uint256 tokenCount = tokens.length;
-        for (;; ++count) {
-            string memory entry = string.concat(".[", vm.toString(count), "]");
-            if (!vm.keyExistsJson(entries, entry)) break;
-            bytes32 topic = vm.parseJsonBytes32(entries, string.concat(entry, ".topics[1]"));
-            address token = address(uint160(uint256(topic)));
-            bool listed;
-            for (uint256 j = 0; j < tokenCount; ++j) {
-                if (tokens[j] == token) {
-                    listed = true;
-                    break;
-                }
+    function _checkToken(address observed, address[] memory expected) internal pure {
+        for (uint256 i = 0; i < expected.length; ++i) {
+            if (expected[i] == observed) {
+                return;
             }
-            require(listed, MissingWrappedToken(token));
         }
+        revert MissingWrappedToken(observed);
+    }
+
+    function _checkExpectedEvents(uint256 expected, uint256 actual) internal pure {
+        require(actual == expected, UnexpectedWrappedEventCount(expected, actual));
     }
 }

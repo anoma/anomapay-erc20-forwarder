@@ -11,23 +11,35 @@ contract AuditERC20ForwarderTokensTest is Test, AuditERC20ForwarderTokens {
         string memory json = vm.readFile("script/migration/tokens.json");
         uint256 forkBlock = vm.parseJsonUint(json, ".chains.84532.audit.blockNumber");
         vm.createSelectFork(vm.envOr("MIGRATION_FORK_RPC", string("base-sepolia")), forkBlock);
-        (address committee, uint256 count, uint256 throughBlock) = run(bytes32(0), 1_000_000);
+        (address committee, uint256 count, uint256 throughBlock) = _run(bytes32(0), 1_000_000, forkBlock);
         assertEq(committee, vm.parseJsonAddress(json, ".chains.84532.audit.emergencyCommittee"));
         assertEq(count, vm.parseJsonUint(json, ".chains.84532.audit.wrappedEventCount"));
         assertEq(throughBlock, forkBlock);
     }
 
+    function test_highVolumeSepoliaHistoryCompletes() public {
+        _assertRecordedAudit("sepolia", ".chains.11155111", 2_000_000);
+    }
+
+    function test_arbitrumUsesL2RpcBlockRange() public {
+        _assertRecordedAudit("arbitrum", ".chains.42161", 100_000_000);
+    }
+
     function test_missingWrappedTokenFailsClosed() public {
         address token = makeAddr("wrapped token");
-        string memory topic = vm.toString(bytes32(uint256(uint160(token))));
-        string memory events = string.concat("[{\"topics\":[\"0x00\",\"", topic, "\"]}]");
         address[] memory tokens = new address[](1);
         tokens[0] = makeAddr("different token");
         vm.expectRevert(abi.encodeWithSelector(MissingWrappedToken.selector, token));
-        _checkLogs(events, tokens);
+        this.checkToken(token, tokens);
         tokens[0] = token;
-        assertEq(_checkLogs(events, tokens), 1);
-        assertEq(_checkLogs("[]", tokens), 0);
+        this.checkToken(token, tokens);
+    }
+
+    function test_emptyOrPartialHistoryFailsExpectedCount() public {
+        vm.expectRevert(abi.encodeWithSelector(UnexpectedWrappedEventCount.selector, 3_010, 0));
+        this.checkExpectedEvents(3_010, 0);
+        vm.expectRevert(abi.encodeWithSelector(UnexpectedWrappedEventCount.selector, 3_010, 3_009));
+        this.checkExpectedEvents(3_010, 3_009);
     }
 
     function test_rejectsForgedCreationReceiptAndConstructorArguments() public {
@@ -60,5 +72,23 @@ contract AuditERC20ForwarderTokensTest is Test, AuditERC20ForwarderTokens {
         returns (address committee)
     {
         committee = _committee(v1, transaction, receipt);
+    }
+
+    function checkToken(address observed, address[] memory expected) public pure {
+        _checkToken(observed, expected);
+    }
+
+    function checkExpectedEvents(uint256 expected, uint256 actual) public pure {
+        _checkExpectedEvents(expected, actual);
+    }
+
+    function _assertRecordedAudit(string memory rpcAlias, string memory key, uint256 blockSpan) internal {
+        string memory json = vm.readFile("script/migration/tokens.json");
+        uint256 auditBlock = vm.parseJsonUint(json, string.concat(key, ".audit.blockNumber"));
+        vm.createSelectFork(vm.envOr("MIGRATION_FORK_RPC", rpcAlias), auditBlock);
+        (address committee, uint256 count, uint256 throughBlock) = _run(bytes32(0), blockSpan, auditBlock);
+        assertEq(committee, vm.parseJsonAddress(json, string.concat(key, ".audit.emergencyCommittee")));
+        assertEq(count, vm.parseJsonUint(json, string.concat(key, ".audit.wrappedEventCount")));
+        assertEq(throughBlock, auditBlock);
     }
 }
