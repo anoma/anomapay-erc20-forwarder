@@ -55,12 +55,18 @@ contract ERC20ForwarderMigrationTest is Test {
         assertEq(_token.balanceOf(address(_migration)), 0);
     }
 
-    function test_emitsCanonicalV1ToV2MigrationEvent() public {
+    function test_emitsTokenCustodyMigrationEvent() public {
         uint128 amount = 42;
         _token.mint(address(_v1), amount);
         vm.expectEmit(address(_migration));
         emit IERC20ForwarderMigration.ERC20TokenMigrated(address(_v1), _v2, address(_token), amount);
         _migration.migrate(_tokens);
+    }
+
+    function test_zeroBalanceEmitsNoMigrationEvent() public {
+        vm.recordLogs();
+        _migration.migrate(_tokens);
+        assertEq(vm.getRecordedLogs().length, 0);
     }
 
     function test_nonOwnerCannotMigrate() public {
