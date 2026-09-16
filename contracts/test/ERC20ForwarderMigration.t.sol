@@ -9,6 +9,7 @@ import {ERC20Example} from "anoma-forwarder-bases-3.0.0/test/examples/ERC20Examp
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 
 import {ERC20ForwarderMigration} from "../src/migration/ERC20ForwarderMigration.sol";
+import {IERC20ForwarderMigration} from "../src/migration/IERC20ForwarderMigration.sol";
 
 contract ERC20ForwarderV1Mock {
     address public emergencyCaller;
@@ -52,6 +53,14 @@ contract ERC20ForwarderMigrationTest is Test {
         assertEq(_token.balanceOf(address(_v1)), 0);
         assertEq(_token.balanceOf(_v2), uint256(existing) + amount);
         assertEq(_token.balanceOf(address(_migration)), 0);
+    }
+
+    function test_emitsCanonicalV1ToV2MigrationEvent() public {
+        uint128 amount = 42;
+        _token.mint(address(_v1), amount);
+        vm.expectEmit(address(_migration));
+        emit IERC20ForwarderMigration.ERC20TokenMigrated(address(_v1), _v2, address(_token), amount);
+        _migration.migrate(_tokens);
     }
 
     function test_nonOwnerCannotMigrate() public {

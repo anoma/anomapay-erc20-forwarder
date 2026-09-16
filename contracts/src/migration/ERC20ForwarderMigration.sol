@@ -58,6 +58,7 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable2Step, Reen
                     && token.balanceOf(FORWARDER_V2) == beforeV2 + amount,
                 IncompleteMigration(address(token))
             );
+            emit ERC20TokenMigrated(address(FORWARDER_V1), FORWARDER_V2, address(token), amount);
         }
     }
 
