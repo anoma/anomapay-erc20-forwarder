@@ -123,11 +123,53 @@ contract ERC20ForwarderMigrationUnitTest is Test {
         // A token that reports an unchanged destination balance, as a token taking a transfer fee does.
         vm.mockCall(address(_token), abi.encodeCall(IERC20.balanceOf, (_forwarderV2)), abi.encode(uint256(0)));
 
-        vm.expectRevert(abi.encodeWithSelector(ERC20ForwarderMigration.IncompleteMigration.selector, address(_token)));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20ForwarderMigration.DestinationBalanceMismatch.selector,
+                address(_token),
+                uint256(_AMOUNT),
+                uint256(0)
+            )
+        );
         _migration.migrate(_tokens);
 
         assertEq(firstToken.balanceOf(_forwarderV2), 0, "the batch moved the token before the failing one");
         assertEq(_token.balanceOf(address(_forwarderV1)), _AMOUNT, "the source lost the balance");
+    }
+
+    function test_migrate_reverts_if_the_source_answers_with_data() public {
+        _token.mint(address(_forwarderV1), _AMOUNT);
+        bytes memory output = hex"01";
+
+        // A source forwarder that answers an unwrap with data, which the deployed one never does.
+        vm.mockCall(
+            address(_forwarderV1),
+            abi.encodeWithSelector(ERC20ForwarderV1Mock.forwardEmergencyCall.selector),
+            abi.encode(output)
+        );
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20ForwarderMigration.UnexpectedEmergencyCallOutput.selector, address(_token), output
+            )
+        );
+        _migration.migrate(_tokens);
+    }
+
+    function test_migrate_reverts_if_the_source_keeps_a_balance() public {
+        _token.mint(address(_forwarderV1), _AMOUNT);
+
+        // A token that reports an unchanged source balance, as a token taking a transfer fee does.
+        vm.mockCall(
+            address(_token), abi.encodeCall(IERC20.balanceOf, (address(_forwarderV1))), abi.encode(uint256(_AMOUNT))
+        );
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20ForwarderMigration.SourceBalanceRemaining.selector, address(_token), uint256(_AMOUNT)
+            )
+        );
+        _migration.migrate(_tokens);
     }
 
     function test_migrate_reverts_if_it_is_reentered() public {

@@ -19,8 +19,18 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
     /// @notice The immutable destination forwarder.
     address public immutable FORWARDER_V2;
 
+    /// @notice Thrown if the forwarders are the same contract, or if one of them is the zero address or holds no
+    /// code.
     error InvalidForwarders();
-    error IncompleteMigration(address token);
+
+    /// @notice Thrown if the source forwarder answers an unwrap with data, which it does not do.
+    error UnexpectedEmergencyCallOutput(address token, bytes output);
+
+    /// @notice Thrown if the source forwarder still holds the token after the call.
+    error SourceBalanceRemaining(address token, uint256 balance);
+
+    /// @notice Thrown if the destination forwarder did not receive exactly the amount taken from the source.
+    error DestinationBalanceMismatch(address token, uint256 expected, uint256 actual);
 
     /// @notice Fixes the source, destination and initial owner for this chain.
     /// @param forwarderV1 The deployed immutable V1 forwarder.
@@ -36,12 +46,12 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
         FORWARDER_V2 = forwarderV2;
     }
 
-    // Owner-chosen batches are guarded; exact pre/post balances enforce custody.
-    // slither-disable-start calls-loop,reentrancy-balance
-    // forge-lint: disable-start(calls-loop, require-revert-in-loop)
+    // slither-disable-start reentrancy-balance
+    // forge-lint: disable-start(calls-loop)
     /// @inheritdoc IERC20ForwarderMigration
     function migrate(IERC20[] calldata tokens) external override nonReentrant onlyOwner {
         uint256 count = tokens.length;
+
         for (uint256 i = 0; i < count; ++i) {
             IERC20 token = tokens[i];
             uint128 amount = SafeCast.toUint128(token.balanceOf(address(FORWARDER_V1)));
@@ -51,20 +61,26 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
                 abi.encode(ERC20Forwarder.CallType.Unwrap, token, amount, FORWARDER_V2)
             );
 
-            require(output.length == 0, IncompleteMigration(address(token)));
+            // forge-lint: disable-next-line(require-revert-in-loop)
+            require(output.length == 0, UnexpectedEmergencyCallOutput({token: address(token), output: output}));
 
-            // forge-lint: disable-next-line(incorrect-strict-equality)
-            require(token.balanceOf(address(FORWARDER_V1)) == 0, IncompleteMigration(address(token)));
+            uint256 remaining = token.balanceOf(address(FORWARDER_V1));
+            // forge-lint: disable-next-line(require-revert-in-loop,incorrect-strict-equality)
+            require(remaining == 0, SourceBalanceRemaining({token: address(token), remaining: remaining}));
 
-            // forge-lint: disable-next-line(incorrect-strict-equality)
-            require(token.balanceOf(FORWARDER_V2) == beforeV2 + amount, IncompleteMigration(address(token)));
+            uint256 expected = beforeV2 + amount;
+            uint256 received = token.balanceOf(FORWARDER_V2);
+            // forge-lint: disable-next-line(require-revert-in-loop,incorrect-strict-equality)
+            require(
+                received == expected,
+                DestinationBalanceMismatch({token: address(token), expected: expected, actual: received})
+            );
 
             // forge-lint: disable-next-line(reentrancy-events)
             emit ERC20TokenMigrated(address(FORWARDER_V1), FORWARDER_V2, address(token), amount);
         }
     }
 
-    // forge-lint: disable-end(calls-loop, require-revert-in-loop, incorrect-strict-equality)
-
-    // slither-disable-end calls-loop,reentrancy-balance
+    // forge-lint: disable-end(calls-loop)
+    // slither-disable-end reentrancy-balance
 }
