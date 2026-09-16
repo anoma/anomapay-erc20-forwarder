@@ -28,6 +28,8 @@ The ERC20 forwarder runs in two environments, recorded per chain in [`./crates/b
 
 Each environment's forwarder is initialized with the protocol adapter proxy of the **same** environment, so a staging forwarder settles through the staging protocol adapter and a production forwarder through the production one.
 
+The same record lists, in its `v1` array, the V1 forwarder of each chain that ran a v1 protocol adapter, with the logic ref it accepts. These entries belong to no environment and never change.
+
 Changes flow one way, `next` → `staging` → `main`, and the promotion pull request is the gate:
 
 - **`next`** integrates feature branches. Nothing is asserted about deployments, so a version bump is green before anything is deployed.
