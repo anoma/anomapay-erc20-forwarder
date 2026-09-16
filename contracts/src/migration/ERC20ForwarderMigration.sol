@@ -6,9 +6,9 @@ import {Ownable2Step} from "@openzeppelin-contracts-5.7.0/access/Ownable2Step.so
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {SafeCast} from "@openzeppelin-contracts-5.7.0/utils/math/SafeCast.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuard.sol";
+import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
 import {IERC20ForwarderMigration} from "./IERC20ForwarderMigration.sol";
-import {IERC20ForwarderV1} from "./IERC20ForwarderV1.sol";
 
 /// @title ERC20ForwarderMigration
 /// @author Anoma Foundation, 2026
@@ -16,7 +16,7 @@ import {IERC20ForwarderV1} from "./IERC20ForwarderV1.sol";
 /// @custom:security-contact security@anoma.foundation
 contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable2Step, ReentrancyGuard {
     /// @notice The immutable source forwarder.
-    IERC20ForwarderV1 public immutable FORWARDER_V1;
+    IEmergencyMigratable public immutable FORWARDER_V1;
     /// @notice The immutable destination forwarder.
     address public immutable FORWARDER_V2;
 
@@ -34,7 +34,7 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable2Step, Reen
                 && forwarderV1.code.length != 0 && forwarderV2.code.length != 0,
             InvalidForwarders()
         );
-        FORWARDER_V1 = IERC20ForwarderV1(forwarderV1);
+        FORWARDER_V1 = IEmergencyMigratable(forwarderV1);
         FORWARDER_V2 = forwarderV2;
     }
 

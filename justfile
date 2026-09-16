@@ -156,6 +156,56 @@ contracts-propose-production-upgrade deployer proxy proposer implementation chai
         --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
+# Simulate the migration contract deployment (dry-run): deploys it locally (sender = the deployer)
+contracts-simulate-migration sender chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+
+# Deploy the migration contract of one chain, which moves the V1 custody to the recorded V2 forwarder
+contracts-deploy-migration deployer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the caller assignment proposal (dry-run): simulates the Safe executing the assignment
+contracts-simulate-migration-caller-proposal migration proposer chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+        --sig "proposeCaller(bool,address,address)" $IS_PRODUCTION {{migration}} {{proposer}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose the permanent caller assignment to the Safe (proposer = unlocked deployer); it cannot be undone
+contracts-propose-migration-caller deployer migration proposer chain *args:
+    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+        --sig "proposeCaller(bool,address,address)" $IS_PRODUCTION {{migration}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the custody move proposal (dry-run): simulates the Safe executing the move (tokens = '[0x…,0x…]')
+contracts-simulate-migration-proposal migration tokens proposer chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+        --sig "proposeMigration(bool,address,address[],address)" $IS_PRODUCTION {{migration}} {{tokens}} {{proposer}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose the custody move to the Safe owning the migration contract (proposer = unlocked deployer)
+contracts-propose-migration deployer migration tokens proposer chain *args:
+    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+        --sig "proposeMigration(bool,address,address[],address)" $IS_PRODUCTION {{migration}} {{tokens}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Check the moved custody of one chain against the chain, reading the emergency caller and the V1 token balances
+contracts-check-migration migration tokens chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+        --sig "verify(bool,address,address[])" $IS_PRODUCTION {{migration}} {{tokens}} \
+        --rpc-url {{chain}} {{ args }}
+
 # Verify a contract on sourcify (e.g. contract=src/ERC20Forwarder.sol:ERC20Forwarder)
 contracts-verify-sourcify address contract chain *args:
     cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} {{contract}} \

@@ -34,7 +34,8 @@ remappings = [
     "anoma-forwarder-bases-3.0.0/=dependencies/anoma-forwarder-bases-3.0.0/",
     "anoma-pa-evm-2.0.0-rc.3/=dependencies/anoma-pa-evm-2.0.0-rc.3/",
     "anoma-risc0-deployments-1.2.2/=dependencies/anoma-risc0-deployments-1.2.2/",
-    "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-2.0.0-rc.3/dependencies/elliptic-curve-solidity-0.2.5/",
+    "anomapay-erc20-forwarder-1.0.1/=dependencies/anomapay-erc20-forwarder-1.0.1/",
+    "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-2.0.0-rc.1/dependencies/elliptic-curve-solidity-0.2.5/",
     "forge-std-1.16.2/=dependencies/forge-std-1.16.2/",
     "forge-std/=dependencies/forge-std-1.16.2/src/",
     "openzeppelin-foundry-upgrades-0.4.2/=dependencies/openzeppelin-foundry-upgrades-0.4.2/",
@@ -71,6 +72,7 @@ ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
 "anoma-forwarder-bases" = "3.0.0"
 "anoma-pa-evm" = "2.0.0-rc.3"
 "anoma-risc0-deployments" = "1.2.2"
+"anomapay-erc20-forwarder" = "1.0.1"
 "forge-std" = "1.16.2"
 "openzeppelin-foundry-upgrades" = "0.4.2"
 "safe-smart-account" = { version = "1.5.0", git = "https://github.com/safe-global/safe-smart-account.git", tag = "v1.5.0" }
