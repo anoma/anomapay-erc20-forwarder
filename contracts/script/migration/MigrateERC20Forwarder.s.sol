@@ -115,7 +115,8 @@ contract MigrateERC20Forwarder is Script {
     {
         config = _configuration(isProduction);
         require(
-            address(migration.FORWARDER_V1()) == address(config.v1) && migration.FORWARDER_V2() == config.v2,
+            address(migration.FORWARDER_V1()) == address(config.v1) && migration.FORWARDER_V2() == config.v2
+                && migration.owner() == config.initialOwner && migration.pendingOwner() == address(0),
             InvalidConfiguration()
         );
         require(

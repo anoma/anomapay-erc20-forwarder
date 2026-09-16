@@ -77,4 +77,16 @@ contract MigrateERC20ForwarderTest is Test {
         vm.expectRevert(MigrateERC20Forwarder.InvalidConfiguration.selector);
         _script.proposeCaller(false, wrong, address(this));
     }
+
+    function test_rejectsUnexpectedMigrationControl() public {
+        ERC20ForwarderMigration wrongOwner = new ERC20ForwarderMigration(address(_v1), _v2, address(this));
+        vm.expectRevert(MigrateERC20Forwarder.InvalidConfiguration.selector);
+        _script.proposeCaller(false, wrongOwner, address(this));
+
+        ERC20ForwarderMigration pendingTransfer = _script.run(false);
+        vm.prank(pendingTransfer.owner());
+        pendingTransfer.transferOwnership(makeAddr("successor"));
+        vm.expectRevert(MigrateERC20Forwarder.InvalidConfiguration.selector);
+        _script.proposeCaller(false, pendingTransfer, address(this));
+    }
 }
