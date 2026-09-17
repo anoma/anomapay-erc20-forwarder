@@ -66,11 +66,11 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
 
             uint256 remaining = token.balanceOf(address(FORWARDER_V1));
             // forge-lint: disable-next-line(require-revert-in-loop,incorrect-strict-equality)
-            require(remaining == 0, SourceBalanceRemaining({token: address(token), remaining: remaining}));
+            require(remaining == 0, SourceBalanceRemaining({token: address(token), balance: remaining}));
 
             uint256 expected = beforeV2 + amount;
             uint256 received = token.balanceOf(FORWARDER_V2);
-            // forge-lint: disable-next-line(require-revert-in-loop,incorrect-strict-equality)
+            // forge-lint: disable-next-item(require-revert-in-loop,incorrect-strict-equality)
             require(
                 received == expected,
                 DestinationBalanceMismatch({token: address(token), expected: expected, actual: received})
