@@ -160,20 +160,20 @@ contracts-propose-production-upgrade deployer proxy proposer implementation chai
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the migration contract deployment and caller assignment proposal (dry-run): simulates the Safe executing it (sender = the deployment wallet)
-contracts-simulate-migration sender proposer chain *args:
+contracts-simulate-migration sender chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
-        --sig "run(bool,address)" $IS_PRODUCTION {{proposer}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
-# Deploy the migration contract and propose it as the permanent emergency caller of V1 (proposer = unlocked deployer); it cannot be undone
-contracts-deploy-migration deployer proposer chain *args:
+# Deploy the migration contract and propose it as the permanent emergency caller of V1 (deployer = the deployment wallet, which signs the proposal); it cannot be undone
+contracts-deploy-migration deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
-        --sig "run(bool,address)" $IS_PRODUCTION {{proposer}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the token move (dry-run): moves the tokens locally as the deployment wallet (tokens = '[0x…,0x…]')
