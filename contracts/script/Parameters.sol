@@ -19,6 +19,10 @@ library Parameters {
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
     bytes32 internal constant IMPLEMENTATION_SALT = "ERC20ForwarderImpl";
 
+    /// @notice The CREATE2 salt for the migration contract deployment. The contract commits to both forwarders, so every
+    /// chain and environment gets its own address.
+    bytes32 internal constant MIGRATION_SALT = "ERC20ForwarderMigration";
+
     /// @notice The logic ref of the token transfer circuit, which the proxies are initialized with.
     bytes32 internal constant LOGIC_REF = 0xbc12323668c37c3d381ca798f11116f35fb1639d12239b29da7810df3985e7ad;
 
