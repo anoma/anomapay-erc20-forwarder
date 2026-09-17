@@ -7,7 +7,7 @@ import {Parameters as ProtocolAdapterParameters} from "anoma-pa-evm-2.0.0-rc.3/s
 /// @author Anoma Foundation, 2026
 /// @notice The deterministic deployment parameters — the CREATE2 salts, the environment proxy owners, and the logic ref
 /// the proxies accept. They fix where a deployment lands, who may upgrade it and which resources it serves, so they are
-/// held once here and read by the deploy scripts and their tests.
+/// held once here and read by the deploy scripts, their tests, and the bindings tests through `DeploymentParameters`.
 /// @custom:security-contact security@anoma.foundation
 library Parameters {
     /// @notice The CREATE2 salt for the staging environment proxy deployment.

@@ -89,9 +89,9 @@ slither .
 To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forge/reference/bind/) documentation), run
 
 ```sh
-forge bind \
-  --skip test \
-  --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC1967Proxy)$' \
+forge clean && forge build --skip test && forge bind \
+  --skip-build \
+  --select '^(ERC20Forwarder|ERC1967Proxy|DeploymentParameters)$' \
   --bindings-path ../crates/bindings/src/generated/ \
   --module \
   --overwrite

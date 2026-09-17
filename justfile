@@ -86,7 +86,7 @@ contracts-gen-bindings:
     # build first and let it read those artifacts.
     cd contracts && forge clean && forge build --skip test && forge bind \
         --skip-build \
-        --select '^(ERC20Forwarder|ERC1967Proxy)$' \
+        --select '^(ERC20Forwarder|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
