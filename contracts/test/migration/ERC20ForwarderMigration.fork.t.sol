@@ -12,16 +12,19 @@ import {Parameters} from "../../script/Parameters.sol";
 import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
 import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
 
-/// @notice Moves the tokens the deployed Sepolia V1 forwarder holds to the recorded staging forwarder, on a fork of
-/// the chain. Sepolia carries the whole starting point of a real migration: its v1 protocol adapter is stopped
-/// already, and its V1 forwarder still holds the wrapped tokens, so the test asserts that state instead of producing
+/// @notice Moves the tokens the deployed Sepolia V1 forwarder held to the recorded staging forwarder, on a fork of
+/// the chain at the last block before the staging migration. At that block the v1 protocol adapter is stopped, V1 has
+/// no emergency caller yet, and V1 still holds the wrapped tokens, so the test asserts that state instead of producing
 /// it.
-/// @dev The assertions compare the balances before and after the move, so they hold at any block, and the fork
-/// follows the latest one.
+/// @dev The fork is pinned, because the forwarder multisig made the migration contract the emergency caller of V1 in
+/// the next block and the tokens moved after it.
 /// @dev Gated the way the other tests reading a chain are: the promotion gate into `staging` sets the variable, and
 /// the test skips everywhere else.
 contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
     uint256 internal constant _CHAIN_ID = 11155111;
+
+    /// @notice The last Sepolia block before the emergency caller assignment.
+    uint256 internal constant _BLOCK_BEFORE_ASSIGNMENT = 11_724_825;
 
     /// @notice The tokens the V1 forwarder wrapped, which the migration has to move. Tokens transferred to it
     /// directly are left out, the way the migration proposal leaves them out.
@@ -41,7 +44,7 @@ contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
     }
 
     function test_migrate_moves_every_wrapped_token_balance_to_the_recorded_forwarder() public onlyStaging {
-        vm.createSelectFork(_supportedNetworks[_CHAIN_ID]);
+        vm.createSelectFork(_supportedNetworks[_CHAIN_ID], _BLOCK_BEFORE_ASSIGNMENT);
         assertEq(block.chainid, _CHAIN_ID, "the fork runs another chain");
 
         address forwarderV1 = RecordedDeployments.forwarderV1(_CHAIN_ID);
