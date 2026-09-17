@@ -92,7 +92,7 @@ These apply to all three cases and are done once per session.
   export ETHERSCAN_API_KEY=<KEY>
   ```
 
-- [ ] Select the environment. It picks the CREATE2 salt and the proxy owner in [`DeployERC20ForwarderProxy.s.sol`](./contracts/script/DeployERC20ForwarderProxy.s.sol), and is deliberately kept out of `contracts/.env` so that it is a conscious choice per session.
+- [ ] Select the environment. It picks the CREATE2 salt and the proxy owner from [`Parameters.sol`](./contracts/script/Parameters.sol), and is deliberately kept out of `contracts/.env` so that it is a conscious choice per session.
 
   ```sh
   export IS_PRODUCTION=false

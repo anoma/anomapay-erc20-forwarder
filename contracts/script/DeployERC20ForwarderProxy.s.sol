@@ -7,6 +7,7 @@ import {Script} from "forge-std-1.16.2/src/Script.sol";
 import {RecordedDeployments} from "../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {DeployERC20ForwarderImplementation} from "./DeployERC20ForwarderImplementation.s.sol";
+import {Parameters} from "./Parameters.sol";
 
 /// @title DeployERC20ForwarderProxy
 /// @author Anoma Foundation, 2025
@@ -15,16 +16,16 @@ import {DeployERC20ForwarderImplementation} from "./DeployERC20ForwarderImplemen
 /// @custom:security-contact security@anoma.foundation
 contract DeployERC20ForwarderProxy is Script {
     /// @notice The CREATE2 salt for the staging environment proxy deployment.
-    bytes32 public constant PROXY_SALT_STAGING = "ERC20ForwarderProxyStaging";
+    bytes32 public constant PROXY_SALT_STAGING = Parameters.PROXY_SALT_STAGING;
 
     /// @notice The CREATE2 salt for the production environment proxy deployment.
-    bytes32 public constant PROXY_SALT_PRODUCTION = "ERC20ForwarderProxyProduction";
+    bytes32 public constant PROXY_SALT_PRODUCTION = Parameters.PROXY_SALT_PRODUCTION;
 
     /// @notice The staging environment proxy owner — the deployment wallet, upgrading instantly.
-    address public constant PROXY_OWNER_STAGING = 0x61462bE56782568376f9cB069382EFa72764a407;
+    address public constant PROXY_OWNER_STAGING = Parameters.DEPLOYMENT_WALLET;
 
     /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
-    address public constant PROXY_OWNER_PRODUCTION = 0xc703402252Ce1251aa07e0815D50060d27fdd6C4;
+    address public constant PROXY_OWNER_PRODUCTION = Parameters.FWD_MULTISIG;
 
     /// @notice Thrown if the environment already has a deployment recorded for this chain.
     error DeploymentAlreadyRecorded(string environment, uint256 chainId);

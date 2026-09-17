@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Script} from "forge-std-1.16.2/src/Script.sol";
 
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
-import {DeployERC20ForwarderProxy} from "../DeployERC20ForwarderProxy.s.sol";
+import {Parameters} from "../Parameters.sol";
 
 /// @title StagingScript
 /// @author Anoma Foundation, 2026
@@ -20,9 +20,9 @@ abstract contract StagingScript is Script {
 
     /// @notice Checks that the proxy belongs to the staging environment and that the sender owns it.
     /// @param proxy The staging environment ERC20 forwarder proxy to act on.
-    function _checkSenderAuthorization(address proxy) internal {
+    function _checkSenderAuthorization(address proxy) internal view {
         address owner = ERC20Forwarder(proxy).owner();
-        require(owner == new DeployERC20ForwarderProxy().PROXY_OWNER_STAGING(), NotAStagingDeployment(proxy));
+        require(owner == Parameters.DEPLOYMENT_WALLET, NotAStagingDeployment(proxy));
         require(msg.sender == owner, UnauthorizedSender(msg.sender));
     }
 }

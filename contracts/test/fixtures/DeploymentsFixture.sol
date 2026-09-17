@@ -7,43 +7,13 @@ import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployERC20ForwarderImplementation} from "../../script/DeployERC20ForwarderImplementation.s.sol";
-import {DeployERC20ForwarderProxy} from "../../script/DeployERC20ForwarderProxy.s.sol";
+import {Parameters} from "../../script/Parameters.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 
 /// @notice A test fixture providing the ERC20 forwarder deployments recorded per environment in `deployments.json` —
 /// the single source of truth for the deterministic deployments — through the generated `RecordedDeployments` library.
 abstract contract DeploymentsFixture is SupportedNetworks, Test {
     using LibString for *;
-
-    /// @notice Checks that every recorded proxy sits at the address its genesis deployment determines under the
-    /// environment salt — the check that the first deployment of an environment used the right salt.
-    /// @param isProduction Whether to check the production or the staging environment.
-    function _expectGenesisDeployments(bool isProduction) internal {
-        bytes32 salt = isProduction
-            ? new DeployERC20ForwarderProxy().PROXY_SALT_PRODUCTION()
-            : new DeployERC20ForwarderProxy().PROXY_SALT_STAGING();
-
-        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments(isProduction);
-
-        for (uint256 i = 0; i < deployments.length; ++i) {
-            RecordedDeployments.Proxy memory recordedProxy = deployments[i].proxy;
-
-            bytes memory constructorArgs =
-                abi.encode(recordedProxy.initialImplementation, recordedProxy.initializerData);
-            bytes memory initCode = abi.encodePacked(recordedProxy.creationCode, constructorArgs);
-
-            address expectedProxyAddress = vm.computeCreate2Address(salt, keccak256(initCode));
-
-            assertEq(
-                expectedProxyAddress,
-                recordedProxy.addr,
-                string.concat(
-                    _deploymentContext({isProduction: isProduction, chainId: deployments[i].chainId}),
-                    ": recorded proxy address differs"
-                )
-            );
-        }
-    }
 
     /// @notice Checks that every recorded proxy delegates to the implementation this source version predicts, which
     /// proves the environment runs this source. The record is not a term in the comparison — the chain answers what
@@ -77,6 +47,34 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
         assertGt(bytes(networkName).length, 0, string.concat(chainId.toString(), ": unsupported network"));
 
         vm.selectFork(vm.createFork(networkName));
+    }
+
+    /// @notice Checks that every recorded proxy sits at the address its genesis deployment determines under the
+    /// environment salt — the check that the first deployment of an environment used the right salt.
+    /// @param isProduction Whether to check the production or the staging environment.
+    function _expectGenesisDeployments(bool isProduction) internal pure {
+        bytes32 salt = isProduction ? Parameters.PROXY_SALT_PRODUCTION : Parameters.PROXY_SALT_STAGING;
+
+        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments(isProduction);
+
+        for (uint256 i = 0; i < deployments.length; ++i) {
+            RecordedDeployments.Proxy memory recordedProxy = deployments[i].proxy;
+
+            bytes memory constructorArgs =
+                abi.encode(recordedProxy.initialImplementation, recordedProxy.initializerData);
+            bytes memory initCode = abi.encodePacked(recordedProxy.creationCode, constructorArgs);
+
+            address expectedProxyAddress = vm.computeCreate2Address(salt, keccak256(initCode));
+
+            assertEq(
+                expectedProxyAddress,
+                recordedProxy.addr,
+                string.concat(
+                    _deploymentContext({isProduction: isProduction, chainId: deployments[i].chainId}),
+                    ": recorded proxy address differs"
+                )
+            );
+        }
     }
 
     /// @notice Returns the deployments of an environment, as `RecordedDeployments` records them.
