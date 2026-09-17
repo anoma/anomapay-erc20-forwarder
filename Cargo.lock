@@ -1135,7 +1135,7 @@ dependencies = [
 
 [[package]]
 name = "anomapay-erc20-forwarder-bindings"
-version = "3.0.0-rc.8"
+version = "3.0.0-rc.9"
 dependencies = [
  "alloy",
  "alloy-chains",
