@@ -24,7 +24,7 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
         assertEq(migration.owner(), _wallet, "the deployment wallet does not own the migration");
     }
 
-    function test_run_moves_no_custody() public {
+    function test_run_moves_no_tokens() public {
         _deployMigration();
 
         assertEq(_token.balanceOf(_forwarderV1), _AMOUNT, "the source lost the balance");

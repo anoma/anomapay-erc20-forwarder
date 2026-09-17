@@ -12,11 +12,11 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title MigrateERC20ForwarderAssets
 /// @author Anoma Foundation, 2026
-/// @notice A script to move one chain's ERC20 token custody from the V1 forwarder to the V2 forwarder proxy, once the
+/// @notice A script to move one chain's ERC20 tokens from the V1 forwarder to the V2 forwarder proxy, once the
 /// chain's v1 protocol adapter is stopped and `DeployERC20ForwarderMigration` has deployed the migration contract.
 /// `proposeCaller` proposes making the migration contract the permanent emergency caller of V1 to the emergency
-/// committee Safe. `executeMigration` then moves the custody as the deployment wallet that owns the migration
-/// contract. `verify` checks the moved custody against the chain.
+/// committee Safe. `executeMigration` then moves the tokens as the deployment wallet that owns the migration
+/// contract. `verify` checks the moved tokens against the chain.
 /// @dev Only the caller assignment needs a Safe, because V1 accepts it from its emergency committee alone. The Safe
 /// owners must execute that proposal before the move runs: V1 rejects an emergency call from a contract it does not
 /// hold as its caller. The assignment cannot be undone, because V1 accepts one emergency caller and keeps it.
@@ -39,7 +39,7 @@ contract MigrateERC20ForwarderAssets is MigrationScript {
     /// Safe.
     /// @dev Without `--broadcast`, the Safe execution of the assignment is simulated instead of proposed. The Safe
     /// owners confirm and execute it in the Safe app. It cannot be undone.
-    /// @param isProduction Whether the custody moves to the production or the staging V2 forwarder.
+    /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
     /// @param migration The deployed migration contract to assign.
     /// @param proposer The Safe owner or delegate proposing the transaction.
     function proposeCaller(bool isProduction, ERC20ForwarderMigration migration, address proposer) public {
@@ -54,11 +54,11 @@ contract MigrateERC20ForwarderAssets is MigrationScript {
         });
     }
 
-    /// @notice Moves the custody as the deployment wallet, which the sender must be, once the Safe has executed the
+    /// @notice Moves the tokens as the deployment wallet, which the sender must be, once the Safe has executed the
     /// caller assignment. Without `--broadcast` the move is simulated locally.
     /// @dev The migration contract moves each token's full V1 balance and reverts unless V2 receives all of it. A
     /// token left out of `tokens` can be moved by a later run.
-    /// @param isProduction Whether the custody moves to the production or the staging V2 forwarder.
+    /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
     /// @param migration The deployed migration contract, already the emergency caller of V1.
     /// @param tokens The ERC20 tokens to move.
     function executeMigration(bool isProduction, ERC20ForwarderMigration migration, IERC20[] calldata tokens) public {
@@ -70,11 +70,11 @@ contract MigrateERC20ForwarderAssets is MigrationScript {
         migration.migrate(tokens);
     }
 
-    /// @notice Checks the moved custody against the chain: the migration contract is the emergency caller of V1, and
+    /// @notice Checks the moved tokens against the chain: the migration contract is the emergency caller of V1, and
     /// V1 holds none of the named tokens. Run it after `executeMigration` has broadcast, because `executeMigration`
     /// itself only ever sees the simulated state. Reverts on the first difference.
-    /// @param isProduction Whether the custody moved to the production or the staging V2 forwarder.
-    /// @param migration The deployed migration contract that moved the custody.
+    /// @param isProduction Whether the tokens moved to the production or the staging V2 forwarder.
+    /// @param migration The deployed migration contract that moved the tokens.
     /// @param tokens The ERC20 tokens the move covered.
     function verify(bool isProduction, ERC20ForwarderMigration migration, IERC20[] calldata tokens) public {
         (address forwarderV1,) = _checkedConfiguration({isProduction: isProduction, migration: migration});

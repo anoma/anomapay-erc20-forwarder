@@ -13,12 +13,12 @@ import {DeployERC20ForwarderProxy} from "../DeployERC20ForwarderProxy.s.sol";
 
 /// @title MigrationScript
 /// @author Anoma Foundation, 2026
-/// @notice The base of the scripts that move one chain's ERC20 token custody from the V1 forwarder to the V2
+/// @notice The base of the scripts that move one chain's ERC20 tokens from the V1 forwarder to the V2
 /// forwarder proxy. Both forwarders come from the recorded deployments and are checked against the chain, so
 /// `--rpc-url` alone names the chain.
 /// @custom:security-contact security@anoma.foundation
 abstract contract MigrationScript is Script {
-    /// @notice Thrown if the chain ran no V1 forwarder, i.e. it has no custody to move.
+    /// @notice Thrown if the chain ran no V1 forwarder, i.e. it has no tokens to move.
     error ForwarderV1NotRecorded(uint256 chainId);
 
     /// @notice Thrown if the environment records no V2 forwarder for the chain, i.e. it has no destination.
@@ -45,9 +45,9 @@ abstract contract MigrationScript is Script {
 
     /// @notice Returns the chain's recorded forwarders and checks the V2 forwarder against the chain: the
     /// environment's proxy owner owns it, and it forwards for another protocol adapter than V1.
-    /// @param isProduction Whether the custody moves to the production or the staging V2 forwarder.
-    /// @return forwarderV1 The chain's V1 forwarder, which holds the custody.
-    /// @return forwarderV2 The environment's V2 forwarder of the chain, which receives it.
+    /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
+    /// @return forwarderV1 The chain's V1 forwarder, which holds the tokens.
+    /// @return forwarderV2 The environment's V2 forwarder of the chain, which receives them.
     function _configuration(bool isProduction) internal returns (address forwarderV1, address forwarderV2) {
         DeployERC20ForwarderProxy proxyDeployScript = new DeployERC20ForwarderProxy();
 
@@ -72,13 +72,13 @@ abstract contract MigrationScript is Script {
         );
     }
 
-    /// @notice Returns the chain's recorded forwarders and checks what moving the custody depends on besides them:
-    /// the migration contract moves it between these two forwarders, the deployment wallet owns it, and the v1
-    /// protocol adapter is stopped.
-    /// @param isProduction Whether the custody moves to the production or the staging V2 forwarder.
+    /// @notice Returns the chain's recorded forwarders and checks what moving the tokens depends on besides them:
+    /// the migration contract moves the tokens between these two forwarders, the deployment wallet owns that
+    /// contract, and the v1 protocol adapter is stopped.
+    /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
     /// @param migration The deployed migration contract.
-    /// @return forwarderV1 The chain's V1 forwarder, which holds the custody.
-    /// @return forwarderV2 The environment's V2 forwarder of the chain, which receives it.
+    /// @return forwarderV1 The chain's V1 forwarder, which holds the tokens.
+    /// @return forwarderV2 The environment's V2 forwarder of the chain, which receives them.
     function _checkedConfiguration(bool isProduction, ERC20ForwarderMigration migration)
         internal
         returns (address forwarderV1, address forwarderV2)
@@ -103,7 +103,7 @@ abstract contract MigrationScript is Script {
         require(Pausable(protocolAdapterV1).paused(), ProtocolAdapterNotStopped(protocolAdapterV1));
     }
 
-    /// @notice Returns the deployment wallet, which owns the migration contract and moves the custody with it. It is
+    /// @notice Returns the deployment wallet, which owns the migration contract and moves the tokens with it. It is
     /// the wallet the protocol adapter repository names `Parameters.DEPLOYMENT_WALLET`, and the owner of the staging
     /// proxies here.
     /// @return wallet The deployment wallet.

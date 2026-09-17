@@ -15,7 +15,7 @@ import {ERC20ForwarderMock} from "../mocks/ERC20Forwarder.m.sol";
 import {ERC20ForwarderV1Mock} from "../mocks/ERC20ForwarderV1.m.sol";
 import {ProtocolAdapterMock} from "../mocks/ProtocolAdapter.m.sol";
 
-/// @notice Checks the migration contract, which moves the V1 custody to the one destination it is built with. The
+/// @notice Checks the migration contract, which moves the V1 tokens to the one destination it is built with. The
 /// owner picks the tokens, so every test states what a batch leaves behind.
 contract ERC20ForwarderMigrationUnitTest is Test {
     uint128 internal constant _AMOUNT = 42;

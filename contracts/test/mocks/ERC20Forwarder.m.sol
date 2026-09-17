@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 /// @notice A stand-in for the V2 ERC20 forwarder proxy, answering the two getters the migration script reads it
-/// through. It holds the custody the migration moves, so it needs code and nothing else.
+/// through. It receives the tokens the migration moves, so it needs code and nothing else.
 contract ERC20ForwarderMock {
     address internal immutable _OWNER;
     address internal immutable _PROTOCOL_ADAPTER;

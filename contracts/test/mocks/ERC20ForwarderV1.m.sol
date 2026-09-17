@@ -9,7 +9,7 @@ import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/inter
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {ProtocolAdapterMock} from "./ProtocolAdapter.m.sol";
 
-/// @notice A stand-in for the deployed V1 ERC20 forwarder, holding the custody the migration moves. It keeps the
+/// @notice A stand-in for the deployed V1 ERC20 forwarder, holding the tokens the migration moves. It keeps the
 /// guards the deployed contract applies: the committee assigns the emergency caller once, only that caller forwards,
 /// and both need the protocol adapter stopped.
 contract ERC20ForwarderV1Mock is IEmergencyMigratable, IProtocolAdapterSpecific {

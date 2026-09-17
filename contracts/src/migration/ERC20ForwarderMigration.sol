@@ -11,7 +11,7 @@ import {IERC20ForwarderMigration} from "./IERC20ForwarderMigration.sol";
 
 /// @title ERC20ForwarderMigration
 /// @author Anoma Foundation, 2026
-/// @notice Permanent V1 emergency caller that moves custody only to its fixed V2 destination.
+/// @notice Permanent V1 emergency caller that moves the V1 tokens only to its fixed V2 destination.
 /// @custom:security-contact security@anoma.foundation
 contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, ReentrancyGuard {
     /// @notice The immutable source forwarder.
@@ -34,8 +34,8 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
 
     /// @notice Fixes the source, destination and initial owner for this chain.
     /// @param forwarderV1 The deployed immutable V1 forwarder.
-    /// @param forwarderV2 The deployed V2 forwarder proxy receiving custody.
-    /// @param initialOwner The account that moves the custody, which the deploy script names.
+    /// @param forwarderV2 The deployed V2 forwarder proxy receiving the tokens.
+    /// @param initialOwner The account that moves the tokens, which the deploy script names.
     constructor(address forwarderV1, address forwarderV2, address initialOwner) Ownable(initialOwner) {
         require(
             forwarderV1 != address(0) && forwarderV2 != address(0) && forwarderV1 != forwarderV2

@@ -165,7 +165,7 @@ contracts-simulate-migration sender chain *args:
         --sig "run(bool)" $IS_PRODUCTION \
         --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
-# Deploy the migration contract of one chain, which moves the V1 custody to the recorded V2 forwarder
+# Deploy the migration contract of one chain, which moves the V1 tokens to the recorded V2 forwarder
 contracts-deploy-migration deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
@@ -186,20 +186,20 @@ contracts-propose-migration-caller deployer migration proposer chain *args:
         --sig "proposeCaller(bool,address,address)" $IS_PRODUCTION {{migration}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the custody move (dry-run): moves it locally as the deployment wallet (tokens = '[0x…,0x…]')
+# Simulate the token move (dry-run): moves the tokens locally as the deployment wallet (tokens = '[0x…,0x…]')
 contracts-simulate-migration-move sender migration tokens chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
         --sig "executeMigration(bool,address,address[])" $IS_PRODUCTION {{migration}} {{tokens}} \
         --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
-# Move the custody to the recorded V2 forwarder as the deployment wallet owning the migration contract
+# Move the V1 tokens to the recorded V2 forwarder as the deployment wallet owning the migration contract
 contracts-execute-migration deployer migration tokens chain *args:
     cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
         --sig "executeMigration(bool,address,address[])" $IS_PRODUCTION {{migration}} {{tokens}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Check the moved custody of one chain against the chain, reading the emergency caller and the V1 token balances
+# Check the moved tokens of one chain against the chain, reading the emergency caller and the V1 token balances
 contracts-check-migration migration tokens chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \

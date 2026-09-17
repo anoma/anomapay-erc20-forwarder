@@ -6,8 +6,8 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title DeployERC20ForwarderMigration
 /// @author Anoma Foundation, 2026
-/// @notice A script to deploy the migration contract of one chain — the only contract that can move the V1 custody,
-/// and that can move it only to the recorded V2 forwarder. The deployment wallet owns it and moves the custody with
+/// @notice A script to deploy the migration contract of one chain — the only contract that can move the V1 tokens,
+/// and that can move them only to the recorded V2 forwarder. The deployment wallet owns it and moves the tokens with
 /// it through `MigrateERC20ForwarderAssets`.
 /// @dev The deployed contract fixes both forwarders and the owner, so a chain that records another V2 forwarder, or
 /// another wallet, needs its own deployment.
@@ -17,7 +17,7 @@ contract DeployERC20ForwarderMigration is MigrationScript {
     /// deployment is simulated locally.
     /// @dev The deployment is not deterministic, so a repeated run deploys a second contract. Pass the one this run
     /// reports to the steps that follow.
-    /// @param isProduction Whether the custody moves to the production or the staging V2 forwarder.
+    /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
     /// @return migration The migration contract, owned by the deployment wallet.
     function run(bool isProduction) public returns (ERC20ForwarderMigration migration) {
         (address forwarderV1, address forwarderV2) = _configuration(isProduction);

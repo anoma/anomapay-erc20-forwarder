@@ -100,7 +100,7 @@ contract MigrateERC20ForwarderAssetsTest is MigrationFixture {
         _script.executeMigration({isProduction: false, migration: migration, tokens: _tokens});
     }
 
-    function test_verify_passes_once_the_custody_moved() public {
+    function test_verify_passes_once_the_tokens_moved() public {
         ERC20ForwarderMigration migration = _deployMigration();
 
         _script = new MigrateERC20ForwarderAssets();

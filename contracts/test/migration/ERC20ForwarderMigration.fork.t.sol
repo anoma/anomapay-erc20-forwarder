@@ -13,7 +13,7 @@ import {MigrateERC20ForwarderAssets} from "../../script/migration/MigrateERC20Fo
 import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
 import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
 
-/// @notice Moves the custody the deployed Sepolia V1 forwarder holds to the recorded staging forwarder, on a fork of
+/// @notice Moves the tokens the deployed Sepolia V1 forwarder holds to the recorded staging forwarder, on a fork of
 /// the chain. Sepolia carries the whole starting point of a real migration: its v1 protocol adapter is stopped
 /// already, and its V1 forwarder still holds the wrapped tokens, so the test asserts that state instead of producing
 /// it.

@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 
 /// @title IERC20ForwarderMigration
 /// @author Anoma Foundation, 2026
-/// @notice Moves V1 pooled token custody to a fixed V2 destination.
+/// @notice Moves the tokens the V1 forwarder holds to a fixed V2 destination.
 interface IERC20ForwarderMigration {
     /// @notice Emitted after a token's full V1 balance has been moved to V2 and verified. The amount is zero if V1
     /// held none of the token.
