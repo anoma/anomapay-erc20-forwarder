@@ -47,11 +47,13 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
     }
 
     // slither-disable-start reentrancy-balance
-    // forge-lint: disable-start(calls-loop)
     /// @inheritdoc IERC20ForwarderMigration
     function migrate(IERC20[] calldata tokens) external override nonReentrant onlyOwner {
         uint256 count = tokens.length;
 
+        // NOTE: Each token of the batch carries its own balance reads and its own emergency call, so the calls
+        // belong inside the loop.
+        // forge-lint: disable-next-item(calls-loop)
         for (uint256 i = 0; i < count; ++i) {
             IERC20 token = tokens[i];
             uint128 amount = SafeCast.toUint128(token.balanceOf(address(FORWARDER_V1)));
@@ -61,26 +63,21 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
                 abi.encode(ERC20Forwarder.CallType.Unwrap, token, amount, FORWARDER_V2)
             );
 
-            // forge-lint: disable-next-line(require-revert-in-loop)
             require(output.length == 0, UnexpectedEmergencyCallOutput({token: address(token), output: output}));
 
             uint256 remaining = token.balanceOf(address(FORWARDER_V1));
-            // forge-lint: disable-next-line(require-revert-in-loop,incorrect-strict-equality)
-            require(remaining == 0, SourceBalanceRemaining({token: address(token), balance: remaining}));
+            require(remaining == 0, SourceBalanceRemaining({token: address(token), remaining: remaining}));
 
             uint256 expected = beforeV2 + amount;
             uint256 received = token.balanceOf(FORWARDER_V2);
-            // forge-lint: disable-next-item(require-revert-in-loop,incorrect-strict-equality)
             require(
                 received == expected,
                 DestinationBalanceMismatch({token: address(token), expected: expected, actual: received})
             );
 
-            // forge-lint: disable-next-line(reentrancy-events)
             emit ERC20TokenMigrated(address(FORWARDER_V1), FORWARDER_V2, address(token), amount);
         }
     }
 
-    // forge-lint: disable-end(calls-loop)
     // slither-disable-end reentrancy-balance
 }

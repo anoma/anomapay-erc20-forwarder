@@ -61,7 +61,9 @@ ignored_warnings_from = [
 
 [lint]
 exclude_lints = [
-    "internal-function-used-once", # Unreliable while `ignore` hides the call sites in the tests.
+    "internal-function-used-once", # Counts the call sites of `src` alone, because `ignore` hides those of the tests.
+    "reentrancy-events",           # Reports events that no external call precedes; Slither checks this instead.
+    "require-revert-in-loop",      # The loops revert on purpose: one invalid token aborts the whole batch.
 ]
 ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
 
