@@ -56,8 +56,8 @@ contract MigrateERC20ForwarderAssets is MigrationScript {
 
     /// @notice Moves the custody as the deployment wallet, which the sender must be, once the Safe has executed the
     /// caller assignment. Without `--broadcast` the move is simulated locally.
-    /// @dev The migration contract moves each token's full V1 balance and reverts unless V2 receives it, so a token
-    /// left out of `tokens` is moved by a later run.
+    /// @dev The migration contract moves each token's full V1 balance and reverts unless V2 receives all of it. A
+    /// token left out of `tokens` can be moved by a later run.
     /// @param isProduction Whether the custody moves to the production or the staging V2 forwarder.
     /// @param migration The deployed migration contract, already the emergency caller of V1.
     /// @param tokens The ERC20 tokens to move.

@@ -17,9 +17,8 @@ import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
 /// the chain. Sepolia carries the whole starting point of a real migration: its v1 protocol adapter is stopped
 /// already, and its V1 forwarder still holds the wrapped tokens, so the test asserts that state instead of producing
 /// it.
-/// @dev The assertions compare the balances before and after the move, so they hold at any block. The fork pins one
-/// anyway: Sepolia reorganizes its head often enough that a fork of the latest block fails on a block that is no
-/// longer canonical. Move the pin forward whenever the chain has to answer for a later state.
+/// @dev The assertions compare the balances before and after the move, so they hold at any block, and the fork
+/// follows the latest one.
 /// @dev Gated the way the other tests reading a chain are: the promotion gate into `staging` sets the variable, and
 /// the test skips everywhere else.
 contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {

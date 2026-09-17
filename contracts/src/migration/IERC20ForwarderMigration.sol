@@ -20,7 +20,8 @@ interface IERC20ForwarderMigration {
     /// @notice Moves full V1 balances to V2; omitted tokens can be supplied later.
     /// @dev V1 accepts uint128 amounts; larger balances revert without truncation.
     /// @dev Every token of the list emits the event, a zero balance included, so the events record which tokens the
-    /// migration covered. Repeated calls and duplicate tokens are harmless: each one moves a zero balance.
+    /// migration covered. Repeated calls and duplicate tokens move a zero balance, which still reaches V1 as a
+    /// zero-value transfer, so a token that rejects those reverts the whole batch.
     /// @param tokens The ERC20 token contracts to migrate.
     function migrate(IERC20[] calldata tokens) external;
 }
