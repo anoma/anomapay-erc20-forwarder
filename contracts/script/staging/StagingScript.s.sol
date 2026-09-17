@@ -15,14 +15,12 @@ abstract contract StagingScript is Script {
     /// @notice Thrown if the proxy is not a staging deployment, i.e. not owned by the staging proxy owner.
     error NotAStagingDeployment(address proxy);
 
-    /// @notice Thrown if the sender is not the proxy owner.
-    error UnauthorizedSender(address sender);
-
-    /// @notice Checks that the proxy belongs to the staging environment and that the sender owns it.
+    /// @notice Returns the owner of the proxy, and reverts unless the proxy belongs to the staging environment.
+    /// @dev The scripts broadcast as this owner, because with `--account` alone forge runs them as its default sender.
     /// @param proxy The staging environment ERC20 forwarder proxy to act on.
-    function _checkSenderAuthorization(address proxy) internal view {
-        address owner = ERC20Forwarder(proxy).owner();
+    /// @return owner The staging proxy owner, which sends the transactions.
+    function _stagingOwner(address proxy) internal view returns (address owner) {
+        owner = ERC20Forwarder(proxy).owner();
         require(owner == Parameters.DEPLOYMENT_WALLET, NotAStagingDeployment(proxy));
-        require(msg.sender == owner, UnauthorizedSender(msg.sender));
     }
 }

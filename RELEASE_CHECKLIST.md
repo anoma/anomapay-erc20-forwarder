@@ -159,10 +159,10 @@ For each chain in the `staging` section of the record:
 
   and check that the verification worked (e.g. on https://sourcify.dev/#/lookup). The proxy was verified at its genesis deploy and carries the ERC-1967 bytecode, not the implementation's, so it needs no reverification.
 
-- [ ] **Simulate** the upgrade, with the staging proxy owner as the sender, by running
+- [ ] **Simulate** the upgrade by running
 
   ```sh
-  just contracts-simulate-staging-upgrade 0x61462bE56782568376f9cB069382EFa72764a407 $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-staging-upgrade $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running

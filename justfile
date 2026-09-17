@@ -127,13 +127,13 @@ contracts-deploy-proxy deployer chain *args:
         --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally (sender = the staging proxy owner)
-contracts-simulate-staging-upgrade sender proxy implementation chain *args:
+# Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally as the staging proxy owner
+contracts-simulate-staging-upgrade proxy implementation chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteERC20ForwarderUpgrade.s.sol:ExecuteERC20ForwarderUpgrade \
         --sig "run(address,address)" {{proxy}} {{implementation}} \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Execute the staging upgrade to the deployed implementation as the proxy owner
 contracts-execute-staging-upgrade deployer proxy implementation chain *args:
