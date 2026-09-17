@@ -1,3 +1,5 @@
+version = 1
+
 [[dependencies]]
 name = "@openzeppelin-contracts"
 version = "5.7.0"
@@ -21,10 +23,10 @@ integrity = "0c8a4d6236e39045dc6140cf14ce9a3d4e3a9c8c9e0ce75ab9b0eb21d178c127"
 
 [[dependencies]]
 name = "anoma-pa-evm"
-version = "2.0.0-rc.1"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/2_0_0-rc_1_24-08-2026_09:34:03_contracts.zip"
-checksum = "53d01464df9d675fbef741c763d4957c199a3e37cd99d2e3440d9d01e25228fc"
-integrity = "37e6bd6d576fbfe28b6dfe8588572cb71c9b46514bd50d57ec4d52aa9b6dd42f"
+version = "2.0.0-rc.3"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/2_0_0-rc_3_17-09-2026_10:49:26_contracts.zip"
+checksum = "8eca30cc6f17193a57c790ab34a43cac11e8043955cf0a7da361096111b25714"
+integrity = "a40671eefc073bed58f4638d32b9f55900283f32acba054cf26118ca937ce747"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"
