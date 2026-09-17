@@ -27,7 +27,7 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
     error UnexpectedEmergencyCallOutput(address token, bytes output);
 
     /// @notice Thrown if the source forwarder still holds the token after the call.
-    error SourceBalanceRemaining(address token, uint256 balance);
+    error SourceBalanceRemaining(address token, uint256 remaining);
 
     /// @notice Thrown if the destination forwarder did not receive exactly the amount taken from the source.
     error DestinationBalanceMismatch(address token, uint256 expected, uint256 actual);

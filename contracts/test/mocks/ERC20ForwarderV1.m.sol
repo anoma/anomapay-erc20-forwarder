@@ -3,11 +3,11 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/utils/SafeERC20.sol";
-import {IProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.1/src/interfaces/IProtocolAdapter.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
 
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
+import {ProtocolAdapterMock} from "./ProtocolAdapter.m.sol";
 
 /// @notice A stand-in for the deployed V1 ERC20 forwarder, holding the custody the migration moves. It keeps the
 /// guards the deployed contract applies: the committee assigns the emergency caller once, only that caller forwards,
@@ -67,6 +67,6 @@ contract ERC20ForwarderV1Mock is IEmergencyMigratable, IProtocolAdapterSpecific 
     }
 
     function _checkEmergencyStopped() internal view {
-        require(IProtocolAdapter(_PROTOCOL_ADAPTER).isEmergencyStopped(), ProtocolAdapterNotStopped());
+        require(ProtocolAdapterMock(_PROTOCOL_ADAPTER).isEmergencyStopped(), ProtocolAdapterNotStopped());
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.1/src/interfaces/IProtocolAdapter.sol";
+import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
 import {Script} from "forge-std-1.16.2/src/Script.sol";
@@ -39,7 +39,8 @@ abstract contract MigrationScript is Script {
     /// @notice Thrown if V1 has another emergency caller than the expected one.
     error EmergencyCallerMismatch(address expected, address actual);
 
-    /// @notice Thrown if the v1 protocol adapter is not stopped, which V1 requires for both emergency calls.
+    /// @notice Thrown if the owner has not stopped the v1 protocol adapter. That stop is enough for V1 to accept both
+    /// emergency calls.
     error ProtocolAdapterNotStopped(address protocolAdapter);
 
     /// @notice Returns the chain's recorded forwarders and checks the V2 forwarder against the chain: the
@@ -99,7 +100,7 @@ abstract contract MigrationScript is Script {
         require(actualOwner == wallet, OwnerMismatch({expected: wallet, actual: actualOwner}));
 
         address protocolAdapterV1 = IProtocolAdapterSpecific(forwarderV1).getProtocolAdapter();
-        require(IProtocolAdapter(protocolAdapterV1).isEmergencyStopped(), ProtocolAdapterNotStopped(protocolAdapterV1));
+        require(Pausable(protocolAdapterV1).paused(), ProtocolAdapterNotStopped(protocolAdapterV1));
     }
 
     /// @notice Returns the deployment wallet, which owns the migration contract and moves the custody with it. It is

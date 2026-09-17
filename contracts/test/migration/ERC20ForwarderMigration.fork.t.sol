@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
-import {IProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.1/src/interfaces/IProtocolAdapter.sol";
+import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
 
@@ -88,13 +88,14 @@ contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
         new MigrateERC20ForwarderAssets().verify({isProduction: false, migration: migration, tokens: tokens});
     }
 
-    /// @notice Reverts unless the v1 protocol adapter of the forwarder is stopped, which both its emergency calls
-    /// require. The stop cannot be undone, so the chain holds it from the day the committee executed it.
+    /// @notice Reverts unless the owner stopped the v1 protocol adapter of the forwarder. That stop is enough for V1
+    /// to accept both emergency calls. The stop cannot be undone, so the chain holds it from the day the owner
+    /// executed it.
     /// @param forwarderV1 The deployed V1 forwarder.
     function _requireStoppedProtocolAdapterV1(address forwarderV1) private view {
         address protocolAdapter = IProtocolAdapterSpecific(forwarderV1).getProtocolAdapter();
 
-        assertTrue(IProtocolAdapter(protocolAdapter).isEmergencyStopped(), "the v1 protocol adapter is not stopped");
+        assertTrue(Pausable(protocolAdapter).paused(), "the v1 protocol adapter is not stopped");
     }
 
     /// @notice Returns the wrapped tokens as the migration takes them.
