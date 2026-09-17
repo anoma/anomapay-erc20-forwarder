@@ -60,7 +60,7 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
         vm.expectRevert(
             abi.encodeWithSelector(MigrationScript.EmergencyCallerMismatch.selector, address(0), address(migration))
         );
-        script.run({isProduction: false, proposer: _committeeOwner});
+        script.run({isProduction: false});
     }
 
     function test_run_reverts_if_the_protocol_adapter_is_not_stopped() public {
@@ -69,7 +69,7 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
         DeployERC20ForwarderMigration script = new DeployERC20ForwarderMigration();
 
         vm.expectRevert(abi.encodeWithSelector(MigrationScript.ProtocolAdapterNotStopped.selector, _protocolAdapterV1));
-        script.run({isProduction: false, proposer: _committeeOwner});
+        script.run({isProduction: false});
     }
 
     function test_run_reverts_if_the_chain_records_no_v1_forwarder() public {
@@ -79,14 +79,14 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
         DeployERC20ForwarderMigration script = new DeployERC20ForwarderMigration();
 
         vm.expectRevert(abi.encodeWithSelector(MigrationScript.ForwarderV1NotRecorded.selector, chainId));
-        script.run({isProduction: false, proposer: _committeeOwner});
+        script.run({isProduction: false});
     }
 
     function test_run_reverts_if_the_environment_records_no_deployment() public {
         DeployERC20ForwarderMigration script = new DeployERC20ForwarderMigration();
 
         vm.expectRevert(abi.encodeWithSelector(MigrationScript.DeploymentNotRecorded.selector, "production", _CHAIN_ID));
-        script.run({isProduction: true, proposer: _committeeOwner});
+        script.run({isProduction: true});
     }
 
     function test_run_reverts_if_the_v2_forwarder_has_another_owner() public {
@@ -101,7 +101,7 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
         vm.expectRevert(
             abi.encodeWithSelector(MigrationScript.OwnerMismatch.selector, Parameters.DEPLOYMENT_WALLET, owner)
         );
-        script.run({isProduction: false, proposer: _committeeOwner});
+        script.run({isProduction: false});
     }
 
     function test_run_reverts_if_the_v1_forwarder_forwards_for_another_protocol_adapter() public {
@@ -120,7 +120,7 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
                 MigrationScript.ProtocolAdapterMismatch.selector, _protocolAdapterV1, protocolAdapter
             )
         );
-        script.run({isProduction: false, proposer: _committeeOwner});
+        script.run({isProduction: false});
     }
 
     function test_run_reverts_if_the_v2_forwarder_forwards_for_another_protocol_adapter() public {
@@ -139,6 +139,6 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
                 MigrationScript.ProtocolAdapterMismatch.selector, _protocolAdapterV2, protocolAdapter
             )
         );
-        script.run({isProduction: false, proposer: _committeeOwner});
+        script.run({isProduction: false});
     }
 }

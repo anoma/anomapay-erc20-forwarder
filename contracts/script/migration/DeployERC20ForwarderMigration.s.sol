@@ -13,8 +13,8 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 /// @author Anoma Foundation, 2026
 /// @notice A script to deploy the migration contract of one chain and to propose it to the forwarder multisig as the
 /// permanent emergency caller of V1. The migration contract is the only contract that can move the V1 tokens, and it
-/// can move them only to the recorded V2 forwarder. The deployment wallet owns it and moves the tokens with it through
-/// `MigrateERC20ForwarderAssets`.
+/// can move them only to the recorded V2 forwarder. The deployment wallet proposes it, owns it, and moves the tokens
+/// with it through `MigrateERC20ForwarderAssets`.
 /// @dev The deployment is deterministic: the address commits to both forwarders and the owner. So the proposal names
 /// the right contract even before the deployment lands, and a repeated run finds the contract instead of deploying a
 /// second one. V1 accepts the caller assignment only once its protocol adapter is stopped, so the script refuses to
@@ -32,9 +32,8 @@ contract DeployERC20ForwarderMigration is MigrationScript {
     /// and proposes it to the forwarder multisig as the emergency caller of V1. Without `--broadcast`, the deployment
     /// is simulated locally and the Safe execution of the assignment is simulated instead of proposed.
     /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
-    /// @param proposer The Safe owner or delegate proposing the transaction.
     /// @return migration The migration contract, owned by the deployment wallet.
-    function run(bool isProduction, address proposer) public returns (ERC20ForwarderMigration migration) {
+    function run(bool isProduction) public returns (ERC20ForwarderMigration migration) {
         (address forwarderV1, address forwarderV2) = _configuration(isProduction);
 
         migration = ERC20ForwarderMigration(_predict({forwarderV1: forwarderV1, forwarderV2: forwarderV2}));
@@ -49,9 +48,7 @@ contract DeployERC20ForwarderMigration is MigrationScript {
         _requireEmergencyCaller({forwarderV1: forwarderV1, expected: address(0)});
 
         _propose({
-            target: forwarderV1,
-            callData: abi.encodeCall(IEmergencyMigratable.setEmergencyCaller, (address(migration))),
-            proposer: proposer
+            target: forwarderV1, callData: abi.encodeCall(IEmergencyMigratable.setEmergencyCaller, (address(migration)))
         });
     }
 
@@ -63,17 +60,17 @@ contract DeployERC20ForwarderMigration is MigrationScript {
         migration = _predict({forwarderV1: forwarderV1, forwarderV2: forwarderV2});
     }
 
-    /// @notice Proposes a transaction to the forwarder multisig via the Safe Transaction Service.
+    /// @notice Proposes a transaction to the forwarder multisig via the Safe Transaction Service, signed by the
+    /// deployment wallet.
     /// @dev Without `--broadcast`, the Safe execution of the transaction is simulated instead of proposed.
     /// @param target The contract the Safe calls.
     /// @param callData The call to propose.
-    /// @param proposer The Safe owner or delegate proposing the transaction.
-    function _propose(address target, bytes memory callData, address proposer) internal {
+    function _propose(address target, bytes memory callData) internal {
         address safe = Parameters.FWD_MULTISIG;
         _safe.initialize(safe);
 
         if (Safe.isBroadcastMode()) {
-            _safe.proposeTransaction(target, callData, proposer);
+            _safe.proposeTransaction(target, callData, Parameters.DEPLOYMENT_WALLET);
         } else {
             require(
                 _safe.simulateTransactionMultiSigNoSign(target, callData, IOwnerManager(safe).getOwners()),

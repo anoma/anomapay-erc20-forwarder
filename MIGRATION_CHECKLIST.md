@@ -8,7 +8,7 @@ The V1 forwarder is immutable, and only its emergency path can move its tokens. 
 
 So the committee assigns a contract, not an account. [`ERC20ForwarderMigration`](./contracts/src/migration/ERC20ForwarderMigration.sol) fixes the V1 forwarder and the V2 forwarder of one environment at deployment, and sets its owner. Its owner-only `migrate` unwraps the full V1 balance of each listed token to the V2 forwarder, and reverts unless V1 keeps none of the token and the V2 forwarder receives exactly that amount. Every listed token emits `ERC20TokenMigrated`, with a zero amount if V1 held none. The caller assignment cannot be undone, but it fixes only where the tokens can go: the owner can move a token that an earlier run left out, and only to the same V2 forwarder.
 
-Two scripts do the work, and both take their addresses and salt from [`Parameters.sol`](./contracts/script/Parameters.sol). [`DeployERC20ForwarderMigration`](./contracts/script/migration/DeployERC20ForwarderMigration.s.sol) deploys the migration contract, makes the deployment wallet `0x61462bE56782568376f9cB069382EFa72764a407` (`Parameters.DEPLOYMENT_WALLET`) its owner in both environments, and proposes the caller assignment to the committee Safe. It deploys with CREATE2, so the address commits to both forwarders and the owner: the proposal names the right contract before the deployment lands, and a repeated run finds the contract instead of deploying a second one. [`MigrateERC20ForwarderAssets`](./contracts/script/migration/MigrateERC20ForwarderAssets.s.sol) moves the tokens as the deployment wallet and checks the result. It reads the migration contract from the emergency caller of V1. Both scripts read the two forwarders from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol) and check them against the chain: the environment's proxy owner owns the V2 forwarder, and each forwarder forwards for the protocol adapter that the records of the `anoma-pa-evm` package name for it. They also check the migration contract: it holds the recorded forwarders, the deployment wallet owns it, and the owner of the v1 protocol adapter has stopped it.
+Two scripts do the work, and both take their addresses and salt from [`Parameters.sol`](./contracts/script/Parameters.sol). [`DeployERC20ForwarderMigration`](./contracts/script/migration/DeployERC20ForwarderMigration.s.sol) deploys the migration contract, makes the deployment wallet `0x61462bE56782568376f9cB069382EFa72764a407` (`Parameters.DEPLOYMENT_WALLET`) its owner in both environments, and proposes the caller assignment to the committee Safe as the deployment wallet. It deploys with CREATE2, so the address commits to both forwarders and the owner: the proposal names the right contract before the deployment lands, and a repeated run finds the contract instead of deploying a second one. [`MigrateERC20ForwarderAssets`](./contracts/script/migration/MigrateERC20ForwarderAssets.s.sol) moves the tokens as the deployment wallet and checks the result. It reads the migration contract from the emergency caller of V1. Both scripts read the two forwarders from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol) and check them against the chain: the environment's proxy owner owns the V2 forwarder, and each forwarder forwards for the protocol adapter that the records of the `anoma-pa-evm` package name for it. They also check the migration contract: it holds the recorded forwarders, the deployment wallet owns it, and the owner of the v1 protocol adapter has stopped it.
 
 The move must end while the protocol adapter proxy is still paused. The kind table on that proxy carries V1 members, which let a V1 resource unwrap from the V2 forwarder. A paused proxy executes nothing, so no V1 resource can unwrap before the V2 forwarder holds the V1 tokens.
 
@@ -43,7 +43,7 @@ The pa-evm migration run sends its transactions from the deployment wallet, and 
 
    ```sh
    export IS_PRODUCTION=<true|false>
-   just contracts-simulate-migration 0x61462bE56782568376f9cB069382EFa72764a407 <PROPOSER> <CHAIN>
+   just contracts-simulate-migration 0x61462bE56782568376f9cB069382EFa72764a407 <CHAIN>
    ```
 
    Besides the checks in [How it works](#how-it-works), it requires that V1 has no emergency caller yet.
@@ -51,10 +51,10 @@ The pa-evm migration run sends its transactions from the deployment wallet, and 
 3. [ ] Deploy the migration contract and propose the caller assignment to the committee Safe:
 
    ```sh
-   just contracts-deploy-migration deployer <PROPOSER> <CHAIN>
+   just contracts-deploy-migration deployer <CHAIN>
    ```
 
-   where `<PROPOSER>` is a Safe owner or delegate. Export the address the run reports:
+   The deployment wallet signs the proposal, so it must be an owner or a delegate of the committee Safe. Export the address the run reports:
 
    ```sh
    export MIGRATION_ADDRESS=<ADDRESS>

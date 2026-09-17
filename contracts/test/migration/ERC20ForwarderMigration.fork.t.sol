@@ -55,8 +55,7 @@ contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
         // Deployed and assigned through the script, so its checks run against the chain the migration acts on. Outside
         // broadcast mode it simulates the forwarder multisig executing the assignment.
         vm.setEnv("SAFE_BROADCAST", "false");
-        ERC20ForwarderMigration migration =
-            new DeployERC20ForwarderMigration().run({isProduction: false, proposer: Parameters.DEPLOYMENT_WALLET});
+        ERC20ForwarderMigration migration = new DeployERC20ForwarderMigration().run({isProduction: false});
         assertEq(migration.owner(), Parameters.DEPLOYMENT_WALLET, "the deployment wallet does not own the migration");
 
         // Read after the deployment: the address the migration lands on may hold a balance of its own already.

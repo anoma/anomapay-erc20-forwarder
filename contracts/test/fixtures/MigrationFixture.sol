@@ -71,7 +71,7 @@ abstract contract MigrationFixture is SafeFixture {
     /// the emergency caller of V1 by simulating the forwarder multisig.
     /// @return migration The migration contract, owned by the deployment wallet.
     function _deployMigration() internal returns (ERC20ForwarderMigration migration) {
-        migration = new DeployERC20ForwarderMigration().run({isProduction: false, proposer: _committeeOwner});
+        migration = new DeployERC20ForwarderMigration().run({isProduction: false});
     }
 
     /// @notice Installs a stand-in for the v1 protocol adapter at the address the records name.
