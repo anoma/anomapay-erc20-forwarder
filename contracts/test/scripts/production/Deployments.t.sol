@@ -16,10 +16,6 @@ contract DeploymentsProductionTest is DeploymentsFixture, SafeFixture {
         _;
     }
 
-    function test_recorded_deployments_use_the_environment_salt() public {
-        _expectGenesisDeployments({isProduction: true});
-    }
-
     function test_recorded_deployments_run_the_source_implementation() public onlyProduction {
         _expectSourceImplementations({isProduction: true});
     }
@@ -39,5 +35,9 @@ contract DeploymentsProductionTest is DeploymentsFixture, SafeFixture {
                 _isSafe(ERC20Forwarder(recordedProxy).owner()), string.concat(context, ": proxy is not owned by a Safe")
             );
         }
+    }
+
+    function test_recorded_deployments_use_the_environment_salt() public pure {
+        _expectGenesisDeployments({isProduction: true});
     }
 }

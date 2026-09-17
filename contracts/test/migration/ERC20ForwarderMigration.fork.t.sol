@@ -3,13 +3,12 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
-import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
-import {DeployERC20ForwarderProxy} from "../../script/DeployERC20ForwarderProxy.s.sol";
 import {DeployERC20ForwarderMigration} from "../../script/migration/DeployERC20ForwarderMigration.s.sol";
 import {MigrateERC20ForwarderAssets} from "../../script/migration/MigrateERC20ForwarderAssets.s.sol";
+import {Parameters} from "../../script/Parameters.sol";
 import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
 import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
 
@@ -47,26 +46,23 @@ contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
 
         address forwarderV1 = RecordedDeployments.forwarderV1(_CHAIN_ID);
         address forwarderV2 = RecordedDeployments.forwarderProxy({isProduction: false, chainId: _CHAIN_ID});
-        DeployERC20ForwarderProxy proxyDeployScript = new DeployERC20ForwarderProxy();
-        address committee = proxyDeployScript.PROXY_OWNER_PRODUCTION();
-        address wallet = proxyDeployScript.PROXY_OWNER_STAGING();
         _requireStoppedProtocolAdapterV1(forwarderV1);
 
         IERC20[] memory tokens = _tokens();
         uint256[] memory balancesV1 = _balances({tokens: tokens, account: forwarderV1});
         uint256[] memory balancesV2 = _balances({tokens: tokens, account: forwarderV2});
 
-        // Deployed through the script, so its checks run against the chain the migration acts on.
-        ERC20ForwarderMigration migration = new DeployERC20ForwarderMigration().run(false);
-        assertEq(migration.owner(), wallet, "the deployment wallet does not own the migration");
+        // Deployed and assigned through the script, so its checks run against the chain the migration acts on. Outside
+        // broadcast mode it simulates the forwarder multisig executing the assignment.
+        vm.setEnv("SAFE_BROADCAST", "false");
+        ERC20ForwarderMigration migration =
+            new DeployERC20ForwarderMigration().run({isProduction: false, proposer: Parameters.DEPLOYMENT_WALLET});
+        assertEq(migration.owner(), Parameters.DEPLOYMENT_WALLET, "the deployment wallet does not own the migration");
 
         // Read after the deployment: the address the migration lands on may hold a balance of its own already.
         uint256[] memory balancesBeforeMigration = _balances({tokens: tokens, account: address(migration)});
 
-        vm.prank(committee);
-        IEmergencyMigratable(forwarderV1).setEmergencyCaller(address(migration));
-
-        vm.prank(wallet);
+        vm.prank(Parameters.DEPLOYMENT_WALLET);
         migration.migrate(tokens);
 
         for (uint256 i = 0; i < tokens.length; ++i) {
@@ -85,7 +81,7 @@ contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
             );
         }
 
-        new MigrateERC20ForwarderAssets().verify({isProduction: false, migration: migration, tokens: tokens});
+        new MigrateERC20ForwarderAssets().verify({isProduction: false, tokens: tokens});
     }
 
     /// @notice Reverts unless the owner stopped the v1 protocol adapter of the forwarder. That stop is enough for V1

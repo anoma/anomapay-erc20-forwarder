@@ -4,18 +4,17 @@ pragma solidity ^0.8.30;
 import {IERC1967} from "@openzeppelin-contracts-5.7.0/interfaces/IERC1967.sol";
 
 import {DeployERC20ForwarderImplementation} from "../../../script/DeployERC20ForwarderImplementation.s.sol";
-import {DeployERC20ForwarderProxy} from "../../../script/DeployERC20ForwarderProxy.s.sol";
+import {Parameters} from "../../../script/Parameters.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
 import {ProposeERC20ForwarderUpgrade} from "../../../script/production/ProposeERC20ForwarderUpgrade.s.sol";
 import {ERC20Forwarder} from "../../../src/ERC20Forwarder.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
+import {DeployERC20ForwarderProxyMock} from "../../mocks/DeployERC20ForwarderProxy.m.sol";
 
 /// @notice Checks the production-only upgrade proposal script against a Safe-owned production proxy. Outside
 /// broadcast mode, the script simulates the Safe executing the upgrade, so the proxy must end up on the new
 /// implementation.
 contract ProposeERC20ForwarderUpgradeTest is SafeFixture {
-    bytes32 internal constant _LOGIC_REF = bytes32(uint256(1));
-
     address internal immutable _PROTOCOL_ADAPTER = makeAddr("protocol adapter");
 
     address internal _owner;
@@ -28,15 +27,13 @@ contract ProposeERC20ForwarderUpgradeTest is SafeFixture {
         // Keep the script on the simulation branch regardless of the shell environment.
         vm.setEnv("SAFE_BROADCAST", "false");
 
-        DeployERC20ForwarderProxy deployScript = new DeployERC20ForwarderProxy();
+        DeployERC20ForwarderProxyMock deployScript = new DeployERC20ForwarderProxyMock(_PROTOCOL_ADAPTER);
 
         _owner = makeAddr("safe owner");
-        _safe = _deploySafeAt(_owner, deployScript.PROXY_OWNER_PRODUCTION());
+        _safe = _deploySafeAt(_owner, Parameters.FWD_MULTISIG);
 
-        (_productionProxy, _implementation,,) =
-            deployScript.run({isProduction: true, protocolAdapter: _PROTOCOL_ADAPTER, logicRef: _LOGIC_REF});
-        (_stagingProxy,,,) =
-            deployScript.run({isProduction: false, protocolAdapter: _PROTOCOL_ADAPTER, logicRef: _LOGIC_REF});
+        (_productionProxy, _implementation,,) = deployScript.run({isProduction: true});
+        (_stagingProxy,,,) = deployScript.run({isProduction: false});
     }
 
     function test_run_upgrades_the_proxy() public {

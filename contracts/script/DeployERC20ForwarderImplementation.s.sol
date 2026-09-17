@@ -6,6 +6,7 @@ import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
+import {Parameters} from "./Parameters.sol";
 
 /// @title DeployERC20ForwarderImplementation
 /// @author Anoma Foundation, 2025
@@ -13,7 +14,7 @@ import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 /// @custom:security-contact security@anoma.foundation
 contract DeployERC20ForwarderImplementation is Script {
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
-    bytes32 public constant IMPLEMENTATION_SALT = "ERC20ForwarderImpl";
+    bytes32 public constant IMPLEMENTATION_SALT = Parameters.IMPLEMENTATION_SALT;
 
     /// @notice The initialization data to pass to `upgradeToAndCall` when upgrading a proxy to this implementation —
     /// empty because the current version requires no reinitialization.
