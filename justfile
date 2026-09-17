@@ -108,20 +108,20 @@ contracts-deploy-impl deployer chain *args:
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the implementation and proxy deployment (dry-run)
-contracts-simulate-proxy chain protocol-adapter logic-ref *args:
+contracts-simulate-proxy chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \
-        --sig "run(bool,address,bytes32)" $IS_PRODUCTION {{protocol-adapter}} {{logic-ref}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy the ERC20 forwarder implementation and proxy
-contracts-deploy-proxy deployer chain protocol-adapter logic-ref *args:
+contracts-deploy-proxy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \
-        --sig "run(bool,address,bytes32)" $IS_PRODUCTION {{protocol-adapter}} {{logic-ref}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally (sender = the staging proxy owner)

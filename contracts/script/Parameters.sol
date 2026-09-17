@@ -5,9 +5,9 @@ import {Parameters as ProtocolAdapterParameters} from "anoma-pa-evm-2.0.0-rc.3/s
 
 /// @title Parameters
 /// @author Anoma Foundation, 2026
-/// @notice The deterministic deployment parameters — the CREATE2 salts and the environment proxy owners. They fix
-/// where a deployment lands and who may upgrade it, so they are held once here and read by the deploy scripts and
-/// their tests.
+/// @notice The deterministic deployment parameters — the CREATE2 salts, the environment proxy owners, and the logic ref
+/// the proxies accept. They fix where a deployment lands, who may upgrade it and which resources it serves, so they are
+/// held once here and read by the deploy scripts and their tests.
 /// @custom:security-contact security@anoma.foundation
 library Parameters {
     /// @notice The CREATE2 salt for the staging environment proxy deployment.
@@ -18,6 +18,9 @@ library Parameters {
 
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
     bytes32 internal constant IMPLEMENTATION_SALT = "ERC20ForwarderImpl";
+
+    /// @notice The logic ref of the token transfer circuit, which the proxies are initialized with.
+    bytes32 internal constant LOGIC_REF = 0xbc12323668c37c3d381ca798f11116f35fb1639d12239b29da7810df3985e7ad;
 
     /// @notice The deployment wallet, which owns the staging proxies and upgrades them instantly. The protocol adapter
     /// repository names the same wallet.

@@ -111,7 +111,7 @@ To simulate deployment on sepolia, run
 
 ```sh
 forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \
-  --sig "run(bool,address,bytes32)" <IS_PRODUCTION> <PROTOCOL_ADAPTER> <LOGIC_REF> \
+  --sig "run(bool)" <IS_PRODUCTION> \
   --rpc-url sepolia
 ```
 

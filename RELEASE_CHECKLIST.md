@@ -98,7 +98,7 @@ These apply to all three cases and are done once per session.
   export IS_PRODUCTION=false
   ```
 
-  Only `just contracts-simulate-proxy` and `just contracts-deploy-proxy` read it; every other recipe takes its addresses as arguments.
+  The proxy recipes and the migration recipes read it. The upgrade recipes take their addresses as arguments.
 
 ## Releasing a new ERC20 Forwarder Version
 
@@ -316,22 +316,22 @@ For **production**:
 
 For **both**:
 
-- [ ] Look up the two values the proxy commits to:
-  - `<PROTOCOL_ADAPTER>` — the protocol adapter proxy of the **same** environment on this chain, recorded in [`anoma/pa-evm` `crates/bindings/deployments.json`](https://github.com/anoma/pa-evm/blob/main/crates/bindings/deployments.json) on the branch tracking the environment.
-  - `<TOKEN_TRANSFER_CIRCUIT_ID>` — the `TOKEN_TRANSFER_ID` of the [`transfer_library`](https://github.com/anoma/anomapay-erc20-resource) version pinned in [`./Cargo.toml`](./Cargo.toml), which `just bindings-test` checks the deployment against.
+- [ ] Check the two values the proxy commits to. The deploy script reads both itself:
+  - the protocol adapter proxy of the **same** environment on this chain, from the records of the `anoma-pa-evm` package in [`./contracts/foundry.toml`](./contracts/foundry.toml). The script reverts with `ProtocolAdapterNotRecorded` if the package records none, so bump the package first.
+  - `LOGIC_REF` in [`Parameters.sol`](./contracts/script/Parameters.sol), which `just bindings-test` checks against the `TOKEN_TRANSFER_ID` of the [`transfer_library`](https://github.com/anoma/anomapay-erc20-resource) version pinned in [`./Cargo.toml`](./Cargo.toml).
 
 - [ ] Run the test suites as in step 2 of the release cycle.
 
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  just contracts-simulate-proxy <CHAIN> <PROTOCOL_ADAPTER> <TOKEN_TRANSFER_CIRCUIT_ID>
+  just contracts-simulate-proxy <CHAIN>
   ```
 
 - [ ] After successful simulation, **deploy** the contracts by running
 
   ```sh
-  just contracts-deploy-proxy deployer <CHAIN> <PROTOCOL_ADAPTER> <TOKEN_TRANSFER_CIRCUIT_ID>
+  just contracts-deploy-proxy deployer <CHAIN>
   ```
 
 - [ ] Export the addresses of the implementation and proxy with

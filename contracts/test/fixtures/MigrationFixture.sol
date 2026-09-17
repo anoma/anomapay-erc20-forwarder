@@ -8,6 +8,7 @@ import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployERC20ForwarderProxy} from "../../script/DeployERC20ForwarderProxy.s.sol";
 import {DeployERC20ForwarderMigration} from "../../script/migration/DeployERC20ForwarderMigration.s.sol";
 import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
+import {DeployERC20ForwarderProxyMock} from "../mocks/DeployERC20ForwarderProxy.m.sol";
 import {ERC20ForwarderV1Mock} from "../mocks/ERC20ForwarderV1.m.sol";
 import {ProtocolAdapterMock} from "../mocks/ProtocolAdapter.m.sol";
 import {SafeFixture} from "./SafeFixture.sol";
@@ -19,7 +20,6 @@ import {SafeFixture} from "./SafeFixture.sol";
 abstract contract MigrationFixture is SafeFixture {
     uint256 internal constant _CHAIN_ID = 11155111;
     uint128 internal constant _AMOUNT = 42;
-    bytes32 internal constant _LOGIC_REF = bytes32(uint256(1));
 
     address internal immutable _PROTOCOL_ADAPTER_V2 = makeAddr("protocol adapter v2");
 
@@ -45,8 +45,7 @@ abstract contract MigrationFixture is SafeFixture {
         _protocolAdapterV1.emergencyStop();
 
         // Deployed before the chain ID changes, because the deploy script refuses a chain with a recorded deployment.
-        (address proxy,,,) =
-            proxyDeployScript.run({isProduction: false, protocolAdapter: _PROTOCOL_ADAPTER_V2, logicRef: _LOGIC_REF});
+        (address proxy,,,) = new DeployERC20ForwarderProxyMock(_PROTOCOL_ADAPTER_V2).run({isProduction: false});
 
         _forwarderV1 = RecordedDeployments.forwarderV1(_CHAIN_ID);
         _forwarderV2 = RecordedDeployments.forwarderProxy({isProduction: false, chainId: _CHAIN_ID});

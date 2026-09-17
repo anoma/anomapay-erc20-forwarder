@@ -2,6 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
+import {
+    RecordedDeployments as ProtocolAdapterDeployments
+} from "anoma-pa-evm-2.0.0-rc.3/generated/RecordedDeployments.sol";
 import {Script} from "forge-std-1.16.2/src/Script.sol";
 
 import {RecordedDeployments} from "../generated/RecordedDeployments.sol";
@@ -12,7 +15,8 @@ import {Parameters} from "./Parameters.sol";
 /// @title DeployERC20ForwarderProxy
 /// @author Anoma Foundation, 2025
 /// @notice A script to deploy the ERC20 forwarder implementation and an ERC-1967 proxy pointing to it on supported
-/// networks.
+/// networks. The proxy forwards for the protocol adapter proxy that the protocol adapter package records for the same
+/// environment on the chain.
 /// @custom:security-contact security@anoma.foundation
 contract DeployERC20ForwarderProxy is Script {
     /// @notice The CREATE2 salt for the staging environment proxy deployment.
@@ -30,6 +34,10 @@ contract DeployERC20ForwarderProxy is Script {
     /// @notice Thrown if the environment already has a deployment recorded for this chain.
     error DeploymentAlreadyRecorded(string environment, uint256 chainId);
 
+    /// @notice Thrown if the protocol adapter package records no protocol adapter proxy of the environment for this
+    /// chain, i.e. the proxy has no protocol adapter to forward for.
+    error ProtocolAdapterNotRecorded(string environment, uint256 chainId);
+
     /// @notice Thrown if the proxy of this source version is already deployed.
     error ProxyAlreadyDeployed(address proxy);
 
@@ -37,15 +45,12 @@ contract DeployERC20ForwarderProxy is Script {
     /// implementation is validated for upgrade safety and deployed first, unless the other environment deployed it
     /// already.
     /// @param isProduction Whether to deploy the production or the staging environment proxy, selecting the CREATE2
-    /// salt and the owner receiving the authority to authorize upgrades.
-    /// @param protocolAdapter The protocol adapter proxy of the same environment, the only caller allowed to forward
-    /// calls.
-    /// @param logicRef The reference to the ERC20 resource logic function triggering the forward calls.
+    /// salt, the owner receiving the authority to authorize upgrades, and the protocol adapter proxy to forward for.
     /// @return proxy The ERC20 forwarder proxy contract to interact with.
     /// @return implementation The ERC20 forwarder implementation contract the proxy delegates to.
     /// @return initializerData The proxy constructor's initializer data, to record in `deployments.json`.
     /// @return creationCode The ERC-1967 proxy creation code, to record in `deployments.json`.
-    function run(bool isProduction, address protocolAdapter, bytes32 logicRef)
+    function run(bool isProduction)
         public
         returns (address proxy, address implementation, bytes memory initializerData, bytes memory creationCode)
     {
@@ -65,8 +70,7 @@ contract DeployERC20ForwarderProxy is Script {
             (proxy, initializerData, creationCode) = _predict({
                 salt: salt,
                 implementation: implementation,
-                protocolAdapter: protocolAdapter,
-                logicRef: logicRef,
+                protocolAdapter: _protocolAdapter(isProduction),
                 isProduction: isProduction
             });
             require(proxy.code.length == 0, ProxyAlreadyDeployed({proxy: proxy}));
@@ -84,14 +88,9 @@ contract DeployERC20ForwarderProxy is Script {
 
     /// @notice Predicts the deterministic address the proxy of this source version deploys to.
     /// @param isProduction Whether to predict the production or the staging environment proxy.
-    /// @param protocolAdapter The protocol adapter proxy of the same environment.
-    /// @param logicRef The reference to the ERC20 resource logic function triggering the forward calls.
     /// @return proxy The predicted ERC20 forwarder proxy contract address.
     /// @return implementation The predicted implementation contract address the proxy commits to.
-    function predict(bool isProduction, address protocolAdapter, bytes32 logicRef)
-        public
-        returns (address proxy, address implementation)
-    {
+    function predict(bool isProduction) public returns (address proxy, address implementation) {
         bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
 
         implementation = new DeployERC20ForwarderImplementation().predict();
@@ -99,8 +98,7 @@ contract DeployERC20ForwarderProxy is Script {
         (proxy,,) = _predict({
             salt: salt,
             implementation: implementation,
-            protocolAdapter: protocolAdapter,
-            logicRef: logicRef,
+            protocolAdapter: _protocolAdapter(isProduction),
             isProduction: isProduction
         });
     }
@@ -112,25 +110,32 @@ contract DeployERC20ForwarderProxy is Script {
         name = isProduction ? "production" : "staging";
     }
 
+    /// @notice Returns the protocol adapter proxy that the protocol adapter package records for the environment on this
+    /// chain, which the forwarder proxy forwards for, and reverts unless the package records one.
+    /// @param isProduction Whether to return the production or the staging environment protocol adapter proxy.
+    /// @return protocolAdapter The recorded protocol adapter proxy.
+    function _protocolAdapter(bool isProduction) internal view virtual returns (address protocolAdapter) {
+        protocolAdapter =
+            ProtocolAdapterDeployments.protocolAdapterProxy({isProduction: isProduction, chainId: block.chainid});
+        require(protocolAdapter != address(0), ProtocolAdapterNotRecorded(environmentName(isProduction), block.chainid));
+    }
+
     /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.
     /// @param salt The CREATE2 salt of the environment.
     /// @param implementation The implementation contract the proxy delegates to.
     /// @param protocolAdapter The protocol adapter proxy of the same environment.
-    /// @param logicRef The reference to the ERC20 resource logic function triggering the forward calls.
     /// @param isProduction Whether to derive the production or the staging environment proxy, selecting the owner.
     /// @return proxy The deterministic ERC20 forwarder proxy contract address.
     /// @return initializerData The proxy constructor's initializer data.
     /// @return creationCode The ERC-1967 proxy creation code.
-    function _predict(
-        bytes32 salt,
-        address implementation,
-        address protocolAdapter,
-        bytes32 logicRef,
-        bool isProduction
-    ) internal pure returns (address proxy, bytes memory initializerData, bytes memory creationCode) {
+    function _predict(bytes32 salt, address implementation, address protocolAdapter, bool isProduction)
+        internal
+        pure
+        returns (address proxy, bytes memory initializerData, bytes memory creationCode)
+    {
         initializerData = abi.encodeCall(
             ERC20Forwarder.initialize,
-            (protocolAdapter, logicRef, isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING)
+            (protocolAdapter, Parameters.LOGIC_REF, isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING)
         );
         creationCode = type(ERC1967Proxy).creationCode;
 
