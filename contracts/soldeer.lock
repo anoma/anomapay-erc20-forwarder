@@ -36,6 +36,13 @@ checksum = "666fd7e4ad6f99d4cb82fb844109a194aa52d1f4c12f63f7d5079fbafe88c3fb"
 integrity = "78014db6a5c11bc61babec1452bb1331d9f4de5e9189609fdd50caa27433f3f7"
 
 [[dependencies]]
+name = "anomapay-erc20-forwarder"
+version = "1.0.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/anomapay-erc20-forwarder/1_0_1_27-01-2026_17:35:31_contracts.zip"
+checksum = "da1e801473e0763efbcb3c60fde429445f830cacdf67c8e3488f5988317d519c"
+integrity = "2a57af3f615892cc40c950848eb5a343914b709bfc3267bec56f34d375a9c3c0"
+
+[[dependencies]]
 name = "forge-std"
 version = "1.16.2"
 url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_16_2_03-07-2026_07:37:45_forge-std-1.16.zip"
