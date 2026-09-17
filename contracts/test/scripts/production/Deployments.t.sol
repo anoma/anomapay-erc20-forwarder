@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {RecordedDeployments} from "../../../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../../src/ERC20Forwarder.sol";
 import {DeploymentsFixture} from "../../fixtures/DeploymentsFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
@@ -15,16 +16,12 @@ contract DeploymentsProductionTest is DeploymentsFixture, SafeFixture {
         _;
     }
 
-    function test_recorded_deployments_use_the_environment_salt() public {
-        _expectGenesisDeployments({isProduction: true});
-    }
-
     function test_recorded_deployments_run_the_source_implementation() public onlyProduction {
         _expectSourceImplementations({isProduction: true});
     }
 
     function test_recorded_deployments_run_a_release_version_and_are_safe_owned() public onlyProduction {
-        Deployment[] memory deployments = _recordedDeployments({isProduction: true});
+        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments({isProduction: true});
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             _selectForkAt(deployments[i].chainId);
@@ -38,5 +35,9 @@ contract DeploymentsProductionTest is DeploymentsFixture, SafeFixture {
                 _isSafe(ERC20Forwarder(recordedProxy).owner()), string.concat(context, ": proxy is not owned by a Safe")
             );
         }
+    }
+
+    function test_recorded_deployments_use_the_environment_salt() public pure {
+        _expectGenesisDeployments({isProduction: true});
     }
 }

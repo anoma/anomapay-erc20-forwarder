@@ -105,22 +105,22 @@ pub mod ERC1967Proxy {
     /// The creation / init bytecode of the contract.
     ///
     /// ```text
-    ///0x6080604052610284803803806100148161016e565b9283398101604082820312610156578151916001600160a01b03831690818403610156576020810151906001600160401b038211610156570182601f82011215610156578051906001600160401b03821161015a5761007c601f8301601f191660200161016e565b938285526020838301011161015657815f9260208093018387015e8401015281511561014757823b15610135577f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc80546001600160a01b031916821790557fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b5f80a280511561011e5761010e91610193565b505b604051606490816102208239f35b505034156101105763b398979f60e01b5f5260045ffd5b634c9c8ce360e01b5f5260045260245ffd5b6330a289cf60e21b5f5260045ffd5b5f80fd5b634e487b7160e01b5f52604160045260245ffd5b6040519190601f01601f191682016001600160401b0381118382101761015a57604052565b905f8091602081519101845af4808061020c575b156101c75750506040513d81523d5f602083013e60203d82010160405290565b156101ec57639996b31560e01b5f9081526001600160a01b0391909116600452602490fd5b3d156101fd576040513d5f823e3d90fd5b63d6bda27560e01b5f5260045ffd5b503d1515806101a75750813b15156101a756fe60806040525f8073ffffffffffffffffffffffffffffffffffffffff7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc5416368280378136915af43d5f803e156053573d5ff35b3d5ffdfea164736f6c6343000824000a
+    ///0x6080604052610284803803806100148161016e565b9283398101604082820312610156578151916001600160a01b03831690818403610156576020810151906001600160401b038211610156570182601f82011215610156578051906001600160401b03821161015a5761007c601f8301601f191660200161016e565b938285526020838301011161015657815f9260208093018387015e8401015281511561014757823b15610135577f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc80546001600160a01b031916821790557fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b5f80a280511561011e5761010e91610193565b505b604051606490816102208239f35b505034156101105763b398979f60e01b5f5260045ffd5b634c9c8ce360e01b5f5260045260245ffd5b6330a289cf60e21b5f5260045ffd5b5f80fd5b634e487b7160e01b5f52604160045260245ffd5b6040519190601f01601f191682016001600160401b0381118382101761015a57604052565b905f8091602081519101845af4808061020c575b156101c75750506040513d81523d5f602083013e60203d82010160405290565b156101ec57639996b31560e01b5f9081526001600160a01b0391909116600452602490fd5b3d156101fd576040513d5f823e3d90fd5b63d6bda27560e01b5f5260045ffd5b503d1515806101a75750813b15156101a756fe60806040525f8073ffffffffffffffffffffffffffffffffffffffff7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc5416368280378136915af43d5f803e156053573d5ff35b3d5ffdfea164736f6c6343000825000a
     /// ```
     #[rustfmt::skip]
     #[allow(clippy::all)]
     pub static BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
-        b"`\x80`@Ra\x02\x84\x808\x03\x80a\0\x14\x81a\x01nV[\x92\x839\x81\x01`@\x82\x82\x03\x12a\x01VW\x81Q\x91`\x01`\x01`\xA0\x1B\x03\x83\x16\x90\x81\x84\x03a\x01VW` \x81\x01Q\x90`\x01`\x01`@\x1B\x03\x82\x11a\x01VW\x01\x82`\x1F\x82\x01\x12\x15a\x01VW\x80Q\x90`\x01`\x01`@\x1B\x03\x82\x11a\x01ZWa\0|`\x1F\x83\x01`\x1F\x19\x16` \x01a\x01nV[\x93\x82\x85R` \x83\x83\x01\x01\x11a\x01VW\x81_\x92` \x80\x93\x01\x83\x87\x01^\x84\x01\x01R\x81Q\x15a\x01GW\x82;\x15a\x015W\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBC\x80T`\x01`\x01`\xA0\x1B\x03\x19\x16\x82\x17\x90U\x7F\xBC|\xD7Z \xEE'\xFD\x9A\xDE\xBA\xB3 A\xF7U!M\xBCk\xFF\xA9\x0C\xC0\"[9\xDA.\\-;_\x80\xA2\x80Q\x15a\x01\x1EWa\x01\x0E\x91a\x01\x93V[P[`@Q`d\x90\x81a\x02 \x829\xF3[PP4\x15a\x01\x10Wc\xB3\x98\x97\x9F`\xE0\x1B_R`\x04_\xFD[cL\x9C\x8C\xE3`\xE0\x1B_R`\x04R`$_\xFD[c0\xA2\x89\xCF`\xE2\x1B_R`\x04_\xFD[_\x80\xFD[cNH{q`\xE0\x1B_R`A`\x04R`$_\xFD[`@Q\x91\x90`\x1F\x01`\x1F\x19\x16\x82\x01`\x01`\x01`@\x1B\x03\x81\x11\x83\x82\x10\x17a\x01ZW`@RV[\x90_\x80\x91` \x81Q\x91\x01\x84Z\xF4\x80\x80a\x02\x0CW[\x15a\x01\xC7WPP`@Q=\x81R=_` \x83\x01>` =\x82\x01\x01`@R\x90V[\x15a\x01\xECWc\x99\x96\xB3\x15`\xE0\x1B_\x90\x81R`\x01`\x01`\xA0\x1B\x03\x91\x90\x91\x16`\x04R`$\x90\xFD[=\x15a\x01\xFDW`@Q=_\x82>=\x90\xFD[c\xD6\xBD\xA2u`\xE0\x1B_R`\x04_\xFD[P=\x15\x15\x80a\x01\xA7WP\x81;\x15\x15a\x01\xA7V\xFE`\x80`@R_\x80s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBCT\x166\x82\x807\x816\x91Z\xF4=_\x80>\x15`SW=_\xF3[=_\xFD\xFE\xA1dsolcC\0\x08$\0\n",
+        b"`\x80`@Ra\x02\x84\x808\x03\x80a\0\x14\x81a\x01nV[\x92\x839\x81\x01`@\x82\x82\x03\x12a\x01VW\x81Q\x91`\x01`\x01`\xA0\x1B\x03\x83\x16\x90\x81\x84\x03a\x01VW` \x81\x01Q\x90`\x01`\x01`@\x1B\x03\x82\x11a\x01VW\x01\x82`\x1F\x82\x01\x12\x15a\x01VW\x80Q\x90`\x01`\x01`@\x1B\x03\x82\x11a\x01ZWa\0|`\x1F\x83\x01`\x1F\x19\x16` \x01a\x01nV[\x93\x82\x85R` \x83\x83\x01\x01\x11a\x01VW\x81_\x92` \x80\x93\x01\x83\x87\x01^\x84\x01\x01R\x81Q\x15a\x01GW\x82;\x15a\x015W\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBC\x80T`\x01`\x01`\xA0\x1B\x03\x19\x16\x82\x17\x90U\x7F\xBC|\xD7Z \xEE'\xFD\x9A\xDE\xBA\xB3 A\xF7U!M\xBCk\xFF\xA9\x0C\xC0\"[9\xDA.\\-;_\x80\xA2\x80Q\x15a\x01\x1EWa\x01\x0E\x91a\x01\x93V[P[`@Q`d\x90\x81a\x02 \x829\xF3[PP4\x15a\x01\x10Wc\xB3\x98\x97\x9F`\xE0\x1B_R`\x04_\xFD[cL\x9C\x8C\xE3`\xE0\x1B_R`\x04R`$_\xFD[c0\xA2\x89\xCF`\xE2\x1B_R`\x04_\xFD[_\x80\xFD[cNH{q`\xE0\x1B_R`A`\x04R`$_\xFD[`@Q\x91\x90`\x1F\x01`\x1F\x19\x16\x82\x01`\x01`\x01`@\x1B\x03\x81\x11\x83\x82\x10\x17a\x01ZW`@RV[\x90_\x80\x91` \x81Q\x91\x01\x84Z\xF4\x80\x80a\x02\x0CW[\x15a\x01\xC7WPP`@Q=\x81R=_` \x83\x01>` =\x82\x01\x01`@R\x90V[\x15a\x01\xECWc\x99\x96\xB3\x15`\xE0\x1B_\x90\x81R`\x01`\x01`\xA0\x1B\x03\x91\x90\x91\x16`\x04R`$\x90\xFD[=\x15a\x01\xFDW`@Q=_\x82>=\x90\xFD[c\xD6\xBD\xA2u`\xE0\x1B_R`\x04_\xFD[P=\x15\x15\x80a\x01\xA7WP\x81;\x15\x15a\x01\xA7V\xFE`\x80`@R_\x80s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBCT\x166\x82\x807\x816\x91Z\xF4=_\x80>\x15`SW=_\xF3[=_\xFD\xFE\xA1dsolcC\0\x08%\0\n",
     );
     /// The runtime bytecode of the contract, as deployed on the network.
     ///
     /// ```text
-    ///0x60806040525f8073ffffffffffffffffffffffffffffffffffffffff7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc5416368280378136915af43d5f803e156053573d5ff35b3d5ffdfea164736f6c6343000824000a
+    ///0x60806040525f8073ffffffffffffffffffffffffffffffffffffffff7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc5416368280378136915af43d5f803e156053573d5ff35b3d5ffdfea164736f6c6343000825000a
     /// ```
     #[rustfmt::skip]
     #[allow(clippy::all)]
     pub static DEPLOYED_BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
-        b"`\x80`@R_\x80s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBCT\x166\x82\x807\x816\x91Z\xF4=_\x80>\x15`SW=_\xF3[=_\xFD\xFE\xA1dsolcC\0\x08$\0\n",
+        b"`\x80`@R_\x80s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBCT\x166\x82\x807\x816\x91Z\xF4=_\x80>\x15`SW=_\xF3[=_\xFD\xFE\xA1dsolcC\0\x08%\0\n",
     );
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
@@ -196,10 +196,10 @@ error AddressEmptyCode(address target);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -279,10 +279,10 @@ error ERC1967InvalidImplementation(address implementation);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -353,10 +353,10 @@ error ERC1967NonPayable();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -429,10 +429,10 @@ error ERC1967ProxyUninitialized();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -503,10 +503,10 @@ error FailedCall();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -806,15 +806,31 @@ constructor(address implementation, bytes _data) payable;
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
+            Self::abi_decode_raw_with_config(
+                selector,
+                data,
+                alloy_sol_types::abi::AbiDecoderConfig::default(),
+            )
+        }
+        #[inline]
+        #[allow(non_snake_case)]
+        fn abi_decode_raw_with_config(
+            selector: [u8; 4],
+            data: &[u8],
+            config: alloy_sol_types::abi::AbiDecoderConfig,
+        ) -> alloy_sol_types::Result<Self> {
             static DECODE_SHIMS: &[fn(
                 &[u8],
+                alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<ERC1967ProxyErrors>] = &[
                 {
                     fn ERC1967InvalidImplementation(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <ERC1967InvalidImplementation as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ERC1967InvalidImplementation as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ERC1967ProxyErrors::ERC1967InvalidImplementation)
                     }
@@ -823,9 +839,11 @@ constructor(address implementation, bytes _data) payable;
                 {
                     fn AddressEmptyCode(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <AddressEmptyCode as alloy_sol_types::SolError>::abi_decode_raw(
+                        <AddressEmptyCode as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ERC1967ProxyErrors::AddressEmptyCode)
                     }
@@ -834,9 +852,11 @@ constructor(address implementation, bytes _data) payable;
                 {
                     fn ERC1967NonPayable(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <ERC1967NonPayable as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ERC1967NonPayable as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ERC1967ProxyErrors::ERC1967NonPayable)
                     }
@@ -845,9 +865,11 @@ constructor(address implementation, bytes _data) payable;
                 {
                     fn ERC1967ProxyUninitialized(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <ERC1967ProxyUninitialized as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ERC1967ProxyUninitialized as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ERC1967ProxyErrors::ERC1967ProxyUninitialized)
                     }
@@ -856,8 +878,12 @@ constructor(address implementation, bytes _data) payable;
                 {
                     fn FailedCall(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <FailedCall as alloy_sol_types::SolError>::abi_decode_raw(data)
+                        <FailedCall as alloy_sol_types::SolError>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
                             .map(ERC1967ProxyErrors::FailedCall)
                     }
                     FailedCall
@@ -871,7 +897,7 @@ constructor(address implementation, bytes _data) payable;
                     ),
                 );
             };
-            DECODE_SHIMS[idx](data)
+            DECODE_SHIMS[idx](data, config)
         }
         #[inline]
         #[allow(non_snake_case)]
@@ -879,74 +905,11 @@ constructor(address implementation, bytes _data) payable;
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            static DECODE_VALIDATE_SHIMS: &[fn(
-                &[u8],
-            ) -> alloy_sol_types::Result<ERC1967ProxyErrors>] = &[
-                {
-                    fn ERC1967InvalidImplementation(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <ERC1967InvalidImplementation as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ERC1967ProxyErrors::ERC1967InvalidImplementation)
-                    }
-                    ERC1967InvalidImplementation
-                },
-                {
-                    fn AddressEmptyCode(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <AddressEmptyCode as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ERC1967ProxyErrors::AddressEmptyCode)
-                    }
-                    AddressEmptyCode
-                },
-                {
-                    fn ERC1967NonPayable(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <ERC1967NonPayable as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ERC1967ProxyErrors::ERC1967NonPayable)
-                    }
-                    ERC1967NonPayable
-                },
-                {
-                    fn ERC1967ProxyUninitialized(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <ERC1967ProxyUninitialized as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ERC1967ProxyErrors::ERC1967ProxyUninitialized)
-                    }
-                    ERC1967ProxyUninitialized
-                },
-                {
-                    fn FailedCall(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <FailedCall as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ERC1967ProxyErrors::FailedCall)
-                    }
-                    FailedCall
-                },
-            ];
-            let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
-                return Err(
-                    alloy_sol_types::Error::unknown_selector(
-                        <Self as alloy_sol_types::SolInterface>::NAME,
-                        selector,
-                    ),
-                );
-            };
-            DECODE_VALIDATE_SHIMS[idx](data)
+            Self::abi_decode_raw_with_config(
+                selector,
+                data,
+                alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+            )
         }
         #[inline]
         fn abi_encoded_size(&self) -> usize {
@@ -1009,6 +972,58 @@ constructor(address implementation, bytes _data) payable;
             }
         }
     }
+    #[automatically_derived]
+    impl ERC1967ProxyErrors {
+        /**Creates a [`AddressEmptyCode`] error.
+
+```solidity
+error AddressEmptyCode(address)
+```*/
+        #[inline]
+        pub fn address_empty_code(target: alloy::sol_types::private::Address) -> Self {
+            Self::AddressEmptyCode(AddressEmptyCode { target: target })
+        }
+        /**Creates a [`ERC1967InvalidImplementation`] error.
+
+```solidity
+error ERC1967InvalidImplementation(address)
+```*/
+        #[inline]
+        pub fn erc_1967_invalid_implementation(
+            implementation: alloy::sol_types::private::Address,
+        ) -> Self {
+            Self::ERC1967InvalidImplementation(ERC1967InvalidImplementation {
+                implementation: implementation,
+            })
+        }
+        /**Creates a [`ERC1967NonPayable`] error.
+
+```solidity
+error ERC1967NonPayable()
+```*/
+        #[inline]
+        pub fn erc_1967_non_payable() -> Self {
+            Self::ERC1967NonPayable(ERC1967NonPayable)
+        }
+        /**Creates a [`ERC1967ProxyUninitialized`] error.
+
+```solidity
+error ERC1967ProxyUninitialized()
+```*/
+        #[inline]
+        pub fn erc_1967_proxy_uninitialized() -> Self {
+            Self::ERC1967ProxyUninitialized(ERC1967ProxyUninitialized)
+        }
+        /**Creates a [`FailedCall`] error.
+
+```solidity
+error FailedCall()
+```*/
+        #[inline]
+        pub fn failed_call() -> Self {
+            Self::FailedCall(FailedCall)
+        }
+    }
     ///Container for all the [`ERC1967Proxy`](self) events.
     #[derive(Clone)]
     #[derive(serde::Serialize, serde::Deserialize)]
@@ -1068,12 +1083,39 @@ constructor(address implementation, bytes _data) payable;
             topics: &[alloy_sol_types::Word],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
+            <Self as alloy_sol_types::SolEventInterface>::decode_raw_log_with_config(
+                topics,
+                data,
+                alloy_sol_types::abi::AbiDecoderConfig::default(),
+            )
+        }
+        fn decode_raw_log_with_config(
+            topics: &[alloy_sol_types::Word],
+            data: &[u8],
+            config: alloy_sol_types::abi::AbiDecoderConfig,
+        ) -> alloy_sol_types::Result<Self> {
             match topics.first().copied() {
                 Some(<Upgraded as alloy_sol_types::SolEvent>::SIGNATURE_HASH) => {
-                    <Upgraded as alloy_sol_types::SolEvent>::decode_raw_log(topics, data)
+                    <Upgraded as alloy_sol_types::SolEvent>::decode_raw_log_with_config(
+                            topics,
+                            data,
+                            config,
+                        )
                         .map(Self::Upgraded)
                 }
                 _ => {
+                    if topics
+                        .len()
+                        .checked_mul(alloy_sol_types::Word::len_bytes())
+                        .and_then(|len| len.checked_add(data.len()))
+                        .is_none_or(|len| len > config.get_memory_limit())
+                    {
+                        return alloy_sol_types::private::Err(
+                            alloy_sol_types::Error::MemoryLimitExceeded(
+                                config.get_memory_limit(),
+                            ),
+                        );
+                    }
                     alloy_sol_types::private::Err(alloy_sol_types::Error::InvalidLog {
                         name: <Self as alloy_sol_types::SolEventInterface>::NAME,
                         log: alloy_sol_types::private::Box::new(
@@ -1102,6 +1144,20 @@ constructor(address implementation, bytes _data) payable;
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
             }
+        }
+    }
+    #[automatically_derived]
+    impl ERC1967ProxyEvents {
+        /**Creates a [`Upgraded`] event.
+
+```solidity
+event Upgraded(address)
+```*/
+        #[inline]
+        pub fn upgraded(implementation: alloy::sol_types::private::Address) -> Self {
+            Self::Upgraded(Upgraded {
+                implementation: implementation,
+            })
         }
     }
     use alloy::contract as alloy_contract;

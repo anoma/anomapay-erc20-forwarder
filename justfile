@@ -33,10 +33,11 @@ contracts-build *args:
 
 # Lint contracts (forge lint + solhint)
 contracts-lint:
-    cd contracts && forge lint --deny warnings
+    cd contracts && forge lint --deny notes
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
+    cd contracts && bunx --bun solhint --config .solhint.other.json 'generated/**/*.sol'
 
 # Checks that the storage layout of contracts in `src` is empty.
 # `skip` is a space-separated list of contract names to ignore (non-upgradeable bases).
@@ -72,17 +73,26 @@ contracts-fmt-check:
 contracts-test *args:
     cd contracts && forge test --force {{ args }}
 
+# Regenerate the recorded deployments library from the deployment records
+contracts-gen-deployments:
+    ./scripts/generate-recorded-deployments.sh
+
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     # The script directory is built (not skipped) because `ERC1967Proxy` only
     # enters the compilation graph through `DeployERC20ForwarderProxy.s.sol`;
     # `--select` keeps the script contracts themselves out of the bindings.
-    cd contracts && forge clean && forge bind \
-        --skip test \
-        --select '^(ERC20Forwarder|ERC1967Proxy)$' \
+    # `forge bind` builds without bytecode, which drops the `deploy` helpers, so
+    # build first and let it read those artifacts.
+    cd contracts && forge clean && forge build --skip test && forge bind \
+        --skip-build \
+        --select '^(ERC20Forwarder|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
+
+# Regenerate the recorded deployments library, then the Rust bindings
+contracts-gen: contracts-gen-deployments contracts-gen-bindings
 
 # Simulate the implementation deployment (dry-run)
 contracts-simulate-impl chain *args:
@@ -101,29 +111,29 @@ contracts-deploy-impl deployer chain *args:
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the implementation and proxy deployment (dry-run)
-contracts-simulate-proxy chain protocol-adapter logic-ref *args:
+contracts-simulate-proxy chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \
-        --sig "run(bool,address,bytes32)" $IS_PRODUCTION {{protocol-adapter}} {{logic-ref}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy the ERC20 forwarder implementation and proxy
-contracts-deploy-proxy deployer chain protocol-adapter logic-ref *args:
+contracts-deploy-proxy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \
-        --sig "run(bool,address,bytes32)" $IS_PRODUCTION {{protocol-adapter}} {{logic-ref}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally (sender = the staging proxy owner)
-contracts-simulate-staging-upgrade sender proxy implementation chain *args:
+# Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally as the staging proxy owner
+contracts-simulate-staging-upgrade proxy implementation chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteERC20ForwarderUpgrade.s.sol:ExecuteERC20ForwarderUpgrade \
         --sig "run(address,address)" {{proxy}} {{implementation}} \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Execute the staging upgrade to the deployed implementation as the proxy owner
 contracts-execute-staging-upgrade deployer proxy implementation chain *args:
@@ -148,6 +158,43 @@ contracts-propose-production-upgrade deployer proxy proposer implementation chai
     cd contracts && forge script script/production/ProposeERC20ForwarderUpgrade.s.sol:ProposeERC20ForwarderUpgrade \
         --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the migration contract deployment and caller assignment proposal as the deployment wallet (dry-run): simulates the Safe executing it
+contracts-simulate-migration chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --rpc-url {{chain}} {{ args }}
+
+# Deploy the migration contract and propose it as the permanent emergency caller of V1 (deployer = the deployment wallet, which signs the proposal); it cannot be undone
+contracts-deploy-migration deployer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the token move (dry-run): moves the tokens locally as the deployment wallet (tokens = '[0x…,0x…]')
+contracts-simulate-migration-move tokens chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+        --sig "executeMigration(bool,address[])" $IS_PRODUCTION {{tokens}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Move the V1 tokens to the recorded V2 forwarder as the deployment wallet, through the migration contract V1 holds as its emergency caller
+contracts-execute-migration deployer tokens chain *args:
+    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+        --sig "executeMigration(bool,address[])" $IS_PRODUCTION {{tokens}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Check the moved tokens of one chain against the chain, reading the emergency caller and the V1 token balances
+contracts-check-migration tokens chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
+        --sig "verify(bool,address[])" $IS_PRODUCTION {{tokens}} \
+        --rpc-url {{chain}} {{ args }}
 
 # Verify a contract on sourcify (e.g. contract=src/ERC20Forwarder.sol:ERC20Forwarder)
 contracts-verify-sourcify address contract chain *args:
@@ -215,6 +262,10 @@ bindings-test *args:
 # Check bindings are up-to-date
 bindings-check: contracts-gen-bindings
     git diff --exit-code crates/bindings/src/generated/
+
+# Check the recorded deployments library is up-to-date
+contracts-deployments-check: contracts-gen-deployments
+    git diff --exit-code contracts/generated/RecordedDeployments.sol
 
 # Publish bindings
 bindings-publish *args:
@@ -307,5 +358,7 @@ all-check:
     @just all-fmt-check
     @echo "==> Linting..."
     @just all-lint
+    @echo "==> Checking the recorded deployments library is up-to-date..."
+    @just contracts-deployments-check
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check

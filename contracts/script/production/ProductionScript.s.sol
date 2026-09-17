@@ -6,7 +6,7 @@ import {IOwnerManager} from "safe-smart-account-1.5.0/contracts/interfaces/IOwne
 import {Safe} from "safe-utils-0.0.22/src/Safe.sol";
 
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
-import {DeployERC20ForwarderProxy} from "../DeployERC20ForwarderProxy.s.sol";
+import {Parameters} from "../Parameters.sol";
 
 /// @title ProductionScript
 /// @author Anoma Foundation, 2026
@@ -31,7 +31,7 @@ abstract contract ProductionScript is Script {
     /// @dev Without `--broadcast`, the Safe execution of the transaction is simulated instead of proposed.
     function _propose(address proxy, bytes memory callData, address proposer) internal {
         address safe = ERC20Forwarder(proxy).owner();
-        require(safe == new DeployERC20ForwarderProxy().PROXY_OWNER_PRODUCTION(), NotAProductionDeployment(proxy));
+        require(safe == Parameters.FWD_MULTISIG, NotAProductionDeployment(proxy));
 
         _safe.initialize(safe);
 

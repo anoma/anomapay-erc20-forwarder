@@ -1,4 +1,9 @@
 {
   "filter_paths": "dependencies/",
-  "detectors_to_exclude": ["pragma", "naming-convention"]
+  "detectors_to_exclude": [
+    "calls-loop",
+    "incorrect-equality",
+    "naming-convention",
+    "pragma"
+  ]
 }

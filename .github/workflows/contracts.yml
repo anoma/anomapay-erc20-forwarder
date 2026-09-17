@@ -22,8 +22,6 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: v1.7.1
 
       - name: Show Foundry version
         run: forge --version
@@ -62,6 +60,9 @@ jobs:
 
       - name: Run Forge fmt
         run: just contracts-fmt-check
+
+      - name: Check that the recorded deployments library is up-to-date
+        run: just contracts-deployments-check
 
       - name: Check that bindings are up-to-date
         run: just bindings-check
