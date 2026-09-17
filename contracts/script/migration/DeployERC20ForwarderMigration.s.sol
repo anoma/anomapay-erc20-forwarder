@@ -24,6 +24,7 @@ contract DeployERC20ForwarderMigration is MigrationScript {
         address wallet = _deploymentWallet();
 
         vm.broadcast();
-        migration = new ERC20ForwarderMigration(forwarderV1, forwarderV2, wallet);
+        migration =
+            new ERC20ForwarderMigration({forwarderV1: forwarderV1, forwarderV2: forwarderV2, initialOwner: wallet});
     }
 }
