@@ -39,11 +39,11 @@ The pa-evm migration run sends its transactions from the deployment wallet, and 
    export TOKENS='[<TOKEN>,<TOKEN>]'
    ```
 
-2. [ ] Simulate the deployment and the proposal, with the deployment wallet as the sender. The simulation executes the caller assignment as the Safe:
+2. [ ] Simulate the deployment and the proposal. The simulation executes the caller assignment as the Safe:
 
    ```sh
    export IS_PRODUCTION=<true|false>
-   just contracts-simulate-migration 0x61462bE56782568376f9cB069382EFa72764a407 <CHAIN>
+   just contracts-simulate-migration <CHAIN>
    ```
 
    Besides the checks in [How it works](#how-it-works), it requires that V1 has no emergency caller yet.
@@ -74,10 +74,10 @@ The pa-evm migration run sends its transactions from the deployment wallet, and 
    cast call <FORWARDER_V1> "getEmergencyCaller()(address)" --rpc-url <CHAIN>
    ```
 
-6. [ ] Simulate the move, with the deployment wallet as the sender:
+6. [ ] Simulate the move:
 
    ```sh
-   just contracts-simulate-migration-move 0x61462bE56782568376f9cB069382EFa72764a407 "$TOKENS" <CHAIN>
+   just contracts-simulate-migration-move "$TOKENS" <CHAIN>
    ```
 
    A token with a zero V1 balance still gets a zero-value transfer. If such a token rejects zero-value transfers, the whole move reverts. Then pass the move a list without that token, because it has nothing to move. Keep `$TOKENS` whole for the check.

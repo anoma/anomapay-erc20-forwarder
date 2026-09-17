@@ -159,14 +159,14 @@ contracts-propose-production-upgrade deployer proxy proposer implementation chai
         --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the migration contract deployment and caller assignment proposal (dry-run): simulates the Safe executing it (sender = the deployment wallet)
-contracts-simulate-migration sender chain *args:
+# Simulate the migration contract deployment and caller assignment proposal as the deployment wallet (dry-run): simulates the Safe executing it
+contracts-simulate-migration chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
         --sig "run(bool)" $IS_PRODUCTION \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Deploy the migration contract and propose it as the permanent emergency caller of V1 (deployer = the deployment wallet, which signs the proposal); it cannot be undone
 contracts-deploy-migration deployer chain *args:
@@ -177,11 +177,11 @@ contracts-deploy-migration deployer chain *args:
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the token move (dry-run): moves the tokens locally as the deployment wallet (tokens = '[0x…,0x…]')
-contracts-simulate-migration-move sender tokens chain *args:
+contracts-simulate-migration-move tokens chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
         --sig "executeMigration(bool,address[])" $IS_PRODUCTION {{tokens}} \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Move the V1 tokens to the recorded V2 forwarder as the deployment wallet, through the migration contract V1 holds as its emergency caller
 contracts-execute-migration deployer tokens chain *args:
