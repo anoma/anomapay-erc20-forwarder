@@ -6,7 +6,7 @@ pragma solidity ^0.8.30;
 /// @author Anoma Foundation, 2026
 /// @notice The ERC20 forwarder proxies each environment records, and the V1 forwarders the chains ran before them.
 /// @dev Generated from `crates/bindings/deployments.json`, the single source of truth, which the bindings crate
-/// embeds and checks against the chains. Do not edit by hand: run `just contracts-gen-deployments`, which CI reruns
+/// embeds and checks against the chains. Do not edit by hand: run `just contracts-gen`, which CI reruns
 /// and fails on any diff. The records live with the bindings because that crate publishes them; this library carries
 /// them into Solidity so the contracts package reads nothing outside itself.
 /// @custom:security-contact security@anoma.foundation

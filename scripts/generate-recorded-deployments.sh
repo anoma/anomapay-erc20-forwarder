@@ -3,7 +3,7 @@
 #
 # Reads the deployment records, the single source of truth, and writes them as a
 # library the contracts package can read without leaving its own directory. Run
-# it through `just contracts-gen-deployments`; CI reruns it and fails on a diff.
+# it through `just contracts-gen`; CI reruns it and fails on a diff.
 #
 # The records store checksummed addresses, which Solidity address literals
 # require. A wrong checksum fails the bindings tests and the contract build, so
@@ -64,7 +64,7 @@ pragma solidity ^0.8.30;
 /// @author Anoma Foundation, 2026
 /// @notice The ERC20 forwarder proxies each environment records, and the V1 forwarders the chains ran before them.
 /// @dev Generated from `crates/bindings/deployments.json`, the single source of truth, which the bindings crate
-/// embeds and checks against the chains. Do not edit by hand: run `just contracts-gen-deployments`, which CI reruns
+/// embeds and checks against the chains. Do not edit by hand: run `just contracts-gen`, which CI reruns
 /// and fails on any diff. The records live with the bindings because that crate publishes them; this library carries
 /// them into Solidity so the contracts package reads nothing outside itself.
 /// @custom:security-contact security@anoma.foundation
