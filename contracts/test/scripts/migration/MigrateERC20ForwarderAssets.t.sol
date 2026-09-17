@@ -10,10 +10,7 @@ import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
 import {ERC20ForwarderV1Mock} from "../../mocks/ERC20ForwarderV1.m.sol";
 
 /// @notice Checks the migration script against a chain that carries both recorded forwarders. The script reads the
-/// migration contract from the emergency caller of V1, so every test states which contract V1 holds. The move itself is
-/// only checked through its guards: the script broadcasts it as the deployment wallet, and forge rejects a broadcast
-/// under the prank that makes the sender the wallet in the first place. `ERC20ForwarderMigration.unit.t.sol` and the
-/// fork test cover the move itself.
+/// migration contract from the emergency caller of V1, so every test states which contract V1 holds.
 contract MigrateERC20ForwarderAssetsTest is MigrationFixture {
     MigrateERC20ForwarderAssets internal _script;
 
@@ -24,15 +21,13 @@ contract MigrateERC20ForwarderAssetsTest is MigrationFixture {
         _script.executeMigration({isProduction: false, tokens: _tokens});
     }
 
-    function test_executeMigration_reverts_if_the_sender_is_not_the_deployment_wallet() public {
+    function test_executeMigration_moves_the_tokens_to_the_recorded_forwarder() public {
         _deployMigration();
-        address outsider = makeAddr("outsider");
 
-        _script = new MigrateERC20ForwarderAssets();
+        new MigrateERC20ForwarderAssets().executeMigration({isProduction: false, tokens: _tokens});
 
-        vm.prank(outsider);
-        vm.expectRevert(abi.encodeWithSelector(MigrateERC20ForwarderAssets.UnauthorizedSender.selector, outsider));
-        _script.executeMigration({isProduction: false, tokens: _tokens});
+        assertEq(_token.balanceOf(_forwarderV1), 0, "the source keeps a balance");
+        assertEq(_token.balanceOf(_forwarderV2), _AMOUNT, "the destination did not receive the balance");
     }
 
     function test_executeMigration_reverts_if_the_emergency_caller_names_another_forwarder() public {

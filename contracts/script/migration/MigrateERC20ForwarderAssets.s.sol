@@ -20,20 +20,16 @@ contract MigrateERC20ForwarderAssets is MigrationScript {
     /// @notice Thrown if the V1 forwarder still holds a token, i.e. the move left it behind.
     error TokenNotMigrated(address token, uint256 balance);
 
-    /// @notice Thrown if the sender is not the deployment wallet that owns the migration contract.
-    error UnauthorizedSender(address sender);
-
-    /// @notice Moves the tokens as the deployment wallet, which the sender must be. Without `--broadcast` the move is
-    /// simulated locally.
+    /// @notice Moves the tokens as the deployment wallet. Without `--broadcast` the move is simulated locally.
     /// @dev The migration contract moves each token's full V1 balance and reverts unless V2 receives all of it. A
-    /// token left out of `tokens` can be moved by a later run.
+    /// token left out of `tokens` can be moved by a later run. The script broadcasts as the deployment wallet, because
+    /// with `--account` alone forge runs it as its default sender.
     /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
     /// @param tokens The ERC20 tokens to move.
     function executeMigration(bool isProduction, IERC20[] calldata tokens) public {
         ERC20ForwarderMigration migration = _assignedMigration(isProduction);
-        require(msg.sender == Parameters.DEPLOYMENT_WALLET, UnauthorizedSender(msg.sender));
 
-        vm.broadcast();
+        vm.broadcast(Parameters.DEPLOYMENT_WALLET);
         migration.migrate(tokens);
     }
 

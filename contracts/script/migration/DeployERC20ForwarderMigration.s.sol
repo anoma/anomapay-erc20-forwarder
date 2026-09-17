@@ -13,8 +13,8 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 /// @author Anoma Foundation, 2026
 /// @notice A script to deploy the migration contract of one chain and to propose it to the forwarder multisig as the
 /// permanent emergency caller of V1. The migration contract is the only contract that can move the V1 tokens, and it
-/// can move them only to the recorded V2 forwarder. The deployment wallet proposes it, owns it, and moves the tokens
-/// with it through `MigrateERC20ForwarderAssets`.
+/// can move them only to the recorded V2 forwarder. The deployment wallet deploys, proposes and owns it, and moves
+/// the tokens with it through `MigrateERC20ForwarderAssets`.
 /// @dev The deployment is deterministic: the address commits to both forwarders and the owner. So the proposal names
 /// the right contract even before the deployment lands, and a repeated run finds the contract instead of deploying a
 /// second one. V1 accepts the caller assignment only once its protocol adapter is stopped, so the script refuses to
@@ -31,6 +31,8 @@ contract DeployERC20ForwarderMigration is MigrationScript {
     /// @notice Deploys the migration contract between the chain's recorded forwarders, unless it is deployed already,
     /// and proposes it to the forwarder multisig as the emergency caller of V1. Without `--broadcast`, the deployment
     /// is simulated locally and the Safe execution of the assignment is simulated instead of proposed.
+    /// @dev The script broadcasts as the deployment wallet, because with `--account` alone forge runs it as its default
+    /// sender.
     /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
     /// @return migration The migration contract, owned by the deployment wallet.
     function run(bool isProduction) public returns (ERC20ForwarderMigration migration) {
@@ -38,7 +40,7 @@ contract DeployERC20ForwarderMigration is MigrationScript {
 
         migration = ERC20ForwarderMigration(_predict({forwarderV1: forwarderV1, forwarderV2: forwarderV2}));
         if (address(migration).code.length == 0) {
-            vm.broadcast();
+            vm.broadcast(Parameters.DEPLOYMENT_WALLET);
             migration = new ERC20ForwarderMigration{salt: Parameters.MIGRATION_SALT}({
                 forwarderV1: forwarderV1, forwarderV2: forwarderV2, initialOwner: Parameters.DEPLOYMENT_WALLET
             });
