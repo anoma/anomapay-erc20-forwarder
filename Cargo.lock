@@ -1199,6 +1199,7 @@ dependencies = [
  "regex",
  "risc0-zkvm",
  "rstest",
+ "serde_json",
  "tokio",
  "transfer_library",
  "transfer_witness",

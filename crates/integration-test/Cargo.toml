@@ -41,4 +41,5 @@ transfer_witness = { workspace = true }
 anoma-pa-testkit = { workspace = true, features = ["mocks"] }
 regex = { workspace = true }
 rstest = { workspace = true }
+serde_json = { workspace = true }
 tokio = { workspace = true }
