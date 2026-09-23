@@ -29,7 +29,7 @@ The [contracts](./contracts/) folder contains the contracts written in [Solidity
 The [crates](./crates/) folder contains the Rust workspace:
 
 - [bindings](./crates/bindings/) provides [Rust](https://www.rust-lang.org/) bindings for the forwarder contract and exposes its deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs) library.
-- [integration-test](./crates/integration-test/) contains the Rust integration and e2e tests that deploy the forwarder against a local or forked chain and exercise the wrap / transfer / unwrap lifecycle with risc0-proven transactions.
+- [integration-test](./crates/integration-test/) contains the Rust integration and e2e tests that deploy the forwarder against a local or forked chain and exercise the wrap / transfer / unwrap lifecycle with risc0-proven transactions. `just crates-test` runs the local cases. `just crates-test-e2e` runs the e2e cases on a fork of `E2E_CHAIN_ID` (Sepolia by default) against the recorded protocol adapter, and proves them with the queue at `QUEUE_BASE_URL`. CI runs them on pull requests into `staging` and `main`.
 
 ## Audits
 
@@ -46,7 +46,6 @@ Our software undergoes regular audits:
 
 ## Security
 
-If you believe you've found a security issue, we encourage you to notify us via Email
-at [security@anoma.foundation](mailto:security@anoma.foundation).
+If you believe you've found a security issue, we encourage you to notify us via Email at [security@anoma.foundation](mailto:security@anoma.foundation).
 
 Please do not use the issue tracker for security issues. We welcome working with you to resolve the issue promptly.

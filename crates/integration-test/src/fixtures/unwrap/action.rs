@@ -1,6 +1,6 @@
 use alloy::primitives::Address;
 use anoma_rm_risc0::action_tree::ActionTree as ArmTree;
-use anoma_rm_risc0::compliance::ComplianceWitness;
+use anoma_rm_risc0::compliance;
 use anoma_rm_risc0::merkle_path::MerklePath;
 use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource};
 use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
@@ -122,7 +122,7 @@ pub fn build(
         }
         None => ConsumedResourceWitness::from_resource(consumed, owner.nf_key.clone()),
     };
-    let compliance = ComplianceWitness::from_resources(
+    let compliance = compliance::from_resources(
         vec![consumed_witness],
         vec![created],
         crate::fixtures::resource::kind_table(),

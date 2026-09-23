@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {
     RecordedDeployments as ProtocolAdapterDeployments
-} from "anoma-pa-evm-2.0.0-rc.3/generated/RecordedDeployments.sol";
+} from "anoma-pa-evm-2.0.0-rc.5/generated/RecordedDeployments.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
 import {Script} from "forge-std-1.16.2/src/Script.sol";

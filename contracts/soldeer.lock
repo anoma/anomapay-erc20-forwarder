@@ -23,10 +23,10 @@ integrity = "c9f7f17bc7882dbd5db9d3b296426fe15f246a429cbc7ba27036e7e5caadaf3e"
 
 [[dependencies]]
 name = "anoma-pa-evm"
-version = "2.0.0-rc.3"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/2_0_0-rc_3_17-09-2026_10:49:26_contracts.zip"
-checksum = "8eca30cc6f17193a57c790ab34a43cac11e8043955cf0a7da361096111b25714"
-integrity = "a40671eefc073bed58f4638d32b9f55900283f32acba054cf26118ca937ce747"
+version = "2.0.0-rc.5"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/2_0_0-rc_5_23-09-2026_18:20:24_contracts.zip"
+checksum = "9109f3b6bfbd7053ed260c288c554e211f21b105f39c81ac1c71c4ea29bd0886"
+integrity = "93e1fd09bdf357763dea9a39d8615651ca0da5e91d3ce598f3430dcfa4ace3e1"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"
