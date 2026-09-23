@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use alloy::primitives::{Address, B256, U256};
 use anoma_rm_risc0::action_tree::ActionTree as ArmTree;
-use anoma_rm_risc0::compliance::ComplianceWitness;
+use anoma_rm_risc0::compliance;
 use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource};
 use transfer_witness::EncryptionInfo;
 use transfer_witness::ForwarderInfo;
@@ -129,7 +129,7 @@ pub async fn build(
         }),
     );
 
-    let compliance = ComplianceWitness::from_resources(
+    let compliance = compliance::from_resources(
         vec![ConsumedResourceWitness::from_resource(
             consumed,
             sender.nf_key.clone(),
