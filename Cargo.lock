@@ -1034,7 +1034,7 @@ dependencies = [
 [[package]]
 name = "anoma-pa-evm-bindings"
 version = "3.0.0-rc.10"
-source = "git+https://github.com/anoma/pa-evm?rev=95a929d274beb3c89a7aa3ce3865ed4e86085b64#95a929d274beb3c89a7aa3ce3865ed4e86085b64"
+source = "git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.10#da28d16bf30b3d772bae9f0ca444ab123449632f"
 dependencies = [
  "alloy",
  "alloy-chains",
@@ -1048,11 +1048,11 @@ dependencies = [
 [[package]]
 name = "anoma-pa-evm-integration-test"
 version = "0.1.0"
-source = "git+https://github.com/anoma/pa-evm?rev=95a929d274beb3c89a7aa3ce3865ed4e86085b64#95a929d274beb3c89a7aa3ce3865ed4e86085b64"
+source = "git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.10#da28d16bf30b3d772bae9f0ca444ab123449632f"
 dependencies = [
  "alloy",
  "alloy-chains",
- "anoma-pa-evm-bindings 3.0.0-rc.10 (git+https://github.com/anoma/pa-evm?rev=95a929d274beb3c89a7aa3ce3865ed4e86085b64)",
+ "anoma-pa-evm-bindings 3.0.0-rc.10 (git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.10)",
  "anoma-pa-testkit",
  "anoma-risc0-kind-tables",
  "anoma-risc0-verifier-bindings",
