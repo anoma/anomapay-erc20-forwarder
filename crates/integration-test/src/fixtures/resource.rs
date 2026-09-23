@@ -13,13 +13,10 @@ use transfer_witness::calculate_persistent_value_ref;
 use crate::logic;
 use anoma_pa_testkit::fixtures::identities::Keychain;
 
-/// The kind table the fixtures prove against. Empty, so every kind falls back to
-/// hash-to-curve and the commitment matches the protocol adapter's initial
-/// `_EMPTY_KIND_TABLE_COMMITMENT`. Proving against a non-empty table additionally
-/// requires `init_kind_table_from_file` — `Transaction::verify` fails with
-/// `KindTableNotLoaded` without it — and the adapter's stored commitment to agree.
+/// The kind table the fixtures prove against: the loaded one, or the empty table
+/// if none is loaded. The e2e setup loads the table the forked adapter stores.
 pub(crate) fn kind_table() -> Vec<KindTableEntry> {
-    Vec::new()
+    anoma_rm_risc0::constants::kind_table().to_vec()
 }
 
 /// The persistent token-transfer resource: label committed to
