@@ -2,10 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
-import {EnumerableMap} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableMap.sol";
+import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
 import {ICommitmentTree} from "anoma-pa-evm-2.0.0-rc.7/src/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "anoma-pa-evm-2.0.0-rc.7/src/interfaces/INullifierSet.sol";
-import {IProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.7/src/interfaces/IProtocolAdapter.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
 import {ILogicRefDenylist} from "./ILogicRefDenylist.sol";
@@ -20,7 +19,7 @@ import {IMigratingERC20Forwarder} from "./IMigratingERC20Forwarder.sol";
 /// @custom:oz-upgrades-from ERC20Forwarder
 /// @custom:oz-upgrades-unsafe-allow missing-initializer
 contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
-    using EnumerableMap for EnumerableMap.Bytes32ToBytes32Map;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     /// @notice The call types. `Wrap` and `Unwrap` have the same values as in `ERC20Forwarder.CallType`.
     enum MigratingCallType {
@@ -31,12 +30,12 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
 
     /// @notice One resource of a migration batch, in the order that the migration logic encodes it.
     /// @param nullifier The nullifier of the resource.
-    /// @param migrationRoot The commitment tree root that the resource is proven against.
+    /// @param commitmentTreeRoot The commitment tree root that the resource is proven against.
     /// @param retiredLogicRef The logic reference of the resource.
     /// @param forwarder The forwarder address in the resource label.
     struct MigrateEntry {
         bytes32 nullifier;
-        bytes32 migrationRoot;
+        bytes32 commitmentTreeRoot;
         bytes32 retiredLogicRef;
         address forwarder;
     }
@@ -44,8 +43,8 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     /// @notice The ERC-7201 storage of the contract.
     /// @custom:storage-location erc7201:anoma.storage.MigratingERC20Forwarder
     struct MigratingERC20ForwarderStorage {
-        // The migration root of each retired logic reference, in the order of retirement.
-        EnumerableMap.Bytes32ToBytes32Map _migrationRoots;
+        // The retired logic references, in the order of retirement.
+        EnumerableSet.Bytes32Set _retiredLogicRefs;
         // The nullifiers of the migrated resources.
         mapping(bytes32 nullifier => bool isMigrated) _isNullifierMigrated;
     }
@@ -61,17 +60,11 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     /// @notice The length of one migration entry.
     uint256 internal constant _MIGRATE_ENTRY_LENGTH = 4 * 32;
 
-    /// @notice Thrown if the protocol adapter is not paused during a rotation.
-    error ProtocolAdapterNotPaused(address protocolAdapter);
-
     /// @notice Thrown if the protocol adapter does not deny a retired logic reference.
     error LogicRefNotDenied(bytes32 logicRef);
 
     /// @notice Thrown if the protocol adapter denies the new logic reference.
     error DeniedLogicRef(bytes32 logicRef);
-
-    /// @notice Thrown if the root history of the protocol adapter does not contain the migration root.
-    error UnknownMigrationRoot(bytes32 migrationRoot);
 
     /// @notice Thrown if a rotation keeps the current logic reference.
     error UnchangedLogicRef(bytes32 logicRef);
@@ -82,8 +75,8 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     /// @notice Thrown if a migration names a logic reference that is not retired.
     error UnknownRetiredLogicRef(bytes32 retiredLogicRef);
 
-    /// @notice Thrown if a migration names another root than the root recorded for its logic reference.
-    error MigrationRootMismatch(bytes32 expected, bytes32 actual);
+    /// @notice Thrown if the root history of the protocol adapter does not contain the root of a migrated resource.
+    error NonExistingRoot(bytes32 root);
 
     /// @notice Thrown if the label of a migrated resource contains another forwarder address.
     error ForwarderMismatch(address expected, address actual);
@@ -98,60 +91,43 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     error ResourceAlreadyMigrated(bytes32 nullifier);
 
     /// @inheritdoc IMigratingERC20Forwarder
-    function reinitialize(bytes32 newLogicRef, bytes32 migrationRoot)
-        external
-        override
-        onlyOwner
-        reinitializer(_getInitializedVersion() + 1)
-    {
+    function reinitialize(bytes32 newLogicRef) external override onlyOwner reinitializer(_getInitializedVersion() + 1) {
         require(newLogicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
         ForwarderBaseStorage storage $ = _getForwarderBaseStorage();
         bytes32 retiredLogicRef = $._logicRef;
         require(newLogicRef != retiredLogicRef, UnchangedLogicRef(retiredLogicRef));
 
-        address protocolAdapter = $._protocolAdapter;
-        require(IProtocolAdapter(protocolAdapter).paused(), ProtocolAdapterNotPaused(protocolAdapter));
-        require(
-            ICommitmentTree(protocolAdapter).isCommitmentTreeRootContained(migrationRoot),
-            UnknownMigrationRoot(migrationRoot)
-        );
-
         // The adapter must not also consume the resources that this contract migrates.
+        address protocolAdapter = $._protocolAdapter;
         require(
             ILogicRefDenylist(protocolAdapter).isLogicRefDenied(retiredLogicRef), LogicRefNotDenied(retiredLogicRef)
         );
         require(!ILogicRefDenylist(protocolAdapter).isLogicRefDenied(newLogicRef), DeniedLogicRef(newLogicRef));
 
         require(
-            _getMigratingERC20ForwarderStorage()._migrationRoots.set({key: retiredLogicRef, value: migrationRoot}),
+            _getMigratingERC20ForwarderStorage()._retiredLogicRefs.add(retiredLogicRef),
             LogicRefAlreadyRetired(retiredLogicRef)
         );
 
         $._logicRef = newLogicRef;
 
-        emit LogicRefRetired(retiredLogicRef, migrationRoot, newLogicRef);
+        emit LogicRefRetired({retiredLogicRef: retiredLogicRef, newLogicRef: newLogicRef});
     }
 
     /// @inheritdoc IMigratingERC20Forwarder
-    function getMigrationRoot(bytes32 retiredLogicRef) external view override returns (bytes32 migrationRoot) {
-        // slither-disable-next-line unused-return
-        (, migrationRoot) = _getMigratingERC20ForwarderStorage()._migrationRoots.tryGet(retiredLogicRef);
+    function isLogicRefRetired(bytes32 logicRef) external view override returns (bool isRetired) {
+        isRetired = _getMigratingERC20ForwarderStorage()._retiredLogicRefs.contains(logicRef);
     }
 
     /// @inheritdoc IMigratingERC20Forwarder
     function retiredLogicRefCount() external view override returns (uint256 count) {
-        count = _getMigratingERC20ForwarderStorage()._migrationRoots.length();
+        count = _getMigratingERC20ForwarderStorage()._retiredLogicRefs.length();
     }
 
     /// @inheritdoc IMigratingERC20Forwarder
-    function retiredLogicRefAtIndex(uint256 index)
-        external
-        view
-        override
-        returns (bytes32 retiredLogicRef, bytes32 migrationRoot)
-    {
-        (retiredLogicRef, migrationRoot) = _getMigratingERC20ForwarderStorage()._migrationRoots.at(index);
+    function retiredLogicRefAtIndex(uint256 index) external view override returns (bytes32 retiredLogicRef) {
+        retiredLogicRef = _getMigratingERC20ForwarderStorage()._retiredLogicRefs.at(index);
     }
 
     /// @inheritdoc IMigratingERC20Forwarder
@@ -205,15 +181,17 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
                 entry.forwarder == address(this), ForwarderMismatch({expected: address(this), actual: entry.forwarder})
             );
 
-            (bool isRetired, bytes32 migrationRoot) = $._migrationRoots.tryGet(entry.retiredLogicRef);
-            require(isRetired, UnknownRetiredLogicRef(entry.retiredLogicRef));
+            require($._retiredLogicRefs.contains(entry.retiredLogicRef), UnknownRetiredLogicRef(entry.retiredLogicRef));
+
+            // Every root of the adapter works: no resource with a denied logic reference can be created.
+            // NOTE: The adapter is the caller and a trusted contract.
+            // forge-lint: disable-next-item(calls-loop)
             require(
-                entry.migrationRoot == migrationRoot,
-                MigrationRootMismatch({expected: migrationRoot, actual: entry.migrationRoot})
+                ICommitmentTree(protocolAdapter).isCommitmentTreeRootContained(entry.commitmentTreeRoot),
+                NonExistingRoot(entry.commitmentTreeRoot)
             );
 
             // The adapter must not also consume the resources that this contract migrates.
-            // NOTE: The adapter is the caller and a trusted contract.
             // forge-lint: disable-next-item(calls-loop)
             require(
                 ILogicRefDenylist(protocolAdapter).isLogicRefDenied(entry.retiredLogicRef),
