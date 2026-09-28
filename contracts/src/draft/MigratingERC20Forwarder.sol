@@ -41,7 +41,8 @@ import {IMigratingERC20Forwarder} from "./IMigratingERC20Forwarder.sol";
 /// Without the denylist entry, the owner could spend the resource at the adapter as well, for example by converting it
 /// through a kind table alias. A transaction could also nullify a resource under the broken logic, which then blocks
 /// its migration. `reinitialize` therefore requires that the adapter denies the retired logic reference and does not
-/// deny the new one. The adapter has no function that removes a denylist entry.
+/// deny the new one, and each migrated resource requires it again. The adapter has no function that removes a denylist
+/// entry; if an upgrade of the adapter drops one, migrations of that logic reference stop.
 ///
 /// Which root to name is the incident's decision, not the contract's. The latest root migrates every resource and
 /// keeps what the attacker created. An earlier root drops the resources created after it, the honest ones included.
@@ -114,7 +115,7 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     /// @notice Thrown if the protocol adapter is not paused while the logic reference rotates.
     error ProtocolAdapterNotPaused(address protocolAdapter);
 
-    /// @notice Thrown if the protocol adapter does not deny the logic reference that the rotation retires.
+    /// @notice Thrown if the protocol adapter does not deny a logic reference that this contract retires or retired.
     error LogicRefNotDenied(bytes32 logicRef);
 
     /// @notice Thrown if the protocol adapter denies the logic reference that the rotation moves to.
@@ -249,7 +250,7 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
         _checkLength({input: input, expectedLength: _MIGRATE_HEADER_LENGTH + entryCount * _MIGRATE_ENTRY_LENGTH});
 
         MigratingERC20ForwarderStorage storage $ = _getMigratingERC20ForwarderStorage();
-        INullifierSet protocolAdapter = INullifierSet(_getForwarderBaseStorage()._protocolAdapter);
+        address protocolAdapter = _getForwarderBaseStorage()._protocolAdapter;
 
         for (uint256 i = 0; i < entryCount; ++i) {
             MigrateEntry memory entry = entries[i];
@@ -266,9 +267,19 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
                 MigrationRootMismatch({expected: migrationRoot, actual: entry.migrationRoot})
             );
 
+            // A migrated resource must not be spendable at the adapter as well.
             // NOTE: The adapter is the caller and a trusted contract.
             // forge-lint: disable-next-item(calls-loop)
-            require(!protocolAdapter.isNullifierContained(entry.nullifier), ResourceAlreadyConsumed(entry.nullifier));
+            require(
+                ILogicRefDenylist(protocolAdapter).isLogicRefDenied(entry.retiredLogicRef),
+                LogicRefNotDenied(entry.retiredLogicRef)
+            );
+
+            // forge-lint: disable-next-item(calls-loop)
+            require(
+                !INullifierSet(protocolAdapter).isNullifierContained(entry.nullifier),
+                ResourceAlreadyConsumed(entry.nullifier)
+            );
 
             // The nullifier is recorded before the next entry is read, so a batch that names a resource twice fails.
             require(!$._isNullifierMigrated[entry.nullifier], ResourceAlreadyMigrated(entry.nullifier));
