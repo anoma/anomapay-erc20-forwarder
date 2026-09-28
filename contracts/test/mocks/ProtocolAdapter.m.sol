@@ -7,6 +7,7 @@ import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 contract ProtocolAdapterMock is Ownable, Pausable {
     mapping(bytes32 nullifier => bool isContained) internal _nullifierSet;
     mapping(bytes32 root => bool isContained) internal _commitmentTreeRoots;
+    mapping(bytes32 logicRef => bool isDenied) internal _deniedLogicRefs;
 
     constructor(address emergencyStopCaller) Ownable(emergencyStopCaller) {}
 
@@ -16,6 +17,10 @@ contract ProtocolAdapterMock is Ownable, Pausable {
 
     function mockAddCommitmentTreeRoot(bytes32 root) external {
         _commitmentTreeRoots[root] = true;
+    }
+
+    function mockSetLogicRefDenied(bytes32 logicRef, bool isDenied) external {
+        _deniedLogicRefs[logicRef] = isDenied;
     }
 
     function emergencyStop() external onlyOwner whenNotPaused {
@@ -28,6 +33,10 @@ contract ProtocolAdapterMock is Ownable, Pausable {
 
     function isCommitmentTreeRootContained(bytes32 root) external view returns (bool isContained) {
         isContained = _commitmentTreeRoots[root];
+    }
+
+    function isLogicRefDenied(bytes32 logicRef) external view returns (bool isDenied) {
+        isDenied = _deniedLogicRefs[logicRef];
     }
 
     function isEmergencyStopped() public view returns (bool isStopped) {
