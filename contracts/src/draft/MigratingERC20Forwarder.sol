@@ -8,6 +8,7 @@ import {INullifierSet} from "anoma-pa-evm-2.0.0-rc.8/src/interfaces/INullifierSe
 import {IProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.8/src/interfaces/IProtocolAdapter.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
+import {ILogicRefDenylist} from "./ILogicRefDenylist.sol";
 import {IMigratingERC20Forwarder} from "./IMigratingERC20Forwarder.sol";
 
 /// @title MigratingERC20Forwarder
@@ -20,7 +21,7 @@ import {IMigratingERC20Forwarder} from "./IMigratingERC20Forwarder.sol";
 /// The incident runs in this order.
 /// 1. The owner pauses the protocol adapter, so nothing settles any more.
 /// 2. The owner upgrades the protocol adapter to an implementation that holds sound circuit keys and names a sound
-///    RISC Zero verifier.
+///    RISC Zero verifier, and adds the logic reference this forwarder accepts to the adapter's denylist.
 /// 3. The owner upgrades this forwarder and calls `reinitialize` with the new logic reference and the migration root.
 /// 4. The owner unpauses the protocol adapter.
 /// 5. The owner of retired resources sends migration transactions. One transaction migrates a batch of resources that
@@ -35,6 +36,12 @@ import {IMigratingERC20Forwarder} from "./IMigratingERC20Forwarder.sol";
 /// * The retired logic reference. `reinitialize` reads it from storage before it overwrites it.
 /// * The migration root. The protocol adapter keeps every root it ever had, so the root is still on chain, but no rule
 ///   on chain picks the right one. The owner names it, and `reinitialize` checks that the adapter holds it.
+///
+/// Denylist. A migration does not consume the retired resource at the protocol adapter; it records the nullifier here.
+/// Without the denylist entry, the owner could spend the resource at the adapter as well, for example by converting it
+/// through a kind table alias. A transaction could also nullify a resource under the broken logic, which then blocks
+/// its migration. `reinitialize` therefore requires that the adapter denies the retired logic reference and does not
+/// deny the new one. The adapter has no function that removes a denylist entry.
 ///
 /// Which root to name is the incident's decision, not the contract's. The latest root migrates every resource and
 /// keeps what the attacker created. An earlier root drops the resources created after it, the honest ones included.
@@ -107,6 +114,12 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     /// @notice Thrown if the protocol adapter is not paused while the logic reference rotates.
     error ProtocolAdapterNotPaused(address protocolAdapter);
 
+    /// @notice Thrown if the protocol adapter does not deny the logic reference that the rotation retires.
+    error LogicRefNotDenied(bytes32 logicRef);
+
+    /// @notice Thrown if the protocol adapter denies the logic reference that the rotation moves to.
+    error DeniedLogicRef(bytes32 logicRef);
+
     /// @notice Thrown if the protocol adapter does not hold the named migration root.
     error UnknownMigrationRoot(bytes32 migrationRoot);
 
@@ -154,6 +167,12 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
             ICommitmentTree(protocolAdapter).isCommitmentTreeRootContained(migrationRoot),
             UnknownMigrationRoot(migrationRoot)
         );
+
+        // A migrated resource must not be spendable at the adapter as well.
+        require(
+            ILogicRefDenylist(protocolAdapter).isLogicRefDenied(retiredLogicRef), LogicRefNotDenied(retiredLogicRef)
+        );
+        require(!ILogicRefDenylist(protocolAdapter).isLogicRefDenied(newLogicRef), DeniedLogicRef(newLogicRef));
 
         require(
             _getMigratingERC20ForwarderStorage()._migrationRoots.set({key: retiredLogicRef, value: migrationRoot}),

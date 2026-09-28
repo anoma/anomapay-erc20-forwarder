@@ -20,7 +20,7 @@ interface IMigratingERC20Forwarder {
     event Migrated(address indexed token, bytes32 indexed retiredLogicRef, bytes32 indexed nullifier);
 
     /// @notice Retires the current logic reference against a commitment tree root and rotates to a new one. The
-    /// protocol adapter must be paused, and it must hold the root.
+    /// protocol adapter must be paused, hold the root, deny the current logic reference, and not deny the new one.
     /// @param newLogicRef The logic reference the forwarder accepts after the call.
     /// @param migrationRoot The commitment tree root the retired resources are migrated against. It is the last root
     /// the incident leaves trustworthy.
