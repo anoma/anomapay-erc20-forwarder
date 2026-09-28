@@ -13,77 +13,27 @@ import {IMigratingERC20Forwarder} from "./IMigratingERC20Forwarder.sol";
 
 /// @title MigratingERC20Forwarder
 /// @author Anoma Foundation, 2026
-/// @notice A draft ERC20 forwarder that re-issues ERC20 resources after a proof system version turns out to be
-/// forgeable. It adds one call type, `Migrate`, next to wrap and unwrap.
-/// @dev A migration trusts no proof made under the forgeable version. It trusts one commitment tree root that the
-/// protocol adapter recorded before that version went live.
-///
-/// The incident runs in this order.
-/// 1. The owner pauses the protocol adapter, so nothing settles any more.
-/// 2. The owner upgrades the protocol adapter to an implementation that holds sound circuit keys and names a sound
-///    RISC Zero verifier, and adds the logic reference this forwarder accepts to the adapter's denylist.
-/// 3. The owner upgrades this forwarder and calls `reinitialize` with the new logic reference and the migration root.
-/// 4. The owner unpauses the protocol adapter.
-/// 5. The owner of retired resources sends migration transactions. One transaction migrates a batch of resources that
-///    one key owns. Under the new logic, it proves that each resource sits in the commitment tree at the migration
-///    root of its logic reference, and that the owner signed the action tree root. This contract records the nullifier
-///    of each resource, and the transaction creates resources for the total quantity under the new logic reference.
-///
-/// Anchoring. The forwarder keeps its address across an upgrade, so the label `hash(forwarder, token)` no longer
-/// tells the resource versions apart. The logic reference does, because the resource kind is
-/// `hash(logicRef, labelRef)` and the rotation moves the logic reference. Two values must survive the rotation, and
-/// step 3 stores both.
-/// * The retired logic reference. `reinitialize` reads it from storage before it overwrites it.
-/// * The migration root. The protocol adapter keeps every root it ever had, so the root is still on chain, but no rule
-///   on chain picks the right one. The owner names it, and `reinitialize` checks that the adapter holds it.
-///
-/// Denylist. A migration does not consume the retired resource at the protocol adapter; it records the nullifier here.
-/// Without the denylist entry, the owner could spend the resource at the adapter as well, for example by converting it
-/// through a kind table alias. A transaction could also nullify a resource under the broken logic, which then blocks
-/// its migration. `reinitialize` therefore requires that the adapter denies the retired logic reference and does not
-/// deny the new one, and each migrated resource requires it again. The adapter has no function that removes a denylist
-/// entry; if an upgrade of the adapter drops one, migrations of that logic reference stop.
-///
-/// Which root to name is the incident's decision, not the contract's. The latest root migrates every resource and
-/// keeps what the attacker created. An earlier root drops the resources created after it, the honest ones included.
-///
-/// Repeated migrations. Each rotation adds one entry to the map of retired logic references, and a migration names the
-/// entry it comes from. A second rotation therefore leaves the first generation migratable, and one contract covers
-/// V1 to V2, V1 to V3 and V2 to V3 without a contract per version.
-///
-/// What a migration does not check. The tokens stay where they are, so the balance check that guards wrap and unwrap
-/// cannot guard a migration. This contract checks that a migration moves no tokens and records each nullifier once,
-/// also when a batch names a resource twice. It checks nothing about the amount. The migration logic must bind the
-/// created resources to the migrated ones: the same token, the total quantity, and one signature of the owner over
-/// the action tree root, which commits to the created resources. A migration that the logic leaves unbound creates
-/// tokens out of nothing.
-///
-/// A migration also does not restore tokens. If the forgeable version was used to unwrap tokens, the forwarder holds
-/// less than the migrated resources add up to, and the shortfall shows up at unwrap time, first come first served.
-///
-/// This contract declares no initializer of its own. `ERC20Forwarder.initialize` initializes every parent, and a
-/// rotation must not run it again, which is why `reinitialize` calls no parent initializer.
-///
-/// It also reports the `VERSION` of `ERC20Forwarder`, because a constant cannot be overridden. Promoting this draft
-/// means turning `VERSION` into a virtual getter first.
+/// @notice A draft ERC20 forwarder that migrates ERC20 resources from a retired logic reference to a new one. It adds
+/// the `Migrate` call type to wrap and unwrap.
+/// @dev See `docs/emergency-migration.md` for the incident procedure, the design and its limits.
 /// @custom:security-contact security@anoma.foundation
 /// @custom:oz-upgrades-from ERC20Forwarder
 /// @custom:oz-upgrades-unsafe-allow missing-initializer
 contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     using EnumerableMap for EnumerableMap.Bytes32ToBytes32Map;
 
+    /// @notice The call types. `Wrap` and `Unwrap` have the same values as in `ERC20Forwarder.CallType`.
     enum MigratingCallType {
         Wrap,
         Unwrap,
         Migrate
     }
 
-    /// @notice One resource of a migration batch, in the order the migration logic encodes it.
-    /// @param nullifier The nullifier of the resource to migrate, computed under the retired logic.
-    /// @param migrationRoot The commitment tree root the resource is proven against. It must be the root this contract
-    /// recorded for the retired logic reference.
-    /// @param retiredLogicRef The logic reference the resource carries. It must be one this contract retired.
-    /// @param forwarder The forwarder the resource label commits to. It must be this contract.
+    /// @notice One resource of a migration batch, in the order that the migration logic encodes it.
+    /// @param nullifier The nullifier of the resource.
+    /// @param migrationRoot The commitment tree root that the resource is proven against.
+    /// @param retiredLogicRef The logic reference of the resource.
+    /// @param forwarder The forwarder address in the resource label.
     struct MigrateEntry {
         bytes32 nullifier;
         bytes32 migrationRoot;
@@ -94,9 +44,9 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     /// @notice The ERC-7201 storage of the contract.
     /// @custom:storage-location erc7201:anoma.storage.MigratingERC20Forwarder
     struct MigratingERC20ForwarderStorage {
-        // The migration root of each retired logic reference, in retirement order.
+        // The migration root of each retired logic reference, in the order of retirement.
         EnumerableMap.Bytes32ToBytes32Map _migrationRoots;
-        // The nullifiers of the resources this contract migrated.
+        // The nullifiers of the migrated resources.
         mapping(bytes32 nullifier => bool isMigrated) _isNullifierMigrated;
     }
 
@@ -105,41 +55,40 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     bytes32 internal constant _MIGRATING_ERC20_FORWARDER_STORAGE_SLOT =
         0x542a3d2fc110dcee1dc322fc93583e849eb18bb7c89b4453a5bd009e400fab00;
 
-    /// @notice The length of the migration input without its entries: the generic input, the offset and the length
-    /// of the entry array.
+    /// @notice The length of the migration input before its first entry.
     uint256 internal constant _MIGRATE_HEADER_LENGTH = _GENERIC_INPUT_OFFSET + 2 * 32;
 
     /// @notice The length of one migration entry.
     uint256 internal constant _MIGRATE_ENTRY_LENGTH = 4 * 32;
 
-    /// @notice Thrown if the protocol adapter is not paused while the logic reference rotates.
+    /// @notice Thrown if the protocol adapter is not paused during a rotation.
     error ProtocolAdapterNotPaused(address protocolAdapter);
 
-    /// @notice Thrown if the protocol adapter does not deny a logic reference that this contract retires or retired.
+    /// @notice Thrown if the protocol adapter does not deny a retired logic reference.
     error LogicRefNotDenied(bytes32 logicRef);
 
-    /// @notice Thrown if the protocol adapter denies the logic reference that the rotation moves to.
+    /// @notice Thrown if the protocol adapter denies the new logic reference.
     error DeniedLogicRef(bytes32 logicRef);
 
-    /// @notice Thrown if the protocol adapter does not hold the named migration root.
+    /// @notice Thrown if the root history of the protocol adapter does not contain the migration root.
     error UnknownMigrationRoot(bytes32 migrationRoot);
 
-    /// @notice Thrown if the rotation would keep the logic reference it retires.
+    /// @notice Thrown if a rotation keeps the current logic reference.
     error UnchangedLogicRef(bytes32 logicRef);
 
-    /// @notice Thrown if the rotation retires a logic reference that is retired already.
+    /// @notice Thrown if a rotation retires a logic reference a second time.
     error LogicRefAlreadyRetired(bytes32 logicRef);
 
-    /// @notice Thrown if a migration names a logic reference this contract never retired.
+    /// @notice Thrown if a migration names a logic reference that is not retired.
     error UnknownRetiredLogicRef(bytes32 retiredLogicRef);
 
-    /// @notice Thrown if a migration names another root than the one recorded for the retired logic reference.
+    /// @notice Thrown if a migration names another root than the root recorded for its logic reference.
     error MigrationRootMismatch(bytes32 expected, bytes32 actual);
 
-    /// @notice Thrown if a migration names another forwarder than this contract.
+    /// @notice Thrown if the label of a migrated resource contains another forwarder address.
     error ForwarderMismatch(address expected, address actual);
 
-    /// @notice Thrown if a migration names no resource.
+    /// @notice Thrown if a migration contains no resource.
     error EmptyMigrationBatch();
 
     /// @notice Thrown if the protocol adapter consumed the resource already.
@@ -161,7 +110,6 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
         bytes32 retiredLogicRef = $._logicRef;
         require(newLogicRef != retiredLogicRef, UnchangedLogicRef(retiredLogicRef));
 
-        // A paused adapter settles nothing, so no resource moves between the root and the rotation.
         address protocolAdapter = $._protocolAdapter;
         require(IProtocolAdapter(protocolAdapter).paused(), ProtocolAdapterNotPaused(protocolAdapter));
         require(
@@ -169,7 +117,7 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
             UnknownMigrationRoot(migrationRoot)
         );
 
-        // A migrated resource must not be spendable at the adapter as well.
+        // The adapter must not also consume the resources that this contract migrates.
         require(
             ILogicRefDenylist(protocolAdapter).isLogicRefDenied(retiredLogicRef), LogicRefNotDenied(retiredLogicRef)
         );
@@ -221,7 +169,6 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
         (MigratingCallType callType, IERC20 token,) =
             abi.decode(input[:_GENERIC_INPUT_OFFSET], (MigratingCallType, IERC20, uint128));
 
-        // Wrap and unwrap keep the first two call type values, so the base decodes the same input.
         if (callType != MigratingCallType.Migrate) {
             return super._forwardCall(input);
         }
@@ -230,7 +177,7 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
 
         _migrate({token: address(token), input: input});
 
-        // A migration re-issues a resource that the forwarder already holds the tokens for, so no tokens move.
+        // A migration moves no tokens.
         uint256 balanceDelta = token.balanceOf(address(this)) - balanceBefore;
         // slither-disable-next-line incorrect-equality
         require(balanceDelta == 0, BalanceMismatch({expected: 0, actual: balanceDelta}));
@@ -241,8 +188,6 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     /// @notice Migrates a batch of resources carrying retired logic references by recording their nullifiers.
     /// @param token The address of the token the migrated resources are labelled with.
     /// @param input The forwarder input, which ends with the batch.
-    /// @dev The adapter check rejects a resource that was consumed the ordinary way. The same check also rejects a
-    /// resource that an attacker nullified under the forgeable version; those tokens are gone either way.
     function _migrate(address token, bytes calldata input) internal {
         (,,, MigrateEntry[] memory entries) = abi.decode(input, (MigratingCallType, IERC20, uint128, MigrateEntry[]));
 
@@ -256,7 +201,6 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
         for (uint256 i = 0; i < entryCount; ++i) {
             MigrateEntry memory entry = entries[i];
 
-            // The migrated resource's label commits to the forwarder, and the upgrade did not move this contract.
             require(
                 entry.forwarder == address(this), ForwarderMismatch({expected: address(this), actual: entry.forwarder})
             );
@@ -268,7 +212,7 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
                 MigrationRootMismatch({expected: migrationRoot, actual: entry.migrationRoot})
             );
 
-            // A migrated resource must not be spendable at the adapter as well.
+            // The adapter must not also consume the resources that this contract migrates.
             // NOTE: The adapter is the caller and a trusted contract.
             // forge-lint: disable-next-item(calls-loop)
             require(
@@ -282,12 +226,10 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
                 ResourceAlreadyConsumed(entry.nullifier)
             );
 
-            // The nullifier is recorded before the next entry is read, so a batch that names a resource twice fails.
+            // Recording each nullifier before the next entry also rejects a resource that a batch contains twice.
             require(!$._isNullifierMigrated[entry.nullifier], ResourceAlreadyMigrated(entry.nullifier));
             $._isNullifierMigrated[entry.nullifier] = true;
 
-            // NOTE: A migration moves no tokens, so this is not the `Wrapped` event; an indexer summing wraps and
-            // unwraps must not count it as a deposit.
             emit Migrated({token: token, retiredLogicRef: entry.retiredLogicRef, nullifier: entry.nullifier});
         }
     }
