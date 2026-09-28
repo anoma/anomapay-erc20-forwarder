@@ -13,13 +13,11 @@ interface IMigratingERC20Forwarder {
     /// @param newLogicRef The logic reference the forwarder accepts from this call on.
     event LogicRefRetired(bytes32 indexed retiredLogicRef, bytes32 indexed migrationRoot, bytes32 indexed newLogicRef);
 
-    /// @notice Emitted when a retired resource is migrated. No tokens move, so the amount states what the re-issued
-    /// resource carries, not what the forwarder received.
+    /// @notice Emitted when a retired resource is migrated. No tokens move.
     /// @param token The ERC20 token the migrated resource is labelled with.
     /// @param retiredLogicRef The logic reference the migrated resource carries.
     /// @param nullifier The nullifier of the migrated resource.
-    /// @param amount The quantity the migrated resource carries.
-    event Migrated(address indexed token, bytes32 indexed retiredLogicRef, bytes32 indexed nullifier, uint128 amount);
+    event Migrated(address indexed token, bytes32 indexed retiredLogicRef, bytes32 indexed nullifier);
 
     /// @notice Retires the current logic reference against a commitment tree root and rotates to a new one. The
     /// protocol adapter must be paused, and it must hold the root.
