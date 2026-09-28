@@ -23,9 +23,10 @@ import {IMigratingERC20Forwarder} from "./IMigratingERC20Forwarder.sol";
 ///    RISC Zero verifier.
 /// 3. The owner upgrades this forwarder and calls `reinitialize` with the new logic reference and the migration root.
 /// 4. The owner unpauses the protocol adapter.
-/// 5. The owner of a retired resource sends one migration transaction per resource. It proves, under the new circuits,
-///    that the resource sits in the commitment tree at the migration root. This contract records the resource's
-///    nullifier, and the transaction creates the same resource under the new logic reference.
+/// 5. The owner of retired resources sends migration transactions. One transaction migrates a batch of resources that
+///    one key owns. Under the new logic, it proves that each resource sits in the commitment tree at the migration
+///    root of its logic reference, and that the owner signed the action tree root. This contract records the nullifier
+///    of each resource, and the transaction creates resources for the total quantity under the new logic reference.
 ///
 /// Anchoring. The forwarder keeps its address across an upgrade, so the label `hash(forwarder, token)` no longer
 /// tells the resource versions apart. The logic reference does, because the resource kind is
@@ -43,9 +44,11 @@ import {IMigratingERC20Forwarder} from "./IMigratingERC20Forwarder.sol";
 /// V1 to V2, V1 to V3 and V2 to V3 without a contract per version.
 ///
 /// What a migration does not check. The tokens stay where they are, so the balance check that guards wrap and unwrap
-/// cannot guard a migration. This contract checks that a migration moves no tokens and records the nullifier once. It
-/// checks nothing about the amount. The resource logic must bind the created resource to the migrated one: same
-/// label, same quantity, same owner. A migration that the logic leaves unbound creates tokens out of nothing.
+/// cannot guard a migration. This contract checks that a migration moves no tokens and records each nullifier once,
+/// also when a batch names a resource twice. It checks nothing about the amount. The migration logic must bind the
+/// created resources to the migrated ones: the same token, the total quantity, and one signature of the owner over
+/// the action tree root, which commits to the created resources. A migration that the logic leaves unbound creates
+/// tokens out of nothing.
 ///
 /// A migration also does not restore tokens. If the forgeable version was used to unwrap tokens, the forwarder holds
 /// less than the migrated resources add up to, and the shortfall shows up at unwrap time, first come first served.
@@ -67,13 +70,13 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
         Migrate
     }
 
-    /// @notice A struct containing migration specific inputs.
+    /// @notice One resource of a migration batch, in the order the migration logic encodes it.
     /// @param nullifier The nullifier of the resource to migrate, computed under the retired logic.
     /// @param migrationRoot The commitment tree root the resource is proven against. It must be the root this contract
     /// recorded for the retired logic reference.
     /// @param retiredLogicRef The logic reference the resource carries. It must be one this contract retired.
     /// @param forwarder The forwarder the resource label commits to. It must be this contract.
-    struct MigrateData {
+    struct MigrateEntry {
         bytes32 nullifier;
         bytes32 migrationRoot;
         bytes32 retiredLogicRef;
@@ -94,8 +97,12 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     bytes32 internal constant _MIGRATING_ERC20_FORWARDER_STORAGE_SLOT =
         0x542a3d2fc110dcee1dc322fc93583e849eb18bb7c89b4453a5bd009e400fab00;
 
-    /// @notice The length of the migration data.
-    uint256 internal constant _MIGRATE_DATA_LENGTH = 4 * 32;
+    /// @notice The length of the migration input without its entries: the generic input, the offset and the length
+    /// of the entry array.
+    uint256 internal constant _MIGRATE_HEADER_LENGTH = _GENERIC_INPUT_OFFSET + 2 * 32;
+
+    /// @notice The length of one migration entry.
+    uint256 internal constant _MIGRATE_ENTRY_LENGTH = 4 * 32;
 
     /// @notice Thrown if the protocol adapter is not paused while the logic reference rotates.
     error ProtocolAdapterNotPaused(address protocolAdapter);
@@ -117,6 +124,9 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
 
     /// @notice Thrown if a migration names another forwarder than this contract.
     error ForwarderMismatch(address expected, address actual);
+
+    /// @notice Thrown if a migration names no resource.
+    error EmptyMigrationBatch();
 
     /// @notice Thrown if the protocol adapter consumed the resource already.
     error ResourceAlreadyConsumed(bytes32 nullifier);
@@ -188,7 +198,7 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     /// - migrate resources carrying a retired logic reference.
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
-        (MigratingCallType callType, IERC20 token, uint128 amount) =
+        (MigratingCallType callType, IERC20 token,) =
             abi.decode(input[:_GENERIC_INPUT_OFFSET], (MigratingCallType, IERC20, uint128));
 
         // Wrap and unwrap keep the first two call type values, so the base decodes the same input.
@@ -198,7 +208,7 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
 
         uint256 balanceBefore = token.balanceOf(address(this));
 
-        _migrate({token: address(token), amount: amount, migrateInput: input[_GENERIC_INPUT_OFFSET:]});
+        _migrate({token: address(token), input: input});
 
         // A migration re-issues a resource that the forwarder already holds the tokens for, so no tokens move.
         uint256 balanceDelta = token.balanceOf(address(this)) - balanceBefore;
@@ -207,42 +217,48 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
         output = "";
     }
 
-    /// @notice Migrates a resource carrying a retired logic reference by recording its nullifier.
-    /// @param token The address of the token the migrated resource is labelled with.
-    /// @param amount The quantity the migrated resource carries.
-    /// @param migrateInput The input bytes containing the encoded arguments for the migration call.
-    /// @dev The adapter check rejects a resource that was consumed the ordinary way. A retired resource can still be
-    /// transferred, because a transfer calls no forwarder, and the transfer puts the nullifier into the adapter's
-    /// set. The same check also rejects a resource that an attacker nullified under the forgeable version; those
-    /// tokens are gone either way.
-    function _migrate(address token, uint128 amount, bytes calldata migrateInput) internal {
-        _checkLength({input: migrateInput, expectedLength: _MIGRATE_DATA_LENGTH});
+    /// @notice Migrates a batch of resources carrying retired logic references by recording their nullifiers.
+    /// @param token The address of the token the migrated resources are labelled with.
+    /// @param input The forwarder input, which ends with the batch.
+    /// @dev The adapter check rejects a resource that was consumed the ordinary way. The same check also rejects a
+    /// resource that an attacker nullified under the forgeable version; those tokens are gone either way.
+    function _migrate(address token, bytes calldata input) internal {
+        (,,, MigrateEntry[] memory entries) = abi.decode(input, (MigratingCallType, IERC20, uint128, MigrateEntry[]));
 
-        (MigrateData memory data) = abi.decode(migrateInput, (MigrateData));
-
-        // The migrated resource's label commits to the forwarder, and the upgrade did not move this contract.
-        require(data.forwarder == address(this), ForwarderMismatch({expected: address(this), actual: data.forwarder}));
+        uint256 entryCount = entries.length;
+        require(entryCount != 0, EmptyMigrationBatch());
+        _checkLength({input: input, expectedLength: _MIGRATE_HEADER_LENGTH + entryCount * _MIGRATE_ENTRY_LENGTH});
 
         MigratingERC20ForwarderStorage storage $ = _getMigratingERC20ForwarderStorage();
+        INullifierSet protocolAdapter = INullifierSet(_getForwarderBaseStorage()._protocolAdapter);
 
-        (bool isRetired, bytes32 migrationRoot) = $._migrationRoots.tryGet(data.retiredLogicRef);
-        require(isRetired, UnknownRetiredLogicRef(data.retiredLogicRef));
-        require(
-            data.migrationRoot == migrationRoot,
-            MigrationRootMismatch({expected: migrationRoot, actual: data.migrationRoot})
-        );
+        for (uint256 i = 0; i < entryCount; ++i) {
+            MigrateEntry memory entry = entries[i];
 
-        require(
-            !INullifierSet(_getForwarderBaseStorage()._protocolAdapter).isNullifierContained(data.nullifier),
-            ResourceAlreadyConsumed(data.nullifier)
-        );
+            // The migrated resource's label commits to the forwarder, and the upgrade did not move this contract.
+            require(
+                entry.forwarder == address(this), ForwarderMismatch({expected: address(this), actual: entry.forwarder})
+            );
 
-        require(!$._isNullifierMigrated[data.nullifier], ResourceAlreadyMigrated(data.nullifier));
-        $._isNullifierMigrated[data.nullifier] = true;
+            (bool isRetired, bytes32 migrationRoot) = $._migrationRoots.tryGet(entry.retiredLogicRef);
+            require(isRetired, UnknownRetiredLogicRef(entry.retiredLogicRef));
+            require(
+                entry.migrationRoot == migrationRoot,
+                MigrationRootMismatch({expected: migrationRoot, actual: entry.migrationRoot})
+            );
 
-        // NOTE: A migration moves no tokens, so this is not the `Wrapped` event; an indexer summing wraps and unwraps
-        // must not count it as a deposit.
-        emit Migrated({token: token, retiredLogicRef: data.retiredLogicRef, nullifier: data.nullifier, amount: amount});
+            // NOTE: The adapter is the caller and a trusted contract.
+            // forge-lint: disable-next-item(calls-loop)
+            require(!protocolAdapter.isNullifierContained(entry.nullifier), ResourceAlreadyConsumed(entry.nullifier));
+
+            // The nullifier is recorded before the next entry is read, so a batch that names a resource twice fails.
+            require(!$._isNullifierMigrated[entry.nullifier], ResourceAlreadyMigrated(entry.nullifier));
+            $._isNullifierMigrated[entry.nullifier] = true;
+
+            // NOTE: A migration moves no tokens, so this is not the `Wrapped` event; an indexer summing wraps and
+            // unwraps must not count it as a deposit.
+            emit Migrated({token: token, retiredLogicRef: entry.retiredLogicRef, nullifier: entry.nullifier});
+        }
     }
 
     /// @notice Returns the storage from the migrating ERC20 forwarder storage slot.

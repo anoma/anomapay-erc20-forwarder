@@ -145,19 +145,36 @@ contract MigratingERC20ForwarderTest is Test {
         assertEq(_fwd.getMigrationRoot(_RETIRED_LOGIC_REF), _MIGRATION_ROOT);
         assertEq(_fwd.getMigrationRoot(_NEW_LOGIC_REF), secondMigrationRoot);
 
-        // Both generations migrate against the root recorded for them.
-        _migrate({retiredLogicRef: _RETIRED_LOGIC_REF, migrationRoot: _MIGRATION_ROOT, nullifier: _NULLIFIER});
-        _migrate({retiredLogicRef: _NEW_LOGIC_REF, migrationRoot: secondMigrationRoot, nullifier: bytes32(uint256(7))});
-    }
-
-    function test_forwardCall_reverts_on_the_retired_logic_ref() public {
-        _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF, migrationRoot: _MIGRATION_ROOT});
-        bytes memory input = _migrateInput({
+        // One batch migrates both generations, each against the root recorded for it.
+        MigratingERC20Forwarder.MigrateEntry[] memory entries = new MigratingERC20Forwarder.MigrateEntry[](2);
+        entries[0] = _entry({
             retiredLogicRef: _RETIRED_LOGIC_REF,
             migrationRoot: _MIGRATION_ROOT,
             nullifier: _NULLIFIER,
             forwarder: address(_fwd)
         });
+        entries[1] = _entry({
+            retiredLogicRef: _NEW_LOGIC_REF,
+            migrationRoot: secondMigrationRoot,
+            nullifier: bytes32(uint256(7)),
+            forwarder: address(_fwd)
+        });
+        _migrateBatch(entries);
+
+        assertTrue(_fwd.isNullifierMigrated(_NULLIFIER));
+        assertTrue(_fwd.isNullifierMigrated(bytes32(uint256(7))));
+    }
+
+    function test_forwardCall_reverts_on_the_retired_logic_ref() public {
+        _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF, migrationRoot: _MIGRATION_ROOT});
+        bytes memory input = _migrateInput(
+            _batch({
+                retiredLogicRef: _RETIRED_LOGIC_REF,
+                migrationRoot: _MIGRATION_ROOT,
+                nullifier: _NULLIFIER,
+                forwarder: address(_fwd)
+            })
+        );
 
         vm.prank(address(_pa));
         vm.expectRevert(
@@ -188,7 +205,7 @@ contract MigratingERC20ForwarderTest is Test {
 
         vm.expectEmit(address(_fwd));
         emit IMigratingERC20Forwarder.Migrated({
-            token: address(_erc20), retiredLogicRef: _RETIRED_LOGIC_REF, nullifier: _NULLIFIER, amount: _AMOUNT
+            token: address(_erc20), retiredLogicRef: _RETIRED_LOGIC_REF, nullifier: _NULLIFIER
         });
 
         _migrate({retiredLogicRef: _RETIRED_LOGIC_REF, migrationRoot: _MIGRATION_ROOT, nullifier: _NULLIFIER});
@@ -264,16 +281,77 @@ contract MigratingERC20ForwarderTest is Test {
         });
     }
 
-    function test_migrate_reverts_on_a_short_input() public {
+    function test_migrate_records_every_nullifier_of_a_batch() public {
+        _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF, migrationRoot: _MIGRATION_ROOT});
+        MigratingERC20Forwarder.MigrateEntry[] memory entries = _batchOf({count: 3});
+
+        _migrateBatch(entries);
+
+        for (uint256 i = 0; i < entries.length; ++i) {
+            assertTrue(_fwd.isNullifierMigrated(entries[i].nullifier));
+        }
+    }
+
+    function test_migrate_reverts_if_a_batch_names_a_resource_twice() public {
+        _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF, migrationRoot: _MIGRATION_ROOT});
+        MigratingERC20Forwarder.MigrateEntry[] memory entries = _batchOf({count: 3});
+        entries[2].nullifier = entries[0].nullifier;
+
+        _expectMigrateBatchRevert({
+            entries: entries,
+            expectedError: abi.encodeWithSelector(
+                MigratingERC20Forwarder.ResourceAlreadyMigrated.selector, entries[0].nullifier
+            )
+        });
+    }
+
+    function test_migrate_records_nothing_if_a_later_entry_fails() public {
+        _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF, migrationRoot: _MIGRATION_ROOT});
+        MigratingERC20Forwarder.MigrateEntry[] memory entries = _batchOf({count: 2});
+        _pa.mockAddNullifier(entries[1].nullifier);
+
+        _expectMigrateBatchRevert({
+            entries: entries,
+            expectedError: abi.encodeWithSelector(
+                MigratingERC20Forwarder.ResourceAlreadyConsumed.selector, entries[1].nullifier
+            )
+        });
+
+        assertFalse(_fwd.isNullifierMigrated(entries[0].nullifier));
+    }
+
+    function test_migrate_reverts_on_an_empty_batch() public {
         _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF, migrationRoot: _MIGRATION_ROOT});
 
-        bytes memory input = abi.encode(
-            MigratingERC20Forwarder.MigratingCallType.Migrate, address(_erc20), _AMOUNT, _NULLIFIER, _MIGRATION_ROOT
-        );
+        _expectMigrateBatchRevert({
+            entries: new MigratingERC20Forwarder.MigrateEntry[](0),
+            expectedError: abi.encodeWithSelector(MigratingERC20Forwarder.EmptyMigrationBatch.selector)
+        });
+    }
+
+    function test_migrate_reverts_on_trailing_bytes() public {
+        _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF, migrationRoot: _MIGRATION_ROOT});
+        bytes memory input = bytes.concat(_migrateInput(_batchOf({count: 1})), bytes32(0));
 
         vm.prank(address(_pa));
-        vm.expectRevert(abi.encodeWithSelector(ERC20Forwarder.InvalidInputLength.selector, 4 * 32, 2 * 32));
+        vm.expectRevert(abi.encodeWithSelector(ERC20Forwarder.InvalidInputLength.selector, 9 * 32, 10 * 32));
         IForwarder(address(_fwd)).forwardCall({logicRef: _NEW_LOGIC_REF, input: input});
+    }
+
+    function test_migrate_decodes_the_encoding_of_the_migration_logic() public {
+        _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF, migrationRoot: _MIGRATION_ROOT});
+
+        // `(CallTypeV2::Migrate, token, quantity, Vec<MigrateV1Data>).abi_encode_params()`, written out by hand.
+        bytes memory input = abi.encodePacked(
+            abi.encode(uint256(2), address(_erc20), uint256(_AMOUNT), uint256(0x80), uint256(1)),
+            abi.encode(_NULLIFIER, _MIGRATION_ROOT, _RETIRED_LOGIC_REF, address(_fwd))
+        );
+        assertEq(input, _migrateInput(_batchOf({count: 1})));
+
+        vm.prank(address(_pa));
+        IForwarder(address(_fwd)).forwardCall({logicRef: _NEW_LOGIC_REF, input: input});
+
+        assertTrue(_fwd.isNullifierMigrated(_NULLIFIER));
     }
 
     function test_unwrap_still_releases_tokens() public {
@@ -335,13 +413,19 @@ contract MigratingERC20ForwarderTest is Test {
     }
 
     function _migrate(bytes32 retiredLogicRef, bytes32 migrationRoot, bytes32 nullifier) internal {
+        _migrateBatch(
+            _batch({
+                retiredLogicRef: retiredLogicRef,
+                migrationRoot: migrationRoot,
+                nullifier: nullifier,
+                forwarder: address(_fwd)
+            })
+        );
+    }
+
+    function _migrateBatch(MigratingERC20Forwarder.MigrateEntry[] memory entries) internal {
         bytes32 logicRef = _fwd.getLogicRef();
-        bytes memory input = _migrateInput({
-            retiredLogicRef: retiredLogicRef,
-            migrationRoot: migrationRoot,
-            nullifier: nullifier,
-            forwarder: address(_fwd)
-        });
+        bytes memory input = _migrateInput(entries);
 
         vm.prank(address(_pa));
         IForwarder(address(_fwd)).forwardCall({logicRef: logicRef, input: input});
@@ -354,31 +438,68 @@ contract MigratingERC20ForwarderTest is Test {
         address forwarder,
         bytes memory expectedError
     ) internal {
-        bytes32 logicRef = _fwd.getLogicRef();
-        bytes memory input = _migrateInput({
-            retiredLogicRef: retiredLogicRef, migrationRoot: migrationRoot, nullifier: nullifier, forwarder: forwarder
+        _expectMigrateBatchRevert({
+            entries: _batch({
+                retiredLogicRef: retiredLogicRef,
+                migrationRoot: migrationRoot,
+                nullifier: nullifier,
+                forwarder: forwarder
+            }),
+            expectedError: expectedError
         });
+    }
+
+    function _expectMigrateBatchRevert(
+        MigratingERC20Forwarder.MigrateEntry[] memory entries,
+        bytes memory expectedError
+    ) internal {
+        bytes32 logicRef = _fwd.getLogicRef();
+        bytes memory input = _migrateInput(entries);
 
         vm.prank(address(_pa));
         vm.expectRevert(expectedError);
         IForwarder(address(_fwd)).forwardCall({logicRef: logicRef, input: input});
     }
 
-    function _migrateInput(bytes32 retiredLogicRef, bytes32 migrationRoot, bytes32 nullifier, address forwarder)
+    /// @dev A batch of distinct resources of the first generation; the first one carries `_NULLIFIER`.
+    function _batchOf(uint256 count) internal view returns (MigratingERC20Forwarder.MigrateEntry[] memory entries) {
+        entries = new MigratingERC20Forwarder.MigrateEntry[](count);
+        for (uint256 i = 0; i < count; ++i) {
+            entries[i] = _entry({
+                retiredLogicRef: _RETIRED_LOGIC_REF,
+                migrationRoot: _MIGRATION_ROOT,
+                nullifier: bytes32(uint256(_NULLIFIER) + i),
+                forwarder: address(_fwd)
+            });
+        }
+    }
+
+    function _migrateInput(MigratingERC20Forwarder.MigrateEntry[] memory entries)
         internal
         view
         returns (bytes memory input)
     {
-        input = abi.encode(
-            MigratingERC20Forwarder.MigratingCallType.Migrate,
-            address(_erc20),
-            _AMOUNT,
-            MigratingERC20Forwarder.MigrateData({
-                nullifier: nullifier,
-                migrationRoot: migrationRoot,
-                retiredLogicRef: retiredLogicRef,
-                forwarder: forwarder
-            })
-        );
+        input = abi.encode(MigratingERC20Forwarder.MigratingCallType.Migrate, address(_erc20), _AMOUNT, entries);
+    }
+
+    function _batch(bytes32 retiredLogicRef, bytes32 migrationRoot, bytes32 nullifier, address forwarder)
+        internal
+        pure
+        returns (MigratingERC20Forwarder.MigrateEntry[] memory entries)
+    {
+        entries = new MigratingERC20Forwarder.MigrateEntry[](1);
+        entries[0] = _entry({
+            retiredLogicRef: retiredLogicRef, migrationRoot: migrationRoot, nullifier: nullifier, forwarder: forwarder
+        });
+    }
+
+    function _entry(bytes32 retiredLogicRef, bytes32 migrationRoot, bytes32 nullifier, address forwarder)
+        internal
+        pure
+        returns (MigratingERC20Forwarder.MigrateEntry memory entry)
+    {
+        entry = MigratingERC20Forwarder.MigrateEntry({
+            nullifier: nullifier, migrationRoot: migrationRoot, retiredLogicRef: retiredLogicRef, forwarder: forwarder
+        });
     }
 }
