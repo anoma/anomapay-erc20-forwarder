@@ -171,7 +171,7 @@ contract MigratingERC20ForwarderTest is Test {
         assertEq(_fwd.getMigrationRoot(_RETIRED_LOGIC_REF), _MIGRATION_ROOT);
         assertEq(_fwd.getMigrationRoot(_NEW_LOGIC_REF), secondMigrationRoot);
 
-        // One batch migrates both generations, each against the root recorded for it.
+        // One batch migrates resources of both retired logic refs, each with the root recorded for it.
         MigratingERC20Forwarder.MigrateEntry[] memory entries = new MigratingERC20Forwarder.MigrateEntry[](2);
         entries[0] = _entry({
             retiredLogicRef: _RETIRED_LOGIC_REF,
@@ -413,8 +413,7 @@ contract MigratingERC20ForwarderTest is Test {
         assertEq(_erc20.balanceOf(address(_fwd)), 0);
     }
 
-    /// @dev A stopped adapter that holds the root and denies the logic ref to retire, which is the state the rotation
-    /// expects.
+    /// @dev A paused adapter whose root history contains the root and that denies the logic ref to retire.
     function _pausedAdapterHolding(bytes32 root) internal returns (ProtocolAdapterMock adapter) {
         adapter = new ProtocolAdapterMock(_PA_OWNER);
         adapter.mockAddCommitmentTreeRoot(root);
@@ -433,7 +432,7 @@ contract MigratingERC20ForwarderTest is Test {
         );
     }
 
-    /// @dev Upgrades the proxy to the draft and retires the logic reference it holds, as the owner does.
+    /// @dev Upgrades the proxy to the draft and retires its logic reference, as the owner does.
     function _upgradeAndRetire(bytes32 newLogicRef, bytes32 migrationRoot) internal {
         // `startPrank` keeps the owner as the caller across the implementation deploy and the `upgradeToAndCall`
         // that `Upgrades.upgradeProxy` performs internally; a single `vm.prank` would only apply to the deploy.
@@ -504,7 +503,7 @@ contract MigratingERC20ForwarderTest is Test {
         IForwarder(address(_fwd)).forwardCall({logicRef: logicRef, input: input});
     }
 
-    /// @dev A batch of distinct resources of the first generation; the first one carries `_NULLIFIER`.
+    /// @dev A batch of distinct resources with the first retired logic ref; the first one has `_NULLIFIER`.
     function _batchOf(uint256 count) internal view returns (MigratingERC20Forwarder.MigrateEntry[] memory entries) {
         entries = new MigratingERC20Forwarder.MigrateEntry[](count);
         for (uint256 i = 0; i < count; ++i) {

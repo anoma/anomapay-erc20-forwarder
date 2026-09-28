@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 /// @title ILogicRefDenylist
 /// @author Anoma Foundation, 2026
-/// @notice The part of the protocol adapter's logic reference denylist that this draft reads. The draft declares it
-/// until a pa-evm release carries `ILogicRefDenylist`.
+/// @notice The function of the protocol adapter's logic reference denylist that this draft reads.
+/// @dev Replace it with the pa-evm interface when a pa-evm release contains it.
 /// @custom:security-contact security@anoma.foundation
 interface ILogicRefDenylist {
     /// @notice Returns whether the denylist contains a given logic reference or not.
