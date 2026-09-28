@@ -250,6 +250,21 @@ contract MigratingERC20ForwarderTest is Test {
         });
     }
 
+    function test_migrate_reverts_if_the_protocol_adapter_no_longer_denies_the_retired_logic_ref() public {
+        _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF, migrationRoot: _MIGRATION_ROOT});
+        _pa.mockSetLogicRefDenied({logicRef: _RETIRED_LOGIC_REF, isDenied: false});
+
+        _expectMigrateRevert({
+            retiredLogicRef: _RETIRED_LOGIC_REF,
+            migrationRoot: _MIGRATION_ROOT,
+            nullifier: _NULLIFIER,
+            forwarder: address(_fwd),
+            expectedError: abi.encodeWithSelector(
+                MigratingERC20Forwarder.LogicRefNotDenied.selector, _RETIRED_LOGIC_REF
+            )
+        });
+    }
+
     function test_migrate_reverts_if_the_protocol_adapter_consumed_the_resource() public {
         _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF, migrationRoot: _MIGRATION_ROOT});
         _pa.mockAddNullifier(_NULLIFIER);
