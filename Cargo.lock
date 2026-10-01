@@ -1018,9 +1018,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-evm-bindings"
-version = "3.0.0-rc.10"
+version = "3.0.0-rc.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "748d3befbc8c2545239d9d64f40c41fcb3d037abfa53358bda5db74ff0191c40"
+checksum = "14c8f21ea94b531f9735681632a171c8dbd28e3426cf5f5455c163aa5f81e5a5"
 dependencies = [
  "alloy",
  "alloy-chains",
@@ -1033,8 +1033,8 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-evm-bindings"
-version = "3.0.0-rc.10"
-source = "git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.10#da28d16bf30b3d772bae9f0ca444ab123449632f"
+version = "3.0.0-rc.11"
+source = "git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.11#56f47a1c4e3f0e18825a55884285948e48185d73"
 dependencies = [
  "alloy",
  "alloy-chains",
@@ -1048,11 +1048,11 @@ dependencies = [
 [[package]]
 name = "anoma-pa-evm-integration-test"
 version = "0.1.0"
-source = "git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.10#da28d16bf30b3d772bae9f0ca444ab123449632f"
+source = "git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.11#56f47a1c4e3f0e18825a55884285948e48185d73"
 dependencies = [
  "alloy",
  "alloy-chains",
- "anoma-pa-evm-bindings 3.0.0-rc.10 (git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.10)",
+ "anoma-pa-evm-bindings 3.0.0-rc.11 (git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.11)",
  "anoma-pa-testkit",
  "anoma-risc0-kind-tables",
  "anoma-risc0-verifier-bindings",
@@ -1087,9 +1087,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-risc0-kind-tables"
-version = "1.0.0-rc.2"
+version = "1.0.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55a1d12e14072dd251a407890a53f79e3f418830779c63a9e1e27c8991d553e9"
+checksum = "5248c2ae50ead1eab47886021c4a3af075445b2d23627b8732bb06b276afc0ca"
 dependencies = [
  "alloy",
  "alloy-chains",
@@ -1174,7 +1174,7 @@ version = "3.0.0-rc.10"
 dependencies = [
  "alloy",
  "alloy-chains",
- "anoma-pa-evm-bindings 3.0.0-rc.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "anoma-pa-evm-bindings 3.0.0-rc.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "dotenvy",
  "serde",
  "serde_json",
