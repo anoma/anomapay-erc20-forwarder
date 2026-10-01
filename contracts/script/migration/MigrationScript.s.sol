@@ -7,7 +7,7 @@ import {
 } from "anoma-pa-evm-2.0.0-rc.5/generated/RecordedDeployments.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
-import {Script} from "forge-std-1.16.2/src/Script.sol";
+import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";

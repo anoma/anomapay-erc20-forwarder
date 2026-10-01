@@ -36,8 +36,8 @@ remappings = [
     "anoma-risc0-deployments-1.2.2/=dependencies/anoma-risc0-deployments-1.2.2/",
     "anomapay-erc20-forwarder-1.0.1/=dependencies/anomapay-erc20-forwarder-1.0.1/",
     "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-2.0.0-rc.5/dependencies/elliptic-curve-solidity-0.2.5/",
-    "forge-std-1.16.2/=dependencies/forge-std-1.16.2/",
-    "forge-std/=dependencies/forge-std-1.16.2/src/",
+    "forge-std-1.17.0/=dependencies/forge-std-1.17.0/",
+    "forge-std/=dependencies/forge-std-1.17.0/src/",
     "openzeppelin-foundry-upgrades-0.4.2/=dependencies/openzeppelin-foundry-upgrades-0.4.2/",
     "openzeppelin/contracts/=dependencies/anoma-pa-evm-2.0.0-rc.5/dependencies/risc0-risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
     "risc0-risc0-ethereum-3.0.1/=dependencies/anoma-pa-evm-2.0.0-rc.5/dependencies/risc0-risc0-ethereum-3.0.1/",
@@ -74,7 +74,7 @@ ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
 "anoma-pa-evm" = "2.0.0-rc.5"
 "anoma-risc0-deployments" = "1.2.2"
 "anomapay-erc20-forwarder" = "1.0.1"
-"forge-std" = "1.16.2"
+"forge-std" = "1.17.0"
 "openzeppelin-foundry-upgrades" = "0.4.2"
 "safe-smart-account" = { version = "1.5.0", git = "https://github.com/safe-global/safe-smart-account.git", tag = "v1.5.0" }
 "safe-utils" = { version = "0.0.22", git = "https://github.com/Recon-Fuzz/safe-utils.git", tag = "v0.0.22" }

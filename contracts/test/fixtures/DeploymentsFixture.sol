@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {SupportedNetworks} from "anoma-risc0-deployments-1.2.2/src/SupportedNetworks.sol";
-import {Test} from "forge-std-1.16.2/src/Test.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
