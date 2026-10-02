@@ -8,7 +8,6 @@ use transfer_witness::AUTH_SIGNATURE_DOMAIN;
 use transfer_witness::ForwarderInfo;
 use transfer_witness::LabelInfo;
 use transfer_witness::TokenTransferWitness;
-use transfer_witness::ValueInfo;
 use transfer_witness::call_type::CallType;
 
 use super::resource;
@@ -79,20 +78,7 @@ pub fn build(
             .sign(AUTH_SIGNATURE_DOMAIN, action_tree_root.as_bytes()),
     };
 
-    let consumed_logic = TokenTransferWitness::new(
-        consumed,
-        true,
-        action_tree_root,
-        Some(owner.nf_key.clone()),
-        Some(auth_sig),
-        None,
-        None,
-        None,
-        Some(ValueInfo {
-            auth_pk: owner.auth_verifying_key(),
-            encryption_pk: owner.encryption_pk,
-        }),
-    );
+    let consumed_logic = logic::consumed_persistent(consumed, action_tree_root, &owner, auth_sig);
 
     let created_logic = TokenTransferWitness::new(
         created,
@@ -131,10 +117,7 @@ pub fn build(
     Ok(ActionData {
         witnesses: ActionWitnesses {
             compliance_witness: Box::new(compliance),
-            logic_witnesses: vec![
-                Box::new(logic::Witness::new(consumed_logic)),
-                Box::new(logic::Witness::new(created_logic)),
-            ],
+            logic_witnesses: vec![consumed_logic, Box::new(logic::Witness::new(created_logic))],
         },
         consumed_persistent: consumed,
         created_ephemeral: created,
