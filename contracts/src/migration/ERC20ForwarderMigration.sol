@@ -63,13 +63,19 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
                 abi.encode(ERC20Forwarder.CallType.Unwrap, token, amount, FORWARDER_V2)
             );
 
+            // NOTE: The V1 forwarder returns empty bytes for a successful unwrap.
+            // slither-disable-next-line incorrect-equality
             require(output.length == 0, UnexpectedEmergencyCallOutput({token: address(token), output: output}));
 
             uint256 remaining = token.balanceOf(address(FORWARDER_V1));
+            // NOTE: The amount is the V1 balance read in this call, so V1 must end at zero.
+            // slither-disable-next-line incorrect-equality
             require(remaining == 0, SourceBalanceRemaining({token: address(token), remaining: remaining}));
 
             uint256 expected = beforeV2 + amount;
             uint256 received = token.balanceOf(FORWARDER_V2);
+            // NOTE: The forwarders support no fee-on-transfer token, so V2 must receive the exact amount.
+            // slither-disable-next-line incorrect-equality
             require(
                 received == expected,
                 DestinationBalanceMismatch({token: address(token), expected: expected, actual: received})
