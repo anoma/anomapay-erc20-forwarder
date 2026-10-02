@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeployERC20ForwarderMigration} from "../../../script/migration/DeployERC20ForwarderMigration.s.sol";
+import {DeployERC20ForwarderV1Migration} from "../../../script/migration/DeployERC20ForwarderV1Migration.s.sol";
 import {MigrationScript} from "../../../script/migration/MigrationScript.s.sol";
 import {Parameters} from "../../../script/Parameters.sol";
-import {ERC20ForwarderMigration} from "../../../src/migration/ERC20ForwarderMigration.sol";
+import {ERC20ForwarderV1Migration} from "../../../src/migration/ERC20ForwarderV1Migration.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
 import {ERC20ForwarderMock} from "../../mocks/ERC20Forwarder.m.sol";
 import {ERC20ForwarderV1Mock} from "../../mocks/ERC20ForwarderV1.m.sol";
@@ -13,30 +13,30 @@ import {ERC20ForwarderV1Mock} from "../../mocks/ERC20ForwarderV1.m.sol";
 /// that records both forwarders. It reads them and their protocol adapters from the records, so every test states what
 /// the chain has to answer. Outside broadcast mode the script simulates the forwarder multisig executing the proposal,
 /// so the assignment must leave the state it proposes.
-contract DeployERC20ForwarderMigrationTest is MigrationFixture {
+contract DeployERC20ForwarderV1MigrationTest is MigrationFixture {
     function test_run_deploys_a_migration_between_the_recorded_forwarders() public {
-        ERC20ForwarderMigration migration = _deployMigration();
+        ERC20ForwarderV1Migration migration = _deployMigration();
 
         assertEq(address(migration.FORWARDER_V1()), _forwarderV1, "the migration names another source");
         assertEq(migration.FORWARDER_V2(), _forwarderV2, "the migration names another destination");
     }
 
     function test_run_deploys_the_migration_at_the_predicted_address() public {
-        address predicted = new DeployERC20ForwarderMigration().predict({isProduction: false});
+        address predicted = new DeployERC20ForwarderV1Migration().predict({isProduction: false});
 
-        ERC20ForwarderMigration migration = _deployMigration();
+        ERC20ForwarderV1Migration migration = _deployMigration();
 
         assertEq(address(migration), predicted, "the migration lands at another address");
     }
 
     function test_run_gives_the_migration_to_the_deployment_wallet() public {
-        ERC20ForwarderMigration migration = _deployMigration();
+        ERC20ForwarderV1Migration migration = _deployMigration();
 
         assertEq(migration.owner(), _wallet, "the deployment wallet does not own the migration");
     }
 
     function test_run_makes_the_migration_the_emergency_caller() public {
-        ERC20ForwarderMigration migration = _deployMigration();
+        ERC20ForwarderV1Migration migration = _deployMigration();
 
         assertEq(
             ERC20ForwarderV1Mock(_forwarderV1).getEmergencyCaller(),
@@ -53,9 +53,9 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
     }
 
     function test_run_reverts_if_the_emergency_caller_is_assigned() public {
-        ERC20ForwarderMigration migration = _deployMigration();
+        ERC20ForwarderV1Migration migration = _deployMigration();
 
-        DeployERC20ForwarderMigration script = new DeployERC20ForwarderMigration();
+        DeployERC20ForwarderV1Migration script = new DeployERC20ForwarderV1Migration();
 
         vm.expectRevert(
             abi.encodeWithSelector(MigrationScript.EmergencyCallerMismatch.selector, address(0), address(migration))
@@ -66,7 +66,7 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
     function test_run_reverts_if_the_protocol_adapter_is_not_stopped() public {
         _installProtocolAdapterV1({isStopped: false});
 
-        DeployERC20ForwarderMigration script = new DeployERC20ForwarderMigration();
+        DeployERC20ForwarderV1Migration script = new DeployERC20ForwarderV1Migration();
 
         vm.expectRevert(abi.encodeWithSelector(MigrationScript.ProtocolAdapterNotStopped.selector, _protocolAdapterV1));
         script.run({isProduction: false});
@@ -76,14 +76,14 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
         uint256 chainId = 31337;
         vm.chainId(chainId);
 
-        DeployERC20ForwarderMigration script = new DeployERC20ForwarderMigration();
+        DeployERC20ForwarderV1Migration script = new DeployERC20ForwarderV1Migration();
 
         vm.expectRevert(abi.encodeWithSelector(MigrationScript.ForwarderV1NotRecorded.selector, chainId));
         script.run({isProduction: false});
     }
 
     function test_run_reverts_if_the_environment_records_no_deployment() public {
-        DeployERC20ForwarderMigration script = new DeployERC20ForwarderMigration();
+        DeployERC20ForwarderV1Migration script = new DeployERC20ForwarderV1Migration();
 
         vm.expectRevert(abi.encodeWithSelector(MigrationScript.DeploymentNotRecorded.selector, "production", _CHAIN_ID));
         script.run({isProduction: true});
@@ -96,7 +96,7 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
             target: _forwarderV2
         });
 
-        DeployERC20ForwarderMigration script = new DeployERC20ForwarderMigration();
+        DeployERC20ForwarderV1Migration script = new DeployERC20ForwarderV1Migration();
 
         vm.expectRevert(
             abi.encodeWithSelector(MigrationScript.OwnerMismatch.selector, Parameters.DEPLOYMENT_WALLET, owner)
@@ -113,7 +113,7 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
             target: _forwarderV1
         });
 
-        DeployERC20ForwarderMigration script = new DeployERC20ForwarderMigration();
+        DeployERC20ForwarderV1Migration script = new DeployERC20ForwarderV1Migration();
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -132,7 +132,7 @@ contract DeployERC20ForwarderMigrationTest is MigrationFixture {
             target: _forwarderV2
         });
 
-        DeployERC20ForwarderMigration script = new DeployERC20ForwarderMigration();
+        DeployERC20ForwarderV1Migration script = new DeployERC20ForwarderV1Migration();
 
         vm.expectRevert(
             abi.encodeWithSelector(

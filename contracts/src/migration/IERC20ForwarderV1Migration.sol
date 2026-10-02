@@ -3,10 +3,10 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 
-/// @title IERC20ForwarderMigration
+/// @title IERC20ForwarderV1Migration
 /// @author Anoma Foundation, 2026
 /// @notice Moves the tokens the V1 forwarder holds to a fixed V2 destination.
-interface IERC20ForwarderMigration {
+interface IERC20ForwarderV1Migration {
     /// @notice Emitted after a token's full V1 balance has been moved to V2 and verified. The amount is zero if V1
     /// held none of the token.
     /// @param forwarderV1 The source forwarder.
