@@ -27,20 +27,21 @@ script = "script"
 fs_permissions = [{ access = "read", path = "out" }]
 libs = ["dependencies"]
 auto_detect_remappings = false
+# The 2.0.0-rc.7.1 package of anoma-pa-evm differs from 2.0.0-rc.7 only in its deployment records, so the imports keep the 2.0.0-rc.7 prefix.
 remappings = [
     "@openzeppelin-contracts-5.7.0/=dependencies/@openzeppelin-contracts-5.7.0/",
     "@openzeppelin-contracts-upgradeable-5.7.0/=dependencies/@openzeppelin-contracts-upgradeable-5.7.0/",
     "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.7.0/",
-    "anoma-forwarder-bases-3.0.0/=dependencies/anoma-forwarder-bases-3.0.0/",
-    "anoma-pa-evm-2.0.0-rc.5/=dependencies/anoma-pa-evm-2.0.0-rc.5/",
-    "anoma-risc0-deployments-1.2.2/=dependencies/anoma-risc0-deployments-1.2.2/",
+    "anoma-forwarder-bases-3.0.1/=dependencies/anoma-forwarder-bases-3.0.1/",
+    "anoma-pa-evm-2.0.0-rc.7/=dependencies/anoma-pa-evm-2.0.0-rc.7.1/",
+    "anoma-risc0-deployments-1.2.4/=dependencies/anoma-risc0-deployments-1.2.4/",
     "anomapay-erc20-forwarder-1.0.1/=dependencies/anomapay-erc20-forwarder-1.0.1/",
-    "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-2.0.0-rc.5/dependencies/elliptic-curve-solidity-0.2.5/",
-    "forge-std-1.16.2/=dependencies/forge-std-1.16.2/",
-    "forge-std/=dependencies/forge-std-1.16.2/src/",
+    "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-2.0.0-rc.7.1/dependencies/elliptic-curve-solidity-0.2.5/",
+    "forge-std-1.17.0/=dependencies/forge-std-1.17.0/",
+    "forge-std/=dependencies/forge-std-1.17.0/src/",
     "openzeppelin-foundry-upgrades-0.4.2/=dependencies/openzeppelin-foundry-upgrades-0.4.2/",
-    "openzeppelin/contracts/=dependencies/anoma-pa-evm-2.0.0-rc.5/dependencies/risc0-risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
-    "risc0-risc0-ethereum-3.0.1/=dependencies/anoma-pa-evm-2.0.0-rc.5/dependencies/risc0-risc0-ethereum-3.0.1/",
+    "openzeppelin/contracts/=dependencies/anoma-pa-evm-2.0.0-rc.7.1/dependencies/risc0-risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
+    "risc0-risc0-ethereum-3.0.1/=dependencies/anoma-pa-evm-2.0.0-rc.7.1/dependencies/risc0-risc0-ethereum-3.0.1/",
     "safe-smart-account-1.5.0/=dependencies/safe-smart-account-1.5.0/",
     "safe-smart-account/common/Enum.sol=dependencies/safe-smart-account-1.5.0/contracts/libraries/Enum.sol",
     "safe-smart-account/libraries/=dependencies/safe-smart-account-1.5.0/contracts/libraries/",
@@ -52,7 +53,7 @@ remappings = [
 ]
 ignored_warnings_from = [
     "dependencies/@openzeppelin-contracts-5.7.0/utils",                                           # Warning 6335: "error" and "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
-    "dependencies/anoma-pa-evm-2.0.0-rc.5/dependencies/risc0-risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
+    "dependencies/anoma-pa-evm-2.0.0-rc.7.1/dependencies/risc0-risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
     "dependencies/openzeppelin-foundry-upgrades-0.4.2/src",                                       # Warning 2018: Function state mutability can be restricted to pure
     "dependencies/safe-smart-account-1.5.0/contracts",                                            # Warning 6335: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
     "dependencies/safe-utils-0.0.22/lib/solidity-http/src/",                                      # Warning 6335: "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
@@ -60,6 +61,7 @@ ignored_warnings_from = [
 ]
 
 [lint]
+severity = ["high", "medium", "low", "info", "gas", "code-size"] # The default leaves out info, gas, and code-size.
 exclude_lints = [
     "internal-function-used-once", # Counts the call sites of `src` alone, because `ignore` hides those of the tests.
     "reentrancy-events",           # Reports events that no external call precedes; Slither checks this instead.
@@ -70,11 +72,11 @@ ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
 [dependencies]
 "@openzeppelin-contracts" = "5.7.0"
 "@openzeppelin-contracts-upgradeable" = "5.7.0"
-"anoma-forwarder-bases" = "3.0.0"
-"anoma-pa-evm" = "2.0.0-rc.5"
-"anoma-risc0-deployments" = "1.2.2"
+"anoma-forwarder-bases" = "3.0.1"
+"anoma-pa-evm" = "2.0.0-rc.7.1"
+"anoma-risc0-deployments" = "1.2.4"
 "anomapay-erc20-forwarder" = "1.0.1"
-"forge-std" = "1.16.2"
+"forge-std" = "1.17.0"
 "openzeppelin-foundry-upgrades" = "0.4.2"
 "safe-smart-account" = { version = "1.5.0", git = "https://github.com/safe-global/safe-smart-account.git", tag = "v1.5.0" }
 "safe-utils" = { version = "0.0.22", git = "https://github.com/Recon-Fuzz/safe-utils.git", tag = "v0.0.22" }

@@ -31,7 +31,7 @@ contracts-clean:
 contracts-build *args:
     cd contracts && forge build {{ args }}
 
-# Lint contracts (forge lint + solhint)
+# Lint contracts: forge lint, then solhint for the rules that forge lint lacks
 contracts-lint:
     cd contracts && forge lint --deny notes
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
@@ -164,7 +164,7 @@ contracts-simulate-migration chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
+    cd contracts && forge script script/migration/DeployERC20ForwarderV1Migration.s.sol:DeployERC20ForwarderV1Migration \
         --sig "run(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
@@ -172,7 +172,7 @@ contracts-simulate-migration chain *args:
 contracts-deploy-migration deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
+    cd contracts && forge script script/migration/DeployERC20ForwarderV1Migration.s.sol:DeployERC20ForwarderV1Migration \
         --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
@@ -299,7 +299,7 @@ crates-test *args:
     cargo test {{ args }}
 
 # Test the e2e cases on a fork of `E2E_CHAIN_ID` (Sepolia by default), proven by the queue at `QUEUE_BASE_URL`.
-# Separate from the local cases: the kind table holds per process. One thread: the queue's CDN blocks bursts.
+# One thread, unlike the local cases: the queue's CDN blocks bursts.
 crates-test-e2e *args:
     RUST_TEST_THREADS=1 cargo test --features e2e e2e_test {{ args }}
 

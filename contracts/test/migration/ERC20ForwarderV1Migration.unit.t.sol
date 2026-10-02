@@ -5,11 +5,11 @@ import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {SafeCast} from "@openzeppelin-contracts-5.7.0/utils/math/SafeCast.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuard.sol";
-import {ERC20Example} from "anoma-forwarder-bases-3.0.0/test/examples/ERC20Example.sol";
-import {Test} from "forge-std-1.16.2/src/Test.sol";
+import {ERC20Example} from "anoma-forwarder-bases-3.0.1/test/examples/ERC20Example.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 
-import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
-import {IERC20ForwarderMigration} from "../../src/migration/IERC20ForwarderMigration.sol";
+import {ERC20ForwarderV1Migration} from "../../src/migration/ERC20ForwarderV1Migration.sol";
+import {IERC20ForwarderV1Migration} from "../../src/migration/IERC20ForwarderV1Migration.sol";
 import {ERC20ReentrantExample} from "../examples/ERC20ReentrantExample.sol";
 import {ERC20ForwarderMock} from "../mocks/ERC20Forwarder.m.sol";
 import {ERC20ForwarderV1Mock} from "../mocks/ERC20ForwarderV1.m.sol";
@@ -17,14 +17,14 @@ import {ProtocolAdapterMock} from "../mocks/ProtocolAdapter.m.sol";
 
 /// @notice Checks the migration contract, which moves the V1 tokens to the one destination it is built with. The
 /// owner picks the tokens, so every test states what a batch leaves behind.
-contract ERC20ForwarderMigrationUnitTest is Test {
+contract ERC20ForwarderV1MigrationUnitTest is Test {
     uint128 internal constant _AMOUNT = 42;
 
     ProtocolAdapterMock internal _protocolAdapterV1;
     ERC20ForwarderV1Mock internal _forwarderV1;
     address internal _forwarderV2;
     ERC20Example internal _token;
-    ERC20ForwarderMigration internal _migration;
+    ERC20ForwarderV1Migration internal _migration;
     IERC20[] internal _tokens;
 
     function setUp() public {
@@ -40,7 +40,7 @@ contract ERC20ForwarderMigrationUnitTest is Test {
         _token = new ERC20Example();
         _tokens.push(_token);
 
-        _migration = new ERC20ForwarderMigration(address(_forwarderV1), _forwarderV2, address(this));
+        _migration = new ERC20ForwarderV1Migration(address(_forwarderV1), _forwarderV2, address(this));
         _forwarderV1.setEmergencyCaller(address(_migration));
     }
 
@@ -59,14 +59,16 @@ contract ERC20ForwarderMigrationUnitTest is Test {
         _token.mint(address(_forwarderV1), _AMOUNT);
 
         vm.expectEmit(address(_migration));
-        emit IERC20ForwarderMigration.ERC20TokenMigrated(address(_forwarderV1), _forwarderV2, address(_token), _AMOUNT);
+        emit IERC20ForwarderV1Migration.ERC20TokenMigrated(
+            address(_forwarderV1), _forwarderV2, address(_token), _AMOUNT
+        );
 
         _migration.migrate(_tokens);
     }
 
     function test_migrate_emits_the_event_for_a_zero_balance() public {
         vm.expectEmit(address(_migration));
-        emit IERC20ForwarderMigration.ERC20TokenMigrated(address(_forwarderV1), _forwarderV2, address(_token), 0);
+        emit IERC20ForwarderV1Migration.ERC20TokenMigrated(address(_forwarderV1), _forwarderV2, address(_token), 0);
 
         _migration.migrate(_tokens);
     }
@@ -125,7 +127,7 @@ contract ERC20ForwarderMigrationUnitTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ERC20ForwarderMigration.DestinationBalanceMismatch.selector,
+                ERC20ForwarderV1Migration.DestinationBalanceMismatch.selector,
                 address(_token),
                 uint256(_AMOUNT),
                 uint256(0)
@@ -150,7 +152,7 @@ contract ERC20ForwarderMigrationUnitTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ERC20ForwarderMigration.UnexpectedEmergencyCallOutput.selector, address(_token), output
+                ERC20ForwarderV1Migration.UnexpectedEmergencyCallOutput.selector, address(_token), output
             )
         );
         _migration.migrate(_tokens);
@@ -166,7 +168,7 @@ contract ERC20ForwarderMigrationUnitTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ERC20ForwarderMigration.SourceBalanceRemaining.selector, address(_token), uint256(_AMOUNT)
+                ERC20ForwarderV1Migration.SourceBalanceRemaining.selector, address(_token), uint256(_AMOUNT)
             )
         );
         _migration.migrate(_tokens);
@@ -187,8 +189,8 @@ contract ERC20ForwarderMigrationUnitTest is Test {
     function test_migrate_reverts_if_v1_holds_no_emergency_caller() public {
         ERC20ForwarderV1Mock forwarderV1 =
             new ERC20ForwarderV1Mock({protocolAdapter: address(_protocolAdapterV1), emergencyCommittee: address(this)});
-        ERC20ForwarderMigration migration =
-            new ERC20ForwarderMigration(address(forwarderV1), _forwarderV2, address(this));
+        ERC20ForwarderV1Migration migration =
+            new ERC20ForwarderV1Migration(address(forwarderV1), _forwarderV2, address(this));
         _token.mint(address(forwarderV1), _AMOUNT);
 
         vm.expectRevert(ERC20ForwarderV1Mock.EmergencyCallerNotSet.selector);
@@ -202,8 +204,8 @@ contract ERC20ForwarderMigrationUnitTest is Test {
         ERC20ForwarderV1Mock forwarderV1 =
             new ERC20ForwarderV1Mock({protocolAdapter: address(_protocolAdapterV1), emergencyCommittee: address(this)});
         forwarderV1.setEmergencyCaller(emergencyCaller);
-        ERC20ForwarderMigration migration =
-            new ERC20ForwarderMigration(address(forwarderV1), _forwarderV2, address(this));
+        ERC20ForwarderV1Migration migration =
+            new ERC20ForwarderV1Migration(address(forwarderV1), _forwarderV2, address(this));
         _token.mint(address(forwarderV1), _AMOUNT);
 
         vm.expectRevert(
@@ -217,26 +219,26 @@ contract ERC20ForwarderMigrationUnitTest is Test {
     }
 
     function test_constructor_reverts_if_the_forwarders_are_the_same_contract() public {
-        vm.expectRevert(ERC20ForwarderMigration.InvalidForwarders.selector);
-        new ERC20ForwarderMigration(address(_forwarderV1), address(_forwarderV1), address(this));
+        vm.expectRevert(ERC20ForwarderV1Migration.InvalidForwarders.selector);
+        new ERC20ForwarderV1Migration(address(_forwarderV1), address(_forwarderV1), address(this));
     }
 
     function test_constructor_reverts_if_a_forwarder_is_the_zero_address() public {
-        vm.expectRevert(ERC20ForwarderMigration.InvalidForwarders.selector);
-        new ERC20ForwarderMigration(address(0), _forwarderV2, address(this));
+        vm.expectRevert(ERC20ForwarderV1Migration.InvalidForwarders.selector);
+        new ERC20ForwarderV1Migration(address(0), _forwarderV2, address(this));
 
-        vm.expectRevert(ERC20ForwarderMigration.InvalidForwarders.selector);
-        new ERC20ForwarderMigration(address(_forwarderV1), address(0), address(this));
+        vm.expectRevert(ERC20ForwarderV1Migration.InvalidForwarders.selector);
+        new ERC20ForwarderV1Migration(address(_forwarderV1), address(0), address(this));
     }
 
     function test_constructor_reverts_if_a_forwarder_carries_no_code() public {
-        vm.expectRevert(ERC20ForwarderMigration.InvalidForwarders.selector);
-        new ERC20ForwarderMigration(address(_forwarderV1), makeAddr("account"), address(this));
+        vm.expectRevert(ERC20ForwarderV1Migration.InvalidForwarders.selector);
+        new ERC20ForwarderV1Migration(address(_forwarderV1), makeAddr("account"), address(this));
     }
 
     function test_constructor_reverts_if_the_initial_owner_is_the_zero_address() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0)));
-        new ERC20ForwarderMigration(address(_forwarderV1), _forwarderV2, address(0));
+        new ERC20ForwarderV1Migration(address(_forwarderV1), _forwarderV2, address(0));
     }
 
     function test_transferOwnership_moves_the_migration_to_the_successor() public {

@@ -4,14 +4,14 @@ pragma solidity ^0.8.30;
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {
     RecordedDeployments as ProtocolAdapterDeployments
-} from "anoma-pa-evm-2.0.0-rc.5/generated/RecordedDeployments.sol";
+} from "anoma-pa-evm-2.0.0-rc.7/generated/RecordedDeployments.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
-import {Script} from "forge-std-1.16.2/src/Script.sol";
+import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
-import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
+import {ERC20ForwarderV1Migration} from "../../src/migration/ERC20ForwarderV1Migration.sol";
 import {DeployERC20ForwarderProxy} from "../DeployERC20ForwarderProxy.s.sol";
 import {Parameters} from "../Parameters.sol";
 
@@ -89,7 +89,7 @@ abstract contract MigrationScript is Script {
     /// @param migration The deployed migration contract.
     /// @return forwarderV1 The chain's V1 forwarder, which holds the tokens.
     /// @return forwarderV2 The environment's V2 forwarder of the chain, which receives them.
-    function _checkedConfiguration(bool isProduction, ERC20ForwarderMigration migration)
+    function _checkedConfiguration(bool isProduction, ERC20ForwarderV1Migration migration)
         internal
         returns (address forwarderV1, address forwarderV2)
     {
@@ -119,13 +119,13 @@ abstract contract MigrationScript is Script {
     /// `_checkedConfiguration` does.
     /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
     /// @return migration The migration contract the Safe assigned.
-    function _assignedMigration(bool isProduction) internal returns (ERC20ForwarderMigration migration) {
+    function _assignedMigration(bool isProduction) internal returns (ERC20ForwarderV1Migration migration) {
         (address forwarderV1,) = _configuration(isProduction);
 
         address caller = IEmergencyMigratable(forwarderV1).getEmergencyCaller();
         require(caller != address(0), EmergencyCallerNotSet(forwarderV1));
 
-        migration = ERC20ForwarderMigration(caller);
+        migration = ERC20ForwarderV1Migration(caller);
         _checkedConfiguration({isProduction: isProduction, migration: migration});
     }
 

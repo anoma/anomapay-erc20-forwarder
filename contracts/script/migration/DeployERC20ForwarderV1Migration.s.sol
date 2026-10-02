@@ -5,11 +5,11 @@ import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interface
 import {IOwnerManager} from "safe-smart-account-1.5.0/contracts/interfaces/IOwnerManager.sol";
 import {Safe} from "safe-utils-0.0.22/src/Safe.sol";
 
-import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
+import {ERC20ForwarderV1Migration} from "../../src/migration/ERC20ForwarderV1Migration.sol";
 import {Parameters} from "../Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
-/// @title DeployERC20ForwarderMigration
+/// @title DeployERC20ForwarderV1Migration
 /// @author Anoma Foundation, 2026
 /// @notice A script to deploy the migration contract of one chain and to propose it to the forwarder multisig as the
 /// permanent emergency caller of V1. The migration contract is the only contract that can move the V1 tokens, and it
@@ -20,7 +20,7 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 /// second one. V1 accepts the caller assignment only once its protocol adapter is stopped, so the script refuses to
 /// run before the stop. The assignment cannot be undone, because V1 accepts one emergency caller and keeps it.
 /// @custom:security-contact security@anoma.foundation
-contract DeployERC20ForwarderMigration is MigrationScript {
+contract DeployERC20ForwarderV1Migration is MigrationScript {
     using Safe for *;
 
     Safe.Client internal _safe;
@@ -35,13 +35,13 @@ contract DeployERC20ForwarderMigration is MigrationScript {
     /// sender.
     /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
     /// @return migration The migration contract, owned by the deployment wallet.
-    function run(bool isProduction) public returns (ERC20ForwarderMigration migration) {
+    function run(bool isProduction) public returns (ERC20ForwarderV1Migration migration) {
         (address forwarderV1, address forwarderV2) = _configuration(isProduction);
 
-        migration = ERC20ForwarderMigration(_predict({forwarderV1: forwarderV1, forwarderV2: forwarderV2}));
+        migration = ERC20ForwarderV1Migration(_predict({forwarderV1: forwarderV1, forwarderV2: forwarderV2}));
         if (address(migration).code.length == 0) {
             vm.broadcast(Parameters.DEPLOYMENT_WALLET);
-            migration = new ERC20ForwarderMigration{salt: Parameters.MIGRATION_SALT}({
+            migration = new ERC20ForwarderV1Migration{salt: Parameters.MIGRATION_SALT}({
                 forwarderV1: forwarderV1, forwarderV2: forwarderV2, initialOwner: Parameters.DEPLOYMENT_WALLET
             });
         }
@@ -88,7 +88,7 @@ contract DeployERC20ForwarderMigration is MigrationScript {
     function _predict(address forwarderV1, address forwarderV2) internal pure returns (address migration) {
         bytes memory constructorArgs = abi.encode(forwarderV1, forwarderV2, Parameters.DEPLOYMENT_WALLET);
 
-        bytes memory initCode = abi.encodePacked(type(ERC20ForwarderMigration).creationCode, constructorArgs);
+        bytes memory initCode = abi.encodePacked(type(ERC20ForwarderV1Migration).creationCode, constructorArgs);
 
         migration = vm.computeCreate2Address({salt: Parameters.MIGRATION_SALT, initCodeHash: keccak256(initCode)});
     }

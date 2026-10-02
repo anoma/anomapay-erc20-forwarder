@@ -4,8 +4,8 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {
     RecordedDeployments as ProtocolAdapterDeployments
-} from "anoma-pa-evm-2.0.0-rc.5/generated/RecordedDeployments.sol";
-import {Script} from "forge-std-1.16.2/src/Script.sol";
+} from "anoma-pa-evm-2.0.0-rc.7/generated/RecordedDeployments.sol";
+import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {RecordedDeployments} from "../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";

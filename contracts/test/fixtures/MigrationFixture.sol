@@ -2,15 +2,15 @@
 pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
-import {ERC20Example} from "anoma-forwarder-bases-3.0.0/test/examples/ERC20Example.sol";
+import {ERC20Example} from "anoma-forwarder-bases-3.0.1/test/examples/ERC20Example.sol";
 import {
     RecordedDeployments as ProtocolAdapterDeployments
-} from "anoma-pa-evm-2.0.0-rc.5/generated/RecordedDeployments.sol";
+} from "anoma-pa-evm-2.0.0-rc.7/generated/RecordedDeployments.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
-import {DeployERC20ForwarderMigration} from "../../script/migration/DeployERC20ForwarderMigration.s.sol";
+import {DeployERC20ForwarderV1Migration} from "../../script/migration/DeployERC20ForwarderV1Migration.s.sol";
 import {Parameters} from "../../script/Parameters.sol";
-import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
+import {ERC20ForwarderV1Migration} from "../../src/migration/ERC20ForwarderV1Migration.sol";
 import {DeployERC20ForwarderProxyMock} from "../mocks/DeployERC20ForwarderProxy.m.sol";
 import {ERC20ForwarderV1Mock} from "../mocks/ERC20ForwarderV1.m.sol";
 import {ProtocolAdapterMock} from "../mocks/ProtocolAdapter.m.sol";
@@ -70,8 +70,8 @@ abstract contract MigrationFixture is SafeFixture {
     /// @notice Deploys the migration contract of the staging environment through its deploy script, which also makes it
     /// the emergency caller of V1 by simulating the forwarder multisig.
     /// @return migration The migration contract, owned by the deployment wallet.
-    function _deployMigration() internal returns (ERC20ForwarderMigration migration) {
-        migration = new DeployERC20ForwarderMigration().run({isProduction: false});
+    function _deployMigration() internal returns (ERC20ForwarderV1Migration migration) {
+        migration = new DeployERC20ForwarderV1Migration().run({isProduction: false});
     }
 
     /// @notice Installs a stand-in for the v1 protocol adapter at the address the records name.

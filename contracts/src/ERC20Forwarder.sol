@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/utils/SafeERC20.sol";
-import {ForwarderBaseUpgradeable} from "anoma-forwarder-bases-3.0.0/src/ForwarderBaseUpgradeable.sol";
-import {IVersion} from "anoma-forwarder-bases-3.0.0/src/interfaces/IVersion.sol";
+import {ForwarderBaseUpgradeable} from "anoma-forwarder-bases-3.0.1/src/ForwarderBaseUpgradeable.sol";
+import {IVersion} from "anoma-forwarder-bases-3.0.1/src/interfaces/IVersion.sol";
 import {
     IPermit2,
     ISignatureTransfer
@@ -67,7 +67,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "2.0.0-rc.2";
+    string public constant override VERSION = "2.0.0-rc.3";
 
     /// @notice Emitted when ERC20 tokens get wrapped.
     /// @param token The ERC20 token address.

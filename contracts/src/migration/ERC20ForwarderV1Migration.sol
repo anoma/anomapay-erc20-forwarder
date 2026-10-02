@@ -7,13 +7,13 @@ import {SafeCast} from "@openzeppelin-contracts-5.7.0/utils/math/SafeCast.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuard.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
-import {IERC20ForwarderMigration} from "./IERC20ForwarderMigration.sol";
+import {IERC20ForwarderV1Migration} from "./IERC20ForwarderV1Migration.sol";
 
-/// @title ERC20ForwarderMigration
+/// @title ERC20ForwarderV1Migration
 /// @author Anoma Foundation, 2026
 /// @notice Permanent V1 emergency caller that moves the V1 tokens only to its fixed V2 destination.
 /// @custom:security-contact security@anoma.foundation
-contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, ReentrancyGuard {
+contract ERC20ForwarderV1Migration is IERC20ForwarderV1Migration, Ownable, ReentrancyGuard {
     /// @notice The immutable source forwarder.
     IEmergencyMigratable public immutable FORWARDER_V1;
     /// @notice The immutable destination forwarder.
@@ -47,7 +47,7 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
     }
 
     // slither-disable-start reentrancy-balance
-    /// @inheritdoc IERC20ForwarderMigration
+    /// @inheritdoc IERC20ForwarderV1Migration
     function migrate(IERC20[] calldata tokens) external override nonReentrant onlyOwner {
         uint256 count = tokens.length;
 
@@ -63,13 +63,19 @@ contract ERC20ForwarderMigration is IERC20ForwarderMigration, Ownable, Reentranc
                 abi.encode(ERC20Forwarder.CallType.Unwrap, token, amount, FORWARDER_V2)
             );
 
+            // NOTE: The V1 forwarder returns empty bytes for a successful unwrap.
+            // slither-disable-next-line incorrect-equality
             require(output.length == 0, UnexpectedEmergencyCallOutput({token: address(token), output: output}));
 
             uint256 remaining = token.balanceOf(address(FORWARDER_V1));
+            // NOTE: The amount is the V1 balance read in this call, so V1 must end at zero.
+            // slither-disable-next-line incorrect-equality
             require(remaining == 0, SourceBalanceRemaining({token: address(token), remaining: remaining}));
 
             uint256 expected = beforeV2 + amount;
             uint256 received = token.balanceOf(FORWARDER_V2);
+            // NOTE: The forwarders support no fee-on-transfer token, so V2 must receive the exact amount.
+            // slither-disable-next-line incorrect-equality
             require(
                 received == expected,
                 DestinationBalanceMismatch({token: address(token), expected: expected, actual: received})
