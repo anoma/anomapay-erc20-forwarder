@@ -14,7 +14,7 @@ use crate::logic;
 use anoma_pa_testkit::fixtures::identities::Keychain;
 
 /// The kind table the fixtures prove against: the loaded one, or the empty table
-/// if none is loaded. The e2e setup loads the table the forked adapter stores.
+/// if none is loaded. The e2e setup loads none; a test that needs an alias loads its table first.
 pub(crate) fn kind_table() -> Vec<KindTableEntry> {
     anoma_rm_risc0::constants::kind_table().to_vec()
 }
