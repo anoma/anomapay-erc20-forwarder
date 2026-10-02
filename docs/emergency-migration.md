@@ -65,4 +65,3 @@ Each rotation adds one logic reference to the forwarder's set of retired logic r
 
 - The contract declares no initializer of its own. `ERC20Forwarder.initialize` initializes every parent contract, and a rotation must not run it again, so `reinitialize` calls no parent initializer.
 - The contract reports the `VERSION` of `ERC20Forwarder`, because a constant cannot be overridden. Before the draft becomes a release, `VERSION` must become a virtual getter.
-- `ILogicRefDenylist` in `src/draft/` declares the one protocol adapter function that the draft reads. Replace it with the pa-evm interface when a pa-evm release contains it.
