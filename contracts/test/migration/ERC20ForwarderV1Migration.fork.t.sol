@@ -6,10 +6,10 @@ import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
-import {DeployERC20ForwarderMigration} from "../../script/migration/DeployERC20ForwarderMigration.s.sol";
+import {DeployERC20ForwarderV1Migration} from "../../script/migration/DeployERC20ForwarderV1Migration.s.sol";
 import {MigrateERC20ForwarderAssets} from "../../script/migration/MigrateERC20ForwarderAssets.s.sol";
 import {Parameters} from "../../script/Parameters.sol";
-import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
+import {ERC20ForwarderV1Migration} from "../../src/migration/ERC20ForwarderV1Migration.sol";
 import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
 
 /// @notice Moves the tokens the deployed Sepolia V1 forwarder held to the recorded staging forwarder, on a fork of
@@ -20,7 +20,7 @@ import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
 /// the next block and the tokens moved after it.
 /// @dev Gated the way the other tests reading a chain are: the promotion gate into `staging` sets the variable, and
 /// the test skips everywhere else.
-contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
+contract ERC20ForwarderV1MigrationForkTest is DeploymentsFixture {
     uint256 internal constant _CHAIN_ID = 11155111;
 
     /// @notice The last Sepolia block before the emergency caller assignment.
@@ -58,7 +58,7 @@ contract ERC20ForwarderMigrationForkTest is DeploymentsFixture {
         // Deployed and assigned through the script, so its checks run against the chain the migration acts on. Outside
         // broadcast mode it simulates the forwarder multisig executing the assignment.
         vm.setEnv("SAFE_BROADCAST", "false");
-        ERC20ForwarderMigration migration = new DeployERC20ForwarderMigration().run({isProduction: false});
+        ERC20ForwarderV1Migration migration = new DeployERC20ForwarderV1Migration().run({isProduction: false});
         assertEq(migration.owner(), Parameters.DEPLOYMENT_WALLET, "the deployment wallet does not own the migration");
 
         // Read after the deployment: the address the migration lands on may hold a balance of its own already.

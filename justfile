@@ -164,7 +164,7 @@ contracts-simulate-migration chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
+    cd contracts && forge script script/migration/DeployERC20ForwarderV1Migration.s.sol:DeployERC20ForwarderV1Migration \
         --sig "run(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
@@ -172,7 +172,7 @@ contracts-simulate-migration chain *args:
 contracts-deploy-migration deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/migration/DeployERC20ForwarderMigration.s.sol:DeployERC20ForwarderMigration \
+    cd contracts && forge script script/migration/DeployERC20ForwarderV1Migration.s.sol:DeployERC20ForwarderV1Migration \
         --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 

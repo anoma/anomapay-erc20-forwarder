@@ -5,7 +5,7 @@ import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interface
 
 import {MigrateERC20ForwarderAssets} from "../../../script/migration/MigrateERC20ForwarderAssets.s.sol";
 import {MigrationScript} from "../../../script/migration/MigrationScript.s.sol";
-import {ERC20ForwarderMigration} from "../../../src/migration/ERC20ForwarderMigration.sol";
+import {ERC20ForwarderV1Migration} from "../../../src/migration/ERC20ForwarderV1Migration.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
 import {ERC20ForwarderV1Mock} from "../../mocks/ERC20ForwarderV1.m.sol";
 
@@ -33,7 +33,7 @@ contract MigrateERC20ForwarderAssetsTest is MigrationFixture {
     function test_executeMigration_reverts_if_the_emergency_caller_names_another_forwarder() public {
         address forwarderV1 =
             address(new ERC20ForwarderV1Mock({protocolAdapter: _protocolAdapterV1, emergencyCommittee: _committee}));
-        _assignEmergencyCaller(address(new ERC20ForwarderMigration(forwarderV1, _forwarderV2, _wallet)));
+        _assignEmergencyCaller(address(new ERC20ForwarderV1Migration(forwarderV1, _forwarderV2, _wallet)));
 
         _script = new MigrateERC20ForwarderAssets();
 
@@ -43,7 +43,7 @@ contract MigrateERC20ForwarderAssetsTest is MigrationFixture {
 
     function test_executeMigration_reverts_if_the_deployment_wallet_does_not_own_the_emergency_caller() public {
         address owner = makeAddr("another owner");
-        _assignEmergencyCaller(address(new ERC20ForwarderMigration(_forwarderV1, _forwarderV2, owner)));
+        _assignEmergencyCaller(address(new ERC20ForwarderV1Migration(_forwarderV1, _forwarderV2, owner)));
 
         _script = new MigrateERC20ForwarderAssets();
 
@@ -52,7 +52,7 @@ contract MigrateERC20ForwarderAssetsTest is MigrationFixture {
     }
 
     function test_verify_passes_once_the_tokens_moved() public {
-        ERC20ForwarderMigration migration = _deployMigration();
+        ERC20ForwarderV1Migration migration = _deployMigration();
 
         vm.prank(_wallet);
         migration.migrate(_tokens);

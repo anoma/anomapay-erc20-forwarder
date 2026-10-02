@@ -3,14 +3,14 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 
-import {ERC20ForwarderMigration} from "../../src/migration/ERC20ForwarderMigration.sol";
+import {ERC20ForwarderV1Migration} from "../../src/migration/ERC20ForwarderV1Migration.sol";
 import {Parameters} from "../Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title MigrateERC20ForwarderAssets
 /// @author Anoma Foundation, 2026
 /// @notice A script to move one chain's ERC20 tokens from the V1 forwarder to the V2 forwarder proxy, once the
-/// forwarder multisig has executed the caller assignment that `DeployERC20ForwarderMigration` proposed.
+/// forwarder multisig has executed the caller assignment that `DeployERC20ForwarderV1Migration` proposed.
 /// `executeMigration` moves the tokens as the deployment wallet that owns the migration contract. `verify` checks the
 /// moved tokens against the chain. Both read the migration contract from the emergency caller of V1.
 /// @dev V1 rejects an emergency call from a contract it does not hold as its caller, so the move runs only after the
@@ -27,7 +27,7 @@ contract MigrateERC20ForwarderAssets is MigrationScript {
     /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
     /// @param tokens The ERC20 tokens to move.
     function executeMigration(bool isProduction, IERC20[] calldata tokens) public {
-        ERC20ForwarderMigration migration = _assignedMigration(isProduction);
+        ERC20ForwarderV1Migration migration = _assignedMigration(isProduction);
 
         vm.broadcast(Parameters.DEPLOYMENT_WALLET);
         migration.migrate(tokens);

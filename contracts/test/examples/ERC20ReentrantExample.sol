@@ -4,12 +4,12 @@ pragma solidity ^0.8.30;
 import {ERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 
-import {IERC20ForwarderMigration} from "../../src/migration/IERC20ForwarderMigration.sol";
+import {IERC20ForwarderV1Migration} from "../../src/migration/IERC20ForwarderV1Migration.sol";
 
 /// @notice A token that calls the migration back while it moves this token, which is how a token with a transfer
 /// callback would re-enter.
 contract ERC20ReentrantExample is ERC20 {
-    IERC20ForwarderMigration internal _migration;
+    IERC20ForwarderV1Migration internal _migration;
 
     constructor() ERC20("MyToken", "MTK") {}
 
@@ -17,7 +17,7 @@ contract ERC20ReentrantExample is ERC20 {
         _mint(to, value);
     }
 
-    function setMigration(IERC20ForwarderMigration migration) external {
+    function setMigration(IERC20ForwarderV1Migration migration) external {
         _migration = migration;
     }
 
