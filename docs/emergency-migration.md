@@ -5,12 +5,12 @@ The draft [`MigratingERC20Forwarder`](../contracts/src/draft/MigratingERC20Forwa
 ## Incident procedure
 
 1. The owner of the protocol adapter pauses it. The adapter then executes no transaction.
-2. The owner upgrades the protocol adapter to an implementation whose circuit keys and RISC Zero verifier do not have the flaw, and adds the logic reference that the forwarder accepts to the adapter's logic ref denylist.
+2. The owner upgrades the protocol adapter to an implementation whose circuit keys and RISC Zero verifier do not have the flaw, and denies the logic reference that the forwarder accepts: it adds it to both logic ref denylists of the adapter, the one for consumed and the one for created resources.
 3. The owner of the forwarder upgrades it and calls `reinitialize` with the new logic reference.
 4. The owner unpauses the protocol adapter.
 5. Resource owners send migration transactions.
 
-`reinitialize` checks that the adapter denies the retired logic reference and does not deny the new one.
+`reinitialize` checks that both denylists of the adapter contain the retired logic reference and that neither contains the new one.
 
 ## Migration transactions
 
@@ -23,7 +23,7 @@ For each entry, the forwarder checks that:
 - the forwarder address in the resource label is this forwarder,
 - the forwarder retired the logic reference,
 - the adapter's root history contains the root,
-- the protocol adapter still denies the logic reference,
+- both denylists of the protocol adapter still contain the logic reference,
 - the adapter's nullifier set does not contain the nullifier,
 - the forwarder did not migrate the resource before.
 
@@ -42,11 +42,11 @@ The backend can therefore prove against the adapter's current root.
 
 The forwarder keeps its address when it is upgraded, so the label `hash(forwarder, token)` is the same for resources with the retired and with the new logic reference. The logic reference is different, and it is part of the resource kind `hash(logicRef, labelRef)`. `reinitialize` reads the current logic reference from storage, adds it to the set of retired logic references, and then writes the new one.
 
-The forwarder must accept only logic references that it retired itself, not every logic reference that the adapter denies. All applications share the denylist. A resource with another application's denied logic reference can have this forwarder's label and any quantity, and migrating it would create ERC20 resources for tokens that the forwarder does not hold.
+The forwarder must accept only logic references that it retired itself, not every logic reference that the adapter denies. All applications share the denylists. A resource with another application's denied logic reference can have this forwarder's label and any quantity, and migrating it would create ERC20 resources for tokens that the forwarder does not hold.
 
 ## Why the adapter must deny the retired logic reference
 
-A migration does not consume the retired resource at the adapter; the forwarder records its nullifier. Without the denylist entry, the resource owner could also consume the resource at the adapter, for example in a transaction that uses a kind table alias to create a resource with the new logic reference from it. A transaction that uses the flaw could also add the nullifier of another owner's resource to the adapter's nullifier set, and that resource could then not migrate. The adapter has no function that removes a denylist entry. If an upgrade of the adapter removes one, every migration of that logic reference fails.
+A migration does not consume the retired resource at the adapter; the forwarder records its nullifier. Without the entry in the denylist for consumed resources, the resource owner could also consume the resource at the adapter, for example in a transaction that uses a kind table alias to create a resource with the new logic reference from it. A transaction that uses the flaw could also add the nullifier of another owner's resource to the adapter's nullifier set, and that resource could then not migrate. Without the entry in the denylist for created resources, a transaction that uses the flaw could still create resources with the retired logic reference, and these resources could migrate too. So the logic reference must be on both lists: deprecating it, which adds it to the denylist for created resources only, is not enough. The adapter has no function that removes a denylist entry. If an upgrade of the adapter removes one, every migration of that logic reference fails.
 
 ## Repeated incidents
 

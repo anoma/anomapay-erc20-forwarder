@@ -60,11 +60,15 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
     /// @notice The length of one migration entry.
     uint256 internal constant _MIGRATE_ENTRY_LENGTH = 4 * 32;
 
-    /// @notice Thrown if the protocol adapter does not deny a retired logic reference.
-    error LogicRefNotDenied(bytes32 logicRef);
+    /// @notice Thrown if a denylist of the protocol adapter does not contain a retired logic reference.
+    /// @param logicRef The retired logic reference.
+    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
+    error LogicRefNotDenied(bytes32 logicRef, bool consumed);
 
-    /// @notice Thrown if the protocol adapter denies the new logic reference.
-    error DeniedLogicRef(bytes32 logicRef);
+    /// @notice Thrown if a denylist of the protocol adapter contains the new logic reference.
+    /// @param logicRef The new logic reference.
+    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
+    error DeniedLogicRef(bytes32 logicRef, bool consumed);
 
     /// @notice Thrown if a rotation keeps the current logic reference.
     error UnchangedLogicRef(bytes32 logicRef);
@@ -98,12 +102,9 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
         bytes32 retiredLogicRef = $._logicRef;
         require(newLogicRef != retiredLogicRef, UnchangedLogicRef(retiredLogicRef));
 
-        // The adapter must not also consume the resources that this contract migrates.
         address protocolAdapter = $._protocolAdapter;
-        require(
-            ILogicRefDenylist(protocolAdapter).isLogicRefDenied(retiredLogicRef), LogicRefNotDenied(retiredLogicRef)
-        );
-        require(!ILogicRefDenylist(protocolAdapter).isLogicRefDenied(newLogicRef), DeniedLogicRef(newLogicRef));
+        _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: retiredLogicRef});
+        _checkLogicRefNotDenied({protocolAdapter: protocolAdapter, logicRef: newLogicRef});
 
         require(
             _getMigratingERC20ForwarderStorage()._retiredLogicRefs.add(retiredLogicRef),
@@ -191,12 +192,7 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
                 NonExistingRoot(entry.commitmentTreeRoot)
             );
 
-            // The adapter must not also consume the resources that this contract migrates.
-            // forge-lint: disable-next-item(calls-loop)
-            require(
-                ILogicRefDenylist(protocolAdapter).isLogicRefDenied(entry.retiredLogicRef),
-                LogicRefNotDenied(entry.retiredLogicRef)
-            );
+            _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: entry.retiredLogicRef});
 
             // forge-lint: disable-next-item(calls-loop)
             require(
@@ -210,6 +206,38 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
 
             emit Migrated({token: token, retiredLogicRef: entry.retiredLogicRef, nullifier: entry.nullifier});
         }
+    }
+
+    /// @notice Checks that both denylists of the protocol adapter contain a retired logic reference: the adapter then
+    /// neither consumes the resources that this contract migrates nor creates new ones.
+    /// @param protocolAdapter The protocol adapter.
+    /// @param logicRef The retired logic reference.
+    function _checkLogicRefDenied(address protocolAdapter, bytes32 logicRef) internal view {
+        // NOTE: `_migrate` calls this function in a loop, and the adapter is a trusted contract.
+        // forge-lint: disable-next-item(calls-loop)
+        require(
+            ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: true}),
+            LogicRefNotDenied({logicRef: logicRef, consumed: true})
+        );
+        // forge-lint: disable-next-item(calls-loop)
+        require(
+            ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: false}),
+            LogicRefNotDenied({logicRef: logicRef, consumed: false})
+        );
+    }
+
+    /// @notice Checks that no denylist of the protocol adapter contains the new logic reference.
+    /// @param protocolAdapter The protocol adapter.
+    /// @param logicRef The new logic reference.
+    function _checkLogicRefNotDenied(address protocolAdapter, bytes32 logicRef) internal view {
+        require(
+            !ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: true}),
+            DeniedLogicRef({logicRef: logicRef, consumed: true})
+        );
+        require(
+            !ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: false}),
+            DeniedLogicRef({logicRef: logicRef, consumed: false})
+        );
     }
 
     /// @notice Returns the storage from the migrating ERC20 forwarder storage slot.

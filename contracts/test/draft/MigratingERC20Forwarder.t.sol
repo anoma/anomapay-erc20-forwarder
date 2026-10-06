@@ -93,12 +93,12 @@ contract MigratingERC20ForwarderTest is Test {
     function test_reinitialize_reverts_if_the_logic_ref_is_retired_already() public {
         _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF});
 
-        _pa.mockSetLogicRefDenied({logicRef: _RETIRED_LOGIC_REF, isDenied: false});
-        _pa.mockSetLogicRefDenied({logicRef: _NEW_LOGIC_REF, isDenied: true});
+        _setDenied({adapter: _pa, logicRef: _RETIRED_LOGIC_REF, isDenied: false});
+        _setDenied({adapter: _pa, logicRef: _NEW_LOGIC_REF, isDenied: true});
         vm.prank(_FORWARDER_OWNER);
         _fwd.reinitialize({newLogicRef: _RETIRED_LOGIC_REF});
 
-        _pa.mockSetLogicRefDenied({logicRef: _RETIRED_LOGIC_REF, isDenied: true});
+        _setDenied({adapter: _pa, logicRef: _RETIRED_LOGIC_REF, isDenied: true});
         vm.prank(_FORWARDER_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(MigratingERC20Forwarder.LogicRefAlreadyRetired.selector, _RETIRED_LOGIC_REF)
@@ -106,30 +106,34 @@ contract MigratingERC20ForwarderTest is Test {
         _fwd.reinitialize({newLogicRef: bytes32(uint256(5))});
     }
 
-    function test_reinitialize_reverts_if_the_protocol_adapter_does_not_deny_the_retired_logic_ref() public {
-        _pa.mockSetLogicRefDenied({logicRef: _RETIRED_LOGIC_REF, isDenied: false});
+    function testFuzz_reinitialize_reverts_if_the_protocol_adapter_does_not_deny_the_retired_logic_ref(bool consumed)
+        public
+    {
+        _pa.mockSetLogicRefDenied({logicRef: _RETIRED_LOGIC_REF, consumed: consumed, isDenied: false});
 
         _expectRetireRevert({
             newLogicRef: _NEW_LOGIC_REF,
             expectedError: abi.encodeWithSelector(
-                MigratingERC20Forwarder.LogicRefNotDenied.selector, _RETIRED_LOGIC_REF
+                MigratingERC20Forwarder.LogicRefNotDenied.selector, _RETIRED_LOGIC_REF, consumed
             )
         });
     }
 
-    function test_reinitialize_reverts_if_the_protocol_adapter_denies_the_new_logic_ref() public {
-        _pa.mockSetLogicRefDenied({logicRef: _NEW_LOGIC_REF, isDenied: true});
+    function testFuzz_reinitialize_reverts_if_the_protocol_adapter_denies_the_new_logic_ref(bool consumed) public {
+        _pa.mockSetLogicRefDenied({logicRef: _NEW_LOGIC_REF, consumed: consumed, isDenied: true});
 
         _expectRetireRevert({
             newLogicRef: _NEW_LOGIC_REF,
-            expectedError: abi.encodeWithSelector(MigratingERC20Forwarder.DeniedLogicRef.selector, _NEW_LOGIC_REF)
+            expectedError: abi.encodeWithSelector(
+                MigratingERC20Forwarder.DeniedLogicRef.selector, _NEW_LOGIC_REF, consumed
+            )
         });
     }
 
     function test_reinitialize_keeps_earlier_retired_logic_refs_migratable() public {
         _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF});
 
-        _pa.mockSetLogicRefDenied({logicRef: _NEW_LOGIC_REF, isDenied: true});
+        _setDenied({adapter: _pa, logicRef: _NEW_LOGIC_REF, isDenied: true});
         vm.prank(_FORWARDER_OWNER);
         _fwd.reinitialize({newLogicRef: bytes32(uint256(5))});
 
@@ -206,7 +210,7 @@ contract MigratingERC20ForwarderTest is Test {
 
     function test_migrate_reverts_if_the_protocol_adapter_no_longer_denies_the_retired_logic_ref() public {
         _upgradeAndRetire({newLogicRef: _NEW_LOGIC_REF});
-        _pa.mockSetLogicRefDenied({logicRef: _RETIRED_LOGIC_REF, isDenied: false});
+        _setDenied({adapter: _pa, logicRef: _RETIRED_LOGIC_REF, isDenied: false});
 
         _expectMigrateRevert({
             retiredLogicRef: _RETIRED_LOGIC_REF,
@@ -214,7 +218,7 @@ contract MigratingERC20ForwarderTest is Test {
             nullifier: _NULLIFIER,
             forwarder: address(_fwd),
             expectedError: abi.encodeWithSelector(
-                MigratingERC20Forwarder.LogicRefNotDenied.selector, _RETIRED_LOGIC_REF
+                MigratingERC20Forwarder.LogicRefNotDenied.selector, _RETIRED_LOGIC_REF, true
             )
         });
     }
@@ -382,7 +386,13 @@ contract MigratingERC20ForwarderTest is Test {
     function _adapterHolding(bytes32 root) internal returns (ProtocolAdapterMock adapter) {
         adapter = new ProtocolAdapterMock(_PA_OWNER);
         adapter.mockAddCommitmentTreeRoot(root);
-        adapter.mockSetLogicRefDenied({logicRef: _RETIRED_LOGIC_REF, isDenied: true});
+        _setDenied({adapter: adapter, logicRef: _RETIRED_LOGIC_REF, isDenied: true});
+    }
+
+    /// @dev Adds the logic ref to both denylists of the adapter, or removes it from both.
+    function _setDenied(ProtocolAdapterMock adapter, bytes32 logicRef, bool isDenied) internal {
+        adapter.mockSetLogicRefDenied({logicRef: logicRef, consumed: true, isDenied: isDenied});
+        adapter.mockSetLogicRefDenied({logicRef: logicRef, consumed: false, isDenied: isDenied});
     }
 
     function _deployForwarder(address protocolAdapter) internal returns (MigratingERC20Forwarder forwarder) {
