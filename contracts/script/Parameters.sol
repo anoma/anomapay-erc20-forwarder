@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Parameters as ProtocolAdapterParameters} from "anoma-pa-evm-2.0.0-rc.7/script/Parameters.sol";
+import {Parameters as ProtocolAdapterParameters} from "anoma-pa-evm-2.0.0-rc.8/script/Parameters.sol";
 
 /// @title Parameters
 /// @author Anoma Foundation, 2026
