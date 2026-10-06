@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {ERC20Example} from "anoma-forwarder-bases-3.0.1/test/examples/ERC20Example.sol";
 import {
     RecordedDeployments as ProtocolAdapterDeployments
-} from "anoma-pa-evm-2.0.0-rc.7/generated/RecordedDeployments.sol";
+} from "anoma-pa-evm-2.0.0-rc.8/generated/RecordedDeployments.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployERC20ForwarderV1Migration} from "../../script/migration/DeployERC20ForwarderV1Migration.s.sol";
