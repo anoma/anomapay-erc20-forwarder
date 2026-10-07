@@ -7,7 +7,7 @@ import {EmergencyMigratingERC20Forwarder} from "../../src/draft/EmergencyMigrati
 contract EmergencyMigratingERC20ForwarderNextMock is EmergencyMigratingERC20Forwarder {
     uint64 internal immutable _VERSION;
 
-    constructor(uint64 version) {
+    constructor(uint64 version, address v1Forwarder) EmergencyMigratingERC20Forwarder(v1Forwarder) {
         _VERSION = version;
     }
 

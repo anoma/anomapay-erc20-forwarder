@@ -7,6 +7,7 @@ import {IForwarder} from "anoma-forwarder-bases-3.0.1/src/interfaces/IForwarder.
 import {ILogicRefSpecific} from "anoma-forwarder-bases-3.0.1/src/interfaces/ILogicRefSpecific.sol";
 import {ERC20Example} from "anoma-forwarder-bases-3.0.1/test/examples/ERC20Example.sol";
 import {Test} from "forge-std-1.17.0/src/Test.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
 import {EmergencyMigratingERC20Forwarder} from "../../src/draft/EmergencyMigratingERC20Forwarder.sol";
@@ -26,6 +27,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     address internal immutable _PA_OWNER = makeAddr("pa owner");
     address internal immutable _FORWARDER_OWNER = makeAddr("forwarder owner");
     address internal immutable _RECEIVER = makeAddr("receiver");
+    address internal immutable _V1_FORWARDER = makeAddr("v1 forwarder");
 
     ProtocolAdapterMock internal _pa;
     EmergencyMigratingERC20Forwarder internal _fwd;
@@ -39,6 +41,12 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
 
     function test_upgrades_safely() public {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
+    }
+
+    function test_getV1Forwarder_returns_the_constructor_argument() public {
+        _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
+
+        assertEq(_fwd.getV1Forwarder(), _V1_FORWARDER);
     }
 
     function test_reinitialize_replaces_the_logic_ref() public {
@@ -98,7 +106,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     }
 
     function test_reinitialize_emits_the_LogicRefReplaced_event() public {
-        address implementation = address(new EmergencyMigratingERC20Forwarder());
+        address implementation = address(new EmergencyMigratingERC20Forwarder(_V1_FORWARDER));
         bytes memory data = abi.encodeCall(
             EmergencyMigratingERC20Forwarder.reinitialize, (_NEW_LOGIC_REF, _listOf(_VULNERABLE_LOGIC_REF))
         );
@@ -113,7 +121,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     }
 
     function test_reinitialize_emits_the_VulnerableLogicRefListed_event() public {
-        address implementation = address(new EmergencyMigratingERC20Forwarder());
+        address implementation = address(new EmergencyMigratingERC20Forwarder(_V1_FORWARDER));
         bytes memory data = abi.encodeCall(
             EmergencyMigratingERC20Forwarder.reinitialize, (_NEW_LOGIC_REF, _listOf(_VULNERABLE_LOGIC_REF))
         );
@@ -126,7 +134,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     }
 
     function test_reinitialize_reverts_if_the_caller_is_not_the_owner() public {
-        address implementation = address(new EmergencyMigratingERC20Forwarder());
+        address implementation = address(new EmergencyMigratingERC20Forwarder(_V1_FORWARDER));
         vm.prank(_FORWARDER_OWNER);
         _fwd.upgradeToAndCall({newImplementation: implementation, data: ""});
 
@@ -368,6 +376,21 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         });
     }
 
+    function test_migrate_accepts_a_resource_with_the_V1_forwarder_in_its_label() public {
+        _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
+
+        _migrateBatch(
+            _batch({
+                vulnerableLogicRef: _VULNERABLE_LOGIC_REF,
+                commitmentTreeRoot: _ROOT,
+                nullifier: _NULLIFIER,
+                forwarder: _V1_FORWARDER
+            })
+        );
+
+        assertTrue(_fwd.isNullifierMigrated(_NULLIFIER));
+    }
+
     function test_migrate_reverts_on_another_forwarder() public {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
         address otherForwarder = makeAddr("other forwarder");
@@ -378,7 +401,26 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
             nullifier: _NULLIFIER,
             forwarder: otherForwarder,
             expectedError: abi.encodeWithSelector(
-                EmergencyMigratingERC20Forwarder.ForwarderMismatch.selector, address(_fwd), otherForwarder
+                EmergencyMigratingERC20Forwarder.UnknownForwarder.selector, otherForwarder
+            )
+        });
+    }
+
+    function test_migrate_reverts_on_the_zero_forwarder_on_a_chain_without_a_V1_forwarder() public {
+        address implementation = address(new EmergencyMigratingERC20Forwarder(address(0)));
+        bytes memory data = abi.encodeCall(
+            EmergencyMigratingERC20Forwarder.reinitialize, (_NEW_LOGIC_REF, _listOf(_VULNERABLE_LOGIC_REF))
+        );
+        vm.prank(_FORWARDER_OWNER);
+        _fwd.upgradeToAndCall({newImplementation: implementation, data: data});
+
+        _expectMigrateRevert({
+            vulnerableLogicRef: _VULNERABLE_LOGIC_REF,
+            commitmentTreeRoot: _ROOT,
+            nullifier: _NULLIFIER,
+            forwarder: address(0),
+            expectedError: abi.encodeWithSelector(
+                EmergencyMigratingERC20Forwarder.UnknownForwarder.selector, address(0)
             )
         });
     }
@@ -505,11 +547,15 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     function _upgradeAndReinitialize(bytes32 newLogicRef, bytes32[] memory vulnerableLogicRefs) internal {
         // `startPrank` keeps the owner as the caller across the implementation deploy and the `upgradeToAndCall`
         // that `Upgrades.upgradeProxy` performs internally; a single `vm.prank` would only apply to the deploy.
+        Options memory options;
+        options.constructorData = abi.encode(_V1_FORWARDER);
+
         vm.startPrank(_FORWARDER_OWNER);
         Upgrades.upgradeProxy(
             address(_fwd),
             "EmergencyMigratingERC20Forwarder.sol:EmergencyMigratingERC20Forwarder",
-            abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef, vulnerableLogicRefs))
+            abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef, vulnerableLogicRefs)),
+            options
         );
         vm.stopPrank();
     }
@@ -518,7 +564,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     function _upgradeToNextAndReinitialize(uint64 version, bytes32 newLogicRef, bytes32[] memory vulnerableLogicRefs)
         internal
     {
-        address implementation = address(new EmergencyMigratingERC20ForwarderNextMock(version));
+        address implementation = address(new EmergencyMigratingERC20ForwarderNextMock(version, _V1_FORWARDER));
         bytes memory data =
             abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef, vulnerableLogicRefs));
 
@@ -531,7 +577,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         bytes32[] memory vulnerableLogicRefs,
         bytes memory expectedError
     ) internal {
-        address implementation = address(new EmergencyMigratingERC20Forwarder());
+        address implementation = address(new EmergencyMigratingERC20Forwarder(_V1_FORWARDER));
         bytes memory data =
             abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef, vulnerableLogicRefs));
 

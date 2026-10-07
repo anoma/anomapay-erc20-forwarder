@@ -60,6 +60,10 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @notice The length of one migration entry.
     uint256 internal constant _MIGRATE_ENTRY_LENGTH = 4 * 32;
 
+    /// @notice The V1 forwarder of the chain, or the zero address on a chain without one.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    address internal immutable _V1_FORWARDER;
+
     /// @notice Thrown if a denylist of the protocol adapter does not contain a vulnerable logic reference.
     /// @param logicRef The vulnerable logic reference.
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
@@ -82,8 +86,8 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @notice Thrown if the root history of the protocol adapter does not contain the root of a migrated resource.
     error NonExistingRoot(bytes32 root);
 
-    /// @notice Thrown if the label of a migrated resource contains another forwarder address.
-    error ForwarderMismatch(address expected, address actual);
+    /// @notice Thrown if the label of a migrated resource contains neither this forwarder nor the V1 forwarder.
+    error UnknownForwarder(address forwarder);
 
     /// @notice Thrown if a migration contains no resource.
     error EmptyMigrationBatch();
@@ -93,6 +97,16 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
 
     /// @notice Thrown if this contract migrated the resource already.
     error ResourceAlreadyMigrated(bytes32 nullifier);
+
+    /// @notice Sets the V1 forwarder of the chain, whose resources can migrate too.
+    /// @param v1Forwarder The V1 forwarder, or the zero address on a chain without one.
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    // NOTE: The zero address stands for a chain without a V1 forwarder, and `_migrate` accepts no zero label.
+    // forge-lint: disable-next-line(missing-zero-check)
+    constructor(address v1Forwarder) {
+        // slither-disable-next-line missing-zero-check
+        _V1_FORWARDER = v1Forwarder;
+    }
 
     /// @inheritdoc IEmergencyMigratingERC20Forwarder
     /// @dev Runs once: version 2 is one more than the version that `ERC20Forwarder.initialize` sets.
@@ -124,6 +138,11 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @inheritdoc IEmergencyMigratingERC20Forwarder
     function isNullifierMigrated(bytes32 nullifier) external view override returns (bool isMigrated) {
         isMigrated = _getEmergencyMigratingERC20ForwarderStorage()._isNullifierMigrated[nullifier];
+    }
+
+    /// @inheritdoc IEmergencyMigratingERC20Forwarder
+    function getV1Forwarder() external view override returns (address v1Forwarder) {
+        v1Forwarder = _V1_FORWARDER;
     }
 
     /// @notice Forwards a call wrapping, unwrapping, or migrating ERC20 resources based on the provided input.
@@ -175,8 +194,10 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
         for (uint256 i = 0; i < entryCount; ++i) {
             MigrateEntry memory entry = entries[i];
 
+            // The forwarder holds the tokens of its own resources and of V1 resources.
             require(
-                entry.forwarder == address(this), ForwarderMismatch({expected: address(this), actual: entry.forwarder})
+                entry.forwarder == address(this) || (_V1_FORWARDER != address(0) && entry.forwarder == _V1_FORWARDER),
+                UnknownForwarder(entry.forwarder)
             );
 
             require(
