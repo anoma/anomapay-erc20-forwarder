@@ -49,7 +49,7 @@ A migration does not consume the migrated resource at the adapter; the forwarder
 
 ## Repeated incidents
 
-Each call of `reinitialize` adds one logic reference to the forwarder's set of vulnerable logic references, and each migration entry names the logic reference of its resource. After a second call, resources with the first vulnerable logic reference can still migrate. One contract thus covers V1 to V2, V1 to V3 and V2 to V3.
+`reinitialize` runs once per implementation, so each incident upgrades the forwarder to a new implementation. Its `reinitialize` adds one logic reference to the forwarder's set of vulnerable logic references, and each migration entry names the logic reference of its resource. After a second incident, resources with the first vulnerable logic reference can still migrate.
 
 ## Limits
 
@@ -62,5 +62,6 @@ Each call of `reinitialize` adds one logic reference to the forwarder's set of v
 
 ## Notes on the draft
 
+- `reinitialize` uses a fixed reinitializer version, so it runs once per implementation. The version must be one more than the initialized version of the forwarder when the upgrade starts. The draft uses 2, because `ERC20Forwarder.initialize` sets 1. `reinitialize` is also owner-only: if an upgrade does not call it in the same call, nobody else can choose the logic reference.
 - The contract declares no initializer of its own. `ERC20Forwarder.initialize` initializes every parent contract, and `reinitialize` must not run it again, so it calls no parent initializer.
 - The contract reports the `VERSION` of `ERC20Forwarder`, because a constant cannot be overridden. Before the draft becomes a release, `VERSION` must become a virtual getter.

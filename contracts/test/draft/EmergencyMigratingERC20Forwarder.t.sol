@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin-contracts-upgradeable-5.7.0/proxy/utils/Initializable.sol";
 import {IForwarder} from "anoma-forwarder-bases-3.0.1/src/interfaces/IForwarder.sol";
 import {ILogicRefSpecific} from "anoma-forwarder-bases-3.0.1/src/interfaces/ILogicRefSpecific.sol";
 import {ERC20Example} from "anoma-forwarder-bases-3.0.1/test/examples/ERC20Example.sol";
@@ -11,6 +12,7 @@ import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {EmergencyMigratingERC20Forwarder} from "../../src/draft/EmergencyMigratingERC20Forwarder.sol";
 import {IEmergencyMigratingERC20Forwarder} from "../../src/draft/IEmergencyMigratingERC20Forwarder.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
+import {EmergencyMigratingERC20ForwarderNextMock} from "../mocks/EmergencyMigratingERC20ForwarderNext.m.sol";
 import {ProtocolAdapterMock} from "../mocks/ProtocolAdapter.m.sol";
 
 contract EmergencyMigratingERC20ForwarderTest is Test {
@@ -67,9 +69,20 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     }
 
     function test_reinitialize_reverts_if_the_caller_is_not_the_owner() public {
-        _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
+        address implementation = address(new EmergencyMigratingERC20Forwarder());
+        vm.prank(_FORWARDER_OWNER);
+        _fwd.upgradeToAndCall({newImplementation: implementation, data: ""});
 
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, address(this)));
+        _fwd.reinitialize({newLogicRef: _NEW_LOGIC_REF});
+    }
+
+    function test_reinitialize_reverts_if_it_runs_a_second_time() public {
+        _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
+        _setDenied({adapter: _pa, logicRef: _NEW_LOGIC_REF, isDenied: true});
+
+        vm.prank(_FORWARDER_OWNER);
+        vm.expectRevert(abi.encodeWithSelector(Initializable.InvalidInitialization.selector));
         _fwd.reinitialize({newLogicRef: bytes32(uint256(5))});
     }
 
@@ -95,17 +108,18 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
 
         _setDenied({adapter: _pa, logicRef: _VULNERABLE_LOGIC_REF, isDenied: false});
         _setDenied({adapter: _pa, logicRef: _NEW_LOGIC_REF, isDenied: true});
-        vm.prank(_FORWARDER_OWNER);
-        _fwd.reinitialize({newLogicRef: _VULNERABLE_LOGIC_REF});
+        _upgradeToNextAndReplace({version: 3, newLogicRef: _VULNERABLE_LOGIC_REF});
 
         _setDenied({adapter: _pa, logicRef: _VULNERABLE_LOGIC_REF, isDenied: true});
+        address implementation = address(new EmergencyMigratingERC20ForwarderNextMock(4));
+        bytes memory data = abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (bytes32(uint256(5))));
         vm.prank(_FORWARDER_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(
                 EmergencyMigratingERC20Forwarder.LogicRefAlreadyVulnerable.selector, _VULNERABLE_LOGIC_REF
             )
         );
-        _fwd.reinitialize({newLogicRef: bytes32(uint256(5))});
+        _fwd.upgradeToAndCall({newImplementation: implementation, data: data});
     }
 
     function testFuzz_reinitialize_reverts_if_the_protocol_adapter_does_not_deny_the_vulnerable_logic_ref(bool consumed)
@@ -136,8 +150,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
 
         _setDenied({adapter: _pa, logicRef: _NEW_LOGIC_REF, isDenied: true});
-        vm.prank(_FORWARDER_OWNER);
-        _fwd.reinitialize({newLogicRef: bytes32(uint256(5))});
+        _upgradeToNextAndReplace({version: 3, newLogicRef: bytes32(uint256(5))});
 
         assertEq(_fwd.vulnerableLogicRefCount(), 2);
         assertEq(_fwd.vulnerableLogicRefAtIndex(1), _NEW_LOGIC_REF);
@@ -230,8 +243,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     function test_migrate_reverts_if_the_protocol_adapter_no_longer_denies_another_vulnerable_logic_ref() public {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
         _setDenied({adapter: _pa, logicRef: _NEW_LOGIC_REF, isDenied: true});
-        vm.prank(_FORWARDER_OWNER);
-        _fwd.reinitialize({newLogicRef: bytes32(uint256(5))});
+        _upgradeToNextAndReplace({version: 3, newLogicRef: bytes32(uint256(5))});
         _setDenied({adapter: _pa, logicRef: _VULNERABLE_LOGIC_REF, isDenied: false});
 
         _expectMigrateRevert({
@@ -441,6 +453,15 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
             abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef))
         );
         vm.stopPrank();
+    }
+
+    /// @dev Upgrades the proxy to the implementation of a later incident and replaces its logic reference.
+    function _upgradeToNextAndReplace(uint64 version, bytes32 newLogicRef) internal {
+        address implementation = address(new EmergencyMigratingERC20ForwarderNextMock(version));
+        bytes memory data = abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef));
+
+        vm.prank(_FORWARDER_OWNER);
+        _fwd.upgradeToAndCall({newImplementation: implementation, data: data});
     }
 
     function _expectReplaceRevert(bytes32 newLogicRef, bytes memory expectedError) internal {

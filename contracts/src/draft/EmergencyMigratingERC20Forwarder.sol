@@ -95,25 +95,9 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     error ResourceAlreadyMigrated(bytes32 nullifier);
 
     /// @inheritdoc IEmergencyMigratingERC20Forwarder
-    function reinitialize(bytes32 newLogicRef) external override onlyOwner reinitializer(_getInitializedVersion() + 1) {
-        require(newLogicRef != bytes32(0), ZeroLogicRefNotAllowed());
-
-        ForwarderBaseStorage storage $ = _getForwarderBaseStorage();
-        bytes32 vulnerableLogicRef = $._logicRef;
-        require(newLogicRef != vulnerableLogicRef, UnchangedLogicRef(vulnerableLogicRef));
-
-        address protocolAdapter = $._protocolAdapter;
-        _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: vulnerableLogicRef});
-        _checkLogicRefNotDenied({protocolAdapter: protocolAdapter, logicRef: newLogicRef});
-
-        require(
-            _getEmergencyMigratingERC20ForwarderStorage()._vulnerableLogicRefs.add(vulnerableLogicRef),
-            LogicRefAlreadyVulnerable(vulnerableLogicRef)
-        );
-
-        $._logicRef = newLogicRef;
-
-        emit LogicRefReplaced({vulnerableLogicRef: vulnerableLogicRef, newLogicRef: newLogicRef});
+    /// @dev Runs once: version 2 is one more than the version that `ERC20Forwarder.initialize` sets.
+    function reinitialize(bytes32 newLogicRef) external virtual override onlyOwner reinitializer(2) {
+        _reinitialize(newLogicRef);
     }
 
     /// @inheritdoc IEmergencyMigratingERC20Forwarder
@@ -214,6 +198,29 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
 
             emit Migrated({token: token, vulnerableLogicRef: entry.vulnerableLogicRef, nullifier: entry.nullifier});
         }
+    }
+
+    /// @notice Replaces the current logic reference, which is vulnerable, with a new one.
+    /// @param newLogicRef The logic reference that the forwarder accepts after the call.
+    function _reinitialize(bytes32 newLogicRef) internal {
+        require(newLogicRef != bytes32(0), ZeroLogicRefNotAllowed());
+
+        ForwarderBaseStorage storage $ = _getForwarderBaseStorage();
+        bytes32 vulnerableLogicRef = $._logicRef;
+        require(newLogicRef != vulnerableLogicRef, UnchangedLogicRef(vulnerableLogicRef));
+
+        address protocolAdapter = $._protocolAdapter;
+        _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: vulnerableLogicRef});
+        _checkLogicRefNotDenied({protocolAdapter: protocolAdapter, logicRef: newLogicRef});
+
+        require(
+            _getEmergencyMigratingERC20ForwarderStorage()._vulnerableLogicRefs.add(vulnerableLogicRef),
+            LogicRefAlreadyVulnerable(vulnerableLogicRef)
+        );
+
+        $._logicRef = newLogicRef;
+
+        emit LogicRefReplaced({vulnerableLogicRef: vulnerableLogicRef, newLogicRef: newLogicRef});
     }
 
     /// @notice Checks that both denylists of the protocol adapter contain a vulnerable logic reference: the adapter
