@@ -21,6 +21,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     bytes32 internal constant _NEW_LOGIC_REF = bytes32(uint256(2));
     bytes32 internal constant _ROOT = bytes32(uint256(3));
     bytes32 internal constant _NULLIFIER = bytes32(uint256(4));
+    bytes32 internal constant _DEPRECATED_LOGIC_REF = bytes32(uint256(7));
 
     address internal immutable _PA_OWNER = makeAddr("pa owner");
     address internal immutable _FORWARDER_OWNER = makeAddr("forwarder owner");
@@ -46,23 +47,79 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         assertEq(_fwd.getLogicRef(), _NEW_LOGIC_REF);
     }
 
-    function test_reinitialize_records_the_vulnerable_logic_ref() public {
-        _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
+    function test_reinitialize_lists_the_vulnerable_logic_refs() public {
+        _setDenied({adapter: _pa, logicRef: _DEPRECATED_LOGIC_REF, isDenied: true});
+
+        _upgradeAndReinitialize({
+            newLogicRef: _NEW_LOGIC_REF, vulnerableLogicRefs: _listOf(_VULNERABLE_LOGIC_REF, _DEPRECATED_LOGIC_REF)
+        });
 
         assertTrue(_fwd.isLogicRefVulnerable(_VULNERABLE_LOGIC_REF));
+        assertTrue(_fwd.isLogicRefVulnerable(_DEPRECATED_LOGIC_REF));
         assertFalse(_fwd.isLogicRefVulnerable(_NEW_LOGIC_REF));
-        assertEq(_fwd.vulnerableLogicRefCount(), 1);
+        assertEq(_fwd.vulnerableLogicRefCount(), 2);
         assertEq(_fwd.vulnerableLogicRefAtIndex(0), _VULNERABLE_LOGIC_REF);
+        assertEq(_fwd.vulnerableLogicRefAtIndex(1), _DEPRECATED_LOGIC_REF);
+    }
+
+    /// @dev The previous logic ref has no flaw: only a deprecated one has.
+    function test_reinitialize_lists_only_the_passed_logic_refs() public {
+        _setDenied({adapter: _pa, logicRef: _VULNERABLE_LOGIC_REF, isDenied: false});
+        _setDenied({adapter: _pa, logicRef: _DEPRECATED_LOGIC_REF, isDenied: true});
+
+        _upgradeAndReinitialize({newLogicRef: _NEW_LOGIC_REF, vulnerableLogicRefs: _listOf(_DEPRECATED_LOGIC_REF)});
+
+        assertEq(_fwd.getLogicRef(), _NEW_LOGIC_REF);
+        assertFalse(_fwd.isLogicRefVulnerable(_VULNERABLE_LOGIC_REF));
+        assertEq(_fwd.vulnerableLogicRefCount(), 1);
+        assertEq(_fwd.vulnerableLogicRefAtIndex(0), _DEPRECATED_LOGIC_REF);
+    }
+
+    /// @dev The current logic ref has no flaw and can start a migration already.
+    function test_reinitialize_keeps_the_logic_ref_and_lists_the_vulnerable_logic_refs() public {
+        _setDenied({adapter: _pa, logicRef: _VULNERABLE_LOGIC_REF, isDenied: false});
+        _setDenied({adapter: _pa, logicRef: _DEPRECATED_LOGIC_REF, isDenied: true});
+
+        _upgradeAndReinitialize({
+            newLogicRef: _VULNERABLE_LOGIC_REF, vulnerableLogicRefs: _listOf(_DEPRECATED_LOGIC_REF)
+        });
+
+        assertEq(_fwd.getLogicRef(), _VULNERABLE_LOGIC_REF);
+        assertTrue(_fwd.isLogicRefVulnerable(_DEPRECATED_LOGIC_REF));
+        assertEq(_fwd.vulnerableLogicRefCount(), 1);
+    }
+
+    /// @dev A voluntary upgrade after an incident lists nothing.
+    function test_reinitialize_replaces_the_logic_ref_with_an_empty_list() public {
+        _upgradeAndReinitialize({newLogicRef: _NEW_LOGIC_REF, vulnerableLogicRefs: new bytes32[](0)});
+
+        assertEq(_fwd.getLogicRef(), _NEW_LOGIC_REF);
+        assertEq(_fwd.vulnerableLogicRefCount(), 0);
     }
 
     function test_reinitialize_emits_the_LogicRefReplaced_event() public {
         address implementation = address(new EmergencyMigratingERC20Forwarder());
-        bytes memory data = abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (_NEW_LOGIC_REF));
+        bytes memory data = abi.encodeCall(
+            EmergencyMigratingERC20Forwarder.reinitialize, (_NEW_LOGIC_REF, _listOf(_VULNERABLE_LOGIC_REF))
+        );
 
         vm.expectEmit(address(_fwd));
         emit IEmergencyMigratingERC20Forwarder.LogicRefReplaced({
-            vulnerableLogicRef: _VULNERABLE_LOGIC_REF, newLogicRef: _NEW_LOGIC_REF
+            previousLogicRef: _VULNERABLE_LOGIC_REF, newLogicRef: _NEW_LOGIC_REF
         });
+
+        vm.prank(_FORWARDER_OWNER);
+        _fwd.upgradeToAndCall({newImplementation: implementation, data: data});
+    }
+
+    function test_reinitialize_emits_the_VulnerableLogicRefListed_event() public {
+        address implementation = address(new EmergencyMigratingERC20Forwarder());
+        bytes memory data = abi.encodeCall(
+            EmergencyMigratingERC20Forwarder.reinitialize, (_NEW_LOGIC_REF, _listOf(_VULNERABLE_LOGIC_REF))
+        );
+
+        vm.expectEmit(address(_fwd));
+        emit IEmergencyMigratingERC20Forwarder.VulnerableLogicRefListed({logicRef: _VULNERABLE_LOGIC_REF});
 
         vm.prank(_FORWARDER_OWNER);
         _fwd.upgradeToAndCall({newImplementation: implementation, data: data});
@@ -74,7 +131,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         _fwd.upgradeToAndCall({newImplementation: implementation, data: ""});
 
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, address(this)));
-        _fwd.reinitialize({newLogicRef: _NEW_LOGIC_REF});
+        _fwd.reinitialize({newLogicRef: _NEW_LOGIC_REF, vulnerableLogicRefs: _listOf(_VULNERABLE_LOGIC_REF)});
     }
 
     function test_reinitialize_reverts_if_it_runs_a_second_time() public {
@@ -83,43 +140,35 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
 
         vm.prank(_FORWARDER_OWNER);
         vm.expectRevert(abi.encodeWithSelector(Initializable.InvalidInitialization.selector));
-        _fwd.reinitialize({newLogicRef: bytes32(uint256(5))});
+        _fwd.reinitialize({newLogicRef: bytes32(uint256(5)), vulnerableLogicRefs: _listOf(_NEW_LOGIC_REF)});
     }
 
     function test_reinitialize_reverts_on_the_zero_logic_ref() public {
-        _expectReplaceRevert({
+        _expectReinitializeRevert({
             newLogicRef: bytes32(0),
+            vulnerableLogicRefs: _listOf(_VULNERABLE_LOGIC_REF),
             expectedError: abi.encodeWithSelector(ILogicRefSpecific.ZeroLogicRefNotAllowed.selector)
         });
     }
 
-    function test_reinitialize_reverts_if_the_logic_ref_does_not_change() public {
-        _expectReplaceRevert({
+    function test_reinitialize_reverts_if_it_changes_nothing() public {
+        _expectReinitializeRevert({
             newLogicRef: _VULNERABLE_LOGIC_REF,
+            vulnerableLogicRefs: new bytes32[](0),
             expectedError: abi.encodeWithSelector(
                 EmergencyMigratingERC20Forwarder.UnchangedLogicRef.selector, _VULNERABLE_LOGIC_REF
             )
         });
     }
 
-    /// @dev Only an adapter that removes a denylist entry lets a vulnerable logic ref become current again.
     function test_reinitialize_reverts_if_the_logic_ref_is_vulnerable_already() public {
-        _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
-
-        _setDenied({adapter: _pa, logicRef: _VULNERABLE_LOGIC_REF, isDenied: false});
-        _setDenied({adapter: _pa, logicRef: _NEW_LOGIC_REF, isDenied: true});
-        _upgradeToNextAndReplace({version: 3, newLogicRef: _VULNERABLE_LOGIC_REF});
-
-        _setDenied({adapter: _pa, logicRef: _VULNERABLE_LOGIC_REF, isDenied: true});
-        address implementation = address(new EmergencyMigratingERC20ForwarderNextMock(4));
-        bytes memory data = abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (bytes32(uint256(5))));
-        vm.prank(_FORWARDER_OWNER);
-        vm.expectRevert(
-            abi.encodeWithSelector(
+        _expectReinitializeRevert({
+            newLogicRef: _NEW_LOGIC_REF,
+            vulnerableLogicRefs: _listOf(_VULNERABLE_LOGIC_REF, _VULNERABLE_LOGIC_REF),
+            expectedError: abi.encodeWithSelector(
                 EmergencyMigratingERC20Forwarder.LogicRefAlreadyVulnerable.selector, _VULNERABLE_LOGIC_REF
             )
-        );
-        _fwd.upgradeToAndCall({newImplementation: implementation, data: data});
+        });
     }
 
     function testFuzz_reinitialize_reverts_if_the_protocol_adapter_does_not_deny_the_vulnerable_logic_ref(bool consumed)
@@ -127,8 +176,9 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     {
         _pa.mockSetLogicRefDenied({logicRef: _VULNERABLE_LOGIC_REF, consumed: consumed, isDenied: false});
 
-        _expectReplaceRevert({
+        _expectReinitializeRevert({
             newLogicRef: _NEW_LOGIC_REF,
+            vulnerableLogicRefs: _listOf(_VULNERABLE_LOGIC_REF),
             expectedError: abi.encodeWithSelector(
                 EmergencyMigratingERC20Forwarder.LogicRefNotDenied.selector, _VULNERABLE_LOGIC_REF, consumed
             )
@@ -138,8 +188,9 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     function testFuzz_reinitialize_reverts_if_the_protocol_adapter_denies_the_new_logic_ref(bool consumed) public {
         _pa.mockSetLogicRefDenied({logicRef: _NEW_LOGIC_REF, consumed: consumed, isDenied: true});
 
-        _expectReplaceRevert({
+        _expectReinitializeRevert({
             newLogicRef: _NEW_LOGIC_REF,
+            vulnerableLogicRefs: _listOf(_VULNERABLE_LOGIC_REF),
             expectedError: abi.encodeWithSelector(
                 EmergencyMigratingERC20Forwarder.DeniedLogicRef.selector, _NEW_LOGIC_REF, consumed
             )
@@ -150,7 +201,9 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
 
         _setDenied({adapter: _pa, logicRef: _NEW_LOGIC_REF, isDenied: true});
-        _upgradeToNextAndReplace({version: 3, newLogicRef: bytes32(uint256(5))});
+        _upgradeToNextAndReinitialize({
+            version: 3, newLogicRef: bytes32(uint256(5)), vulnerableLogicRefs: _listOf(_NEW_LOGIC_REF)
+        });
 
         assertEq(_fwd.vulnerableLogicRefCount(), 2);
         assertEq(_fwd.vulnerableLogicRefAtIndex(1), _NEW_LOGIC_REF);
@@ -241,13 +294,14 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     }
 
     function test_migrate_reverts_if_the_protocol_adapter_no_longer_denies_another_vulnerable_logic_ref() public {
-        _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
-        _setDenied({adapter: _pa, logicRef: _NEW_LOGIC_REF, isDenied: true});
-        _upgradeToNextAndReplace({version: 3, newLogicRef: bytes32(uint256(5))});
+        _setDenied({adapter: _pa, logicRef: _DEPRECATED_LOGIC_REF, isDenied: true});
+        _upgradeAndReinitialize({
+            newLogicRef: _NEW_LOGIC_REF, vulnerableLogicRefs: _listOf(_VULNERABLE_LOGIC_REF, _DEPRECATED_LOGIC_REF)
+        });
         _setDenied({adapter: _pa, logicRef: _VULNERABLE_LOGIC_REF, isDenied: false});
 
         _expectMigrateRevert({
-            vulnerableLogicRef: _NEW_LOGIC_REF,
+            vulnerableLogicRef: _DEPRECATED_LOGIC_REF,
             commitmentTreeRoot: _ROOT,
             nullifier: _NULLIFIER,
             forwarder: address(_fwd),
@@ -442,31 +496,44 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         );
     }
 
-    /// @dev Upgrades the proxy to the draft and replaces its logic reference, as the owner does.
+    /// @dev Upgrades the proxy to the draft, replaces its logic reference and lists the previous one, as the owner does
+    /// after a flaw in the logic ref that the forwarder accepts.
     function _upgradeAndReplace(bytes32 newLogicRef) internal {
+        _upgradeAndReinitialize({newLogicRef: newLogicRef, vulnerableLogicRefs: _listOf(_VULNERABLE_LOGIC_REF)});
+    }
+
+    function _upgradeAndReinitialize(bytes32 newLogicRef, bytes32[] memory vulnerableLogicRefs) internal {
         // `startPrank` keeps the owner as the caller across the implementation deploy and the `upgradeToAndCall`
         // that `Upgrades.upgradeProxy` performs internally; a single `vm.prank` would only apply to the deploy.
         vm.startPrank(_FORWARDER_OWNER);
         Upgrades.upgradeProxy(
             address(_fwd),
             "EmergencyMigratingERC20Forwarder.sol:EmergencyMigratingERC20Forwarder",
-            abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef))
+            abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef, vulnerableLogicRefs))
         );
         vm.stopPrank();
     }
 
-    /// @dev Upgrades the proxy to the implementation of a later incident and replaces its logic reference.
-    function _upgradeToNextAndReplace(uint64 version, bytes32 newLogicRef) internal {
+    /// @dev Upgrades the proxy to the implementation of a later incident and reinitializes it.
+    function _upgradeToNextAndReinitialize(uint64 version, bytes32 newLogicRef, bytes32[] memory vulnerableLogicRefs)
+        internal
+    {
         address implementation = address(new EmergencyMigratingERC20ForwarderNextMock(version));
-        bytes memory data = abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef));
+        bytes memory data =
+            abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef, vulnerableLogicRefs));
 
         vm.prank(_FORWARDER_OWNER);
         _fwd.upgradeToAndCall({newImplementation: implementation, data: data});
     }
 
-    function _expectReplaceRevert(bytes32 newLogicRef, bytes memory expectedError) internal {
+    function _expectReinitializeRevert(
+        bytes32 newLogicRef,
+        bytes32[] memory vulnerableLogicRefs,
+        bytes memory expectedError
+    ) internal {
         address implementation = address(new EmergencyMigratingERC20Forwarder());
-        bytes memory data = abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef));
+        bytes memory data =
+            abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef, vulnerableLogicRefs));
 
         vm.prank(_FORWARDER_OWNER);
         vm.expectRevert(expectedError);
@@ -561,6 +628,17 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
             nullifier: nullifier,
             forwarder: forwarder
         });
+    }
+
+    function _listOf(bytes32 logicRef) internal pure returns (bytes32[] memory logicRefs) {
+        logicRefs = new bytes32[](1);
+        logicRefs[0] = logicRef;
+    }
+
+    function _listOf(bytes32 first, bytes32 second) internal pure returns (bytes32[] memory logicRefs) {
+        logicRefs = new bytes32[](2);
+        logicRefs[0] = first;
+        logicRefs[1] = second;
     }
 
     function _entry(bytes32 vulnerableLogicRef, bytes32 commitmentTreeRoot, bytes32 nullifier, address forwarder)

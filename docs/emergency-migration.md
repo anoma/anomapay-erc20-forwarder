@@ -6,11 +6,11 @@ The draft [`EmergencyMigratingERC20Forwarder`](../contracts/src/draft/EmergencyM
 
 1. The owner of the protocol adapter pauses it. The adapter then executes no transaction.
 2. The owner upgrades the protocol adapter to an implementation whose circuit keys and RISC Zero verifier do not have the flaw, and denies the logic reference that the forwarder accepts: it adds it to both logic ref denylists of the adapter, the one for consumed and the one for created resources.
-3. The owner of the forwarder upgrades it and calls `reinitialize` with the new logic reference.
+3. The owner of the forwarder upgrades it and calls `reinitialize` with the new logic reference and the list of vulnerable logic references, here the logic reference that the forwarder accepted until then.
 4. The owner unpauses the protocol adapter.
 5. Resource owners send migration transactions.
 
-`reinitialize` checks that both denylists of the adapter contain the vulnerable logic reference and that neither contains the new one.
+`reinitialize` checks that both denylists of the adapter contain each listed logic reference and that neither contains the new one.
 
 ## Migration transactions
 
@@ -39,9 +39,9 @@ The backend can therefore prove against the adapter's current root.
 
 ## What `reinitialize` stores
 
-The forwarder keeps its address when it is upgraded, so the label `hash(forwarder, token)` is the same for resources with the vulnerable and with the new logic reference. The logic reference is different, and it is part of the resource kind `hash(logicRef, labelRef)`. `reinitialize` reads the current logic reference from storage, adds it to the set of vulnerable logic references, and then writes the new one.
+The forwarder keeps its address when it is upgraded, so the label `hash(forwarder, token)` is the same for resources with the vulnerable and with the new logic reference. The logic reference is different, and it is part of the resource kind `hash(logicRef, labelRef)`. `reinitialize` adds each listed logic reference to the set of vulnerable logic references and then writes the new logic reference. It lists only the logic references that the owner passes. A logic reference that the forwarder leaves without a flaw stays off the list, and its resources move to the new one through the kind table.
 
-The forwarder must accept only vulnerable logic references that it replaced itself, not every logic reference that the adapter denies. All applications share the denylists. A resource with another application's denied logic reference can have this forwarder's label and any quantity, and migrating it would create ERC20 resources for tokens that the forwarder does not hold.
+The forwarder must accept only vulnerable logic references of its own circuit versions, not every logic reference that the adapter denies. All applications share the denylists. A resource with another application's denied logic reference can have this forwarder's label and any quantity, and migrating it would create ERC20 resources for tokens that the forwarder does not hold.
 
 ## Why the adapter must deny the vulnerable logic reference
 
@@ -49,7 +49,7 @@ A migration does not consume the migrated resource at the adapter; the forwarder
 
 ## Repeated incidents
 
-`reinitialize` runs once per implementation, so each incident upgrades the forwarder to a new implementation. Its `reinitialize` adds one logic reference to the forwarder's set of vulnerable logic references, and each migration entry names the logic reference of its resource. After a second incident, resources with the first vulnerable logic reference can still migrate.
+`reinitialize` runs once per implementation, so each incident upgrades the forwarder to a new implementation. Its `reinitialize` adds the listed logic references to the forwarder's set of vulnerable logic references. It can keep the current logic reference, for example if a later flaw is only in a deprecated version, and it reverts if it changes nothing. Each migration entry names the logic reference of its resource, so after a second incident, resources with the first vulnerable logic reference can still migrate.
 
 ## Limits
 
@@ -58,10 +58,9 @@ A migration does not consume the migrated resource at the adapter; the forwarder
 - **No replacement of withdrawn tokens.** If someone used the flaw to unwrap tokens, the forwarder holds fewer tokens than the migrated resources represent. Unwraps then succeed in the order they execute until the forwarder does not hold enough tokens, and the unwraps after that fail.
 - **Consumed resources cannot migrate.** A resource whose nullifier is in the adapter's nullifier set cannot migrate. This includes resources whose nullifier an attacker added with the flaw.
 - **Only this forwarder's label.** An entry whose label contains another forwarder address fails. V1 resources, which the V2 commitment tree contains on chains that ran V1, cannot migrate with this draft.
-- **One logic reference per call.** `reinitialize` replaces only the logic reference that the forwarder accepts at that time. A deprecated version that the kind table still aliases is not replaced.
 
 ## Notes on the draft
 
-- `reinitialize` uses a fixed reinitializer version, so it runs once per implementation. The version must be one more than the initialized version of the forwarder when the upgrade starts. The draft uses 2, because `ERC20Forwarder.initialize` sets 1. `reinitialize` is also owner-only: if an upgrade does not call it in the same call, nobody else can choose the logic reference.
+- `reinitialize` uses a fixed reinitializer version, so it runs once per implementation. The version must be one more than the initialized version of the forwarder when the upgrade starts. The draft uses 2, because `ERC20Forwarder.initialize` sets 1. `reinitialize` is also owner-only: if an upgrade does not call it in the same call, nobody else can choose the logic reference and the list.
 - The contract declares no initializer of its own. `ERC20Forwarder.initialize` initializes every parent contract, and `reinitialize` must not run it again, so it calls no parent initializer.
 - The contract reports the `VERSION` of `ERC20Forwarder`, because a constant cannot be overridden. Before the draft becomes a release, `VERSION` must become a virtual getter.

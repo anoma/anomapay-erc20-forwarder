@@ -11,7 +11,12 @@ contract EmergencyMigratingERC20ForwarderNextMock is EmergencyMigratingERC20Forw
         _VERSION = version;
     }
 
-    function reinitialize(bytes32 newLogicRef) external override onlyOwner reinitializer(_VERSION) {
-        _reinitialize(newLogicRef);
+    function reinitialize(bytes32 newLogicRef, bytes32[] calldata vulnerableLogicRefs)
+        external
+        override
+        onlyOwner
+        reinitializer(_VERSION)
+    {
+        _reinitialize({newLogicRef: newLogicRef, vulnerableLogicRefs: vulnerableLogicRefs});
     }
 }

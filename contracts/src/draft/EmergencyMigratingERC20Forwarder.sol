@@ -12,7 +12,7 @@ import {IEmergencyMigratingERC20Forwarder} from "./IEmergencyMigratingERC20Forwa
 
 /// @title EmergencyMigratingERC20Forwarder
 /// @author Anoma Foundation, 2026
-/// @notice A draft ERC20 forwarder that migrates ERC20 resources from a vulnerable logic reference to a new one. It
+/// @notice A draft ERC20 forwarder that migrates ERC20 resources from vulnerable logic references to its own. It
 /// adds the `Migrate` call type to wrap and unwrap.
 /// @dev See `docs/emergency-migration.md` for the incident procedure, the design and its limits.
 /// @custom:security-contact security@anoma.foundation
@@ -43,7 +43,7 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @notice The ERC-7201 storage of the contract.
     /// @custom:storage-location erc7201:anoma.storage.EmergencyMigratingERC20Forwarder
     struct EmergencyMigratingERC20ForwarderStorage {
-        // The vulnerable logic references that the forwarder replaced, in that order.
+        // The vulnerable logic references, in the order in which `reinitialize` listed them.
         EnumerableSet.Bytes32Set _vulnerableLogicRefs;
         // The nullifiers of the migrated resources.
         mapping(bytes32 nullifier => bool isMigrated) _isNullifierMigrated;
@@ -70,13 +70,13 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
     error DeniedLogicRef(bytes32 logicRef, bool consumed);
 
-    /// @notice Thrown if `reinitialize` keeps the current logic reference.
+    /// @notice Thrown if `reinitialize` keeps the current logic reference and lists no vulnerable logic reference.
     error UnchangedLogicRef(bytes32 logicRef);
 
-    /// @notice Thrown if `reinitialize` replaces a vulnerable logic reference a second time.
+    /// @notice Thrown if `reinitialize` lists a vulnerable logic reference a second time.
     error LogicRefAlreadyVulnerable(bytes32 logicRef);
 
-    /// @notice Thrown if a migration names a logic reference that this forwarder did not replace as vulnerable.
+    /// @notice Thrown if a migration names a logic reference that this forwarder does not list as vulnerable.
     error UnknownVulnerableLogicRef(bytes32 vulnerableLogicRef);
 
     /// @notice Thrown if the root history of the protocol adapter does not contain the root of a migrated resource.
@@ -96,8 +96,14 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
 
     /// @inheritdoc IEmergencyMigratingERC20Forwarder
     /// @dev Runs once: version 2 is one more than the version that `ERC20Forwarder.initialize` sets.
-    function reinitialize(bytes32 newLogicRef) external virtual override onlyOwner reinitializer(2) {
-        _reinitialize(newLogicRef);
+    function reinitialize(bytes32 newLogicRef, bytes32[] calldata vulnerableLogicRefs)
+        external
+        virtual
+        override
+        onlyOwner
+        reinitializer(2)
+    {
+        _reinitialize({newLogicRef: newLogicRef, vulnerableLogicRefs: vulnerableLogicRefs});
     }
 
     /// @inheritdoc IEmergencyMigratingERC20Forwarder
@@ -200,27 +206,34 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
         }
     }
 
-    /// @notice Replaces the current logic reference, which is vulnerable, with a new one.
+    /// @notice Lists vulnerable logic references and replaces the current logic reference if the new one differs.
     /// @param newLogicRef The logic reference that the forwarder accepts after the call.
-    function _reinitialize(bytes32 newLogicRef) internal {
+    /// @param vulnerableLogicRefs The vulnerable logic references to list.
+    function _reinitialize(bytes32 newLogicRef, bytes32[] calldata vulnerableLogicRefs) internal {
         require(newLogicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
         ForwarderBaseStorage storage $ = _getForwarderBaseStorage();
-        bytes32 vulnerableLogicRef = $._logicRef;
-        require(newLogicRef != vulnerableLogicRef, UnchangedLogicRef(vulnerableLogicRef));
+        bytes32 previousLogicRef = $._logicRef;
+        uint256 vulnerableCount = vulnerableLogicRefs.length;
+        require(newLogicRef != previousLogicRef || vulnerableCount != 0, UnchangedLogicRef(previousLogicRef));
 
         address protocolAdapter = $._protocolAdapter;
-        _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: vulnerableLogicRef});
         _checkLogicRefNotDenied({protocolAdapter: protocolAdapter, logicRef: newLogicRef});
 
-        require(
-            _getEmergencyMigratingERC20ForwarderStorage()._vulnerableLogicRefs.add(vulnerableLogicRef),
-            LogicRefAlreadyVulnerable(vulnerableLogicRef)
-        );
+        EnumerableSet.Bytes32Set storage listed = _getEmergencyMigratingERC20ForwarderStorage()._vulnerableLogicRefs;
+        for (uint256 i = 0; i < vulnerableCount; ++i) {
+            bytes32 vulnerableLogicRef = vulnerableLogicRefs[i];
+            _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: vulnerableLogicRef});
+            require(listed.add(vulnerableLogicRef), LogicRefAlreadyVulnerable(vulnerableLogicRef));
 
-        $._logicRef = newLogicRef;
+            emit VulnerableLogicRefListed(vulnerableLogicRef);
+        }
 
-        emit LogicRefReplaced({vulnerableLogicRef: vulnerableLogicRef, newLogicRef: newLogicRef});
+        if (newLogicRef != previousLogicRef) {
+            $._logicRef = newLogicRef;
+
+            emit LogicRefReplaced({previousLogicRef: previousLogicRef, newLogicRef: newLogicRef});
+        }
     }
 
     /// @notice Checks that both denylists of the protocol adapter contain a vulnerable logic reference: the adapter
@@ -228,7 +241,7 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @param protocolAdapter The protocol adapter.
     /// @param logicRef The vulnerable logic reference.
     function _checkLogicRefDenied(address protocolAdapter, bytes32 logicRef) internal view {
-        // NOTE: `_migrate` calls this function in a loop, and the adapter is a trusted contract.
+        // NOTE: `_migrate` and `_reinitialize` call this function in a loop, and the adapter is a trusted contract.
         // forge-lint: disable-next-item(calls-loop)
         require(
             ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: true}),
