@@ -18,12 +18,11 @@ A migration transaction consumes one ephemeral resource with the new logic refer
 
 The trigger calls the forwarder with `(Migrate, token, total quantity, MigrateEntry[])`, encoded by `encode_migrate_forwarder_input_batch` in anomapay-erc20-resource. Each entry contains the nullifier, the commitment tree root of the proof, the retired logic reference, and the forwarder address in the resource label.
 
-For each entry, the forwarder checks that:
+Before it reads the first entry, the forwarder checks that both denylists of the protocol adapter still contain every logic reference that it retired. Then, for each entry, it checks that:
 
 - the forwarder address in the resource label is this forwarder,
 - the forwarder retired the logic reference,
 - the adapter's root history contains the root,
-- both denylists of the protocol adapter still contain the logic reference,
 - the adapter's nullifier set does not contain the nullifier,
 - the forwarder did not migrate the resource before.
 
@@ -46,7 +45,7 @@ The forwarder must accept only logic references that it retired itself, not ever
 
 ## Why the adapter must deny the retired logic reference
 
-A migration does not consume the retired resource at the adapter; the forwarder records its nullifier. Without the entry in the denylist for consumed resources, the resource owner could also consume the resource at the adapter, for example in a transaction that uses a kind table alias to create a resource with the new logic reference from it. A transaction that uses the flaw could also add the nullifier of another owner's resource to the adapter's nullifier set, and that resource could then not migrate. Without the entry in the denylist for created resources, a transaction that uses the flaw could still create resources with the retired logic reference, and these resources could migrate too. So the logic reference must be on both lists: deprecating it, which adds it to the denylist for created resources only, is not enough. The adapter has no function that removes a denylist entry. If an upgrade of the adapter removes one, every migration of that logic reference fails.
+A migration does not consume the retired resource at the adapter; the forwarder records its nullifier. Without the entry in the denylist for consumed resources, the resource owner could also consume the resource at the adapter, for example in a transaction that uses a kind table alias to create a resource with the new logic reference from it. A transaction that uses the flaw could also add the nullifier of another owner's resource to the adapter's nullifier set, and that resource could then not migrate. Without the entry in the denylist for created resources, a transaction that uses the flaw could still create resources with the retired logic reference, and these resources could migrate too. So the logic reference must be on both lists: deprecating it, which adds it to the denylist for created resources only, is not enough. The adapter has no function that removes a denylist entry. If an upgrade of the adapter removes one, every migration fails until the owner denies the logic reference again.
 
 ## Repeated incidents
 

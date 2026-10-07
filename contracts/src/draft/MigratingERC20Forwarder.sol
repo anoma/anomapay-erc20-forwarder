@@ -175,6 +175,12 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
         MigratingERC20ForwarderStorage storage $ = _getMigratingERC20ForwarderStorage();
         address protocolAdapter = _getForwarderBaseStorage()._protocolAdapter;
 
+        // Each entry must name a retired logic reference, so these checks cover the whole batch.
+        uint256 retiredCount = $._retiredLogicRefs.length();
+        for (uint256 i = 0; i < retiredCount; ++i) {
+            _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: $._retiredLogicRefs.at(i)});
+        }
+
         for (uint256 i = 0; i < entryCount; ++i) {
             MigrateEntry memory entry = entries[i];
 
@@ -184,15 +190,13 @@ contract MigratingERC20Forwarder is IMigratingERC20Forwarder, ERC20Forwarder {
 
             require($._retiredLogicRefs.contains(entry.retiredLogicRef), UnknownRetiredLogicRef(entry.retiredLogicRef));
 
-            // Every root of the adapter works: no resource with a denied logic reference can be created.
+            // Every root of the adapter works: the adapter creates no resource with a retired logic reference.
             // NOTE: The adapter is the caller and a trusted contract.
             // forge-lint: disable-next-item(calls-loop)
             require(
                 ICommitmentTree(protocolAdapter).isCommitmentTreeRootContained(entry.commitmentTreeRoot),
                 NonExistingRoot(entry.commitmentTreeRoot)
             );
-
-            _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: entry.retiredLogicRef});
 
             // forge-lint: disable-next-item(calls-loop)
             require(
