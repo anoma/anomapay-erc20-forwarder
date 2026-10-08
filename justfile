@@ -91,6 +91,12 @@ contracts-gen-bindings:
         --module \
         --overwrite
 
+# Regenerate the gas report of the contracts that `gas_reports` in foundry.toml lists
+contracts-gen-gas-report:
+    # Fuzz and invariant tests use other inputs on each run, so the report counts only the `test_` unit tests.
+    # `sed` keeps the gas tables of the output.
+    cd contracts && forge test --force --gas-report --md --match-test '^test_' | sed -n '/^|/,/^$/p' > ../docs/gas-report.md
+
 # Regenerate the recorded deployments library, then the Rust bindings
 contracts-gen: contracts-gen-deployments contracts-gen-bindings
 
@@ -267,6 +273,10 @@ bindings-check: contracts-gen-bindings
 contracts-deployments-check: contracts-gen-deployments
     git diff --exit-code contracts/generated/RecordedDeployments.sol
 
+# Check the gas report is up-to-date
+contracts-gas-report-check: contracts-gen-gas-report
+    git diff --exit-code docs/gas-report.md
+
 # Publish bindings
 bindings-publish *args:
     cd crates/bindings && cargo publish {{ args }}
@@ -368,3 +378,5 @@ all-check:
     @just contracts-deployments-check
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
+    @echo "==> Checking the gas report is up-to-date..."
+    @just contracts-gas-report-check
