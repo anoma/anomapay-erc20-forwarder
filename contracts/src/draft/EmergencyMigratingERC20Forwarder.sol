@@ -109,7 +109,6 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     }
 
     /// @inheritdoc IEmergencyMigratingERC20Forwarder
-    /// @dev Runs once: version 2 is one more than the version that `ERC20Forwarder.initialize` sets.
     function reinitialize(bytes32 newLogicRef, bytes32[] calldata vulnerableLogicRefs)
         external
         virtual
@@ -135,7 +134,7 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @param input Contains data to
     /// - wrap ERC20 tokens into resources using Uniswap Permit2,
     /// - unwrap ERC20 tokens from resources, and
-    /// - emergency-migrate resources that carry a vulnerable logic reference.
+    /// - migrate resources that carry a vulnerable logic reference.
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
         (EmergencyMigratingCallType callType,,) =
