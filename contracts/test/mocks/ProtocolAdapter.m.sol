@@ -31,7 +31,7 @@ contract ProtocolAdapterMock is Ownable, Pausable {
         isContained = _nullifierSet[nullifier];
     }
 
-    function isCommitmentTreeRootContained(bytes32 root) external view returns (bool isContained) {
+    function isCommitmentTreeRootHistorical(bytes32 root) external view returns (bool isContained) {
         isContained = _commitmentTreeRoots[root];
     }
 

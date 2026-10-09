@@ -3,9 +3,9 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
-import {ICommitmentTree} from "anoma-pa-evm-2.0.0-rc.8/src/interfaces/ICommitmentTree.sol";
-import {ILogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.8/src/interfaces/ILogicRefDenylist.sol";
-import {INullifierSet} from "anoma-pa-evm-2.0.0-rc.8/src/interfaces/INullifierSet.sol";
+import {ICommitmentTree} from "anoma-pa-evm-2.0.0-rc.9/src/interfaces/ICommitmentTree.sol";
+import {ILogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.9/src/interfaces/ILogicRefDenylist.sol";
+import {INullifierSet} from "anoma-pa-evm-2.0.0-rc.9/src/interfaces/INullifierSet.sol";
 
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
 import {IEmergencyMigratingERC20Forwarder} from "./IEmergencyMigratingERC20Forwarder.sol";
@@ -209,7 +209,7 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
             // NOTE: The adapter is the caller and a trusted contract.
             // forge-lint: disable-next-item(calls-loop)
             require(
-                ICommitmentTree(protocolAdapter).isCommitmentTreeRootContained(entry.commitmentTreeRoot),
+                ICommitmentTree(protocolAdapter).isCommitmentTreeRootHistorical(entry.commitmentTreeRoot),
                 NonExistingRoot(entry.commitmentTreeRoot)
             );
 
