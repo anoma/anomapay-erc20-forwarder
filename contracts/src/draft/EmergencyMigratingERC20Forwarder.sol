@@ -240,14 +240,13 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// then neither consumes the resources that this contract migrates nor creates new ones.
     /// @param protocolAdapter The protocol adapter.
     /// @param logicRef The vulnerable logic reference.
+    /// @dev `_migrate` and `_reinitialize` call this function in a loop, and the adapter is a trusted contract.
+    // forge-lint: disable-next-item(calls-loop)
     function _checkLogicRefDenied(address protocolAdapter, bytes32 logicRef) internal view {
-        // NOTE: `_migrate` and `_reinitialize` call this function in a loop, and the adapter is a trusted contract.
-        // forge-lint: disable-next-item(calls-loop)
         require(
             ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: true}),
             LogicRefNotDenied({logicRef: logicRef, consumed: true})
         );
-        // forge-lint: disable-next-item(calls-loop)
         require(
             ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: false}),
             LogicRefNotDenied({logicRef: logicRef, consumed: false})
