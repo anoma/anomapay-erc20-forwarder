@@ -29,6 +29,8 @@ thiserror = "2.0.18"
 # The circuit crates are pinned exactly: another build has another logic ref, which the deployed forwarder refuses.
 transfer_library = "=3.0.0-rc.3"
 transfer_witness = "=3.0.0-rc.3"
+# 3.0.0-rc.2 consumes the resources that carry its logic ref. It comes from git, because cargo links two compatible versions of one crate only from two sources.
+transfer_library_3_0_0_rc_2 = { package = "transfer_library", git = "https://github.com/anoma/anomapay-erc20-resource", tag = "v3.0.0-rc.2" }
 tokio = { version = "1.52", features = ["rt-multi-thread"] }
 
 # Forwarder bindings + consolidated integration-test crate (this repo)
