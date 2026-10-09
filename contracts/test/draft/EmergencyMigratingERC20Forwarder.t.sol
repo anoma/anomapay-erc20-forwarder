@@ -280,22 +280,9 @@ contract EmergencyMigratingERC20ForwarderUpgradeTest is EmergencyMigratingERC20F
         });
     }
 
-    function test_migrate_reverts_on_the_zero_forwarder_on_a_chain_without_a_V1_forwarder() public {
-        _setDenied({logicRef: _ACTIVE_LOGIC_REF, isDenied: true});
-        _upgradeTo({
-            implementation: address(new EmergencyMigratingERC20Forwarder(address(0))),
-            newLogicRef: _NEW_LOGIC_REF,
-            vulnerableLogicRefs: _listOf(_ACTIVE_LOGIC_REF)
-        });
-        EmergencyMigratingERC20Forwarder.MigrateEntry[] memory entries = _batchOf({count: 1});
-        entries[0].forwarder = address(0);
-
-        _expectMigrateRevert({
-            entries: entries,
-            expectedError: abi.encodeWithSelector(
-                EmergencyMigratingERC20Forwarder.UnknownForwarder.selector, address(0)
-            )
-        });
+    function test_constructor_reverts_on_the_zero_V1_forwarder() public {
+        vm.expectRevert(abi.encodeWithSelector(EmergencyMigratingERC20Forwarder.ZeroForwarderV1NotAllowed.selector));
+        new EmergencyMigratingERC20Forwarder({forwarderV1: address(0)});
     }
 }
 
@@ -510,7 +497,7 @@ contract EmergencyMigratingERC20ForwarderWrapAndUnwrapTest is ERC20ForwarderTest
 
         _pa.mockSetLogicRefDenied({logicRef: vulnerableLogicRef, consumed: true, isDenied: true});
         _pa.mockSetLogicRefDenied({logicRef: vulnerableLogicRef, consumed: false, isDenied: true});
-        address implementation = address(new EmergencyMigratingERC20Forwarder(address(0)));
+        address implementation = address(new EmergencyMigratingERC20Forwarder(makeAddr("V1 forwarder")));
 
         vm.prank(_FORWARDER_OWNER);
         _fwd.upgradeToAndCall({

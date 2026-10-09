@@ -7,7 +7,7 @@ import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {EmergencyMigratingERC20Forwarder} from "../../src/draft/EmergencyMigratingERC20Forwarder.sol";
 
 contract EmergencyMigratingERC20ForwarderStorageTest is Test, EmergencyMigratingERC20Forwarder {
-    constructor() EmergencyMigratingERC20Forwarder(address(0)) {}
+    constructor() EmergencyMigratingERC20Forwarder(makeAddr("V1 forwarder")) {}
 
     function test_storage_slot() public pure {
         assertEq(

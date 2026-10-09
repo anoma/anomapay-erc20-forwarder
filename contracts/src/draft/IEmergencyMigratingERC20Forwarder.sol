@@ -38,6 +38,6 @@ interface IEmergencyMigratingERC20Forwarder {
     function isNullifierMigrated(bytes32 nullifier) external view returns (bool isMigrated);
 
     /// @notice The V1 forwarder of the chain. Resources with its address in their label can emergency-migrate too.
-    /// @return forwarderV1 The V1 forwarder, or the zero address on a chain without one.
+    /// @return forwarderV1 The V1 forwarder, never the zero address.
     function FORWARDER_V1() external view returns (address forwarderV1);
 }
