@@ -65,9 +65,6 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         assertTrue(_fwd.isLogicRefVulnerable(_VULNERABLE_LOGIC_REF));
         assertTrue(_fwd.isLogicRefVulnerable(_DEPRECATED_LOGIC_REF));
         assertFalse(_fwd.isLogicRefVulnerable(_NEW_LOGIC_REF));
-        assertEq(_fwd.vulnerableLogicRefCount(), 2);
-        assertEq(_fwd.vulnerableLogicRefAtIndex(0), _VULNERABLE_LOGIC_REF);
-        assertEq(_fwd.vulnerableLogicRefAtIndex(1), _DEPRECATED_LOGIC_REF);
     }
 
     /// @dev The previous logic ref has no flaw: only a deprecated one has.
@@ -79,8 +76,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
 
         assertEq(_fwd.getLogicRef(), _NEW_LOGIC_REF);
         assertFalse(_fwd.isLogicRefVulnerable(_VULNERABLE_LOGIC_REF));
-        assertEq(_fwd.vulnerableLogicRefCount(), 1);
-        assertEq(_fwd.vulnerableLogicRefAtIndex(0), _DEPRECATED_LOGIC_REF);
+        assertTrue(_fwd.isLogicRefVulnerable(_DEPRECATED_LOGIC_REF));
     }
 
     /// @dev The current logic ref has no flaw and can start a migration already.
@@ -94,7 +90,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
 
         assertEq(_fwd.getLogicRef(), _VULNERABLE_LOGIC_REF);
         assertTrue(_fwd.isLogicRefVulnerable(_DEPRECATED_LOGIC_REF));
-        assertEq(_fwd.vulnerableLogicRefCount(), 1);
+        assertFalse(_fwd.isLogicRefVulnerable(_VULNERABLE_LOGIC_REF));
     }
 
     /// @dev A voluntary upgrade after an incident lists nothing.
@@ -102,7 +98,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         _upgradeAndReinitialize({newLogicRef: _NEW_LOGIC_REF, vulnerableLogicRefs: new bytes32[](0)});
 
         assertEq(_fwd.getLogicRef(), _NEW_LOGIC_REF);
-        assertEq(_fwd.vulnerableLogicRefCount(), 0);
+        assertFalse(_fwd.isLogicRefVulnerable(_VULNERABLE_LOGIC_REF));
     }
 
     function test_reinitialize_emits_the_LogicRefReplaced_event() public {
@@ -213,8 +209,8 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
             version: 3, newLogicRef: bytes32(uint256(5)), vulnerableLogicRefs: _listOf(_NEW_LOGIC_REF)
         });
 
-        assertEq(_fwd.vulnerableLogicRefCount(), 2);
-        assertEq(_fwd.vulnerableLogicRefAtIndex(1), _NEW_LOGIC_REF);
+        assertTrue(_fwd.isLogicRefVulnerable(_VULNERABLE_LOGIC_REF));
+        assertTrue(_fwd.isLogicRefVulnerable(_NEW_LOGIC_REF));
 
         // One batch migrates resources of both vulnerable logic refs.
         EmergencyMigratingERC20Forwarder.MigrateEntry[] memory entries = _batchOf({count: 2});

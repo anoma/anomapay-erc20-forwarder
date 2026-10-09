@@ -43,7 +43,7 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @notice The ERC-7201 storage of the contract.
     /// @custom:storage-location erc7201:anoma.storage.EmergencyMigratingERC20Forwarder
     struct EmergencyMigratingERC20ForwarderStorage {
-        // The vulnerable logic references, in the order in which `reinitialize` listed them.
+        // The vulnerable logic references that `reinitialize` listed.
         EnumerableSet.Bytes32Set _vulnerableLogicRefs;
         // The nullifiers of the migrated resources.
         mapping(bytes32 nullifier => bool isMigrated) _isNullifierMigrated;
@@ -126,16 +126,6 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     }
 
     /// @inheritdoc IEmergencyMigratingERC20Forwarder
-    function vulnerableLogicRefCount() external view override returns (uint256 count) {
-        count = _getEmergencyMigratingERC20ForwarderStorage()._vulnerableLogicRefs.length();
-    }
-
-    /// @inheritdoc IEmergencyMigratingERC20Forwarder
-    function vulnerableLogicRefAtIndex(uint256 index) external view override returns (bytes32 vulnerableLogicRef) {
-        vulnerableLogicRef = _getEmergencyMigratingERC20ForwarderStorage()._vulnerableLogicRefs.at(index);
-    }
-
-    /// @inheritdoc IEmergencyMigratingERC20Forwarder
     function isNullifierMigrated(bytes32 nullifier) external view override returns (bool isMigrated) {
         isMigrated = _getEmergencyMigratingERC20ForwarderStorage()._isNullifierMigrated[nullifier];
     }
@@ -176,7 +166,7 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
         // Each entry must name a vulnerable logic reference, so these checks cover the whole batch.
         uint256 vulnerableCount = $._vulnerableLogicRefs.length();
         for (uint256 i = 0; i < vulnerableCount; ++i) {
-            _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: $._vulnerableLogicRefs.at(i)});
+            _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: $._vulnerableLogicRefs.pos(i)});
         }
 
         for (uint256 i = 0; i < entryCount; ++i) {

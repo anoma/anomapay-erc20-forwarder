@@ -31,15 +31,6 @@ interface IEmergencyMigratingERC20Forwarder {
     /// @return isVulnerable Whether this forwarder lists the logic reference as vulnerable or not.
     function isLogicRefVulnerable(bytes32 logicRef) external view returns (bool isVulnerable);
 
-    /// @notice Returns the number of vulnerable logic references that this forwarder lists.
-    /// @return count The number of vulnerable logic references.
-    function vulnerableLogicRefCount() external view returns (uint256 count);
-
-    /// @notice Returns a vulnerable logic reference by index.
-    /// @param index The index, in the order in which the forwarder listed the logic references.
-    /// @return vulnerableLogicRef The vulnerable logic reference.
-    function vulnerableLogicRefAtIndex(uint256 index) external view returns (bytes32 vulnerableLogicRef);
-
     /// @notice Returns whether the forwarder migrated a resource.
     /// @param nullifier The nullifier of the resource.
     /// @return isMigrated Whether the forwarder migrated the resource or not.
