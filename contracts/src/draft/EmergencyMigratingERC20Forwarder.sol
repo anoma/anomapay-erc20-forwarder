@@ -74,8 +74,8 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
     error LogicRefAlreadyDenied(bytes32 logicRef, bool consumed);
 
-    /// @notice Thrown if `reinitialize` keeps the current logic reference and lists no vulnerable logic reference.
-    error UnchangedLogicRef(bytes32 logicRef);
+    /// @notice Thrown if `reinitialize` lists no vulnerable logic reference.
+    error EmptyVulnerableLogicRefList();
 
     /// @notice Thrown if `reinitialize` lists a vulnerable logic reference a second time.
     error LogicRefAlreadyVulnerable(bytes32 logicRef);
@@ -208,14 +208,15 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
 
     /// @notice Lists vulnerable logic references and replaces the current logic reference if the new one differs.
     /// @param newLogicRef The logic reference that the forwarder accepts after the call.
-    /// @param vulnerableLogicRefs The vulnerable logic references to list. The protocol adapter must deny each one.
+    /// @param vulnerableLogicRefs The vulnerable logic references to list, at least one. The protocol adapter must
+    /// deny each one.
     function _reinitialize(bytes32 newLogicRef, bytes32[] calldata vulnerableLogicRefs) internal {
         require(newLogicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
         ForwarderBaseStorage storage $ = _getForwarderBaseStorage();
         bytes32 previousLogicRef = $._logicRef;
         uint256 vulnerableCount = vulnerableLogicRefs.length;
-        require(newLogicRef != previousLogicRef || vulnerableCount != 0, UnchangedLogicRef(previousLogicRef));
+        require(vulnerableCount != 0, EmptyVulnerableLogicRefList());
 
         address protocolAdapter = $._protocolAdapter;
         _checkLogicRefNotDenied({protocolAdapter: protocolAdapter, logicRef: newLogicRef});

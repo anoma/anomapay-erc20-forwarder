@@ -23,7 +23,8 @@ interface IEmergencyMigratingERC20Forwarder {
 
     /// @notice Lists vulnerable logic references and replaces the current logic reference if the new one differs.
     /// @param newLogicRef The logic reference that the forwarder accepts after the call.
-    /// @param vulnerableLogicRefs The vulnerable logic references to list. The protocol adapter must deny each one.
+    /// @param vulnerableLogicRefs The vulnerable logic references to list, at least one. The protocol adapter must
+    /// deny each one.
     function reinitialize(bytes32 newLogicRef, bytes32[] calldata vulnerableLogicRefs) external;
 
     /// @notice Returns whether this forwarder lists a logic reference as vulnerable.

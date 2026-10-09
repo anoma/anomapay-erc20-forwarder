@@ -26,7 +26,7 @@ No circuit version has a flaw. C improves B.
 3. When the backend creates resources of C, the owner of the adapter deprecates the logic reference of B.
 4. Owners of resources of A and B, and of V1 resources, soft-migrate them to C.
 
-A voluntary upgrade needs no emergency migration. The regular `ERC20Forwarder` has no function that sets a new logic reference yet; the release that ships C adds one. After an incident, every later implementation must keep the emergency migration, because the resources with a listed logic reference have no other way out. A voluntary upgrade then uses an emergency implementation and calls `reinitialize` with the logic reference of C and an empty list.
+A voluntary upgrade needs no emergency migration. The regular `ERC20Forwarder` has no function that sets a new logic reference yet; the release that ships C adds one. After an incident, every later implementation must keep the emergency migration, because the resources with a listed logic reference have no other way out. A voluntary upgrade then uses an emergency implementation that has this function, because `reinitialize` must list at least one vulnerable logic reference.
 
 ### Upgrade after a flaw
 
@@ -39,7 +39,7 @@ Each incident follows these steps:
 5. The owner of the adapter unpauses it.
 6. Resource owners emergency-migrate their resources with a vulnerable logic reference, and soft-migrate their resources of a deprecated version.
 
-`reinitialize` checks that the adapter denies each listed logic reference on both denylists, and the logic reference of C on neither.
+`reinitialize` must list at least one logic reference. It checks that the adapter denies each listed logic reference on both denylists, and the logic reference of C on neither.
 
 The cases differ in the circuit versions with the flaw:
 
@@ -53,7 +53,7 @@ If more deprecated versions have the flaw, the adapter denies each of them, and 
 
 ### A second incident
 
-After an incident, C is active and has the migrate call. `reinitialize` runs only once per implementation, so each later incident needs an upgrade to a new implementation of the forwarder. If a later flaw is in C, the owner follows the steps above with D, which fixes C. If a later flaw is only in a deprecated version, for example A, C stays active: the owner upgrades the forwarder and calls `reinitialize` with the logic reference of C and the list with A. `reinitialize` can keep the logic reference if it lists at least one logic reference. The logic references of the first incident stay listed, so their resources can still emergency-migrate to the active version.
+After an incident, C is active and has the migrate call. `reinitialize` runs only once per implementation, so each later incident needs an upgrade to a new implementation of the forwarder. If a later flaw is in C, the owner follows the steps above with D, which fixes C. If a later flaw is only in a deprecated version, for example A, C stays active: the owner upgrades the forwarder and calls `reinitialize` with the logic reference of C and the list with A. `reinitialize` can keep the logic reference. The logic references of the first incident stay listed, so their resources can still emergency-migrate to the active version.
 
 ### Flaws that the forwarder cannot handle
 

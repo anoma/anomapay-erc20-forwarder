@@ -176,16 +176,6 @@ contract EmergencyMigratingERC20ForwarderUpgradeTest is EmergencyMigratingERC20F
         assertFalse(_forwarder.isLogicRefVulnerable(_ACTIVE_LOGIC_REF));
     }
 
-    /// @dev A voluntary upgrade after an incident lists nothing.
-    function test_reinitialize_replaces_the_logic_ref_with_an_empty_list() public {
-        _upgradeTo({
-            implementation: _implementation, newLogicRef: _NEW_LOGIC_REF, vulnerableLogicRefs: new bytes32[](0)
-        });
-
-        assertEq(_forwarder.getLogicRef(), _NEW_LOGIC_REF);
-        assertFalse(_forwarder.isLogicRefVulnerable(_ACTIVE_LOGIC_REF));
-    }
-
     function test_reinitialize_emits_the_VulnerableLogicRefListed_and_LogicRefReplaced_events() public {
         _setDenied({logicRef: _ACTIVE_LOGIC_REF, isDenied: true});
 
@@ -234,12 +224,11 @@ contract EmergencyMigratingERC20ForwarderUpgradeTest is EmergencyMigratingERC20F
         });
     }
 
-    function test_reinitialize_reverts_if_it_changes_nothing() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(EmergencyMigratingERC20Forwarder.UnchangedLogicRef.selector, _ACTIVE_LOGIC_REF)
-        );
+    /// @dev The call replaces the logic ref, so the empty list alone makes it revert.
+    function test_reinitialize_reverts_on_an_empty_list() public {
+        vm.expectRevert(abi.encodeWithSelector(EmergencyMigratingERC20Forwarder.EmptyVulnerableLogicRefList.selector));
         _upgradeTo({
-            implementation: _implementation, newLogicRef: _ACTIVE_LOGIC_REF, vulnerableLogicRefs: new bytes32[](0)
+            implementation: _implementation, newLogicRef: _NEW_LOGIC_REF, vulnerableLogicRefs: new bytes32[](0)
         });
     }
 

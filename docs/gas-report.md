@@ -10,8 +10,8 @@
 | getImplementation                              |             391 |    391 |    391 |    391 |       3 |
 | getLogicRef                                    |            2429 |   2429 |   2429 |   2429 |       3 |
 | getProtocolAdapter                             |             281 |   1392 |   2281 |   2281 |      36 |
-| initialize                                     |           92522 |  92522 |  92522 |  92522 |     109 |
+| initialize                                     |           92522 |  92522 |  92522 |  92522 |     108 |
 | owner                                          |             369 |   1588 |   2369 |   2369 |      41 |
 | proxiableUUID                                  |             243 |    243 |    243 |    243 |       2 |
-| upgradeToAndCall                               |            2896 | 106000 | 108672 | 160636 |      53 |
+| upgradeToAndCall                               |            2896 | 107346 | 108646 | 160610 |      52 |
 
