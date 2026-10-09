@@ -164,4 +164,22 @@ contract EmergencyMigratingERC20ForwarderUpgradeTest is EmergencyMigratingERC20F
             vulnerableLogicRefs: _listOf(_ACTIVE_LOGIC_REF)
         });
     }
+
+    function test_migrate_reverts_on_the_zero_forwarder_on_a_chain_without_a_V1_forwarder() public {
+        _setDenied({logicRef: _ACTIVE_LOGIC_REF, isDenied: true});
+        _upgradeTo({
+            implementation: address(new EmergencyMigratingERC20Forwarder(address(0))),
+            newLogicRef: _NEW_LOGIC_REF,
+            vulnerableLogicRefs: _listOf(_ACTIVE_LOGIC_REF)
+        });
+        EmergencyMigratingERC20Forwarder.MigrateEntry[] memory entries = _batchOf({count: 1});
+        entries[0].forwarder = address(0);
+
+        _expectMigrateRevert({
+            entries: entries,
+            expectedError: abi.encodeWithSelector(
+                EmergencyMigratingERC20Forwarder.UnknownForwarder.selector, address(0)
+            )
+        });
+    }
 }

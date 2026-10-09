@@ -63,9 +63,6 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     address public immutable override FORWARDER_V1;
 
-    /// @notice Thrown if the V1 forwarder is the zero address.
-    error ZeroForwarderV1NotAllowed();
-
     /// @notice Thrown if a denylist of the protocol adapter does not contain a vulnerable logic reference.
     /// @param logicRef The vulnerable logic reference.
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
@@ -101,10 +98,12 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     error ResourceAlreadyMigrated(bytes32 nullifier);
 
     /// @notice Sets the V1 forwarder of the chain, whose resources can emergency-migrate too.
-    /// @param forwarderV1 The V1 forwarder, which must not be the zero address.
+    /// @param forwarderV1 The V1 forwarder, or the zero address on a chain without one.
     /// @custom:oz-upgrades-unsafe-allow constructor
+    // NOTE: The zero address stands for a chain without a V1 forwarder, and `_migrate` accepts no zero label.
+    // forge-lint: disable-next-line(missing-zero-check)
     constructor(address forwarderV1) {
-        require(forwarderV1 != address(0), ZeroForwarderV1NotAllowed());
+        // slither-disable-next-line missing-zero-check
         FORWARDER_V1 = forwarderV1;
     }
 
@@ -199,7 +198,8 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
 
             // The forwarder holds the tokens of its own resources and of V1 resources.
             require(
-                entry.forwarder == address(this) || entry.forwarder == FORWARDER_V1, UnknownForwarder(entry.forwarder)
+                entry.forwarder == address(this) || (FORWARDER_V1 != address(0) && entry.forwarder == FORWARDER_V1),
+                UnknownForwarder(entry.forwarder)
             );
 
             require(

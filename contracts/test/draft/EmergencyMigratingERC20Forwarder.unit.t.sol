@@ -204,11 +204,6 @@ contract EmergencyMigratingERC20ForwarderMigrateTest is EmergencyMigratingERC20F
         assertTrue(_forwarder.isNullifierMigrated(entries[1].nullifier));
     }
 
-    function test_constructor_reverts_on_the_zero_V1_forwarder() public {
-        vm.expectRevert(abi.encodeWithSelector(EmergencyMigratingERC20Forwarder.ZeroForwarderV1NotAllowed.selector));
-        new EmergencyMigratingERC20Forwarder({forwarderV1: address(0)});
-    }
-
     function test_FORWARDER_V1_returns_the_constructor_argument() public view {
         assertEq(_forwarder.FORWARDER_V1(), _FORWARDER_V1);
     }
