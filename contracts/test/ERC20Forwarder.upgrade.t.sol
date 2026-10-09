@@ -11,7 +11,7 @@ import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
-import {ERC20ForwarderV2} from "./examples/ERC20ForwarderV2.sol";
+import {ERC20ForwarderUpgradeExample} from "./examples/ERC20ForwarderUpgradeExample.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 
 contract ERC20ForwarderUpgradeTest is Test {
@@ -37,10 +37,10 @@ contract ERC20ForwarderUpgradeTest is Test {
             )
         );
 
-        _reinitializeCalldata = abi.encodeCall(ERC20ForwarderV2.reinitialize, (_LOGIC_REF_V2));
+        _reinitializeCalldata = abi.encodeCall(ERC20ForwarderUpgradeExample.reinitialize, (_LOGIC_REF_V2));
 
         Options memory opts;
-        _implV2 = Upgrades.prepareUpgrade("ERC20ForwarderV2.sol:ERC20ForwarderV2", opts);
+        _implV2 = Upgrades.prepareUpgrade("ERC20ForwarderUpgradeExample.sol:ERC20ForwarderUpgradeExample", opts);
     }
 
     // This test runs the openzeppelin-foundry-upgrades checks.
@@ -51,8 +51,8 @@ contract ERC20ForwarderUpgradeTest is Test {
         vm.startPrank(_FORWARDER_OWNER);
         Upgrades.upgradeProxy(
             address(_fwdProxy),
-            "ERC20ForwarderV2.sol:ERC20ForwarderV2",
-            abi.encodeCall(ERC20ForwarderV2.reinitialize, (_LOGIC_REF_V2))
+            "ERC20ForwarderUpgradeExample.sol:ERC20ForwarderUpgradeExample",
+            abi.encodeCall(ERC20ForwarderUpgradeExample.reinitialize, (_LOGIC_REF_V2))
         );
         vm.stopPrank();
     }
@@ -62,7 +62,7 @@ contract ERC20ForwarderUpgradeTest is Test {
         _fwdProxy.upgradeToAndCall({newImplementation: _implV2, data: _reinitializeCalldata});
     }
 
-    function test_upgradeToAndCall_upgrades_to_the_erc20_forwarder_v2_implementation() public {
+    function test_upgradeToAndCall_upgrades_to_the_upgrade_example_implementation() public {
         vm.prank(_FORWARDER_OWNER);
         _fwdProxy.upgradeToAndCall({newImplementation: _implV2, data: _reinitializeCalldata});
 
