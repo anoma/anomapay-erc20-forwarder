@@ -64,7 +64,16 @@ After an incident, C is active and has the migrate call. `reinitialize` runs onl
 
 An emergency migration transaction consumes one ephemeral resource of the active version, the trigger, and creates resources of the active version for the same total quantity. For each migrated resource, the trigger's logic proves that the commitment tree at a given root contains the resource's commitment, and computes the resource's nullifier. One signature of the resource owner over the action tree root authorizes all resources of the batch, so all of them must have the same authorization key.
 
-The trigger calls the forwarder with `(Migrate, token, total quantity, MigrateEntry[])`, encoded by `encode_migrate_forwarder_input_batch` on the branch `xuyang/batch_migration` of anomapay-erc20-resource. Each entry contains the nullifier, the commitment tree root of the proof, the logic reference of the resource, and the forwarder address in the resource label.
+The trigger calls the forwarder with the ABI encoding of `(EmergencyMigratingCallType.Migrate, IERC20 token, uint128 quantity, MigrateEntry[] entries)`, where `quantity` is the total quantity of the batch and each entry is:
+
+```solidity
+struct MigrateEntry {
+    bytes32 nullifier; // The nullifier of the resource.
+    bytes32 commitmentTreeRoot; // The commitment tree root that the resource is proven against.
+    bytes32 vulnerableLogicRef; // The logic reference of the resource.
+    address forwarder; // The forwarder address in the resource label.
+}
+```
 
 Before it reads the first entry, the forwarder checks that both denylists of the protocol adapter still contain every vulnerable logic reference that it lists. Then, for each entry, it checks that:
 
