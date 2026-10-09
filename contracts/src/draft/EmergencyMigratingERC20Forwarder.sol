@@ -153,22 +153,22 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @notice Migrates a batch of resources carrying vulnerable logic references by recording their nullifiers.
     /// @param input The forwarder input, which ends with the batch.
     function _migrate(bytes calldata input) internal {
+        // Decode the batch and check its length.
         (, IERC20 token,, MigrateEntry[] memory entries) =
             abi.decode(input, (EmergencyMigratingCallType, IERC20, uint128, MigrateEntry[]));
-
         uint256 entryCount = entries.length;
         require(entryCount != 0, EmptyMigrationBatch());
         _checkLength({input: input, expectedLength: _MIGRATE_HEADER_LENGTH + entryCount * _MIGRATE_ENTRY_LENGTH});
 
+        // Check that the adapter still denies each listed logic reference; entries can name only listed ones.
         EmergencyMigratingERC20ForwarderStorage storage $ = _getEmergencyMigratingERC20ForwarderStorage();
         address protocolAdapter = _getForwarderBaseStorage()._protocolAdapter;
-
-        // Each entry must name a vulnerable logic reference, so these checks cover the whole batch.
         uint256 vulnerableCount = $._vulnerableLogicRefs.length();
         for (uint256 i = 0; i < vulnerableCount; ++i) {
             _checkLogicRefDenied({protocolAdapter: protocolAdapter, logicRef: $._vulnerableLogicRefs.pos(i)});
         }
 
+        // Check each entry and record its nullifier.
         for (uint256 i = 0; i < entryCount; ++i) {
             MigrateEntry memory entry = entries[i];
 
@@ -211,16 +211,17 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @param vulnerableLogicRefs The vulnerable logic references to list, at least one. The protocol adapter must
     /// deny each one.
     function _reinitialize(bytes32 newLogicRef, bytes32[] calldata vulnerableLogicRefs) internal {
+        // Check the arguments.
         require(newLogicRef != bytes32(0), ZeroLogicRefNotAllowed());
-
-        ForwarderBaseStorage storage $ = _getForwarderBaseStorage();
-        bytes32 previousLogicRef = $._logicRef;
         uint256 vulnerableCount = vulnerableLogicRefs.length;
         require(vulnerableCount != 0, EmptyVulnerableLogicRefList());
 
+        // Check that the adapter denies the new logic reference on neither denylist.
+        ForwarderBaseStorage storage $ = _getForwarderBaseStorage();
         address protocolAdapter = $._protocolAdapter;
         _checkLogicRefNotDenied({protocolAdapter: protocolAdapter, logicRef: newLogicRef});
 
+        // Check and list each vulnerable logic reference.
         EnumerableSet.Bytes32Set storage listed = _getEmergencyMigratingERC20ForwarderStorage()._vulnerableLogicRefs;
         for (uint256 i = 0; i < vulnerableCount; ++i) {
             bytes32 vulnerableLogicRef = vulnerableLogicRefs[i];
@@ -230,6 +231,8 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
             emit VulnerableLogicRefListed(vulnerableLogicRef);
         }
 
+        // Replace the logic reference if the new one differs.
+        bytes32 previousLogicRef = $._logicRef;
         if (newLogicRef != previousLogicRef) {
             $._logicRef = newLogicRef;
 
