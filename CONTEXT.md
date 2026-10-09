@@ -35,7 +35,7 @@ The EVM contract through which the protocol adapter drives ERC20 state changes
 One of the two ERC20 forwarder deployments the repo maintains, each recorded per chain in the deployment record and tracking a branch. Say "environment" (not "network" or "deployment target") — a chain is where an environment lives, not which one it is.
 
 **Staging / Production**:
-The two environments. Staging is owned by the deployment wallet and upgraded directly; production is owned by a Safe multisig whose signers confirm and execute upgrades. Each environment's forwarder settles through the protocol adapter proxy of the same environment. The branches tracking them keep their own names, `staging` and `main`.
+The two environments. Staging is owned by the deployment wallet and upgraded directly; production is owned by a Safe multisig whose signers confirm and execute upgrades. Each environment's forwarder settles through the protocol adapter of the same environment. The branches tracking them keep their own names, `staging` and `main`.
 
 **Promotion**:
 Moving a commit unchanged from `next` to `staging`, or from `staging` to `main`. The pull request opening one carries the gate proving the environment it targets runs that commit's source. Changes only ever flow this way.
@@ -44,8 +44,8 @@ Moving a commit unchanged from `next` to `staging`, or from `staging` to `main`.
 `crates/bindings/deployments.json` — the proxy address of each environment on each chain, plus the genesis fields pinning how that address was derived, and the immutable ERC20 forwarder of each chain that ran an immutable protocol adapter. Written once per chain at its first deploy and never edited; what an environment currently runs is read from the chain, not from here.
 
 **Immutable protocol adapter**:
-The protocol adapter of a chain before its protocol adapter proxy: one immutable contract per chain. It is stopped, and its state is copied into the protocol adapter proxy.
-_Avoid_: v1 protocol adapter
+The protocol adapter that a chain ran before its upgradeable protocol adapter: one immutable contract per chain. It is stopped, and its state is copied into the protocol adapter.
+_Avoid_: v1 protocol adapter, legacy protocol adapter
 
 **Immutable ERC20 forwarder**:
 The ERC20 forwarder that ran with a chain's immutable protocol adapter: one immutable contract, recorded with the logic ref it accepts. It belongs to no environment.
