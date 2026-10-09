@@ -47,6 +47,29 @@ Moving a commit unchanged from `next` to `staging`, or from `staging` to `main`.
 The immutable ERC20 forwarder that ran with a chain's v1 protocol adapter, recorded with the logic ref it accepts. It belongs to no environment.
 _Avoid_: retired forwarder, legacy forwarder
 
+**V1 resource**:
+A resource with the V1 forwarder's address in its label, on a chain that ran a v1 protocol adapter. It carries the logic ref that the V1 forwarder accepts, and its tokens moved to the forwarder.
+
+**Circuit version**:
+A release of the ERC20 transfer circuit. Its logic ref identifies its code, and each resource carries the logic ref of its circuit version.
+
+**Active version**:
+The one circuit version that the forwarder accepts. The backend creates its resources.
+
+**Deprecated version**:
+Every other circuit version that the kind tables list, as an alias of the active version. The owner of the protocol adapter deprecates its logic ref, so transactions consume its resources but create none.
+
+**Vulnerable logic ref**:
+The logic ref of a circuit version with a flaw. The owner of the protocol adapter denies it, so no transaction consumes or creates its resources, and `reinitialize` lists it in the forwarder.
+
+**Soft migration**:
+A transaction that consumes resources of a deprecated version and creates resources of the active version for the same quantity. The kind table makes the two kinds aliases, so the transaction balances.
+_Avoid_: conversion
+
+**Emergency migration**:
+A transaction that creates resources of the active version for resources with a vulnerable logic ref and this forwarder or the V1 forwarder in their label. The adapter does not consume the old resources; the forwarder records their nullifiers, and the tokens stay in the forwarder.
+_Avoid_: hard migration, rescue
+
 ## Note on upstream names
 
 `transfer_library`, `transfer_witness`, and the underlying transfer circuit live
