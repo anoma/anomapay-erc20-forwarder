@@ -27,7 +27,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     address internal immutable _PA_OWNER = makeAddr("pa owner");
     address internal immutable _FORWARDER_OWNER = makeAddr("forwarder owner");
     address internal immutable _RECEIVER = makeAddr("receiver");
-    address internal immutable _V1_FORWARDER = makeAddr("v1 forwarder");
+    address internal immutable _FORWARDER_V1 = makeAddr("v1 forwarder");
 
     ProtocolAdapterMock internal _pa;
     EmergencyMigratingERC20Forwarder internal _fwd;
@@ -35,7 +35,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
 
     function setUp() public {
         _erc20 = new ERC20Example();
-        _pa = _adapterHolding(_ROOT);
+        _pa = _adapterWithHistoricalRoot(_ROOT);
         _fwd = _deployForwarder(address(_pa));
     }
 
@@ -43,10 +43,10 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
     }
 
-    function test_getV1Forwarder_returns_the_constructor_argument() public {
+    function test_FORWARDER_V1_returns_the_constructor_argument() public {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
 
-        assertEq(_fwd.getV1Forwarder(), _V1_FORWARDER);
+        assertEq(_fwd.FORWARDER_V1(), _FORWARDER_V1);
     }
 
     function test_reinitialize_replaces_the_logic_ref() public {
@@ -106,7 +106,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     }
 
     function test_reinitialize_emits_the_LogicRefReplaced_event() public {
-        address implementation = address(new EmergencyMigratingERC20Forwarder(_V1_FORWARDER));
+        address implementation = address(new EmergencyMigratingERC20Forwarder(_FORWARDER_V1));
         bytes memory data = abi.encodeCall(
             EmergencyMigratingERC20Forwarder.reinitialize, (_NEW_LOGIC_REF, _listOf(_VULNERABLE_LOGIC_REF))
         );
@@ -121,7 +121,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     }
 
     function test_reinitialize_emits_the_VulnerableLogicRefListed_event() public {
-        address implementation = address(new EmergencyMigratingERC20Forwarder(_V1_FORWARDER));
+        address implementation = address(new EmergencyMigratingERC20Forwarder(_FORWARDER_V1));
         bytes memory data = abi.encodeCall(
             EmergencyMigratingERC20Forwarder.reinitialize, (_NEW_LOGIC_REF, _listOf(_VULNERABLE_LOGIC_REF))
         );
@@ -134,7 +134,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     }
 
     function test_reinitialize_reverts_if_the_caller_is_not_the_owner() public {
-        address implementation = address(new EmergencyMigratingERC20Forwarder(_V1_FORWARDER));
+        address implementation = address(new EmergencyMigratingERC20Forwarder(_FORWARDER_V1));
         vm.prank(_FORWARDER_OWNER);
         _fwd.upgradeToAndCall({newImplementation: implementation, data: ""});
 
@@ -200,7 +200,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
             newLogicRef: _NEW_LOGIC_REF,
             vulnerableLogicRefs: _listOf(_VULNERABLE_LOGIC_REF),
             expectedError: abi.encodeWithSelector(
-                EmergencyMigratingERC20Forwarder.DeniedLogicRef.selector, _NEW_LOGIC_REF, consumed
+                EmergencyMigratingERC20Forwarder.LogicRefAlreadyDenied.selector, _NEW_LOGIC_REF, consumed
             )
         });
     }
@@ -325,7 +325,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         });
     }
 
-    function test_migrate_reverts_on_an_unknown_vulnerable_logic_ref() public {
+    function test_migrate_reverts_on_a_logic_ref_that_is_not_vulnerable() public {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
 
         _expectMigrateRevert({
@@ -334,12 +334,12 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
             nullifier: _NULLIFIER,
             forwarder: address(_fwd),
             expectedError: abi.encodeWithSelector(
-                EmergencyMigratingERC20Forwarder.UnknownVulnerableLogicRef.selector, _NEW_LOGIC_REF
+                EmergencyMigratingERC20Forwarder.LogicRefNotVulnerable.selector, _NEW_LOGIC_REF
             )
         });
     }
 
-    function test_migrate_accepts_any_root_that_the_protocol_adapter_holds() public {
+    function test_migrate_accepts_any_historical_root() public {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
         bytes32 laterRoot = bytes32(uint256(6));
         _pa.mockAddCommitmentTreeRoot(laterRoot);
@@ -352,7 +352,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         assertTrue(_fwd.isNullifierMigrated(entries[1].nullifier));
     }
 
-    function test_migrate_reverts_on_a_root_that_the_protocol_adapter_does_not_hold() public {
+    function test_migrate_reverts_on_a_root_that_is_not_historical() public {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
         bytes32 unknownRoot = bytes32(uint256(8));
 
@@ -375,7 +375,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
                 vulnerableLogicRef: _VULNERABLE_LOGIC_REF,
                 commitmentTreeRoot: _ROOT,
                 nullifier: _NULLIFIER,
-                forwarder: _V1_FORWARDER
+                forwarder: _FORWARDER_V1
             })
         );
 
@@ -473,7 +473,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         IForwarder(address(_fwd)).forwardCall({logicRef: _NEW_LOGIC_REF, input: input});
     }
 
-    function test_migrate_decodes_the_encoding_of_the_migration_logic() public {
+    function test_migrate_decodes_the_encoding_of_the_trigger_logic() public {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
 
         // `(CallTypeV2::Migrate, token, quantity, Vec<MigrateV1Data>).abi_encode_params()`, written out by hand.
@@ -507,8 +507,8 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         assertEq(_erc20.balanceOf(address(_fwd)), 0);
     }
 
-    /// @dev An adapter whose root history contains the root and that denies the logic ref to replace.
-    function _adapterHolding(bytes32 root) internal returns (ProtocolAdapterMock adapter) {
+    /// @dev An adapter with the root as a historical root and that denies the logic ref to replace.
+    function _adapterWithHistoricalRoot(bytes32 root) internal returns (ProtocolAdapterMock adapter) {
         adapter = new ProtocolAdapterMock(_PA_OWNER);
         adapter.mockAddCommitmentTreeRoot(root);
         _setDenied({adapter: adapter, logicRef: _VULNERABLE_LOGIC_REF, isDenied: true});
@@ -539,7 +539,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         // `startPrank` keeps the owner as the caller across the implementation deploy and the `upgradeToAndCall`
         // that `Upgrades.upgradeProxy` performs internally; a single `vm.prank` would only apply to the deploy.
         Options memory options;
-        options.constructorData = abi.encode(_V1_FORWARDER);
+        options.constructorData = abi.encode(_FORWARDER_V1);
 
         vm.startPrank(_FORWARDER_OWNER);
         Upgrades.upgradeProxy(
@@ -555,7 +555,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
     function _upgradeToNextAndReinitialize(uint64 version, bytes32 newLogicRef, bytes32[] memory vulnerableLogicRefs)
         internal
     {
-        address implementation = address(new EmergencyMigratingERC20ForwarderNextMock(version, _V1_FORWARDER));
+        address implementation = address(new EmergencyMigratingERC20ForwarderNextMock(version, _FORWARDER_V1));
         bytes memory data =
             abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef, vulnerableLogicRefs));
 
@@ -568,7 +568,7 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         bytes32[] memory vulnerableLogicRefs,
         bytes memory expectedError
     ) internal {
-        address implementation = address(new EmergencyMigratingERC20Forwarder(_V1_FORWARDER));
+        address implementation = address(new EmergencyMigratingERC20Forwarder(_FORWARDER_V1));
         bytes memory data =
             abi.encodeCall(EmergencyMigratingERC20Forwarder.reinitialize, (newLogicRef, vulnerableLogicRefs));
 
