@@ -12,9 +12,8 @@ import {IEmergencyMigratingERC20Forwarder} from "./IEmergencyMigratingERC20Forwa
 
 /// @title EmergencyMigratingERC20Forwarder
 /// @author Anoma Foundation, 2026
-/// @notice A draft ERC20 forwarder that migrates ERC20 resources from vulnerable logic references to its own. It
-/// adds the `Migrate` call type to wrap and unwrap.
-/// @dev See `docs/emergency-migration.md` for the incident procedure, the design and its limits.
+/// @notice A draft ERC20 forwarder that wraps, unwraps, and migrates ERC20 resources from vulnerable logic references
+/// to its own.
 /// @custom:security-contact security@anoma.foundation
 /// @custom:oz-upgrades-from ERC20Forwarder
 /// @custom:oz-upgrades-unsafe-allow missing-initializer
@@ -234,7 +233,7 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
 
     /// @notice Checks that both denylists of the protocol adapter contain a vulnerable logic reference: the adapter
     /// then neither consumes the resources that this contract migrates nor creates new ones.
-    /// @param protocolAdapter The protocol adapter.
+    /// @param protocolAdapter The protocol adapter that holds the denylists.
     /// @param logicRef The vulnerable logic reference.
     /// @dev `_migrate` and `reinitialize` call this function in a loop, and the adapter is a trusted contract.
     // forge-lint: disable-next-item(calls-loop)
@@ -250,7 +249,7 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     }
 
     /// @notice Checks that no denylist of the protocol adapter contains the new logic reference.
-    /// @param protocolAdapter The protocol adapter.
+    /// @param protocolAdapter The protocol adapter that holds the denylists.
     /// @param logicRef The new logic reference.
     function _checkLogicRefNotDenied(address protocolAdapter, bytes32 logicRef) internal view {
         require(

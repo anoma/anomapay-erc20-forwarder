@@ -11,7 +11,7 @@ interface IEmergencyMigratingERC20Forwarder {
     /// @param newLogicRef The logic reference that the forwarder accepts from this call on.
     event LogicRefReplaced(bytes32 indexed previousLogicRef, bytes32 indexed newLogicRef);
 
-    /// @notice Emitted when a resource with a vulnerable logic reference is migrated. No tokens move.
+    /// @notice Emitted when a resource with a vulnerable logic reference is migrated, which moves no tokens.
     /// @param token The ERC20 token in the label of the migrated resource.
     /// @param vulnerableLogicRef The logic reference of the migrated resource.
     /// @param nullifier The nullifier of the migrated resource.
@@ -37,7 +37,7 @@ interface IEmergencyMigratingERC20Forwarder {
     /// @return isMigrated Whether the forwarder migrated the resource or not.
     function isNullifierMigrated(bytes32 nullifier) external view returns (bool isMigrated);
 
-    /// @notice The V1 forwarder of the chain. Resources with its address in their label can emergency-migrate too.
+    /// @notice The V1 forwarder of the chain: resources with its address in their label can emergency-migrate too.
     /// @return forwarderV1 The V1 forwarder, never the zero address.
     function FORWARDER_V1() external view returns (address forwarderV1);
 }
