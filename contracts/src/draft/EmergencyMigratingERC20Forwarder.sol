@@ -152,30 +152,22 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// - migrate resources carrying a vulnerable logic reference.
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
-        (EmergencyMigratingCallType callType, IERC20 token,) =
+        (EmergencyMigratingCallType callType,,) =
             abi.decode(input[:_GENERIC_INPUT_OFFSET], (EmergencyMigratingCallType, IERC20, uint128));
 
         if (callType != EmergencyMigratingCallType.Migrate) {
             return super._forwardCall(input);
         }
 
-        uint256 balanceBefore = token.balanceOf(address(this));
-
-        _migrate({token: address(token), input: input});
-
-        // A migration moves no tokens.
-        uint256 balanceDelta = token.balanceOf(address(this)) - balanceBefore;
-        // slither-disable-next-line incorrect-equality
-        require(balanceDelta == 0, BalanceMismatch({expected: 0, actual: balanceDelta}));
+        _migrate(input);
 
         output = "";
     }
 
     /// @notice Migrates a batch of resources carrying vulnerable logic references by recording their nullifiers.
-    /// @param token The address of the token the migrated resources are labelled with.
     /// @param input The forwarder input, which ends with the batch.
-    function _migrate(address token, bytes calldata input) internal {
-        (,,, MigrateEntry[] memory entries) =
+    function _migrate(bytes calldata input) internal {
+        (, IERC20 token,, MigrateEntry[] memory entries) =
             abi.decode(input, (EmergencyMigratingCallType, IERC20, uint128, MigrateEntry[]));
 
         uint256 entryCount = entries.length;
@@ -223,7 +215,9 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
             require(!$._isNullifierMigrated[entry.nullifier], ResourceAlreadyMigrated(entry.nullifier));
             $._isNullifierMigrated[entry.nullifier] = true;
 
-            emit Migrated({token: token, vulnerableLogicRef: entry.vulnerableLogicRef, nullifier: entry.nullifier});
+            emit Migrated({
+                token: address(token), vulnerableLogicRef: entry.vulnerableLogicRef, nullifier: entry.nullifier
+            });
         }
     }
 

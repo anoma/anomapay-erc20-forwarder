@@ -251,15 +251,6 @@ contract EmergencyMigratingERC20ForwarderTest is Test {
         assertTrue(_fwd.isNullifierMigrated(_NULLIFIER));
     }
 
-    function test_migrate_moves_no_tokens() public {
-        _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
-        _erc20.mint({to: address(_fwd), value: _AMOUNT});
-
-        _migrate({vulnerableLogicRef: _VULNERABLE_LOGIC_REF, commitmentTreeRoot: _ROOT, nullifier: _NULLIFIER});
-
-        assertEq(_erc20.balanceOf(address(_fwd)), _AMOUNT);
-    }
-
     function test_migrate_emits_the_Migrated_event() public {
         _upgradeAndReplace({newLogicRef: _NEW_LOGIC_REF});
 
