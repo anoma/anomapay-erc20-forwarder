@@ -35,20 +35,25 @@ The EVM contract through which the protocol adapter drives ERC20 state changes
 One of the two ERC20 forwarder deployments the repo maintains, each recorded per chain in the deployment record and tracking a branch. Say "environment" (not "network" or "deployment target") — a chain is where an environment lives, not which one it is.
 
 **Staging / Production**:
-The two environments. Staging is owned by the deployment wallet and upgraded directly; production is owned by a Safe multisig whose signers confirm and execute upgrades. Each environment's forwarder settles through the protocol adapter proxy of the same environment. The branches tracking them keep their own names, `staging` and `main`.
+The two environments. Staging is owned by the deployment wallet and upgraded directly; production is owned by a Safe multisig whose signers confirm and execute upgrades. Each environment's forwarder settles through the protocol adapter of the same environment. The branches tracking them keep their own names, `staging` and `main`.
 
 **Promotion**:
 Moving a commit unchanged from `next` to `staging`, or from `staging` to `main`. The pull request opening one carries the gate proving the environment it targets runs that commit's source. Changes only ever flow this way.
 
 **Deployment record**:
-`crates/bindings/deployments.json` — the proxy address of each environment on each chain, plus the genesis fields pinning how that address was derived, and the V1 forwarder of each chain that ran a v1 protocol adapter. Written once per chain at its first deploy and never edited; what an environment currently runs is read from the chain, not from here.
+`crates/bindings/deployments.json` — the proxy address of each environment on each chain, plus the genesis fields pinning how that address was derived, and the immutable ERC20 forwarder of each chain that ran an immutable protocol adapter. Written once per chain at its first deploy and never edited; what an environment currently runs is read from the chain, not from here.
 
-**V1 forwarder**:
-The immutable ERC20 forwarder that ran with a chain's v1 protocol adapter, recorded with the logic ref it accepts. It belongs to no environment.
-_Avoid_: retired forwarder, legacy forwarder
+**Immutable protocol adapter**:
+The protocol adapter that a chain ran before its upgradeable protocol adapter: one immutable contract per chain. It is stopped, and its state is copied into the protocol adapter.
+_Avoid_: v1 protocol adapter, legacy protocol adapter
 
-**V1 resource**:
-A resource with the V1 forwarder's address in its label, on a chain that ran a v1 protocol adapter. It carries the logic ref that the V1 forwarder accepts, and its tokens moved to the forwarder.
+**Immutable ERC20 forwarder**:
+The ERC20 forwarder that ran with a chain's immutable protocol adapter: one immutable contract, recorded with the logic ref it accepts. It belongs to no environment.
+_Avoid_: V1 forwarder, retired forwarder, legacy forwarder
+
+**Immutable-forwarder resource**:
+A resource with the immutable ERC20 forwarder's address in its label. It carries the logic ref that the immutable ERC20 forwarder accepts, and its tokens moved to the forwarder.
+_Avoid_: V1 resource
 
 **Circuit version**:
 A release of the ERC20 transfer circuit. Its logic ref identifies its code, and each resource carries the logic ref of its circuit version.
@@ -67,7 +72,7 @@ A transaction that consumes resources of a deprecated version and creates resour
 _Avoid_: conversion
 
 **Emergency migration**:
-A transaction that creates resources of the active version for resources with a vulnerable logic ref and this forwarder or the V1 forwarder in their label. The adapter does not consume the old resources; the forwarder records their nullifiers, and the tokens stay in the forwarder.
+A transaction that creates resources of the active version for resources with a vulnerable logic ref and this forwarder or the immutable ERC20 forwarder in their label. The adapter does not consume the old resources; the forwarder records their nullifiers, and the tokens stay in the forwarder.
 _Avoid_: hard migration, rescue
 
 ## Note on upstream names
