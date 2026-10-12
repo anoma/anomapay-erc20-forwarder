@@ -1,8 +1,8 @@
 use alloy::primitives::{Address, B256};
 use alloy_chains::NamedChain;
 use anomapay_erc20_forwarder_bindings::addresses::{
-    Environment, erc20_forwarder_address, erc20_forwarder_deployments_map, erc20_forwarder_v1,
-    erc20_forwarder_v1_deployments_map,
+    Environment, erc20_forwarder_address, erc20_forwarder_deployments_map, legacy_erc20_forwarder,
+    legacy_erc20_forwarder_deployments_map,
 };
 use std::collections::HashSet;
 
@@ -22,7 +22,7 @@ struct RawEntry {
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RawV1Entry {
+struct RawLegacyEntry {
     chain_id: u64,
     forwarder: String,
     logic_ref: String,
@@ -32,7 +32,7 @@ struct RawV1Entry {
 struct RawDeployments {
     staging: Vec<RawEntry>,
     production: Vec<RawEntry>,
-    v1: Vec<RawV1Entry>,
+    legacy: Vec<RawLegacyEntry>,
 }
 
 fn raw_deployments() -> RawDeployments {
@@ -120,11 +120,11 @@ fn each_chain_is_individually_addressable() {
 }
 
 #[test]
-fn all_v1_entries_have_valid_chain_ids() {
-    for entry in raw_deployments().v1 {
+fn all_legacy_entries_have_valid_chain_ids() {
+    for entry in raw_deployments().legacy {
         NamedChain::try_from(entry.chain_id).unwrap_or_else(|_| {
             panic!(
-                "chain ID {} of a V1 entry does not map to a known NamedChain variant",
+                "chain ID {} of a legacy entry does not map to a known NamedChain variant",
                 entry.chain_id
             )
         });
@@ -132,17 +132,17 @@ fn all_v1_entries_have_valid_chain_ids() {
 }
 
 #[test]
-fn all_v1_entries_have_valid_addresses_and_logic_refs() {
-    for entry in raw_deployments().v1 {
+fn all_legacy_entries_have_valid_addresses_and_logic_refs() {
+    for entry in raw_deployments().legacy {
         entry.forwarder.parse::<Address>().unwrap_or_else(|_| {
             panic!(
-                "invalid V1 forwarder address '{}' for chain ID '{}'",
+                "invalid legacy ERC20 forwarder address '{}' for chain ID '{}'",
                 entry.forwarder, entry.chain_id
             )
         });
         entry.logic_ref.parse::<B256>().unwrap_or_else(|_| {
             panic!(
-                "invalid V1 logic ref '{}' for chain ID '{}'",
+                "invalid legacy logic ref '{}' for chain ID '{}'",
                 entry.logic_ref, entry.chain_id
             )
         });
@@ -150,36 +150,36 @@ fn all_v1_entries_have_valid_addresses_and_logic_refs() {
 }
 
 #[test]
-fn no_duplicate_chain_ids_among_the_v1_entries() {
+fn no_duplicate_chain_ids_among_the_legacy_entries() {
     let mut seen = HashSet::new();
-    for entry in raw_deployments().v1 {
+    for entry in raw_deployments().legacy {
         assert!(
             seen.insert(entry.chain_id),
-            "duplicate chain ID {} among the V1 entries",
+            "duplicate chain ID {} among the legacy entries",
             entry.chain_id
         );
     }
 }
 
 #[test]
-fn v1_deployments_map_has_expected_count() {
-    let map = erc20_forwarder_v1_deployments_map();
-    let entries = raw_deployments().v1;
+fn legacy_deployments_map_has_expected_count() {
+    let map = legacy_erc20_forwarder_deployments_map();
+    let entries = raw_deployments().legacy;
     assert_eq!(
         map.len(),
         entries.len(),
-        "V1 deployments map size ({}) does not match JSON entries ({})",
+        "Legacy deployments map size ({}) does not match JSON entries ({})",
         map.len(),
         entries.len()
     );
 }
 
 #[test]
-fn each_v1_chain_is_individually_addressable() {
-    for chain in erc20_forwarder_v1_deployments_map().keys() {
+fn each_legacy_chain_is_individually_addressable() {
+    for chain in legacy_erc20_forwarder_deployments_map().keys() {
         assert!(
-            erc20_forwarder_v1(chain).is_some(),
-            "erc20_forwarder_v1 returned None for chain '{chain}'"
+            legacy_erc20_forwarder(chain).is_some(),
+            "legacy_erc20_forwarder returned None for chain '{chain}'"
         );
     }
 }

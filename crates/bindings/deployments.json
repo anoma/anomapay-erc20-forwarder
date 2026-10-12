@@ -20,7 +20,7 @@
       }
     }
   ],
-  "v1": [
+  "legacy": [
     {
       "chainId": 11155111,
       "forwarder": "0x0A62bE41E66841f693f922991C4e40C89cb0CFDF",

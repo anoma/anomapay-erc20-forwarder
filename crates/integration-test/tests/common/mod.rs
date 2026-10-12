@@ -73,7 +73,7 @@ async fn setup_transfer_env_on_builder(builder: &mut StateBuilder) -> anyhow::Re
         deployer,
     )
     .await
-    .context("failed to deploy and insert ERC20 forwarder v1")?;
+    .context("failed to deploy and insert the ERC20 forwarder")?;
 
     erc20_example(token, provider.clone())
         .approve(PERMIT2_CANONICAL_ADDRESS, U256::MAX)

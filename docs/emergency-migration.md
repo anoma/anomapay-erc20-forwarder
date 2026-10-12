@@ -4,7 +4,7 @@ The draft [`EmergencyMigratingERC20Forwarder`](../contracts/src/draft/EmergencyM
 
 ## Terms
 
-This document uses the terms of the [glossary](../CONTEXT.md): circuit version, active version, deprecated version, vulnerable logic ref, V1 resource, soft migration and emergency migration.
+This document uses the terms of the [glossary](../CONTEXT.md): circuit version, active version, deprecated version, vulnerable logic ref, legacy-forwarder resource, soft migration and emergency migration.
 
 ## Cases
 
@@ -15,7 +15,7 @@ The examples name circuit versions with letters, in release order. Each case sta
 - **C**: the version that the forwarder moves to.
 - **D**: the version after C, only in [A second incident](#a-second-incident).
 
-V1 resources carry the logic reference that the V1 forwarder accepts. In the examples, that is A.
+legacy-forwarder resources carry the logic reference that the legacy ERC20 forwarder accepts. In the examples, that is A.
 
 ### Voluntary upgrade
 
@@ -24,7 +24,7 @@ No circuit version has a flaw. C improves B.
 1. The kind tables release C as the active version, and B becomes deprecated. The owner of the protocol adapter stores the new kind table commitment.
 2. The owner of the forwarder upgrades it to an implementation that accepts the logic reference of C. The forwarder keeps its address, so the label of its resources does not change.
 3. When the backend creates resources of C, the owner of the adapter deprecates the logic reference of B.
-4. Owners of resources of A and B, and of V1 resources, soft-migrate them to C.
+4. Owners of resources of A and B, and of legacy-forwarder resources, soft-migrate them to C.
 
 A voluntary upgrade needs no emergency migration. The regular `ERC20Forwarder` has no function that sets a new logic reference yet; the release that ships C adds one. After an incident, every later implementation must keep the emergency migration, because the resources with a listed logic reference have no other way out. A voluntary upgrade then uses an emergency implementation that has this function, because `reinitialize` must list at least one vulnerable logic reference.
 
@@ -45,9 +45,9 @@ The cases differ in the circuit versions with the flaw:
 
 | Flaw in | C | The adapter denies | `reinitialize` lists | Soft migration | Emergency migration |
 | --- | --- | --- | --- | --- | --- |
-| B, the active version | fixes B | B | B | A and V1 resources | B |
-| A, a deprecated version | adds the migrate call to B | A | A | B | A and V1 resources |
-| A and B, for example through a RISC Zero version that both use | fixes A and B | A and B | A and B | none | A, B and V1 resources |
+| B, the active version | fixes B | B | B | A and legacy-forwarder resources | B |
+| A, a deprecated version | adds the migrate call to B | A | A | B | A and legacy-forwarder resources |
+| A and B, for example through a RISC Zero version that both use | fixes A and B | A and B | A and B | none | A, B and legacy-forwarder resources |
 
 If more deprecated versions have the flaw, the adapter denies each of them, and `reinitialize` lists them too.
 
@@ -77,7 +77,7 @@ struct MigrateEntry {
 
 Before it reads the first entry, the forwarder checks that both denylists of the protocol adapter still contain every vulnerable logic reference that it lists. Then, for each entry, it checks that:
 
-- the forwarder address in the resource label is this forwarder or the V1 forwarder of the chain,
+- the forwarder address in the resource label is this forwarder or the legacy ERC20 forwarder of the chain,
 - the forwarder lists the logic reference as vulnerable,
 - the root is a historical root of the adapter,
 - the adapter's nullifier set does not contain the nullifier,
@@ -100,12 +100,12 @@ The forwarder keeps its address when it is upgraded, so the label `hash(forwarde
 
 The forwarder must emergency-migrate only resources whose tokens it holds, not every resource whose logic reference the adapter denies. So an entry must meet two conditions:
 
-- **The label names this forwarder or the V1 forwarder of the chain.** Anyone can deploy a contract that acts as a forwarder, and a resource with that contract in its label can have any quantity. The forwarder holds the tokens of its own resources and of V1 resources, because the V1 balances moved to it. The implementation takes the V1 forwarder as a constructor argument, or the zero address on a chain that has only V2, for example a new chain. The script that deploys the implementation must take the address from the deployment record, `RecordedDeployments.forwarderV1`, which returns the zero address for such a chain.
-- **The forwarder lists the logic reference.** `reinitialize` adds the logic references that the owner passes, and nothing removes them. The owner must list only circuit versions of this forwarder and the logic reference of the V1 forwarder. All applications share the denylists: a resource with another application's denied logic reference can have this forwarder's label and any quantity, and an emergency migration of it would create ERC20 resources for tokens that the forwarder does not hold.
+- **The label names this forwarder or the legacy ERC20 forwarder of the chain.** Anyone can deploy a contract that acts as a forwarder, and a resource with that contract in its label can have any quantity. The forwarder holds the tokens of its own resources and of legacy-forwarder resources, because the balances of the legacy ERC20 forwarder moved to it. The implementation takes the legacy ERC20 forwarder as a constructor argument, or the zero address on a chain without one, for example a new chain. The script that deploys the implementation must take the address from the deployment record, `RecordedDeployments.legacyForwarder`, which returns the zero address for such a chain.
+- **The forwarder lists the logic reference.** `reinitialize` adds the logic references that the owner passes, and nothing removes them. The owner must list only circuit versions of this forwarder and the logic reference of the legacy ERC20 forwarder. All applications share the denylists: a resource with another application's denied logic reference can have this forwarder's label and any quantity, and an emergency migration of it would create ERC20 resources for tokens that the forwarder does not hold.
 
-A V1 resource needs no check of its logic reference. A resource with the V1 forwarder in its label reaches this adapter only through the copy-in of the v1 state, or through a kind table alias until the adapter deprecates the V1 forwarder's logic reference. Both carry that logic reference. Any other V1 resource needs a flaw, and the same flaw could create resources with this forwarder's label too. Before the completion run unpauses the adapter, its owner deprecates the V1 forwarder's logic reference, so that no transaction creates V1 resources.
+A legacy-forwarder resource needs no check of its logic reference. A resource with the legacy ERC20 forwarder in its label reaches this adapter only through the copy-in of the state of the legacy protocol adapter, or through a kind table alias until the adapter deprecates the legacy ERC20 forwarder's logic reference. Both carry that logic reference. Any other legacy-forwarder resource needs a flaw, and the same flaw could create resources with this forwarder's label too. Before the completion run unpauses the adapter, its owner deprecates the legacy ERC20 forwarder's logic reference, so that no transaction creates legacy-forwarder resources.
 
-The forwarder does not check tokens. The owner lists the V1 forwarder's logic reference only if the V1 balances of all tokens that the V1 forwarder wrapped moved to this forwarder. The migration checklist requires this before the adapter unpauses.
+The forwarder does not check tokens. The owner lists the legacy ERC20 forwarder's logic reference only if the balances of all tokens that the legacy ERC20 forwarder wrapped moved to this forwarder. The migration checklist requires this before the adapter unpauses.
 
 ## Why the adapter must deny the vulnerable logic reference
 
@@ -124,6 +124,6 @@ An emergency migration does not consume the resource at the adapter; the forward
 
 - The reinitializer version of each implementation must be one more than the initialized version of the forwarder when the upgrade starts. The draft uses 2, because `ERC20Forwarder.initialize` sets 1. `reinitialize` is owner-only: if an upgrade does not call it in the same call, nobody else can choose the logic reference and the list.
 - No script deploys the draft yet.
-- The constructor accepts the zero address as the V1 forwarder, for a chain that has only V2. On a chain with a V1 forwarder, the zero address makes the forwarder reject the emergency migration of every V1 resource. An upgrade to an implementation with the right address fixes this, and it needs no `reinitialize` call.
+- The constructor accepts the zero address as the legacy ERC20 forwarder, for a chain without one. On a chain with a legacy ERC20 forwarder, the zero address makes the forwarder reject the emergency migration of every legacy-forwarder resource. An upgrade to an implementation with the right address fixes this, and it needs no `reinitialize` call.
 - The contract declares no initializer of its own. `ERC20Forwarder.initialize` initializes every parent contract, and `reinitialize` must not run it again, so it calls no parent initializer.
 - The contract reports the `VERSION` of `ERC20Forwarder`, because a constant cannot be overridden. Before the draft becomes a release, `VERSION` must become a virtual getter.

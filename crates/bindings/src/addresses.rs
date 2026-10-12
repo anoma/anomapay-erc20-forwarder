@@ -16,9 +16,9 @@ pub enum Environment {
     Production,
 }
 
-/// The immutable ERC20 forwarder of a chain's v1 protocol adapter, and the logic ref it accepts.
+/// The legacy ERC20 forwarder of a chain, and the logic ref it accepts.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct V1Forwarder {
+pub struct LegacyForwarder {
     pub address: Address,
     pub logic_ref: B256,
 }
@@ -37,7 +37,7 @@ struct DeploymentEntry {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct V1Entry {
+struct LegacyEntry {
     chain_id: u64,
     forwarder: String,
     logic_ref: String,
@@ -47,7 +47,7 @@ struct V1Entry {
 struct Deployments {
     staging: Vec<DeploymentEntry>,
     production: Vec<DeploymentEntry>,
-    v1: Vec<V1Entry>,
+    legacy: Vec<LegacyEntry>,
 }
 
 static DEPLOYMENTS: LazyLock<HashMap<Environment, HashMap<NamedChain, Address>>> =
@@ -72,18 +72,18 @@ static DEPLOYMENTS: LazyLock<HashMap<Environment, HashMap<NamedChain, Address>>>
         ])
     });
 
-static V1_DEPLOYMENTS: LazyLock<HashMap<NamedChain, V1Forwarder>> = LazyLock::new(|| {
+static LEGACY_DEPLOYMENTS: LazyLock<HashMap<NamedChain, LegacyForwarder>> = LazyLock::new(|| {
     let deployments: Deployments = serde_json::from_str(include_str!("../deployments.json"))
         .expect("deployments.json: invalid JSON");
 
     deployments
-        .v1
+        .legacy
         .into_iter()
         .filter_map(|e| {
             let chain = NamedChain::try_from(e.chain_id).ok()?;
             let address: Address = e.forwarder.parse().ok()?;
             let logic_ref: B256 = e.logic_ref.parse().ok()?;
-            Some((chain, V1Forwarder { address, logic_ref }))
+            Some((chain, LegacyForwarder { address, logic_ref }))
         })
         .collect()
 });
@@ -98,12 +98,12 @@ pub fn erc20_forwarder_address(environment: Environment, chain: &NamedChain) -> 
     DEPLOYMENTS[&environment].get(chain).cloned()
 }
 
-/// Returns a map of the V1 ERC20 forwarders, one per chain that ran a v1 protocol adapter.
-pub fn erc20_forwarder_v1_deployments_map() -> HashMap<NamedChain, V1Forwarder> {
-    V1_DEPLOYMENTS.clone()
+/// Returns a map of the legacy ERC20 forwarders, one per chain that ran a legacy protocol adapter.
+pub fn legacy_erc20_forwarder_deployments_map() -> HashMap<NamedChain, LegacyForwarder> {
+    LEGACY_DEPLOYMENTS.clone()
 }
 
-/// Returns the V1 ERC20 forwarder recorded on the provided chain, if any.
-pub fn erc20_forwarder_v1(chain: &NamedChain) -> Option<V1Forwarder> {
-    V1_DEPLOYMENTS.get(chain).copied()
+/// Returns the legacy ERC20 forwarder recorded on the provided chain, if any.
+pub fn legacy_erc20_forwarder(chain: &NamedChain) -> Option<LegacyForwarder> {
+    LEGACY_DEPLOYMENTS.get(chain).copied()
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-/// @notice A stand-in for the V2 ERC20 forwarder proxy, answering the two getters the migration script reads it
+/// @notice A stand-in for the ERC20 forwarder proxy, answering the two getters the migration script reads it
 /// through. It receives the tokens the migration moves, so it needs code and nothing else.
 contract ERC20ForwarderMock {
     address internal immutable _OWNER;

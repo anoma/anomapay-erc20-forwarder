@@ -46,7 +46,8 @@ contract DeploymentParameters {
     }
 
     /// @notice Returns the forwarder multisig.
-    /// @return multisig The Safe that owns the production proxies and is the emergency committee of the V1 forwarders.
+    /// @return multisig The Safe that owns the production proxies and is the emergency committee of the legacy ERC20
+    /// forwarders.
     function FWD_MULTISIG() external pure returns (address multisig) {
         multisig = Parameters.FWD_MULTISIG;
     }
