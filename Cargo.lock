@@ -1018,9 +1018,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-evm-bindings"
-version = "3.0.0-rc.15"
+version = "3.0.0-rc.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba8b60169f7f51c9bac74651c6d50b8fa7fae245c7e8f6956d4601cac5ec0dcf"
+checksum = "d4f597d3a04d533f1906ec343b8fd0f7222df4da2d6a774c321c938870f87b7c"
 dependencies = [
  "alloy",
  "alloy-chains",
@@ -1033,8 +1033,8 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-evm-bindings"
-version = "3.0.0-rc.15"
-source = "git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.15#5db97e7120c1369943c9d07b90ab828d0d5ce9c7"
+version = "3.0.0-rc.16"
+source = "git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.16#e192846d7a549c3f77bb973c6bfc7021a2e079b5"
 dependencies = [
  "alloy",
  "alloy-chains",
@@ -1048,11 +1048,11 @@ dependencies = [
 [[package]]
 name = "anoma-pa-evm-integration-test"
 version = "0.1.0"
-source = "git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.15#5db97e7120c1369943c9d07b90ab828d0d5ce9c7"
+source = "git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.16#e192846d7a549c3f77bb973c6bfc7021a2e079b5"
 dependencies = [
  "alloy",
  "alloy-chains",
- "anoma-pa-evm-bindings 3.0.0-rc.15 (git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.15)",
+ "anoma-pa-evm-bindings 3.0.0-rc.16 (git+https://github.com/anoma/pa-evm?tag=bindings%2Fv3.0.0-rc.16)",
  "anoma-pa-testkit",
  "anoma-risc0-verifier-bindings",
  "anoma-rm-risc0",
@@ -1155,7 +1155,7 @@ version = "3.0.0-rc.12"
 dependencies = [
  "alloy",
  "alloy-chains",
- "anoma-pa-evm-bindings 3.0.0-rc.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "anoma-pa-evm-bindings 3.0.0-rc.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "dotenvy",
  "serde",
  "serde_json",

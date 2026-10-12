@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {ERC20Example} from "anoma-forwarder-bases-3.0.1/test/examples/ERC20Example.sol";
 import {
     RecordedDeployments as ProtocolAdapterDeployments
-} from "anoma-pa-evm-2.0.0-rc.9/generated/RecordedDeployments.sol";
+} from "anoma-pa-evm-2.0.0-rc.10/generated/RecordedDeployments.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployERC20ForwarderV1Migration} from "../../script/migration/DeployERC20ForwarderV1Migration.s.sol";
@@ -42,7 +42,7 @@ abstract contract MigrationFixture is SafeFixture {
         _committeeOwner = makeAddr("safe owner");
         _committee = _deploySafeAt(_committeeOwner, Parameters.FWD_MULTISIG);
 
-        _protocolAdapterV1 = ProtocolAdapterDeployments.protocolAdapterV1(_CHAIN_ID);
+        _protocolAdapterV1 = ProtocolAdapterDeployments.legacyProtocolAdapter(_CHAIN_ID);
         _protocolAdapterV2 = ProtocolAdapterDeployments.protocolAdapterProxy({isProduction: false, chainId: _CHAIN_ID});
         _installProtocolAdapterV1({isStopped: true});
 
