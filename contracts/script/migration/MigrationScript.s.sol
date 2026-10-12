@@ -11,21 +11,21 @@ import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
-import {ERC20ForwarderV1Migration} from "../../src/migration/ERC20ForwarderV1Migration.sol";
+import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
 import {DeployERC20ForwarderProxy} from "../DeployERC20ForwarderProxy.s.sol";
 import {Parameters} from "../Parameters.sol";
 
 /// @title MigrationScript
 /// @author Anoma Foundation, 2026
-/// @notice The base of the scripts that move one chain's ERC20 tokens from the V1 forwarder to the V2 forwarder proxy.
-/// Both forwarders come from the recorded deployments, their protocol adapters from the records of the protocol
-/// adapter package, and all of them are checked against the chain, so `--rpc-url` alone names the chain.
+/// @notice The base of the scripts that move one chain's ERC20 tokens from the legacy ERC20 forwarder to the ERC20
+/// forwarder proxy. Both forwarders come from the recorded deployments, their protocol adapters from the records of the
+/// protocol adapter package, and all of them are checked against the chain, so `--rpc-url` alone names the chain.
 /// @custom:security-contact security@anoma.foundation
 abstract contract MigrationScript is Script {
-    /// @notice Thrown if the chain ran no V1 forwarder, i.e. it has no tokens to move.
-    error ForwarderV1NotRecorded(uint256 chainId);
+    /// @notice Thrown if the chain ran no legacy ERC20 forwarder, i.e. it has no tokens to move.
+    error LegacyForwarderNotRecorded(uint256 chainId);
 
-    /// @notice Thrown if the environment records no V2 forwarder for the chain, i.e. it has no destination.
+    /// @notice Thrown if the environment records no ERC20 forwarder for the chain, i.e. it has no destination.
     error DeploymentNotRecorded(string environment, uint256 chainId);
 
     /// @notice Thrown if a forwarder forwards for another protocol adapter than the recorded one.
@@ -34,48 +34,49 @@ abstract contract MigrationScript is Script {
     /// @notice Thrown if a contract has another owner than the expected one.
     error OwnerMismatch(address expected, address actual);
 
-    /// @notice Thrown if the migration contract names another forwarder than the recorded V1 forwarder.
-    error ForwarderV1Mismatch(address expected, address actual);
+    /// @notice Thrown if the migration contract names another forwarder than the recorded legacy ERC20 forwarder.
+    error LegacyForwarderMismatch(address expected, address actual);
 
-    /// @notice Thrown if the migration contract names another forwarder than the recorded V2 forwarder.
-    error ForwarderV2Mismatch(address expected, address actual);
+    /// @notice Thrown if the migration contract names another forwarder than the recorded ERC20 forwarder.
+    error ForwarderMismatch(address expected, address actual);
 
-    /// @notice Thrown if V1 has another emergency caller than the expected one.
+    /// @notice Thrown if the legacy ERC20 forwarder has another emergency caller than the expected one.
     error EmergencyCallerMismatch(address expected, address actual);
 
-    /// @notice Thrown if V1 has no emergency caller, i.e. the Safe has not assigned the migration contract yet.
-    error EmergencyCallerNotSet(address forwarderV1);
+    /// @notice Thrown if the legacy ERC20 forwarder has no emergency caller, i.e. the Safe has not assigned the
+    /// migration contract yet.
+    error EmergencyCallerNotSet(address legacyForwarder);
 
-    /// @notice Thrown if the owner has not stopped the v1 protocol adapter. That stop is enough for V1 to accept both
-    /// emergency calls.
+    /// @notice Thrown if the owner has not stopped the legacy protocol adapter. That stop is enough for the legacy
+    /// ERC20 forwarder to accept both emergency calls.
     error ProtocolAdapterNotStopped(address protocolAdapter);
 
     /// @notice Returns the chain's recorded forwarders and checks them against the chain: the environment's proxy
-    /// owner owns the V2 forwarder, and each forwarder forwards for the protocol adapter the records name for it.
-    /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
-    /// @return forwarderV1 The chain's V1 forwarder, which holds the tokens.
-    /// @return forwarderV2 The environment's V2 forwarder of the chain, which receives them.
-    function _configuration(bool isProduction) internal returns (address forwarderV1, address forwarderV2) {
+    /// owner owns the ERC20 forwarder, and each forwarder forwards for the protocol adapter the records name for it.
+    /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
+    /// @return legacyForwarder The chain's legacy ERC20 forwarder, which holds the tokens.
+    /// @return forwarder The environment's ERC20 forwarder of the chain, which receives them.
+    function _configuration(bool isProduction) internal returns (address legacyForwarder, address forwarder) {
         DeployERC20ForwarderProxy proxyDeployScript = new DeployERC20ForwarderProxy();
 
-        forwarderV1 = RecordedDeployments.forwarderV1(block.chainid);
-        require(forwarderV1 != address(0), ForwarderV1NotRecorded(block.chainid));
+        legacyForwarder = RecordedDeployments.legacyForwarder(block.chainid);
+        require(legacyForwarder != address(0), LegacyForwarderNotRecorded(block.chainid));
 
-        forwarderV2 = RecordedDeployments.forwarderProxy({isProduction: isProduction, chainId: block.chainid});
+        forwarder = RecordedDeployments.forwarderProxy({isProduction: isProduction, chainId: block.chainid});
         require(
-            forwarderV2 != address(0),
+            forwarder != address(0),
             DeploymentNotRecorded(proxyDeployScript.environmentName(isProduction), block.chainid)
         );
 
         address expectedOwner = isProduction ? Parameters.FWD_MULTISIG : Parameters.DEPLOYMENT_WALLET;
-        address actualOwner = ERC20Forwarder(forwarderV2).owner();
+        address actualOwner = ERC20Forwarder(forwarder).owner();
         require(actualOwner == expectedOwner, OwnerMismatch({expected: expectedOwner, actual: actualOwner}));
 
         _requireProtocolAdapter({
-            forwarder: forwarderV1, expected: ProtocolAdapterDeployments.legacyProtocolAdapter(block.chainid)
+            forwarder: legacyForwarder, expected: ProtocolAdapterDeployments.legacyProtocolAdapter(block.chainid)
         });
         _requireProtocolAdapter({
-            forwarder: forwarderV2,
+            forwarder: forwarder,
             expected: ProtocolAdapterDeployments.protocolAdapterProxy({
                 isProduction: isProduction, chainId: block.chainid
             })
@@ -84,26 +85,25 @@ abstract contract MigrationScript is Script {
 
     /// @notice Returns the chain's recorded forwarders and checks what moving the tokens depends on besides them:
     /// the migration contract moves the tokens between these two forwarders, the deployment wallet owns that
-    /// contract, and the v1 protocol adapter is stopped.
-    /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
+    /// contract, and the legacy protocol adapter is stopped.
+    /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
     /// @param migration The deployed migration contract.
-    /// @return forwarderV1 The chain's V1 forwarder, which holds the tokens.
-    /// @return forwarderV2 The environment's V2 forwarder of the chain, which receives them.
-    function _checkedConfiguration(bool isProduction, ERC20ForwarderV1Migration migration)
+    /// @return legacyForwarder The chain's legacy ERC20 forwarder, which holds the tokens.
+    /// @return forwarder The environment's ERC20 forwarder of the chain, which receives them.
+    function _checkedConfiguration(bool isProduction, LegacyERC20ForwarderMigration migration)
         internal
-        returns (address forwarderV1, address forwarderV2)
+        returns (address legacyForwarder, address forwarder)
     {
-        (forwarderV1, forwarderV2) = _configuration(isProduction);
+        (legacyForwarder, forwarder) = _configuration(isProduction);
 
-        address actualForwarderV1 = address(migration.FORWARDER_V1());
+        address actualLegacyForwarder = address(migration.LEGACY_FORWARDER());
         require(
-            actualForwarderV1 == forwarderV1, ForwarderV1Mismatch({expected: forwarderV1, actual: actualForwarderV1})
+            actualLegacyForwarder == legacyForwarder,
+            LegacyForwarderMismatch({expected: legacyForwarder, actual: actualLegacyForwarder})
         );
 
-        address actualForwarderV2 = migration.FORWARDER_V2();
-        require(
-            actualForwarderV2 == forwarderV2, ForwarderV2Mismatch({expected: forwarderV2, actual: actualForwarderV2})
-        );
+        address actualForwarder = migration.FORWARDER();
+        require(actualForwarder == forwarder, ForwarderMismatch({expected: forwarder, actual: actualForwarder}));
 
         address actualOwner = migration.owner();
         require(
@@ -111,30 +111,30 @@ abstract contract MigrationScript is Script {
             OwnerMismatch({expected: Parameters.DEPLOYMENT_WALLET, actual: actualOwner})
         );
 
-        address protocolAdapterV1 = ProtocolAdapterDeployments.legacyProtocolAdapter(block.chainid);
-        require(Pausable(protocolAdapterV1).paused(), ProtocolAdapterNotStopped(protocolAdapterV1));
+        address legacyProtocolAdapter = ProtocolAdapterDeployments.legacyProtocolAdapter(block.chainid);
+        require(Pausable(legacyProtocolAdapter).paused(), ProtocolAdapterNotStopped(legacyProtocolAdapter));
     }
 
-    /// @notice Returns the migration contract that V1 holds as its emergency caller, after checking it the way
-    /// `_checkedConfiguration` does.
-    /// @param isProduction Whether the tokens move to the production or the staging V2 forwarder.
+    /// @notice Returns the migration contract that the legacy ERC20 forwarder holds as its emergency caller, after
+    /// checking it the way `_checkedConfiguration` does.
+    /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
     /// @return migration The migration contract the Safe assigned.
-    function _assignedMigration(bool isProduction) internal returns (ERC20ForwarderV1Migration migration) {
-        (address forwarderV1,) = _configuration(isProduction);
+    function _assignedMigration(bool isProduction) internal returns (LegacyERC20ForwarderMigration migration) {
+        (address legacyForwarder,) = _configuration(isProduction);
 
-        address caller = IEmergencyMigratable(forwarderV1).getEmergencyCaller();
-        require(caller != address(0), EmergencyCallerNotSet(forwarderV1));
+        address caller = IEmergencyMigratable(legacyForwarder).getEmergencyCaller();
+        require(caller != address(0), EmergencyCallerNotSet(legacyForwarder));
 
-        migration = ERC20ForwarderV1Migration(caller);
+        migration = LegacyERC20ForwarderMigration(caller);
         _checkedConfiguration({isProduction: isProduction, migration: migration});
     }
 
-    /// @notice Reverts unless V1 holds the expected emergency caller, which is what orders the steps of the
-    /// migration.
-    /// @param forwarderV1 The chain's V1 forwarder.
-    /// @param expected The emergency caller V1 must hold.
-    function _requireEmergencyCaller(address forwarderV1, address expected) internal view {
-        address actual = IEmergencyMigratable(forwarderV1).getEmergencyCaller();
+    /// @notice Reverts unless the legacy ERC20 forwarder holds the expected emergency caller, which is what orders the
+    /// steps of the migration.
+    /// @param legacyForwarder The chain's legacy ERC20 forwarder.
+    /// @param expected The emergency caller the legacy ERC20 forwarder must hold.
+    function _requireEmergencyCaller(address legacyForwarder, address expected) internal view {
+        address actual = IEmergencyMigratable(legacyForwarder).getEmergencyCaller();
         require(actual == expected, EmergencyCallerMismatch({expected: expected, actual: actual}));
     }
 

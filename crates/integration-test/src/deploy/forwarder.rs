@@ -11,7 +11,7 @@ use anomapay_erc20_forwarder_bindings::generated::erc20_forwarder::ERC20Forwarde
 use anomapay_erc20_forwarder_bindings::generated::erc1967_proxy::ERC1967Proxy;
 use anyhow::Context;
 
-use crate::state::forwarder::insert_erc20_forwarder_v1_address;
+use crate::state::forwarder::insert_erc20_forwarder_address;
 
 #[inline]
 pub fn erc20_forwarder<P>(
@@ -98,7 +98,7 @@ where
     let address =
         deploy_erc20_forwarder(provider, protocol_adapter, logic_ref, initial_owner).await?;
 
-    insert_erc20_forwarder_v1_address(builder, address);
+    insert_erc20_forwarder_address(builder, address);
 
     Ok(address)
 }

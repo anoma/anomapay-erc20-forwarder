@@ -61,7 +61,7 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
 
     /// @inheritdoc IEmergencyMigratingERC20Forwarder
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    address public immutable override FORWARDER_V1;
+    address public immutable override LEGACY_FORWARDER;
 
     /// @notice Thrown if a denylist of the protocol adapter does not contain a vulnerable logic reference.
     /// @param logicRef The vulnerable logic reference.
@@ -85,7 +85,8 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @notice Thrown if the root of a migrated resource is not a historical root of the protocol adapter.
     error NonExistingRoot(bytes32 root);
 
-    /// @notice Thrown if the label of a migrated resource contains neither this forwarder nor the V1 forwarder.
+    /// @notice Thrown if the label of a migrated resource contains neither this forwarder nor the legacy ERC20
+    /// forwarder.
     error UnknownForwarder(address forwarder);
 
     /// @notice Thrown if an emergency migration contains no resource.
@@ -97,14 +98,14 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @notice Thrown if this contract migrated the resource already.
     error ResourceAlreadyMigrated(bytes32 nullifier);
 
-    /// @notice Sets the V1 forwarder of the chain, whose resources can emergency-migrate too.
-    /// @param forwarderV1 The V1 forwarder, or the zero address on a chain without one.
+    /// @notice Sets the legacy ERC20 forwarder of the chain, whose resources can emergency-migrate too.
+    /// @param legacyForwarder The legacy ERC20 forwarder, or the zero address on a chain without one.
     /// @custom:oz-upgrades-unsafe-allow constructor
-    // NOTE: The zero address stands for a chain without a V1 forwarder, and `_migrate` accepts no zero label.
+    // NOTE: The zero address stands for a chain without a legacy ERC20 forwarder, and `_migrate` accepts no zero label.
     // forge-lint: disable-next-line(missing-zero-check)
-    constructor(address forwarderV1) {
+    constructor(address legacyForwarder) {
         // slither-disable-next-line missing-zero-check
-        FORWARDER_V1 = forwarderV1;
+        LEGACY_FORWARDER = legacyForwarder;
     }
 
     /// @inheritdoc IEmergencyMigratingERC20Forwarder
@@ -196,9 +197,10 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
         for (uint256 i = 0; i < entryCount; ++i) {
             MigrateEntry memory entry = entries[i];
 
-            // The forwarder holds the tokens of its own resources and of V1 resources.
+            // The forwarder holds the tokens of its own resources and of legacy-forwarder resources.
             require(
-                entry.forwarder == address(this) || (FORWARDER_V1 != address(0) && entry.forwarder == FORWARDER_V1),
+                entry.forwarder == address(this)
+                    || (LEGACY_FORWARDER != address(0) && entry.forwarder == LEGACY_FORWARDER),
                 UnknownForwarder(entry.forwarder)
             );
 

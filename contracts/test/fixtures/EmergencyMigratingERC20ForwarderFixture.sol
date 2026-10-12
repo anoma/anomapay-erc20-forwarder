@@ -23,7 +23,7 @@ abstract contract EmergencyMigratingERC20ForwarderFixture is Test {
 
     address internal immutable _PROTOCOL_ADAPTER_OWNER = makeAddr("protocol adapter owner");
     address internal immutable _FORWARDER_OWNER = makeAddr("forwarder owner");
-    address internal immutable _FORWARDER_V1 = makeAddr("V1 forwarder");
+    address internal immutable _LEGACY_FORWARDER = makeAddr("legacy ERC20 forwarder");
 
     ProtocolAdapterMock internal _protocolAdapter;
     EmergencyMigratingERC20Forwarder internal _forwarder;
@@ -44,11 +44,11 @@ abstract contract EmergencyMigratingERC20ForwarderFixture is Test {
                 )
             )
         );
-        _implementation = address(new EmergencyMigratingERC20Forwarder(_FORWARDER_V1));
+        _implementation = address(new EmergencyMigratingERC20Forwarder(_LEGACY_FORWARDER));
     }
 
-    /// @dev Adds the logic ref to both denylists of the adapter, as `denyLogicRefs` does, or removes it from both, as an
-    /// upgrade of the adapter could.
+    /// @dev Adds the logic ref to both denylists of the adapter, as `denyLogicRefs` does, or removes it from both, as
+    /// an upgrade of the adapter could.
     function _setDenied(bytes32 logicRef, bool isDenied) internal {
         _protocolAdapter.mockSetLogicRefDenied({logicRef: logicRef, consumed: true, isDenied: isDenied});
         _protocolAdapter.mockSetLogicRefDenied({logicRef: logicRef, consumed: false, isDenied: isDenied});

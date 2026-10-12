@@ -4,32 +4,32 @@ use anoma_pa_testkit::environment::State;
 use anoma_pa_testkit::environment::StateBuilder;
 use anyhow::Context;
 
-pub const KEY_ERC20_FORWARDER_V1_ADDRESS: &str = "evm.forwarder.erc20.v1";
+pub const KEY_ERC20_FORWARDER_ADDRESS: &str = "evm.forwarder.erc20";
 
 #[inline]
-pub fn erc20_forwarder_v1_addr_key() -> &'static str {
-    KEY_ERC20_FORWARDER_V1_ADDRESS
+pub fn erc20_forwarder_addr_key() -> &'static str {
+    KEY_ERC20_FORWARDER_ADDRESS
 }
 
 #[inline]
-pub fn insert_erc20_forwarder_v1_address(builder: &mut StateBuilder, address: Address) {
-    builder.insert(erc20_forwarder_v1_addr_key(), address);
+pub fn insert_erc20_forwarder_address(builder: &mut StateBuilder, address: Address) {
+    builder.insert(erc20_forwarder_addr_key(), address);
 }
 
 #[inline]
-pub fn erc20_forwarder_v1_address<E>(env: &E) -> anyhow::Result<Address>
+pub fn erc20_forwarder_address<E>(env: &E) -> anyhow::Result<Address>
 where
     E: Environment,
 {
-    erc20_forwarder_v1_address_in_state(env.state())
+    erc20_forwarder_address_in_state(env.state())
 }
 
 #[inline]
-pub fn erc20_forwarder_v1_address_in_state(state: &State) -> anyhow::Result<Address> {
+pub fn erc20_forwarder_address_in_state(state: &State) -> anyhow::Result<Address> {
     state
-        .get::<Address>(erc20_forwarder_v1_addr_key())
+        .get::<Address>(erc20_forwarder_addr_key())
         .copied()
-        .context("failed to retrieve ERC20 forwarder v1 address from env")
+        .context("failed to retrieve the ERC20 forwarder address from env")
 }
 
 #[cfg(test)]
@@ -39,17 +39,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn erc20_forwarder_v1_key_format() {
-        assert_eq!(erc20_forwarder_v1_addr_key(), "evm.forwarder.erc20.v1");
+    fn erc20_forwarder_key_format() {
+        assert_eq!(erc20_forwarder_addr_key(), "evm.forwarder.erc20");
     }
 
     #[test]
-    fn insert_and_resolve_erc20_forwarder_v1_address() {
+    fn insert_and_resolve_erc20_forwarder_address() {
         let expected = Address::from([0x22; 20]);
 
         let state = {
             let mut builder = StateBuilder::new();
-            insert_erc20_forwarder_v1_address(&mut builder, expected);
+            insert_erc20_forwarder_address(&mut builder, expected);
             builder.finalize()
         };
 
@@ -57,22 +57,22 @@ mod tests {
         env.expect_state().return_const(state);
 
         let resolved =
-            erc20_forwarder_v1_address(&env).expect("must resolve stored forwarder address");
+            erc20_forwarder_address(&env).expect("must resolve stored forwarder address");
         assert_eq!(resolved, expected);
     }
 
     #[test]
-    fn missing_erc20_forwarder_v1_address_errors() {
+    fn missing_erc20_forwarder_address_errors() {
         let state = StateBuilder::new().finalize();
 
         let mut env = MockEnvironment::new();
         env.expect_state().return_const(state);
 
-        let err = erc20_forwarder_v1_address(&env)
-            .expect_err("must fail on missing forwarder address key");
+        let err =
+            erc20_forwarder_address(&env).expect_err("must fail on missing forwarder address key");
         assert!(
             err.to_string()
-                .contains("failed to retrieve ERC20 forwarder v1 address from env"),
+                .contains("failed to retrieve the ERC20 forwarder address from env"),
             "error should mention missing forwarder address, got: {err}"
         );
     }

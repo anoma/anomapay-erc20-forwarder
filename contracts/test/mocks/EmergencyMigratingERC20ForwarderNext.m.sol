@@ -9,7 +9,7 @@ import {EmergencyMigratingERC20Forwarder} from "../../src/draft/EmergencyMigrati
 contract EmergencyMigratingERC20ForwarderNextMock is EmergencyMigratingERC20Forwarder {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    constructor(address forwarderV1) EmergencyMigratingERC20Forwarder(forwarderV1) {}
+    constructor(address legacyForwarder) EmergencyMigratingERC20Forwarder(legacyForwarder) {}
 
     /// @dev Repeats the body of `EmergencyMigratingERC20Forwarder.reinitialize`, which runs only at version 2.
     function reinitialize(bytes32 newLogicRef, bytes32[] calldata vulnerableLogicRefs)

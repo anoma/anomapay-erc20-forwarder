@@ -17,7 +17,7 @@ import {EmergencyMigratingERC20Forwarder} from "../../src/draft/EmergencyMigrati
 import {IEmergencyMigratingERC20Forwarder} from "../../src/draft/IEmergencyMigratingERC20Forwarder.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 
-/// @dev Runs the v2 protocol adapter of pa-evm with a RISC Zero mock verifier, so transactions need no real proofs.
+/// @dev Runs the protocol adapter of pa-evm with a RISC Zero mock verifier, so transactions need no real proofs.
 contract EmergencyMigratingERC20ForwarderIntegrationTest is Test {
     using TxGen for Vm;
 
@@ -100,7 +100,8 @@ contract EmergencyMigratingERC20ForwarderIntegrationTest is Test {
         _protocolAdapter.execute(creation);
 
         // Upgrade the forwarder to the new logic ref and list the vulnerable one.
-        address implementation = address(new EmergencyMigratingERC20Forwarder({forwarderV1: makeAddr("V1 forwarder")}));
+        address implementation =
+            address(new EmergencyMigratingERC20Forwarder({legacyForwarder: makeAddr("legacy ERC20 forwarder")}));
         bytes32[] memory vulnerableLogicRefs = new bytes32[](1);
         vulnerableLogicRefs[0] = _VULNERABLE_LOGIC_REF;
         vm.prank(_FORWARDER_OWNER);

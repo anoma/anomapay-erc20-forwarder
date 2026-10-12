@@ -7,17 +7,18 @@ import {SafeCast} from "@openzeppelin-contracts-5.7.0/utils/math/SafeCast.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuard.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {ERC20Forwarder} from "../ERC20Forwarder.sol";
-import {IERC20ForwarderV1Migration} from "./IERC20ForwarderV1Migration.sol";
+import {ILegacyERC20ForwarderMigration} from "./ILegacyERC20ForwarderMigration.sol";
 
-/// @title ERC20ForwarderV1Migration
+/// @title LegacyERC20ForwarderMigration
 /// @author Anoma Foundation, 2026
-/// @notice Permanent V1 emergency caller that moves the V1 tokens only to its fixed V2 destination.
+/// @notice The permanent emergency caller of the legacy ERC20 forwarder, which moves its tokens only to a fixed ERC20
+/// forwarder.
 /// @custom:security-contact security@anoma.foundation
-contract ERC20ForwarderV1Migration is IERC20ForwarderV1Migration, Ownable, ReentrancyGuard {
-    /// @notice The immutable source forwarder.
-    IEmergencyMigratable public immutable FORWARDER_V1;
-    /// @notice The immutable destination forwarder.
-    address public immutable FORWARDER_V2;
+contract LegacyERC20ForwarderMigration is ILegacyERC20ForwarderMigration, Ownable, ReentrancyGuard {
+    /// @notice The legacy ERC20 forwarder, whose tokens this contract moves.
+    IEmergencyMigratable public immutable LEGACY_FORWARDER;
+    /// @notice The ERC20 forwarder that receives the tokens.
+    address public immutable FORWARDER;
 
     /// @notice Thrown if the forwarders are the same contract, or if one of them is the zero address or holds no
     /// code.
@@ -33,21 +34,21 @@ contract ERC20ForwarderV1Migration is IERC20ForwarderV1Migration, Ownable, Reent
     error DestinationBalanceMismatch(address token, uint256 expected, uint256 actual);
 
     /// @notice Fixes the source, destination and initial owner for this chain.
-    /// @param forwarderV1 The deployed immutable V1 forwarder.
-    /// @param forwarderV2 The deployed V2 forwarder proxy receiving the tokens.
+    /// @param legacyForwarder The deployed legacy ERC20 forwarder.
+    /// @param forwarder The deployed ERC20 forwarder proxy receiving the tokens.
     /// @param initialOwner The account that moves the tokens, which the deploy script names.
-    constructor(address forwarderV1, address forwarderV2, address initialOwner) Ownable(initialOwner) {
+    constructor(address legacyForwarder, address forwarder, address initialOwner) Ownable(initialOwner) {
         require(
-            forwarderV1 != address(0) && forwarderV2 != address(0) && forwarderV1 != forwarderV2
-                && forwarderV1.code.length != 0 && forwarderV2.code.length != 0,
+            legacyForwarder != address(0) && forwarder != address(0) && legacyForwarder != forwarder
+                && legacyForwarder.code.length != 0 && forwarder.code.length != 0,
             InvalidForwarders()
         );
-        FORWARDER_V1 = IEmergencyMigratable(forwarderV1);
-        FORWARDER_V2 = forwarderV2;
+        LEGACY_FORWARDER = IEmergencyMigratable(legacyForwarder);
+        FORWARDER = forwarder;
     }
 
     // slither-disable-start reentrancy-balance
-    /// @inheritdoc IERC20ForwarderV1Migration
+    /// @inheritdoc ILegacyERC20ForwarderMigration
     function migrate(IERC20[] calldata tokens) external override nonReentrant onlyOwner {
         uint256 count = tokens.length;
 
@@ -56,32 +57,34 @@ contract ERC20ForwarderV1Migration is IERC20ForwarderV1Migration, Ownable, Reent
         // forge-lint: disable-next-item(calls-loop)
         for (uint256 i = 0; i < count; ++i) {
             IERC20 token = tokens[i];
-            uint128 amount = SafeCast.toUint128(token.balanceOf(address(FORWARDER_V1)));
+            uint128 amount = SafeCast.toUint128(token.balanceOf(address(LEGACY_FORWARDER)));
 
-            uint256 beforeV2 = token.balanceOf(FORWARDER_V2);
-            bytes memory output = FORWARDER_V1.forwardEmergencyCall(
-                abi.encode(ERC20Forwarder.CallType.Unwrap, token, amount, FORWARDER_V2)
+            uint256 balanceBefore = token.balanceOf(FORWARDER);
+            bytes memory output = LEGACY_FORWARDER.forwardEmergencyCall(
+                abi.encode(ERC20Forwarder.CallType.Unwrap, token, amount, FORWARDER)
             );
 
-            // NOTE: The V1 forwarder returns empty bytes for a successful unwrap.
+            // NOTE: The legacy ERC20 forwarder returns empty bytes for a successful unwrap.
             // slither-disable-next-line incorrect-equality
             require(output.length == 0, UnexpectedEmergencyCallOutput({token: address(token), output: output}));
 
-            uint256 remaining = token.balanceOf(address(FORWARDER_V1));
-            // NOTE: The amount is the V1 balance read in this call, so V1 must end at zero.
+            uint256 remaining = token.balanceOf(address(LEGACY_FORWARDER));
+            // NOTE: The amount is the balance of the legacy ERC20 forwarder read in this call, so that balance must end
+            // at zero.
             // slither-disable-next-line incorrect-equality
             require(remaining == 0, SourceBalanceRemaining({token: address(token), remaining: remaining}));
 
-            uint256 expected = beforeV2 + amount;
-            uint256 received = token.balanceOf(FORWARDER_V2);
-            // NOTE: The forwarders support no fee-on-transfer token, so V2 must receive the exact amount.
+            uint256 expected = balanceBefore + amount;
+            uint256 received = token.balanceOf(FORWARDER);
+            // NOTE: The forwarders support no fee-on-transfer token, so the ERC20 forwarder must receive the exact
+            // amount.
             // slither-disable-next-line incorrect-equality
             require(
                 received == expected,
                 DestinationBalanceMismatch({token: address(token), expected: expected, actual: received})
             );
 
-            emit ERC20TokenMigrated(address(FORWARDER_V1), FORWARDER_V2, address(token), amount);
+            emit ERC20TokenMigrated(address(LEGACY_FORWARDER), FORWARDER, address(token), amount);
         }
     }
 

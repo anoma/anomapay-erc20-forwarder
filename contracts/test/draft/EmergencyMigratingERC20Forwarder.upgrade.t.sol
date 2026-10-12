@@ -17,9 +17,10 @@ contract EmergencyMigratingERC20ForwarderUpgradeTest is EmergencyMigratingERC20F
     function test_upgrades_safely() public {
         _setDenied({logicRef: _ACTIVE_LOGIC_REF, isDenied: true});
         Options memory options;
-        options.constructorData = abi.encode(_FORWARDER_V1);
+        options.constructorData = abi.encode(_LEGACY_FORWARDER);
 
-        // `Upgrades.upgradeProxy` deploys the implementation before it upgrades, so one `vm.prank` covers only the deploy.
+        // `Upgrades.upgradeProxy` deploys the implementation before it upgrades, so one `vm.prank` covers only the
+        // deploy.
         vm.startPrank(_FORWARDER_OWNER);
         Upgrades.upgradeProxy(
             address(_forwarder),
@@ -165,7 +166,7 @@ contract EmergencyMigratingERC20ForwarderUpgradeTest is EmergencyMigratingERC20F
         });
     }
 
-    function test_migrate_reverts_on_the_zero_forwarder_on_a_chain_without_a_V1_forwarder() public {
+    function test_migrate_reverts_on_the_zero_forwarder_on_a_chain_without_a_legacy_forwarder() public {
         _setDenied({logicRef: _ACTIVE_LOGIC_REF, isDenied: true});
         _upgradeTo({
             implementation: address(new EmergencyMigratingERC20Forwarder(address(0))),

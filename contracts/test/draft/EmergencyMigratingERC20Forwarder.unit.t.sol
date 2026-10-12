@@ -53,8 +53,8 @@ contract EmergencyMigratingERC20ForwarderMigrateTest is EmergencyMigratingERC20F
         _migrate(_batchOf({count: 1}));
     }
 
-    /// @dev `(CallTypeV2::Migrate, token, quantity, Vec<MigrateV1Data>).abi_encode_params()` of the trigger's logic,
-    /// written out by hand.
+    /// @dev `(EmergencyMigratingCallType::Migrate, token, quantity, Vec<MigrateV1Data>).abi_encode_params()` of the
+    /// trigger's logic, written out by hand.
     function test_migrate_decodes_the_encoding_of_the_trigger_logic() public {
         bytes memory input = abi.encodePacked(
             abi.encode(uint256(2), address(_erc20), uint256(_AMOUNT), uint256(0x80), uint256(1)),
@@ -150,9 +150,9 @@ contract EmergencyMigratingERC20ForwarderMigrateTest is EmergencyMigratingERC20F
         });
     }
 
-    function test_migrate_accepts_a_resource_with_the_V1_forwarder_in_its_label() public {
+    function test_migrate_accepts_a_resource_with_the_legacy_forwarder_in_its_label() public {
         EmergencyMigratingERC20Forwarder.MigrateEntry[] memory entries = _batchOf({count: 1});
-        entries[0].forwarder = _FORWARDER_V1;
+        entries[0].forwarder = _LEGACY_FORWARDER;
 
         _migrate(entries);
 
@@ -191,7 +191,7 @@ contract EmergencyMigratingERC20ForwarderMigrateTest is EmergencyMigratingERC20F
     function test_reinitialize_keeps_earlier_vulnerable_logic_refs_migratable() public {
         _setDenied({logicRef: _NEW_LOGIC_REF, isDenied: true});
         _upgradeTo({
-            implementation: address(new EmergencyMigratingERC20ForwarderNextMock(_FORWARDER_V1)),
+            implementation: address(new EmergencyMigratingERC20ForwarderNextMock(_LEGACY_FORWARDER)),
             newLogicRef: _SECOND_INCIDENT_LOGIC_REF,
             vulnerableLogicRefs: _listOf(_NEW_LOGIC_REF)
         });
@@ -204,8 +204,8 @@ contract EmergencyMigratingERC20ForwarderMigrateTest is EmergencyMigratingERC20F
         assertTrue(_forwarder.isNullifierMigrated(entries[1].nullifier));
     }
 
-    function test_FORWARDER_V1_returns_the_constructor_argument() public view {
-        assertEq(_forwarder.FORWARDER_V1(), _FORWARDER_V1);
+    function test_LEGACY_FORWARDER_returns_the_constructor_argument() public view {
+        assertEq(_forwarder.LEGACY_FORWARDER(), _LEGACY_FORWARDER);
     }
 }
 
@@ -221,7 +221,7 @@ contract EmergencyMigratingERC20ForwarderWrapAndUnwrapTest is ERC20ForwarderTest
 
         _pa.mockSetLogicRefDenied({logicRef: vulnerableLogicRef, consumed: true, isDenied: true});
         _pa.mockSetLogicRefDenied({logicRef: vulnerableLogicRef, consumed: false, isDenied: true});
-        address implementation = address(new EmergencyMigratingERC20Forwarder(makeAddr("V1 forwarder")));
+        address implementation = address(new EmergencyMigratingERC20Forwarder(makeAddr("legacy ERC20 forwarder")));
 
         vm.prank(_FORWARDER_OWNER);
         _fwd.upgradeToAndCall({
