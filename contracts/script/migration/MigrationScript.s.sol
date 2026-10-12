@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {
     RecordedDeployments as ProtocolAdapterDeployments
-} from "anoma-pa-evm-2.0.0-rc.9/generated/RecordedDeployments.sol";
+} from "anoma-pa-evm-2.0.0-rc.10/generated/RecordedDeployments.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
 import {Script} from "forge-std-1.17.0/src/Script.sol";
@@ -72,7 +72,7 @@ abstract contract MigrationScript is Script {
         require(actualOwner == expectedOwner, OwnerMismatch({expected: expectedOwner, actual: actualOwner}));
 
         _requireProtocolAdapter({
-            forwarder: forwarderV1, expected: ProtocolAdapterDeployments.protocolAdapterV1(block.chainid)
+            forwarder: forwarderV1, expected: ProtocolAdapterDeployments.legacyProtocolAdapter(block.chainid)
         });
         _requireProtocolAdapter({
             forwarder: forwarderV2,
@@ -111,7 +111,7 @@ abstract contract MigrationScript is Script {
             OwnerMismatch({expected: Parameters.DEPLOYMENT_WALLET, actual: actualOwner})
         );
 
-        address protocolAdapterV1 = ProtocolAdapterDeployments.protocolAdapterV1(block.chainid);
+        address protocolAdapterV1 = ProtocolAdapterDeployments.legacyProtocolAdapter(block.chainid);
         require(Pausable(protocolAdapterV1).paused(), ProtocolAdapterNotStopped(protocolAdapterV1));
     }
 
