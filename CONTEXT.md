@@ -41,18 +41,18 @@ The two environments. Staging is owned by the deployment wallet and upgraded dir
 Moving a commit unchanged from `next` to `staging`, or from `staging` to `main`. The pull request opening one carries the gate proving the environment it targets runs that commit's source. Changes only ever flow this way.
 
 **Deployment record**:
-`crates/bindings/deployments.json` — the proxy address of each environment on each chain, plus the genesis fields pinning how that address was derived, and the immutable ERC20 forwarder of each chain that ran an immutable protocol adapter. Written once per chain at its first deploy and never edited; what an environment currently runs is read from the chain, not from here.
+`crates/bindings/deployments.json` — the proxy address of each environment on each chain, plus the genesis fields pinning how that address was derived, and the legacy immutable ERC20 forwarder of each chain that ran a legacy immutable protocol adapter. Written once per chain at its first deploy and never edited; what an environment currently runs is read from the chain, not from here.
 
 **Immutable protocol adapter**:
-The protocol adapter that a chain ran before its upgradeable protocol adapter: one immutable contract per chain. It is stopped, and its state is copied into the protocol adapter.
-_Avoid_: v1 protocol adapter, legacy protocol adapter
+The legacy protocol adapter that cannot be upgraded: one contract on each chain that ran a protocol adapter before the upgradeable one. No new one is deployed. It is stopped, and its state is copied into the protocol adapter. A text calls it legacy where it first mentions it.
+_Avoid_: v1 protocol adapter, legacy protocol adapter (without "immutable")
 
 **Immutable ERC20 forwarder**:
-The ERC20 forwarder that ran with a chain's immutable protocol adapter: one immutable contract, recorded with the logic ref it accepts. It belongs to no environment.
-_Avoid_: V1 forwarder, retired forwarder, legacy forwarder
+The legacy ERC20 forwarder that ran with a chain's legacy immutable protocol adapter: one contract that cannot be upgraded, recorded with the logic ref it accepts. It belongs to no environment, and no new one is deployed. A text calls it legacy where it first mentions it.
+_Avoid_: V1 forwarder, retired forwarder, legacy forwarder (without "immutable ERC20")
 
 **Immutable-forwarder resource**:
-A resource with the immutable ERC20 forwarder's address in its label. It carries the logic ref that the immutable ERC20 forwarder accepts, and its tokens moved to the forwarder.
+A resource with the legacy immutable ERC20 forwarder's address in its label. It carries the logic ref that the immutable ERC20 forwarder accepts, and its tokens moved to the forwarder.
 _Avoid_: V1 resource
 
 **Circuit version**:
@@ -72,7 +72,7 @@ A transaction that consumes resources of a deprecated version and creates resour
 _Avoid_: conversion
 
 **Emergency migration**:
-A transaction that creates resources of the active version for resources with a vulnerable logic ref and this forwarder or the immutable ERC20 forwarder in their label. The adapter does not consume the old resources; the forwarder records their nullifiers, and the tokens stay in the forwarder.
+A transaction that creates resources of the active version for resources with a vulnerable logic ref and this forwarder or the legacy immutable ERC20 forwarder in their label. The adapter does not consume the old resources; the forwarder records their nullifiers, and the tokens stay in the forwarder.
 _Avoid_: hard migration, rescue
 
 ## Note on upstream names
