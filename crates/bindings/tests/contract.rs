@@ -51,8 +51,8 @@ fn armed_environments() -> Vec<Environment> {
         .collect()
 }
 
-fn token_transfer_id() -> B256 {
-    B256::from_slice(transfer_library::TOKEN_TRANSFER_ID.as_bytes())
+fn circuit_id() -> B256 {
+    B256::from_slice(anomapay_erc20_library::ANOMAPAY_ERC20_CIRCUIT_ID.as_bytes())
 }
 
 #[tokio::test]
@@ -93,9 +93,9 @@ async fn deployed_forwarders_reference_the_expected_logic_ref() {
 
             assert_eq!(
                 actual_logic_ref,
-                token_transfer_id(),
+                circuit_id(),
                 "Logic ref mismatch on network '{chain}' of environment {environment:?}: expected {}, actual: {actual_logic_ref}.",
-                token_transfer_id()
+                circuit_id()
             );
         }
     }

@@ -6,7 +6,7 @@ use alloy::providers::ProviderBuilder;
 use anomapay_erc20_forwarder_bindings::generated::deployment_parameters::DeploymentParameters;
 
 #[tokio::test]
-async fn logic_ref_is_the_token_transfer_id_of_the_pinned_transfer_library() {
+async fn logic_ref_is_the_circuit_id_of_the_pinned_anomapay_erc20_library() {
     let provider = ProviderBuilder::new()
         .connect_anvil_with_wallet_and_config(|anvil| anvil)
         .expect("anvil");
@@ -18,7 +18,7 @@ async fn logic_ref_is_the_token_transfer_id_of_the_pinned_transfer_library() {
 
     assert_eq!(
         logic_ref,
-        B256::from_slice(transfer_library::TOKEN_TRANSFER_ID.as_bytes()),
-        "Parameters.LOGIC_REF is not the TOKEN_TRANSFER_ID of the transfer_library pinned in Cargo.toml"
+        B256::from_slice(anomapay_erc20_library::ANOMAPAY_ERC20_CIRCUIT_ID.as_bytes()),
+        "Parameters.LOGIC_REF is not the ANOMAPAY_ERC20_CIRCUIT_ID of the anomapay_erc20_library pinned in Cargo.toml"
     );
 }

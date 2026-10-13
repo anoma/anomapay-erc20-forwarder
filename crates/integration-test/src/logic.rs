@@ -11,15 +11,15 @@ use anoma_rm_risc0::logic_proof::LogicProver;
 use anoma_rm_risc0::resource::Resource;
 use anoma_rm_risc0::resource_logic::LogicCircuit;
 use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
+use anomapay_erc20_library::TransferLogic;
+use anomapay_erc20_witness::TokenTransferWitness;
 use anyhow::Context;
-use transfer_library::TransferLogic;
-use transfer_witness::TokenTransferWitness;
 
 /// Verifying key (image id) of the active token-transfer circuit, which every
 /// created resource carries.
 #[inline]
 pub fn verifying_key() -> Digest {
-    *transfer_library::TOKEN_TRANSFER_ID
+    *anomapay_erc20_library::ANOMAPAY_ERC20_CIRCUIT_ID
 }
 
 /// Adapts a token-transfer circuit's [`LogicProver`] to the testkit's
@@ -38,17 +38,17 @@ impl Witness<TransferLogic> {
     }
 }
 
-/// The witness that consumes a persistent resource: for 3.0.0-rc.2 if the
-/// resource's logic ref names that circuit, else for the active one.
+/// The witness that consumes a persistent resource: for the legacy circuit if
+/// the resource's logic ref names it, else for the active one.
 pub(crate) fn consumed_persistent(
     resource: Resource,
     action_tree_root: Digest,
     owner: &Keychain,
     auth_sig: AuthoritySignature,
 ) -> Box<dyn LogicWitness> {
-    if resource.logic_ref == *transfer_library_3_0_0_rc_2::TOKEN_TRANSFER_ID {
+    if resource.logic_ref == *legacy_anomapay_erc20_library::TOKEN_TRANSFER_ID {
         return Box::new(Witness {
-            logic: transfer_library_3_0_0_rc_2::TransferLogic::consume_persistent_resource_logic(
+            logic: legacy_anomapay_erc20_library::TransferLogic::consume_persistent_resource_logic(
                 resource,
                 action_tree_root,
                 owner.nf_key.clone(),
@@ -101,7 +101,9 @@ where
 mod tests {
     use anoma_pa_testkit::fixtures::identities;
     use anoma_rm_risc0::action_tree::ActionTree;
-    use transfer_witness::{AUTH_SIGNATURE_DOMAIN, ValueInfo, calculate_persistent_value_ref};
+    use anomapay_erc20_witness::{
+        AUTH_SIGNATURE_DOMAIN, ValueInfo, calculate_persistent_value_ref,
+    };
 
     use super::*;
 
@@ -134,13 +136,12 @@ mod tests {
     }
 
     #[test]
-    fn consumed_persistent_uses_the_3_0_0_rc_2_circuit_for_a_3_0_0_rc_2_resource()
-    -> anyhow::Result<()> {
-        let logic_ref = *transfer_library_3_0_0_rc_2::TOKEN_TRANSFER_ID;
+    fn consumed_persistent_uses_the_legacy_circuit_for_a_legacy_resource() -> anyhow::Result<()> {
+        let logic_ref = *legacy_anomapay_erc20_library::TOKEN_TRANSFER_ID;
         assert_ne!(
             logic_ref,
             verifying_key(),
-            "3.0.0-rc.2 must not be the active circuit"
+            "the legacy circuit must not be the active circuit"
         );
 
         let witness = consumed_witness(logic_ref)?;
@@ -148,7 +149,7 @@ mod tests {
         assert_eq!(witness.verifying_key(), logic_ref);
         assert_eq!(
             witness.proving_key(),
-            transfer_library_3_0_0_rc_2::TOKEN_TRANSFER_ELF
+            legacy_anomapay_erc20_library::TOKEN_TRANSFER_ELF
         );
         witness.constrain()?;
         Ok(())
@@ -159,7 +160,10 @@ mod tests {
         let witness = consumed_witness(verifying_key())?;
 
         assert_eq!(witness.verifying_key(), verifying_key());
-        assert_eq!(witness.proving_key(), transfer_library::TOKEN_TRANSFER_ELF);
+        assert_eq!(
+            witness.proving_key(),
+            anomapay_erc20_library::ANOMAPAY_ERC20_CIRCUIT_ELF
+        );
         witness.constrain()?;
         Ok(())
     }

@@ -318,7 +318,7 @@ For **both**:
 
 - [ ] Check the two values the proxy commits to. The deploy script reads both itself:
   - the protocol adapter proxy of the **same** environment on this chain, from the records of the `anoma-pa-evm` package in [`./contracts/foundry.toml`](./contracts/foundry.toml). The script reverts with `ProtocolAdapterNotRecorded` if the package records none, so bump the package first.
-  - `LOGIC_REF` in [`Parameters.sol`](./contracts/script/Parameters.sol), which `just bindings-test` checks against the `TOKEN_TRANSFER_ID` of the [`transfer_library`](https://github.com/anoma/anomapay-erc20-resource) version pinned in [`./Cargo.toml`](./Cargo.toml).
+  - `LOGIC_REF` in [`Parameters.sol`](./contracts/script/Parameters.sol), which `just bindings-test` checks against the `ANOMAPAY_ERC20_CIRCUIT_ID` of the [`anomapay_erc20_library`](https://github.com/anoma/anomapay-erc20-resource) version pinned in [`./Cargo.toml`](./Cargo.toml).
 
 - [ ] Run the test suites as in step 2 of the release cycle.
 

@@ -2,8 +2,8 @@ use alloy::primitives::Address;
 use alloy::primitives::U256;
 use anoma_rm_risc0::Digest;
 use anoma_rm_risc0::resource::Resource;
-use transfer_witness::calculate_label_ref;
-use transfer_witness::calculate_value_ref_from_ethereum_account_addr;
+use anomapay_erc20_witness::calculate_label_ref;
+use anomapay_erc20_witness::calculate_value_ref_from_ethereum_account_addr;
 
 use crate::logic;
 use anoma_pa_evm_integration_test::keychain::EvmSigner;

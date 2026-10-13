@@ -24,7 +24,7 @@ library Parameters {
     bytes32 internal constant MIGRATION_SALT = "ERC20ForwarderMigration";
 
     /// @notice The logic ref of the token transfer circuit, which the proxies are initialized with.
-    bytes32 internal constant LOGIC_REF = 0xca45347792e0e32145325efa7515a552ac9129c5b7193d933219edc6d00c93ad;
+    bytes32 internal constant LOGIC_REF = 0x51c2403f4e1de40c3c3ecef69385f8772ee99b4a610e88f1ad2b1b85b481a7f2;
 
     /// @notice The deployment wallet, which owns the staging proxies and upgrades them instantly. The protocol adapter
     /// repository names the same wallet.

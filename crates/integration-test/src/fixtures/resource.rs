@@ -5,11 +5,11 @@ use alloy::primitives::Address;
 use anoma_rm_risc0::Digest;
 use anoma_rm_risc0::kind_table::KindTable;
 use anoma_rm_risc0::resource::Resource;
+use anomapay_erc20_witness::ValueInfo;
+use anomapay_erc20_witness::calculate_label_ref;
+use anomapay_erc20_witness::calculate_persistent_value_ref;
 use anyhow::Context;
 use std::sync::LazyLock;
-use transfer_witness::ValueInfo;
-use transfer_witness::calculate_label_ref;
-use transfer_witness::calculate_persistent_value_ref;
 
 use crate::logic;
 use anoma_pa_testkit::fixtures::identities::Keychain;

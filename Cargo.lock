@@ -1156,12 +1156,12 @@ dependencies = [
  "alloy",
  "alloy-chains",
  "anoma-pa-evm-bindings 3.0.0-rc.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "anomapay_erc20_library",
  "dotenvy",
  "serde",
  "serde_json",
  "thiserror 2.0.20",
  "tokio",
- "transfer_library 3.0.0-rc.3",
 ]
 
 [[package]]
@@ -1175,6 +1175,8 @@ dependencies = [
  "anoma-rm-risc0",
  "anoma-rm-risc0-gadgets",
  "anomapay-erc20-forwarder-bindings",
+ "anomapay_erc20_library",
+ "anomapay_erc20_witness",
  "anyhow",
  "bincode",
  "regex",
@@ -1182,9 +1184,38 @@ dependencies = [
  "rstest",
  "serde_json",
  "tokio",
- "transfer_library 3.0.0-rc.2",
- "transfer_library 3.0.0-rc.3",
- "transfer_witness 3.0.0-rc.3",
+ "transfer_library",
+]
+
+[[package]]
+name = "anomapay_erc20_library"
+version = "2.0.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3180ef8eb389415e362994cf4360362f6c94c0f8a372ed555e47b6835e6ab056"
+dependencies = [
+ "anoma-rm-risc0",
+ "anoma-rm-risc0-gadgets",
+ "anomapay_erc20_witness",
+ "hex",
+ "k256",
+ "lazy_static",
+ "serde",
+]
+
+[[package]]
+name = "anomapay_erc20_witness"
+version = "2.0.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33e9dfb25e15e77010b795c49717fa7cc0d07e7f026e4f7c7caf35c2728a9d71"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "anoma-rm-risc0",
+ "anoma-rm-risc0-gadgets",
+ "bincode",
+ "k256",
+ "rand 0.9.5",
+ "serde",
 ]
 
 [[package]]
@@ -7724,44 +7755,13 @@ dependencies = [
  "k256",
  "lazy_static",
  "serde",
- "transfer_witness 3.0.0-rc.2",
-]
-
-[[package]]
-name = "transfer_library"
-version = "3.0.0-rc.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5807abad8cc4b5c18c817a9dd59616cbda1fe5bbf553042ee0b6a55bab21727"
-dependencies = [
- "anoma-rm-risc0",
- "anoma-rm-risc0-gadgets",
- "hex",
- "k256",
- "lazy_static",
- "serde",
- "transfer_witness 3.0.0-rc.3",
+ "transfer_witness",
 ]
 
 [[package]]
 name = "transfer_witness"
 version = "3.0.0-rc.2"
 source = "git+https://github.com/anoma/anomapay-erc20-resource?tag=v3.0.0-rc.2#0de229d7e7419e10d8ff7c491c0f34bb60e68f33"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "anoma-rm-risc0",
- "anoma-rm-risc0-gadgets",
- "bincode",
- "k256",
- "rand 0.9.5",
- "serde",
-]
-
-[[package]]
-name = "transfer_witness"
-version = "3.0.0-rc.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70aa57cb4c28cbea96ef4dcd4ca911709fa4acba33c704ec1cb3fa1d9b51e88a"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
