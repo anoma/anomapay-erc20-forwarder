@@ -1,6 +1,6 @@
 [package]
 name = "anomapay-erc20-forwarder-bindings"
-version = "3.0.0-rc.14"
+version = "3.0.0-rc.16"
 description = "The AnomaPay ERC20 forwarder contract bindings and deployments."
 keywords.workspace = true
 authors.workspace = true
@@ -18,5 +18,5 @@ dotenvy = { workspace = true }
 
 [dev-dependencies]
 anoma-pa-evm-bindings = { workspace = true }
-transfer_library = { workspace = true }
+anomapay_erc20_library = { workspace = true }
 tokio = { workspace = true }

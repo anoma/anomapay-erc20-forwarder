@@ -37,7 +37,7 @@ impl Overrides {
     pub fn invalid_auth_signature() -> Self {
         let fake = anoma_rm_risc0_gadgets::authority::AuthoritySigningKey::from_bytes(&[9u8; 32])
             .expect("valid deterministic auth key bytes")
-            .sign(transfer_witness::AUTH_SIGNATURE_DOMAIN, &[0u8; 32]);
+            .sign(anomapay_erc20_witness::AUTH_SIGNATURE_DOMAIN, &[0u8; 32]);
         Self {
             auth_signature: Some(fake),
             ..Self::default()

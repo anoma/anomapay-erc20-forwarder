@@ -3,11 +3,11 @@ use anoma_rm_risc0::action_tree::ActionTree as ArmTree;
 use anoma_rm_risc0::compliance;
 use anoma_rm_risc0::merkle_path::MerklePath;
 use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource};
-use transfer_witness::AUTH_SIGNATURE_DOMAIN;
-use transfer_witness::EncryptionInfo;
-use transfer_witness::LabelInfo;
-use transfer_witness::TokenTransferWitness;
-use transfer_witness::ValueInfo;
+use anomapay_erc20_witness::AUTH_SIGNATURE_DOMAIN;
+use anomapay_erc20_witness::EncryptionInfo;
+use anomapay_erc20_witness::LabelInfo;
+use anomapay_erc20_witness::TokenTransferWitness;
+use anomapay_erc20_witness::ValueInfo;
 
 use super::resource::Overrides;
 use crate::fixtures::resource::persistent;

@@ -4,11 +4,11 @@ use anoma_rm_risc0::compliance;
 use anoma_rm_risc0::merkle_path::MerklePath;
 use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource};
 use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
-use transfer_witness::AUTH_SIGNATURE_DOMAIN;
-use transfer_witness::ForwarderInfo;
-use transfer_witness::LabelInfo;
-use transfer_witness::TokenTransferWitness;
-use transfer_witness::call_type::CallType;
+use anomapay_erc20_witness::AUTH_SIGNATURE_DOMAIN;
+use anomapay_erc20_witness::ForwarderInfo;
+use anomapay_erc20_witness::LabelInfo;
+use anomapay_erc20_witness::TokenTransferWitness;
+use anomapay_erc20_witness::call_type::CallType;
 
 use super::resource;
 use super::resource::Overrides;
@@ -49,7 +49,9 @@ pub fn build(
         && let Some(ethereum_account_addr) = resource_overrides.ethereum_account_addr.as_ref()
     {
         resource_overrides.created_value_ref = Some(
-            transfer_witness::calculate_value_ref_from_ethereum_account_addr(ethereum_account_addr),
+            anomapay_erc20_witness::calculate_value_ref_from_ethereum_account_addr(
+                ethereum_account_addr,
+            ),
         );
     }
 
