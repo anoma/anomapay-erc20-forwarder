@@ -72,20 +72,7 @@ pub fn build(
             .sign(AUTH_SIGNATURE_DOMAIN, action_tree_root.as_bytes()),
     };
 
-    let consumed_logic = TokenTransferWitness::new(
-        consumed,
-        true,
-        action_tree_root,
-        Some(sender.nf_key.clone()),
-        Some(auth_sig),
-        None,
-        None,
-        None,
-        Some(ValueInfo {
-            auth_pk: sender.auth_verifying_key(),
-            encryption_pk: sender.encryption_pk,
-        }),
-    );
+    let consumed_logic = logic::consumed_persistent(consumed, action_tree_root, &sender, auth_sig);
 
     let created_logic = TokenTransferWitness::new(
         created,
@@ -120,10 +107,7 @@ pub fn build(
     Ok(ActionData {
         witnesses: ActionWitnesses {
             compliance_witness: Box::new(compliance),
-            logic_witnesses: vec![
-                Box::new(logic::Witness::new(consumed_logic)),
-                Box::new(logic::Witness::new(created_logic)),
-            ],
+            logic_witnesses: vec![consumed_logic, Box::new(logic::Witness::new(created_logic))],
         },
         consumed_persistent: consumed,
         created_persistent: created,

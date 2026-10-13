@@ -91,6 +91,12 @@ contracts-gen-bindings:
         --module \
         --overwrite
 
+# Regenerate the gas report of the contracts that `gas_reports` in foundry.toml lists
+contracts-gen-gas-report:
+    # Fuzz and invariant tests use other inputs on each run, so the report counts only the `test_` unit tests.
+    # `sed` keeps the gas tables of the output.
+    cd contracts && forge test --force --gas-report --md --match-test '^test_' | sed -n '/^|/,/^$/p' > ../docs/gas-report.md
+
 # Regenerate the recorded deployments library, then the Rust bindings
 contracts-gen: contracts-gen-deployments contracts-gen-bindings
 
@@ -164,15 +170,15 @@ contracts-simulate-migration chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/migration/DeployERC20ForwarderV1Migration.s.sol:DeployERC20ForwarderV1Migration \
+    cd contracts && forge script script/migration/DeployLegacyERC20ForwarderMigration.s.sol:DeployLegacyERC20ForwarderMigration \
         --sig "run(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
-# Deploy the migration contract and propose it as the permanent emergency caller of V1 (deployer = the deployment wallet, which signs the proposal); it cannot be undone
+# Deploy the migration contract and propose it as the permanent emergency caller of the legacy ERC20 forwarder (deployer = the deployment wallet, which signs the proposal); it cannot be undone
 contracts-deploy-migration deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/migration/DeployERC20ForwarderV1Migration.s.sol:DeployERC20ForwarderV1Migration \
+    cd contracts && forge script script/migration/DeployLegacyERC20ForwarderMigration.s.sol:DeployLegacyERC20ForwarderMigration \
         --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
@@ -183,13 +189,13 @@ contracts-simulate-migration-move tokens chain *args:
         --sig "executeMigration(bool,address[])" $IS_PRODUCTION {{tokens}} \
         --rpc-url {{chain}} {{ args }}
 
-# Move the V1 tokens to the recorded V2 forwarder as the deployment wallet, through the migration contract V1 holds as its emergency caller
+# Move the tokens of the legacy ERC20 forwarder to the recorded ERC20 forwarder as the deployment wallet, through the migration contract that the legacy ERC20 forwarder holds as its emergency caller
 contracts-execute-migration deployer tokens chain *args:
     cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
         --sig "executeMigration(bool,address[])" $IS_PRODUCTION {{tokens}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Check the moved tokens of one chain against the chain, reading the emergency caller and the V1 token balances
+# Check the moved tokens of one chain against the chain, reading the emergency caller and the token balances of the legacy ERC20 forwarder
 contracts-check-migration tokens chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateERC20ForwarderAssets.s.sol:MigrateERC20ForwarderAssets \
@@ -266,6 +272,10 @@ bindings-check: contracts-gen-bindings
 # Check the recorded deployments library is up-to-date
 contracts-deployments-check: contracts-gen-deployments
     git diff --exit-code contracts/generated/RecordedDeployments.sol
+
+# Check the gas report is up-to-date
+contracts-gas-report-check: contracts-gen-gas-report
+    git diff --exit-code docs/gas-report.md
 
 # Publish bindings
 bindings-publish *args:
@@ -368,3 +378,5 @@ all-check:
     @just contracts-deployments-check
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
+    @echo "==> Checking the gas report is up-to-date..."
+    @just contracts-gas-report-check

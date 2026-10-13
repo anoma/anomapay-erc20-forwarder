@@ -11,19 +11,19 @@ import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
-import {ERC20ForwarderV2} from "./examples/ERC20ForwarderV2.sol";
+import {ERC20ForwarderUpgradeExample} from "./examples/ERC20ForwarderUpgradeExample.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 
 contract ERC20ForwarderUpgradeTest is Test {
-    bytes32 internal constant _LOGIC_REF_V1 = bytes32(type(uint256).max / 2);
-    bytes32 internal constant _LOGIC_REF_V2 = bytes32(type(uint256).max);
+    bytes32 internal constant _INITIAL_LOGIC_REF = bytes32(type(uint256).max / 2);
+    bytes32 internal constant _UPGRADED_LOGIC_REF = bytes32(type(uint256).max);
 
     address internal immutable _PA_OWNER = makeAddr("pa owner");
     address internal immutable _FORWARDER_OWNER = makeAddr("forwarder owner");
 
     address internal _pa;
     UUPSUpgradeable internal _fwdProxy;
-    address internal _implV2;
+    address internal _upgradedImplementation;
 
     bytes internal _reinitializeCalldata;
 
@@ -33,14 +33,15 @@ contract ERC20ForwarderUpgradeTest is Test {
         _fwdProxy = UUPSUpgradeable(
             Upgrades.deployUUPSProxy(
                 "ERC20Forwarder.sol:ERC20Forwarder",
-                abi.encodeCall(ERC20Forwarder.initialize, (_pa, _LOGIC_REF_V1, _FORWARDER_OWNER))
+                abi.encodeCall(ERC20Forwarder.initialize, (_pa, _INITIAL_LOGIC_REF, _FORWARDER_OWNER))
             )
         );
 
-        _reinitializeCalldata = abi.encodeCall(ERC20ForwarderV2.reinitialize, (_LOGIC_REF_V2));
+        _reinitializeCalldata = abi.encodeCall(ERC20ForwarderUpgradeExample.reinitialize, (_UPGRADED_LOGIC_REF));
 
         Options memory opts;
-        _implV2 = Upgrades.prepareUpgrade("ERC20ForwarderV2.sol:ERC20ForwarderV2", opts);
+        _upgradedImplementation =
+            Upgrades.prepareUpgrade("ERC20ForwarderUpgradeExample.sol:ERC20ForwarderUpgradeExample", opts);
     }
 
     // This test runs the openzeppelin-foundry-upgrades checks.
@@ -51,43 +52,43 @@ contract ERC20ForwarderUpgradeTest is Test {
         vm.startPrank(_FORWARDER_OWNER);
         Upgrades.upgradeProxy(
             address(_fwdProxy),
-            "ERC20ForwarderV2.sol:ERC20ForwarderV2",
-            abi.encodeCall(ERC20ForwarderV2.reinitialize, (_LOGIC_REF_V2))
+            "ERC20ForwarderUpgradeExample.sol:ERC20ForwarderUpgradeExample",
+            abi.encodeCall(ERC20ForwarderUpgradeExample.reinitialize, (_UPGRADED_LOGIC_REF))
         );
         vm.stopPrank();
     }
 
     function test_upgradeToAndCall_reverts_if_the_caller_is_not_the_owner() public {
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, address(this)));
-        _fwdProxy.upgradeToAndCall({newImplementation: _implV2, data: _reinitializeCalldata});
+        _fwdProxy.upgradeToAndCall({newImplementation: _upgradedImplementation, data: _reinitializeCalldata});
     }
 
-    function test_upgradeToAndCall_upgrades_to_the_erc20_forwarder_v2_implementation() public {
+    function test_upgradeToAndCall_upgrades_to_the_upgrade_example_implementation() public {
         vm.prank(_FORWARDER_OWNER);
-        _fwdProxy.upgradeToAndCall({newImplementation: _implV2, data: _reinitializeCalldata});
+        _fwdProxy.upgradeToAndCall({newImplementation: _upgradedImplementation, data: _reinitializeCalldata});
 
-        assertEq(Upgrades.getImplementationAddress(address(_fwdProxy)), _implV2);
+        assertEq(Upgrades.getImplementationAddress(address(_fwdProxy)), _upgradedImplementation);
     }
 
-    function test_upgradeToAndCall_upgrades_the_logic_ref_v1_to_v2() public {
-        assertNotEq(_LOGIC_REF_V1, _LOGIC_REF_V2);
+    function test_upgradeToAndCall_replaces_the_initial_logic_ref_with_the_upgraded_one() public {
+        assertNotEq(_INITIAL_LOGIC_REF, _UPGRADED_LOGIC_REF);
 
-        assertEq(ILogicRefSpecific(address(_fwdProxy)).getLogicRef(), _LOGIC_REF_V1);
+        assertEq(ILogicRefSpecific(address(_fwdProxy)).getLogicRef(), _INITIAL_LOGIC_REF);
 
         vm.prank(_FORWARDER_OWNER);
-        _fwdProxy.upgradeToAndCall({newImplementation: _implV2, data: _reinitializeCalldata});
+        _fwdProxy.upgradeToAndCall({newImplementation: _upgradedImplementation, data: _reinitializeCalldata});
 
-        assertEq(ILogicRefSpecific(address(_fwdProxy)).getLogicRef(), _LOGIC_REF_V2);
+        assertEq(ILogicRefSpecific(address(_fwdProxy)).getLogicRef(), _UPGRADED_LOGIC_REF);
     }
 
     function test_upgradeToAndCall_emits_the_Upgraded_and_Initialized_events() public {
         vm.expectEmit(address(_fwdProxy));
-        emit IERC1967.Upgraded({implementation: _implV2});
+        emit IERC1967.Upgraded({implementation: _upgradedImplementation});
 
         vm.expectEmit(address(_fwdProxy));
         emit Initializable.Initialized({version: 2});
 
         vm.prank(_FORWARDER_OWNER);
-        _fwdProxy.upgradeToAndCall({newImplementation: _implV2, data: _reinitializeCalldata});
+        _fwdProxy.upgradeToAndCall({newImplementation: _upgradedImplementation, data: _reinitializeCalldata});
     }
 }

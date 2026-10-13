@@ -8,7 +8,7 @@ use anoma_pa_testkit::environment::ProtocolAdapter;
 use anoma_pa_testkit::fixtures::identities;
 use anomapay_erc20_forwarder_integration_test::fixtures::{transfer, unwrap, wrap};
 use anomapay_erc20_forwarder_integration_test::state::erc20::erc20_address;
-use anomapay_erc20_forwarder_integration_test::state::forwarder::erc20_forwarder_v1_address;
+use anomapay_erc20_forwarder_integration_test::state::forwarder::erc20_forwarder_address;
 use anyhow::Context;
 #[cfg(feature = "e2e")]
 use common::setup_anomapay_erc20_e2e;
@@ -26,7 +26,7 @@ async fn happy_wrap_transfer_unwrap<Env: Environment>(
 ) -> anyhow::Result<()> {
     let mut env = env_with_setup.context("env setup failed")?;
     let chain_id = chain_id(&env)?;
-    let forwarder = erc20_forwarder_v1_address(&env)?;
+    let forwarder = erc20_forwarder_address(&env)?;
     let token = erc20_address(&env, "example")?;
 
     let before = commitment_root(&env)?;
@@ -111,7 +111,7 @@ async fn happy_wrap_unwrap<Env: Environment>(
 ) -> anyhow::Result<()> {
     let mut env = env_with_setup.context("env setup failed")?;
     let chain_id = chain_id(&env)?;
-    let forwarder = erc20_forwarder_v1_address(&env)?;
+    let forwarder = erc20_forwarder_address(&env)?;
     let token = erc20_address(&env, "example")?;
 
     let before = commitment_root(&env)?;
@@ -179,7 +179,7 @@ async fn transfer_negative_invalid_permit_signature_len<Env: Environment>(
 ) -> anyhow::Result<()> {
     let env = env_with_setup.context("env setup failed")?;
     let chain_id = chain_id(&env)?;
-    let forwarder = erc20_forwarder_v1_address(&env)?;
+    let forwarder = erc20_forwarder_address(&env)?;
     let token = erc20_address(&env, "example")?;
 
     let bad = wrap::build(
@@ -210,7 +210,7 @@ async fn transfer_negative_invalid_created_nonce<Env: Environment>(
 ) -> anyhow::Result<()> {
     let env = env_with_setup.context("env setup failed")?;
     let chain_id = chain_id(&env)?;
-    let forwarder = erc20_forwarder_v1_address(&env)?;
+    let forwarder = erc20_forwarder_address(&env)?;
     let token = erc20_address(&env, "example")?;
 
     let wrap = wrap::build(
@@ -251,7 +251,7 @@ async fn transfer_negative_invalid_auth_signature<Env: Environment>(
 ) -> anyhow::Result<()> {
     let env = env_with_setup.context("env setup failed")?;
     let chain_id = chain_id(&env)?;
-    let forwarder = erc20_forwarder_v1_address(&env)?;
+    let forwarder = erc20_forwarder_address(&env)?;
     let token = erc20_address(&env, "example")?;
 
     let wrap = wrap::build(

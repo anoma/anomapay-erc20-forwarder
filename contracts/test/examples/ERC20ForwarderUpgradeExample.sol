@@ -3,13 +3,13 @@ pragma solidity ^0.8.30;
 
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 
-/// @title ERC20ForwarderV2
+/// @title ERC20ForwarderUpgradeExample
 /// @author Anoma Foundation, 2025
 /// @notice A draft second version of the ERC20 forwarder used to exercise the UUPS upgrade path.
 /// @custom:security-contact security@anoma.foundation
 /// @custom:oz-upgrades-from ERC20Forwarder
-contract ERC20ForwarderV2 is ERC20Forwarder {
-    /// @notice Initializes a freshly deployed V2 proxy at storage version 2.
+contract ERC20ForwarderUpgradeExample is ERC20Forwarder {
+    /// @notice Initializes a freshly deployed proxy of this implementation at storage version 2.
     /// @param protocolAdapter The protocol adapter contract that can forward calls.
     /// @param logicRef The reference to the ERC20 resource logic function triggering the forward calls.
     /// @param initialOwner The initial owner of the contract having the upgrade authority.
@@ -27,15 +27,15 @@ contract ERC20ForwarderV2 is ERC20Forwarder {
         });
     }
 
-    /// @notice Reinitializes an existing proxy when upgrading it from V1 to V2.
-    /// @param logicRefV2 The reference to the ERC20 resource logic function v2 triggering the forward calls.
+    /// @notice Reinitializes an existing proxy when it is upgraded to this implementation.
+    /// @param upgradedLogicRef The logic ref that this implementation accepts.
     function reinitialize( /* solhint-disable-line comprehensive-interface */
-        bytes32 logicRefV2
+        bytes32 upgradedLogicRef
     )
         external
         reinitializer(2)
     {
         ForwarderBaseStorage storage $ = _getForwarderBaseStorage();
-        $._logicRef = logicRefV2;
+        $._logicRef = upgradedLogicRef;
     }
 }

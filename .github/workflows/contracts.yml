@@ -75,3 +75,6 @@ jobs:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
           VERIFY_STAGING_DEPLOYMENTS: ${{ github.base_ref == 'staging' }}
           VERIFY_PRODUCTION_DEPLOYMENTS: ${{ github.base_ref == 'main' }}
+
+      - name: Check that the gas report is up-to-date
+        run: just contracts-gas-report-check

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Parameters as ProtocolAdapterParameters} from "anoma-pa-evm-2.0.0-rc.7/script/Parameters.sol";
+import {Parameters as ProtocolAdapterParameters} from "anoma-pa-evm-2.0.0-rc.10/script/Parameters.sol";
 
 /// @title Parameters
 /// @author Anoma Foundation, 2026
@@ -19,8 +19,8 @@ library Parameters {
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
     bytes32 internal constant IMPLEMENTATION_SALT = "ERC20ForwarderImpl";
 
-    /// @notice The CREATE2 salt for the migration contract deployment. The contract commits to both forwarders, so every
-    /// chain and environment gets its own address.
+    /// @notice The CREATE2 salt for the migration contract deployment. The contract commits to both forwarders, so
+    /// every chain and environment gets its own address.
     bytes32 internal constant MIGRATION_SALT = "ERC20ForwarderMigration";
 
     /// @notice The logic ref of the token transfer circuit, which the proxies are initialized with.
@@ -30,7 +30,7 @@ library Parameters {
     /// repository names the same wallet.
     address internal constant DEPLOYMENT_WALLET = ProtocolAdapterParameters.DEPLOYMENT_WALLET;
 
-    /// @notice The forwarder multisig, a Safe that owns the production proxies and is the emergency committee of the V1
-    /// forwarders.
+    /// @notice The forwarder multisig, a Safe that owns the production proxies and is the emergency committee of the
+    /// legacy ERC20 forwarders.
     address internal constant FWD_MULTISIG = 0xc703402252Ce1251aa07e0815D50060d27fdd6C4;
 }

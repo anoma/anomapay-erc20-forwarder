@@ -1,39 +1,39 @@
 # Migration Checklist
 
-How to move the tokens a chain's V1 forwarder holds to the V2 forwarder of one environment. A chain without a V1 forwarder skips all of this. The plan in `anoma-knowledge-base/galileo-v2-transition-and-versioning.md` sets out the whole move, and the pa-evm [`MIGRATION_CHECKLIST.md`](https://github.com/anoma/pa-evm/blob/next/MIGRATION_CHECKLIST.md) moves the protocol adapter state. This file covers the forwarder's part, which is step 5 of the pa-evm checklist.
+How to move the tokens a chain's legacy ERC20 forwarder holds to the ERC20 forwarder of one environment. A chain without a legacy ERC20 forwarder skips all of this. The plan in `anoma-knowledge-base/galileo-v2-transition-and-versioning.md` sets out the whole move, and the pa-evm [`MIGRATION_CHECKLIST.md`](https://github.com/anoma/pa-evm/blob/next/MIGRATION_CHECKLIST.md) moves the protocol adapter state. This file covers the forwarder's part, which is step 5 of the pa-evm checklist.
 
 ## How it works
 
-The V1 forwarder is immutable, and only its emergency path can move its tokens. Its emergency committee, the forwarder multisig `0xc703402252Ce1251aa07e0815D50060d27fdd6C4` (`Parameters.FWD_MULTISIG`), assigns an emergency caller with `setEmergencyCaller`. With `forwardEmergencyCall`, that caller sends the forwarder any call the v1 protocol adapter can send, such as an unwrap of any amount to any address. V1 accepts both calls only once its v1 protocol adapter is stopped. It accepts one emergency caller and keeps it.
+The legacy ERC20 forwarder is immutable, and only its emergency path can move its tokens. Its emergency committee, the forwarder multisig `0xc703402252Ce1251aa07e0815D50060d27fdd6C4` (`Parameters.FWD_MULTISIG`), assigns an emergency caller with `setEmergencyCaller`. With `forwardEmergencyCall`, that caller sends the forwarder any call the legacy protocol adapter can send, such as an unwrap of any amount to any address. The legacy ERC20 forwarder accepts both calls only once its legacy protocol adapter is stopped. It accepts one emergency caller and keeps it.
 
-So the committee assigns a contract, not an account. [`ERC20ForwarderV1Migration`](./contracts/src/migration/ERC20ForwarderV1Migration.sol) fixes the V1 forwarder and the V2 forwarder of one environment at deployment, and sets its owner. Its owner-only `migrate` unwraps the full V1 balance of each listed token to the V2 forwarder, and reverts unless V1 keeps none of the token and the V2 forwarder receives exactly that amount. Every listed token emits `ERC20TokenMigrated`, with a zero amount if V1 held none. The caller assignment cannot be undone, but it fixes only where the tokens can go: the owner can move a token that an earlier run left out, and only to the same V2 forwarder.
+So the committee assigns a contract, not an account. [`LegacyERC20ForwarderMigration`](./contracts/src/migration/LegacyERC20ForwarderMigration.sol) fixes the legacy ERC20 forwarder and the ERC20 forwarder of one environment at deployment, and sets its owner. Its owner-only `migrate` unwraps the full balance of each listed token from the legacy ERC20 forwarder to the ERC20 forwarder, and reverts unless the legacy ERC20 forwarder keeps none of the token and the ERC20 forwarder receives exactly that amount. Every listed token emits `ERC20TokenMigrated`, with a zero amount if the legacy ERC20 forwarder held none. The caller assignment cannot be undone, but it fixes only where the tokens can go: the owner can move a token that an earlier run left out, and only to the same ERC20 forwarder.
 
-Two scripts do the work, and both take their addresses and salt from [`Parameters.sol`](./contracts/script/Parameters.sol). [`DeployERC20ForwarderV1Migration`](./contracts/script/migration/DeployERC20ForwarderV1Migration.s.sol) deploys the migration contract, makes the deployment wallet `0x61462bE56782568376f9cB069382EFa72764a407` (`Parameters.DEPLOYMENT_WALLET`) its owner in both environments, and proposes the caller assignment to the committee Safe as the deployment wallet. It deploys with CREATE2, so the address commits to both forwarders and the owner: the proposal names the right contract before the deployment lands, and a repeated run finds the contract instead of deploying a second one. [`MigrateERC20ForwarderAssets`](./contracts/script/migration/MigrateERC20ForwarderAssets.s.sol) moves the tokens as the deployment wallet and checks the result. It reads the migration contract from the emergency caller of V1. Both scripts read the two forwarders from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol) and check them against the chain: the environment's proxy owner owns the V2 forwarder, and each forwarder forwards for the protocol adapter that the records of the `anoma-pa-evm` package name for it. They also check the migration contract: it holds the recorded forwarders, the deployment wallet owns it, and the owner of the v1 protocol adapter has stopped it.
+Two scripts do the work, and both take their addresses and salt from [`Parameters.sol`](./contracts/script/Parameters.sol). [`DeployLegacyERC20ForwarderMigration`](./contracts/script/migration/DeployLegacyERC20ForwarderMigration.s.sol) deploys the migration contract, makes the deployment wallet `0x61462bE56782568376f9cB069382EFa72764a407` (`Parameters.DEPLOYMENT_WALLET`) its owner in both environments, and proposes the caller assignment to the committee Safe as the deployment wallet. It deploys with CREATE2, so the address commits to both forwarders and the owner: the proposal names the right contract before the deployment lands, and a repeated run finds the contract instead of deploying a second one. [`MigrateERC20ForwarderAssets`](./contracts/script/migration/MigrateERC20ForwarderAssets.s.sol) moves the tokens as the deployment wallet and checks the result. It reads the migration contract from the emergency caller of the legacy ERC20 forwarder. Both scripts read the two forwarders from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol) and check them against the chain: the environment's proxy owner owns the ERC20 forwarder, and each forwarder forwards for the protocol adapter that the records of the `anoma-pa-evm` package name for it. They also check the migration contract: it holds the recorded forwarders, the deployment wallet owns it, and the owner of the legacy protocol adapter has stopped it.
 
-The move must end while the protocol adapter proxy is still paused. The kind table on that proxy carries V1 members, which let a V1 resource unwrap from the V2 forwarder. A paused proxy executes nothing, so no V1 resource can unwrap before the V2 forwarder holds the V1 tokens.
+The move must end while the protocol adapter proxy is still paused. The kind table on that proxy carries members under the label of the legacy ERC20 forwarder, which let a legacy-forwarder resource unwrap from the ERC20 forwarder. A paused proxy executes nothing, so no legacy-forwarder resource can unwrap before the ERC20 forwarder holds the tokens of the legacy ERC20 forwarder.
 
-`IS_PRODUCTION` selects the environment whose V2 forwarder receives the tokens, and every migration recipe reads it. After the caller assignment, the tokens can move only to the V2 forwarder that the migration contract holds, so choose the environment before the proposal.
+`IS_PRODUCTION` selects the environment whose ERC20 forwarder receives the tokens, and every migration recipe reads it. After the caller assignment, the tokens can move only to the ERC20 forwarder that the migration contract holds, so choose the environment before the proposal.
 
 > [!NOTE]
 > Forge 1.8.3 scripts panic on forks of OP-stack chains such as Base. On those chains, append `--network ethereum` to every recipe below. It also sends the CREATE2 deployment through the deterministic deployer, which forge skips on those chains otherwise.
 
 ## Before any chain
 
-- [ ] Check that the `v1` array of [`deployments.json`](./crates/bindings/deployments.json) records the chain's V1 forwarder. The scripts refuse a chain without it.
+- [ ] Check that the `legacy` array of [`deployments.json`](./crates/bindings/deployments.json) records the chain's legacy ERC20 forwarder. The scripts refuse a chain without it.
 
-- [ ] Deploy the V2 forwarder of the environment and record it, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The deploy script and the migration scripts read its protocol adapter from the records of the `anoma-pa-evm` package, so the package must record the protocol adapter proxy that pa-evm deployed for the migration.
+- [ ] Deploy the ERC20 forwarder of the environment and record it, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The deploy script and the migration scripts read its protocol adapter from the records of the `anoma-pa-evm` package, so the package must record the protocol adapter proxy that pa-evm deployed for the migration.
 
-- [ ] List the tokens the V1 forwarder wrapped. Read its `Wrapped(address indexed token, address indexed from, uint128 amount)` events from its deployment block, and collect the distinct tokens. Read them from the chain: the backend's token list misses tokens that V1 wrapped. A token that V1 holds but never wrapped stays out of the list, because no V1 resource represents it.
+- [ ] List the tokens the legacy ERC20 forwarder wrapped. Read its `Wrapped(address indexed token, address indexed from, uint128 amount)` events from its deployment block, and collect the distinct tokens. Read them from the chain: the backend's token list misses tokens that the legacy ERC20 forwarder wrapped. A token that it holds but never wrapped stays out of the list, because no legacy-forwarder resource represents it.
 
-- [ ] Check that the chain's section in the kind tables' [`tokens.json`](https://github.com/anoma/risc0-kind-tables/blob/next/crates/kind-tables/data/tokens.json) lists every token of that list, before pa-evm generates the chain's kind table. The generator writes V1 members only for the tokens listed there. A wrapped token that is missing gets no V1 member, and its V1 resources lose their only way to unwrap.
+- [ ] Check that the chain's section in the kind tables' [`tokens.json`](https://github.com/anoma/risc0-kind-tables/blob/next/crates/kind-tables/data/tokens.json) lists every token of that list, before pa-evm generates the chain's kind table. The generator writes members under the label of the legacy ERC20 forwarder only for the tokens listed there. A wrapped token that is missing gets no member under the label of the legacy ERC20 forwarder, and its legacy-forwarder resources lose their only way to unwrap.
 
 ## Per chain
 
-These steps are step 5 of the pa-evm checklist: they run after the v1 stop and before the completion run. Users cannot transact in that time. The deploy script refuses to run before the stop, because V1 accepts the caller assignment only after it. Agree on a signing time with the committee's signers before the stop.
+These steps are step 5 of the pa-evm checklist: they run after the stop of the legacy protocol adapter and before the completion run. Users cannot transact in that time. The deploy script refuses to run before the stop, because the legacy ERC20 forwarder accepts the caller assignment only after it. Agree on a signing time with the committee's signers before the stop.
 
 The pa-evm migration run sends its transactions from the deployment wallet, and so do steps 3 and 7 and a kind table update in step 1. Send those only after that run has ended. The other steps can run while it copies the state.
 
-1. [ ] Read the `Wrapped` events again, up to the block of the stop. The v1 protocol adapter executes no transaction after the stop, so this list is final. If it has a token that `tokens.json` does not list, add the token, regenerate the kind table, and install the new commitment on the protocol adapter proxy while it is still paused. Then export the list:
+1. [ ] Read the `Wrapped` events again, up to the block of the stop. The legacy protocol adapter executes no transaction after the stop, so this list is final. If it has a token that `tokens.json` does not list, add the token, regenerate the kind table, and install the new commitment on the protocol adapter proxy while it is still paused. Then export the list:
 
    ```sh
    export TOKENS='[<TOKEN>,<TOKEN>]'
@@ -46,7 +46,7 @@ The pa-evm migration run sends its transactions from the deployment wallet, and 
    just contracts-simulate-migration <CHAIN>
    ```
 
-   Besides the checks in [How it works](#how-it-works), it requires that V1 has no emergency caller yet.
+   Besides the checks in [How it works](#how-it-works), it requires that the legacy ERC20 forwarder has no emergency caller yet.
 
 3. [ ] Deploy the migration contract and propose the caller assignment to the committee Safe:
 
@@ -63,15 +63,15 @@ The pa-evm migration run sends its transactions from the deployment wallet, and 
 4. [ ] Verify the migration contract on sourcify and Etherscan, so that the Safe signers can read the source of the contract they assign:
 
    ```sh
-   just contracts-verify $MIGRATION_ADDRESS src/migration/ERC20ForwarderV1Migration.sol:ERC20ForwarderV1Migration <CHAIN>
+   just contracts-verify $MIGRATION_ADDRESS src/migration/LegacyERC20ForwarderMigration.sol:LegacyERC20ForwarderMigration <CHAIN>
    ```
 
    and check that the verification worked (e.g. on https://sourcify.dev/#/lookup).
 
-5. [ ] Ask the signers of `0xc703402252Ce1251aa07e0815D50060d27fdd6C4` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global/home?safe=0xc703402252Ce1251aa07e0815D50060d27fdd6C4), once the migration contract is deployed and verified. They can read `FORWARDER_V1()`, `FORWARDER_V2()` and `owner()` on it. The caller assignment cannot be undone. Once executed, confirm it:
+5. [ ] Ask the signers of `0xc703402252Ce1251aa07e0815D50060d27fdd6C4` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global/home?safe=0xc703402252Ce1251aa07e0815D50060d27fdd6C4), once the migration contract is deployed and verified. They can read `LEGACY_FORWARDER()`, `FORWARDER()` and `owner()` on it. The caller assignment cannot be undone. Once executed, confirm it:
 
    ```sh
-   cast call <FORWARDER_V1> "getEmergencyCaller()(address)" --rpc-url <CHAIN>
+   cast call <LEGACY_ERC20_FORWARDER> "getEmergencyCaller()(address)" --rpc-url <CHAIN>
    ```
 
 6. [ ] Simulate the move:
@@ -80,7 +80,7 @@ The pa-evm migration run sends its transactions from the deployment wallet, and 
    just contracts-simulate-migration-move "$TOKENS" <CHAIN>
    ```
 
-   A token with a zero V1 balance still gets a zero-value transfer. If such a token rejects zero-value transfers, the whole move reverts. Then pass the move a list without that token, because it has nothing to move. Keep `$TOKENS` whole for the check.
+   A token with a zero balance in the legacy ERC20 forwarder still gets a zero-value transfer. If such a token rejects zero-value transfers, the whole move reverts. Then pass the move a list without that token, because it has nothing to move. Keep `$TOKENS` whole for the check.
 
 7. [ ] Run it:
 
@@ -96,6 +96,6 @@ The pa-evm migration run sends its transactions from the deployment wallet, and 
    just contracts-check-migration "$TOKENS" <CHAIN>
    ```
 
-   It checks that the emergency caller of V1 is the migration contract between the recorded forwarders, and that V1 holds none of the tokens. The `ERC20TokenMigrated` events record the amounts the V2 forwarder received.
+   It checks that the emergency caller of the legacy ERC20 forwarder is the migration contract between the recorded forwarders, and that the legacy ERC20 forwarder holds none of the tokens. The `ERC20TokenMigrated` events record the amounts the ERC20 forwarder received.
 
-9. [ ] Continue with step 6 of the pa-evm checklist. Its completion run unpauses the protocol adapter proxy, and V1 resources can then unwrap from the V2 forwarder.
+9. [ ] Continue with step 6 of the pa-evm checklist. Its completion run unpauses the protocol adapter proxy, and legacy-forwarder resources can then unwrap from the ERC20 forwarder.
