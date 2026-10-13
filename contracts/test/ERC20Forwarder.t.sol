@@ -392,7 +392,7 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _logicRef, input: _defaultWrapInput});
     }
 
-    function test_check_that_the_current_version_is_a_not_a_major_release() public view {
+    function test_check_that_the_current_version_is_not_a_major_release() public view {
         int256 lt = -1;
         //int256 eq = 0;
         int256 gt = 1;
