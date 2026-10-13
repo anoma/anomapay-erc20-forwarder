@@ -23,24 +23,24 @@ integrity = "b2448714fd44f39f370b48736bd3047dd8af57461abd2f9301823720191b8194"
 
 [[dependencies]]
 name = "anoma-pa-evm"
-version = "2.0.0-rc.10"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/2_0_0-rc_10_12-10-2026_12:21:51_contracts.zip"
-checksum = "5c6bd0c7affa8266fb0622a8f62eb9d810aec6e5593a347598119c6c5c6d6563"
-integrity = "a9f7c94e735f6a498c83326973926b76db29607907807adccf4df46afd34e8a0"
+version = "2.0.0-rc.11"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-pa-evm/2_0_0-rc_11_13-10-2026_12:16:00_contracts.zip"
+checksum = "17fa0b78cfca89491620b3045f7cd7a0c617b7d402a3949cd88e35dbfb918a63"
+integrity = "1d44f3f22c4ad72bd9d1d527c764510b6243c5068c24885d88cd8b9f039cae6f"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"
 version = "1.2.4"
 url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_2_4_01-10-2026_16:03:41_contracts.zip"
 checksum = "9ea14846e2d69874963ccf4e4bbe760d2a9b0d49c4430148e97d64f08f72f6b3"
-integrity = "c13686ed57215fda0d5b12aa878771e73549bd2615fecda40a6236e8dd156f37"
+integrity = "75ad7cd534f7804961ed4be8491ba5cf07ec1948f1dea5e20499e335f6b073c8"
 
 [[dependencies]]
 name = "anomapay-erc20-forwarder"
 version = "1.0.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/anomapay-erc20-forwarder/1_0_1_27-01-2026_17:35:31_contracts.zip"
 checksum = "da1e801473e0763efbcb3c60fde429445f830cacdf67c8e3488f5988317d519c"
-integrity = "5e88ff874f613eaa089dc5af411abddc0ce5f7cb6ad152cb1aaeed8204c358d6"
+integrity = "e48d00824ef3d46e9724ecef7d5ea47afa95c8b609d7ded28865dd0b9dc7a4f7"
 
 [[dependencies]]
 name = "forge-std"
@@ -80,4 +80,4 @@ name = "uniswap-permit2"
 version = "0x000000000022D473030F116dDEE9F6B43aC78BA3"
 url = "https://soldeer-revisions.s3.amazonaws.com/uniswap-permit2/0x000000000022D473030F116dDEE9F6B43aC78BA3_11-11-2024_08:00:23_permit2.zip"
 checksum = "d4fb59a5d0b9bb91c6800b55a0fa4037dcf4d2a17e55750ffb369572a4dd5906"
-integrity = "125d95a3a670d3348a91c6d5b766523c486294b32d2f3713c72f9a9601d6b4bd"
+integrity = "7799c6c129643d236186ca2315cfd01887300eb05809c3a5ec60aae9fb350005"

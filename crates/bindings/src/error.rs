@@ -10,8 +10,6 @@ pub enum BindingsError {
     ChainIdUnknown,
     #[error("The RPC transport returned an error.")]
     RpcTransportError(RpcError<TransportErrorKind>),
-    #[error(
-        "The current ERC20 forwarder version has not been deployed on the provided chain '{0}'."
-    )]
+    #[error("The deployment record of the environment has no ERC20 forwarder on the chain '{0}'.")]
     UnsupportedChain(NamedChain),
 }

@@ -3,9 +3,10 @@
 
 use alloy::primitives::Address;
 use anoma_rm_risc0::Digest;
-use anoma_rm_risc0::compliance::KindTableEntry;
+use anoma_rm_risc0::kind_table::KindTable;
 use anoma_rm_risc0::resource::Resource;
 use anyhow::Context;
+use std::sync::LazyLock;
 use transfer_witness::ValueInfo;
 use transfer_witness::calculate_label_ref;
 use transfer_witness::calculate_persistent_value_ref;
@@ -13,10 +14,12 @@ use transfer_witness::calculate_persistent_value_ref;
 use crate::logic;
 use anoma_pa_testkit::fixtures::identities::Keychain;
 
+static EMPTY_KIND_TABLE: LazyLock<KindTable> = LazyLock::new(KindTable::empty);
+
 /// The kind table the fixtures prove against: the loaded one, or the empty table
 /// if none is loaded. The e2e setup loads none; a test that needs an alias loads its table first.
-pub(crate) fn kind_table() -> Vec<KindTableEntry> {
-    anoma_rm_risc0::constants::kind_table().to_vec()
+pub(crate) fn kind_table() -> &'static KindTable {
+    anoma_rm_risc0::constants::global_kind_table().unwrap_or(&EMPTY_KIND_TABLE)
 }
 
 /// The persistent token-transfer resource: label committed to

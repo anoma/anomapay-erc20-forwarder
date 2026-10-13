@@ -56,7 +56,7 @@ fn token_transfer_id() -> B256 {
 }
 
 #[tokio::test]
-async fn deployed_forwarders_point_to_the_current_protocol_adapter_contract() {
+async fn deployed_forwarders_point_to_the_protocol_adapter_of_their_environment() {
     for environment in armed_environments() {
         for chain in erc20_forwarder_deployments_map(environment).keys() {
             let referenced_protocol_adapter = fwd_instance(chain, environment)
