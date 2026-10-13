@@ -72,4 +72,4 @@ _Avoid_: hard migration, rescue
 
 ## Note on upstream names
 
-`anomapay_erc20_library`, `anomapay_erc20_witness`, and the underlying circuit live in `anoma/anomapay-erc20-resource`. Their types keep the "transfer" names (`TransferLogic`, `TokenTransferWitness`), and so does the `transfer_library` crate of the 3.0.0-rc.2 circuit — they are immutable from this repo's perspective. Do not propagate "transfer" as the umbrella name into layers above them (the integration-test crate, scenario setups, helpers); use "AnomaPay ERC20" there.
+`anomapay_erc20_library`, `anomapay_erc20_witness`, and the underlying circuit live in `anoma/anomapay-erc20-resource`. Their types keep the "transfer" names (`TransferLogic`, `TokenTransferWitness`), and so does the `transfer_library` crate of the legacy circuit — they are immutable from this repo's perspective. Do not propagate "transfer" as the umbrella name into layers above them (the integration-test crate, scenario setups, helpers); use "AnomaPay ERC20" there.

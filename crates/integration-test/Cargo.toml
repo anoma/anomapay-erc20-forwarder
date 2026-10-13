@@ -35,8 +35,8 @@ anomapay_erc20_library = { workspace = true }
 anomapay_erc20_witness = { workspace = true }
 anyhow = { workspace = true }
 bincode = { workspace = true }
+legacy-anomapay-erc20-library = { workspace = true }
 risc0-zkvm = { workspace = true }
-transfer_library_3_0_0_rc_2 = { workspace = true }
 
 [dev-dependencies]
 anoma-pa-testkit = { workspace = true, features = ["mocks"] }
