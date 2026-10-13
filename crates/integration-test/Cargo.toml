@@ -31,12 +31,12 @@ alloy = { workspace = true, features = [
 alloy-chains = { workspace = true }
 anoma-rm-risc0 = { workspace = true, features = ["compliance_circuit"] }
 anoma-rm-risc0-gadgets = { workspace = true }
+anomapay_erc20_library = { workspace = true }
+anomapay_erc20_witness = { workspace = true }
 anyhow = { workspace = true }
 bincode = { workspace = true }
 risc0-zkvm = { workspace = true }
-transfer_library = { workspace = true }
 transfer_library_3_0_0_rc_2 = { workspace = true }
-transfer_witness = { workspace = true }
 
 [dev-dependencies]
 anoma-pa-testkit = { workspace = true, features = ["mocks"] }

@@ -11,15 +11,15 @@ use anoma_rm_risc0::logic_proof::LogicProver;
 use anoma_rm_risc0::resource::Resource;
 use anoma_rm_risc0::resource_logic::LogicCircuit;
 use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
+use anomapay_erc20_library::TransferLogic;
+use anomapay_erc20_witness::TokenTransferWitness;
 use anyhow::Context;
-use transfer_library::TransferLogic;
-use transfer_witness::TokenTransferWitness;
 
 /// Verifying key (image id) of the active token-transfer circuit, which every
 /// created resource carries.
 #[inline]
 pub fn verifying_key() -> Digest {
-    *transfer_library::TOKEN_TRANSFER_ID
+    *anomapay_erc20_library::ANOMAPAY_ERC20_CIRCUIT_ID
 }
 
 /// Adapts a token-transfer circuit's [`LogicProver`] to the testkit's
@@ -101,7 +101,9 @@ where
 mod tests {
     use anoma_pa_testkit::fixtures::identities;
     use anoma_rm_risc0::action_tree::ActionTree;
-    use transfer_witness::{AUTH_SIGNATURE_DOMAIN, ValueInfo, calculate_persistent_value_ref};
+    use anomapay_erc20_witness::{
+        AUTH_SIGNATURE_DOMAIN, ValueInfo, calculate_persistent_value_ref,
+    };
 
     use super::*;
 
@@ -159,7 +161,10 @@ mod tests {
         let witness = consumed_witness(verifying_key())?;
 
         assert_eq!(witness.verifying_key(), verifying_key());
-        assert_eq!(witness.proving_key(), transfer_library::TOKEN_TRANSFER_ELF);
+        assert_eq!(
+            witness.proving_key(),
+            anomapay_erc20_library::ANOMAPAY_ERC20_CIRCUIT_ELF
+        );
         witness.constrain()?;
         Ok(())
     }
