@@ -6,3 +6,4 @@
 pub mod deployment_parameters;
 pub mod erc1967_proxy;
 pub mod erc20_forwarder;
+pub mod emergency_migrating_erc20_forwarder;
