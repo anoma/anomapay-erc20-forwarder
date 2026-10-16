@@ -1,6 +1,6 @@
 # Hard Migration — Specification & Architecture
 
-This document specifies the hard migration of ERC20 resources: how the draft [`EmergencyMigratingERC20Forwarder`](../contracts/src/draft/EmergencyMigratingERC20Forwarder.sol) and the emergency-migrating ERC20 circuit let resource owners move their resources away from a circuit version with a flaw ([anoma/dos-pm#42](https://github.com/anoma/dos-pm/issues/42)). The contracts and the circuit crates call the hard migration *emergency migration*. The protocol adapter's part, and the comparison with the soft migration, are in pa-evm's [`02-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/02-resource-kind-migration.md). The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md).
+This document specifies the hard migration of ERC20 resources: how the draft [`EmergencyMigratingERC20Forwarder`](../contracts/src/draft/EmergencyMigratingERC20Forwarder.sol) and the emergency-migrating ERC20 circuit let resource owners move their resources away from a circuit version with a flaw ([anoma/dos-pm#42](https://github.com/anoma/dos-pm/issues/42)). The contracts and the circuit crates call the hard migration *emergency migration*. The protocol adapter's part, and the comparison with the soft migration, are in pa-evm's [`03-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/03-resource-kind-migration.md). The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md).
 
 ## 1. Purpose
 
