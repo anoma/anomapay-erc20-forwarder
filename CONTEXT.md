@@ -41,14 +41,19 @@ The two environments. Staging is owned by the deployment wallet and upgraded dir
 Moving a commit unchanged from `next` to `staging`, or from `staging` to `main`. The pull request opening one carries the gate proving the environment it targets runs that commit's source. Changes only ever flow this way.
 
 **Deployment record**:
-`crates/bindings/deployments.json` — the proxy address of each environment on each chain, plus the genesis fields pinning how that address was derived, and the V1 forwarder of each chain that ran a v1 protocol adapter. Written once per chain at its first deploy and never edited; what an environment currently runs is read from the chain, not from here.
+`crates/bindings/deployments.json` — the proxy address of each environment on each chain, plus the genesis fields pinning how that address was derived, and, under `legacy`, the legacy ERC20 forwarder of each chain that ran a legacy protocol adapter. Written once per chain at its first deploy and never edited; what an environment currently runs is read from the chain, not from here.
 
-**V1 forwarder**:
-The immutable ERC20 forwarder that ran with a chain's v1 protocol adapter, recorded with the logic ref it accepts. It belongs to no environment.
-_Avoid_: retired forwarder, legacy forwarder
+**Legacy ERC20 forwarder**:
+The immutable ERC20 forwarder that ran with a chain's legacy protocol adapter, recorded with the logic ref it accepts. It belongs to no environment.
+_Avoid_: V1 forwarder, retired forwarder
 
-**V1 resource**:
-A resource with the V1 forwarder's address in its label, on a chain that ran a v1 protocol adapter. It carries the logic ref that the V1 forwarder accepts, and its tokens moved to the forwarder.
+**Legacy-forwarder resource**:
+A resource with the legacy ERC20 forwarder's address in its label, on a chain that ran a legacy protocol adapter. It carries the logic ref that the legacy ERC20 forwarder accepts, and the asset migration moved its tokens to the forwarder.
+_Avoid_: V1 resource
+
+**Asset migration**:
+The one-time move of the tokens that a chain's legacy ERC20 forwarder holds to the forwarder of one environment, through `LegacyERC20ForwarderMigration`. It changes no resource.
+_Avoid_: migration (on its own)
 
 **Circuit version**:
 A release of the ERC20 transfer circuit. Its logic ref identifies its code, and each resource carries the logic ref of its circuit version.
@@ -62,13 +67,16 @@ Every other circuit version that the kind tables list, as an alias of the active
 **Vulnerable logic ref**:
 The logic ref of a circuit version with a flaw. The owner of the protocol adapter denies it, so no transaction consumes or creates its resources, and `reinitialize` lists it in the forwarder.
 
-**Soft migration**:
-A transaction that consumes resources of a deprecated version and creates resources of the active version for the same quantity. The kind table makes the two kinds aliases, so the transaction balances.
-_Avoid_: conversion
+**Conversion**:
+A transaction that consumes resources of one kind and creates resources of another kind for the same quantity. The kind table assigns both kinds one kind point, so the transaction balances.
 
-**Emergency migration**:
-A transaction that creates resources of the active version for resources with a vulnerable logic ref and this forwarder or the V1 forwarder in their label. The adapter does not consume the old resources; the forwarder records their nullifiers, and the tokens stay in the forwarder.
-_Avoid_: hard migration, rescue
+**Soft migration**:
+The process in which owners convert their resources of a deprecated version, and their legacy-forwarder resources, into resources of the active version.
+_Avoid_: migration (on its own)
+
+**Hard migration**:
+The process in which owners create resources of the active version for their resources with a vulnerable logic ref and this forwarder or the legacy ERC20 forwarder in their label. The adapter does not consume the old resources; the forwarder records their nullifiers, and the tokens stay in the forwarder. The contracts and the circuit crates call it emergency migration.
+_Avoid_: rescue
 
 ## Note on upstream names
 
