@@ -1,6 +1,6 @@
 # Upgrades and Asset Migration — Specification & Architecture
 
-This document specifies how the ERC20 forwarder changes after its first deployment, in the staging and the production environment, and how the tokens of a chain's legacy ERC20 forwarder move to the ERC20 forwarder. The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md). The commands are in [`RELEASE_CHECKLIST.md`](../RELEASE_CHECKLIST.md) and [`MIGRATION_CHECKLIST.md`](../MIGRATION_CHECKLIST.md); this document gives the order of the steps and the reasons for it. The protocol adapter's part of the same move, the state migration, is in pa-evm's [`01-upgrades-and-state-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/01-upgrades-and-state-migration.md). The forwarder's part of a hard migration is in [`02-hard-migration.md`](./02-hard-migration.md).
+This document specifies how the ERC20 forwarder changes after its first deployment, in the staging and the production environment, and how the tokens of a chain's legacy ERC20 forwarder move to the ERC20 forwarder. The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md). The commands are in [`RELEASE_CHECKLIST.md`](../RELEASE_CHECKLIST.md) and [`MIGRATION_CHECKLIST.md`](../MIGRATION_CHECKLIST.md); this document gives the order of the steps and the reasons for it. The protocol adapter's part of the same move, the state migration, is in pa-evm's [`01-state-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/01-state-migration.md). The forwarder's part of a hard migration is in [`02-hard-migration.md`](./02-hard-migration.md).
 
 ## 1. Three kinds of migration
 
@@ -8,9 +8,9 @@ Three different processes are called migration, and they move different things. 
 
 | Process | What moves | Who acts | How often | Specified in |
 | --- | --- | --- | --- | --- |
-| **State migration** and **asset migration** | The commitment tree and the nullifier set of the legacy protocol adapter are copied into the protocol adapter. The tokens of the legacy ERC20 forwarder move to the ERC20 forwarder. | The deployment wallet and the two Safes | Once per chain that ran a legacy protocol adapter | pa-evm's [`01-upgrades-and-state-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/01-upgrades-and-state-migration.md#6-state-migration), and section [Asset migration](#4-asset-migration) |
-| **Soft migration** | Resource owners convert their resources of a deprecated logic ref into resources of the active logic ref. | Each resource owner | After each circuit release, and once for the legacy-forwarder resources of a migrated chain | pa-evm's [`02-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/02-resource-kind-migration.md#4-soft-migration) |
-| **Hard migration** | Resource owners create resources of the active logic ref from a proof that they hold unspent resources of a denied logic ref. | Each resource owner | After a flaw in a circuit | pa-evm's [`02-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/02-resource-kind-migration.md#5-hard-migration), and [`02-hard-migration.md`](./02-hard-migration.md) |
+| **State migration** and **asset migration** | The commitment tree and the nullifier set of the legacy protocol adapter are copied into the protocol adapter. The tokens of the legacy ERC20 forwarder move to the ERC20 forwarder. | The deployment wallet and the two Safes | Once per chain that ran a legacy protocol adapter | pa-evm's [`01-state-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/01-state-migration.md), and section [Asset migration](#4-asset-migration) |
+| **Soft migration** | Resource owners convert their resources of a deprecated logic ref into resources of the active logic ref. | Each resource owner | After each circuit release, and once for the legacy-forwarder resources of a migrated chain | pa-evm's [`03-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/03-resource-kind-migration.md#4-soft-migration) |
+| **Hard migration** | Resource owners create resources of the active logic ref from a proof that they hold unspent resources of a denied logic ref. | Each resource owner | After a flaw in a circuit | pa-evm's [`03-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/03-resource-kind-migration.md#5-hard-migration), and [`02-hard-migration.md`](./02-hard-migration.md) |
 
 The asset migration moves tokens between two forwarders and changes no resource. A legacy-forwarder resource stays a legacy-forwarder resource until its owner converts it in a soft migration.
 
@@ -51,7 +51,7 @@ The FWD Safe is also the emergency committee of every legacy ERC20 forwarder.
 
 An upgrade replaces the implementation. It keeps the proxy address and the tokens, and it keeps the protocol adapter and the accepted logic ref unless a reinitializer of the new implementation changes them. The address stays, so the label of the resources stays, and every resource of the forwarder stays backed by the tokens that it holds.
 
-The accepted logic ref changes only through a reinitializer, because `ERC20Forwarder` has no function that sets it. A circuit release therefore upgrades the forwarder to an implementation whose reinitializer sets the new logic ref. After that upgrade, the forwarder rejects calls from resources of the old logic ref (`LogicRefMismatch`), so the backend creates resources of the new circuit version from the same moment. Resources of the old version leave by a soft migration, which pa-evm's [`02-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/02-resource-kind-migration.md#4-soft-migration) specifies.
+The accepted logic ref changes only through a reinitializer, because `ERC20Forwarder` has no function that sets it. A circuit release therefore upgrades the forwarder to an implementation whose reinitializer sets the new logic ref. After that upgrade, the forwarder rejects calls from resources of the old logic ref (`LogicRefMismatch`), so the backend creates resources of the new circuit version from the same moment. Resources of the old version leave by a soft migration, which pa-evm's [`03-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/03-resource-kind-migration.md#4-soft-migration) specifies.
 
 Changes go in one direction: `next` → `staging` → `main`. The promotion pull request into `staging` passes only if every staging proxy runs the implementation that the source predicts. The one into `main` passes only if every production proxy runs it, its version has no prerelease suffix, and a Safe owns the proxy. `VERSION` is a constant in the bytecode, so each version is a different implementation at a different address, and the release version runs in staging before it runs in production.
 
@@ -108,7 +108,7 @@ The kind table of the chain must have a member under the label of the legacy ERC
 
 ### Steps
 
-These steps are step 11 of the state migration in pa-evm's [`01-upgrades-and-state-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/01-upgrades-and-state-migration.md#steps-of-a-state-migration). They run after the stop of the legacy protocol adapter and before the completion run, while users cannot transact.
+These steps are step 11 of the state migration in pa-evm's [`01-state-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/01-state-migration.md#5-steps). They run after the stop of the legacy protocol adapter and before the completion run, while users cannot transact.
 
 | # | Step | Signer |
 | --- | --- | --- |
