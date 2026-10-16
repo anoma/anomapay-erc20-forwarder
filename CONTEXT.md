@@ -40,7 +40,7 @@ The immutable ERC20 forwarder that ran with a chain's legacy protocol adapter, r
 _Avoid_: V1 forwarder, retired forwarder
 
 **Legacy-forwarder resource**:
-A resource with the legacy ERC20 forwarder's address in its label, on a chain that ran a legacy protocol adapter. It carries the logic ref that the legacy ERC20 forwarder accepts, and the asset migration moved its tokens to the forwarder.
+A resource whose label ref names the legacy ERC20 forwarder, on a chain that ran a legacy protocol adapter. It carries the logic ref that the legacy ERC20 forwarder accepts. The asset migration moved its tokens to the forwarder.
 _Avoid_: V1 resource
 
 **Asset migration**:
@@ -63,11 +63,11 @@ The logic ref of a circuit version with a flaw. The owner of the protocol adapte
 A transaction that consumes resources of one kind and creates resources of another kind for the same quantity. The kind table assigns both kinds one kind point, so the transaction balances.
 
 **Soft migration**:
-The process in which owners convert their resources of a deprecated version, and their legacy-forwarder resources, into resources of the active version.
+The process in which users convert their resources of a deprecated version, and their legacy-forwarder resources, into resources of the active version.
 _Avoid_: migration (on its own)
 
 **Hard migration**:
-The process in which owners create resources of the active version for their resources with a vulnerable logic ref and this forwarder or the legacy ERC20 forwarder in their label. The adapter does not consume the old resources; the forwarder records their nullifiers, and the tokens stay in the forwarder. The contracts and the circuit crates call it emergency migration.
+The process in which users create resources of the active version for their resources with a vulnerable logic ref, whose label ref names this forwarder or the legacy ERC20 forwarder. The protocol adapter does not consume the old resources. The forwarder stores their nullifiers instead, and the tokens stay in the forwarder. The contracts and the circuit crates call it emergency migration.
 _Avoid_: rescue
 
 ## Note on upstream names

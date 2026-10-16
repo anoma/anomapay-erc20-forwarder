@@ -1,37 +1,27 @@
 # Asset Migration — Specification & Architecture
 
-This document specifies the asset migration: the one-time move of the tokens of a chain's legacy ERC20 forwarder, an immutable contract, to the ERC20 forwarder, an upgradeable proxy. The asset migration is one part of the Galileo upgrade, which pa-evm's [`00-galileo-upgrade.md`](https://github.com/anoma/pa-evm/blob/next/docs/00-galileo-upgrade.md) summarizes. This document gives the order of the steps and the reasons for it. The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md), and the commands are in [`MIGRATION_CHECKLIST.md`](../MIGRATION_CHECKLIST.md). The protocol adapter's part of the same move, the state migration, is in pa-evm's [`01-state-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/01-state-migration.md). Every later change of the ERC20 forwarder is an upgrade, which [`02-upgrades.md`](./02-upgrades.md) specifies. The forwarder's part of a hard migration is in [`03-hard-migration.md`](./03-hard-migration.md).
+This document specifies the asset migration: the one-time move of the tokens of a legacy ERC20 forwarder to the ERC20 forwarder. It gives the steps and the reasons for their order. The asset migration is one part of the Galileo upgrade. The pa-evm [overview](https://github.com/anoma/pa-evm/blob/next/docs/00-galileo-upgrade.md) explains the terms and the other parts. [`MIGRATION_CHECKLIST.md`](../MIGRATION_CHECKLIST.md) has the commands.
 
 ## 1. Purpose
 
-The legacy ERC20 forwarder holds the tokens behind every legacy-forwarder resource. It accepts calls only from the legacy protocol adapter. The state migration stops the legacy protocol adapter, and nothing restarts it. The protocol adapter cannot call the legacy ERC20 forwarder. So the tokens move to the ERC20 forwarder, and the kind table lets each legacy-forwarder resource convert and unwrap there.
+The legacy ERC20 forwarder holds the tokens of all legacy-forwarder resources. It accepts calls only from the legacy protocol adapter. The Galileo upgrade stops the legacy protocol adapter, and nothing lifts the stop. The protocol adapter cannot call the legacy ERC20 forwarder. So the tokens move to the ERC20 forwarder. There, the legacy-forwarder entries of the kind table let each legacy-forwarder resource convert and unwrap.
 
-The asset migration is the only change of a chain's ERC20 forwarder that is not an upgrade, and it happens once. A chain cannot go back, because the legacy ERC20 forwarder keeps the emergency caller that the asset migration assigns. After the asset migration, each change of the ERC20 forwarder is an upgrade of its proxy. A chain without a legacy ERC20 forwarder skips the asset migration.
+The asset migration happens at most once on each chain. After it, the legacy ERC20 forwarder keeps its emergency caller, so nobody can repeat or reverse the asset migration. After the asset migration, each change of the code of the ERC20 forwarder is an upgrade, as [`02-upgrades.md`](./02-upgrades.md) specifies. A chain without a legacy ERC20 forwarder has no asset migration.
 
-The state migration and the asset migration together leave each resource and its tokens where its owner can use them.
+## 2. Three types of migration
 
-## 2. Three kinds of migration
-
-Three different processes are called migration, and they move different things. This document covers the asset migration. The documents in the last column cover the rest.
-
-| Process | What moves | Who acts | How often | Specified in |
-| --- | --- | --- | --- | --- |
-| **State migration** and **asset migration** | The commitment tree and the nullifier set of the legacy protocol adapter are copied into the protocol adapter. The tokens of the legacy ERC20 forwarder move to the ERC20 forwarder. | The deployment wallet and the two Safes | Once per chain that ran a legacy protocol adapter | pa-evm's [`01-state-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/01-state-migration.md), and this document |
-| **Soft migration** | Resource owners convert their resources of a deprecated logic ref into resources of the active logic ref. | Each resource owner | After each circuit release, and once for the legacy-forwarder resources of a migrated chain | pa-evm's [`03-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/03-resource-kind-migration.md#4-soft-migration) |
-| **Hard migration** | Resource owners create resources of the active logic ref from a proof that they hold unspent resources of a denied logic ref. | Each resource owner | After a flaw in a circuit | pa-evm's [`03-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/03-resource-kind-migration.md#5-hard-migration), and [`03-hard-migration.md`](./03-hard-migration.md) |
-
-The asset migration moves tokens between two forwarders and changes no resource. A legacy-forwarder resource stays a legacy-forwarder resource until its owner converts it in a soft migration.
+The Galileo upgrade has three types of migration. The pa-evm [overview](https://github.com/anoma/pa-evm/blob/next/docs/00-galileo-upgrade.md#4-three-types-of-migration) compares them. This document covers the asset migration.
 
 ## 3. Contracts and owners
 
 ```mermaid
 flowchart LR
-    fwdSafe([FWD Safe,<br/>emergency committee])
+    fwdSafe([FWD Safe])
     wallet([Deployment wallet])
     legacyPa[(Legacy protocol adapter,<br/>stopped)]
     legacyFwd[(Legacy ERC20 forwarder)]
     migration[LegacyERC20ForwarderMigration]
-    fwd[ERC20 forwarder proxy]
+    fwd[ERC20 forwarder]
 
     legacyPa -.->|forwardCall, until the stop| legacyFwd
     fwdSafe -->|setEmergencyCaller, once| legacyFwd
@@ -40,69 +30,76 @@ flowchart LR
     legacyFwd -->|transfer the full balance| fwd
 ```
 
-- **Legacy ERC20 forwarder.** The immutable ERC20 forwarder that ran with the legacy protocol adapter. It accepts calls only from the legacy protocol adapter, and only with the logic ref `bc1232…`, which the kind tables list as circuit version 1.0.0. It has an emergency path, which section [The emergency path of the legacy ERC20 forwarder](#4-the-emergency-path-of-the-legacy-erc20-forwarder) specifies.
-- **`LegacyERC20ForwarderMigration`.** The contract that calls the emergency path to move the tokens.
+- **Legacy ERC20 forwarder.** It accepts calls only from the legacy protocol adapter. Each call must contain the logic ref `bc123236…`, version 1.0.0. The forwarder also has two emergency functions. They let an **emergency caller** send calls after the stop of the legacy protocol adapter. Section [4](#4-the-emergency-functions-of-the-legacy-erc20-forwarder) specifies them.
+- **`LegacyERC20ForwarderMigration`**, the **migration contract**. The emergency caller that moves the tokens. Section [5](#5-legacyerc20forwardermigration) specifies it.
 - **ERC20 forwarder.** The upgradeable forwarder of one environment, which receives the tokens. [`02-upgrades.md`](./02-upgrades.md#1-contracts-and-owners) specifies it.
 
 | Contract | Before the asset migration | During the asset migration | After the asset migration |
 | --- | --- | --- | --- |
-| Legacy ERC20 forwarder | Its emergency committee is the FWD Safe, and it has no emergency caller. | The FWD Safe assigns the migration contract as its emergency caller. | It keeps the migration contract as its emergency caller. |
-| `LegacyERC20ForwarderMigration` | — | The deployment wallet deploys it and owns it. | The deployment wallet owns it, and it can still move tokens only to the ERC20 forwarder. |
-| ERC20 forwarder | The deployment wallet owns it in staging, the FWD Safe in production. | The same. | The same. |
+| Legacy ERC20 forwarder | The FWD Safe controls its emergency functions. It has no emergency caller. | The FWD Safe sets the migration contract as its emergency caller. | The emergency caller does not change. |
+| Migration contract | — | The deployment wallet deploys it and owns it. | The deployment wallet owns it. |
 
-The FWD Safe is a Safe multisig that needs 3 of its 5 owners to confirm a transaction. Section [Parameters](#13-parameters) has the addresses.
+## 4. The emergency functions of the legacy ERC20 forwarder
 
-## 4. The emergency path of the legacy ERC20 forwarder
+The legacy ERC20 forwarder has two emergency functions. Both work only while the legacy protocol adapter is stopped (`isEmergencyStopped()`).
 
-The legacy ERC20 forwarder has two emergency functions, and both work only while the legacy protocol adapter is stopped (`isEmergencyStopped()`):
+- `setEmergencyCaller(caller)`. The FWD Safe sets the emergency caller. The function accepts one caller and keeps it. So nobody can remove or change the emergency caller.
+- `forwardEmergencyCall(input)`. The emergency caller sends any input that the legacy protocol adapter can send, for example an unwrap of any amount to any receiver.
 
-- `setEmergencyCaller(caller)`: its emergency committee, the FWD Safe, assigns an emergency caller. It accepts one caller and keeps it, so the assignment cannot be undone or changed.
-- `forwardEmergencyCall(input)`: the emergency caller sends any input that the legacy protocol adapter could send, for example an unwrap of any amount to any receiver.
-
-An account as the emergency caller could send the tokens anywhere. So the FWD Safe assigns a contract that can send them to one place only.
+If the emergency caller is an account with a private key, the holder of that key can send the tokens to any address. So the FWD Safe sets a contract that can send them to one address only.
 
 ## 5. `LegacyERC20ForwarderMigration`
 
-The constructor fixes the legacy ERC20 forwarder (`LEGACY_FORWARDER`) and the ERC20 forwarder of one environment (`FORWARDER`), and sets the owner. It reverts if either forwarder is the zero address or has no code, or if both are the same.
+The constructor stores two addresses: the legacy ERC20 forwarder (`LEGACY_FORWARDER`) and the ERC20 forwarder of one environment (`FORWARDER`). It also sets the owner. It reverts in two cases:
 
-`migrate(tokens)` is owner-only. For each listed token, it:
+- An address is zero or has no code.
+- The two addresses are the same.
 
-1. reads the full balance of the legacy ERC20 forwarder,
-2. calls `forwardEmergencyCall` with an unwrap of that amount to the ERC20 forwarder,
-3. reverts unless the legacy ERC20 forwarder has none of the token left and the ERC20 forwarder received exactly that amount,
-4. emits `ERC20TokenMigrated(legacyForwarder, forwarder, token, amount)`, with a zero amount if the legacy ERC20 forwarder held none.
+Only the owner can call `migrate(tokens)`. For each token in the list, the function does these steps:
 
-The assignment cannot be undone, but it fixes only where the tokens can go. The owner can call `migrate` again for a token that an earlier call left out, and the tokens can still go only to the same ERC20 forwarder.
+1. It reads the full balance of the legacy ERC20 forwarder.
+2. It calls `forwardEmergencyCall` with an unwrap of that amount to the ERC20 forwarder.
+3. It reverts if the legacy ERC20 forwarder still holds some of the token.
+4. It reverts if the ERC20 forwarder did not receive exactly that amount.
+5. It emits `ERC20TokenMigrated(legacyForwarder, forwarder, token, amount)`. The amount is zero if the legacy ERC20 forwarder held none of the token.
+
+If a call did not include a token, the owner can call `migrate` again for that token. The token can still go only to the same ERC20 forwarder.
 
 ## 6. Scripts
 
-- **`DeployLegacyERC20ForwarderMigration`** deploys the migration contract with CREATE2, so its address commits to both forwarders and to the owner, the deployment wallet. It then proposes `setEmergencyCaller(migration)` to the FWD Safe, signed by the deployment wallet. The proposal names the right contract before the deployment lands, and a repeated run finds the contract instead of deploying a second one. The script refuses to run before the legacy protocol adapter is stopped, and if the legacy ERC20 forwarder already has an emergency caller.
-- **`MigrateERC20ForwarderAssets`** calls `migrate` as the deployment wallet and checks the result. It reads the migration contract from the emergency caller of the legacy ERC20 forwarder.
+- **`DeployLegacyERC20ForwarderMigration`** deploys the migration contract with CREATE2. So the address of the contract depends on the two forwarders and on the owner, the deployment wallet. Then the script proposes `setEmergencyCaller(migration)` to the FWD Safe. The proposal can reach the Safe service before the chain includes the deployment. It names the correct address anyway, because CREATE2 fixes the address in advance. A second run finds the deployed contract and does not deploy another one. The script refuses to run before the stop of the legacy protocol adapter. It also refuses to run if the legacy ERC20 forwarder already has an emergency caller.
+- **`MigrateERC20ForwarderAssets`** calls `migrate` from the deployment wallet, and it checks the result. It reads the address of the migration contract from the emergency caller of the legacy ERC20 forwarder.
 
-Both scripts read the two forwarders from [`RecordedDeployments`](../contracts/generated/RecordedDeployments.sol) and check them against the chain: the proxy owner of the environment owns the ERC20 forwarder, and each forwarder forwards for the protocol adapter that the records of the `anoma-pa-evm` package name for it. They also check that the migration contract holds the recorded forwarders and that the deployment wallet owns it.
+The deployment wallet signs the proposal. So it must be a signer or a delegate of the FWD Safe, because the Safe service accepts proposals only from them.
 
-## 7. The token list
+Both scripts read the two forwarders from the deployment record, through `RecordedDeployments`: a Solidity library that the build generates from the deployment record. Then the scripts check three conditions on the chain:
 
-`migrate` moves only the tokens in its list. The list comes from the chain: the distinct tokens of the `Wrapped` events of the legacy ERC20 forwarder, from its deployment block up to the block of the stop. The legacy protocol adapter executes nothing after the stop, so this list is final. A token that the legacy ERC20 forwarder holds but never wrapped stays out, because no legacy-forwarder resource represents it.
+- The owner of the ERC20 forwarder is the owner of its environment: the deployment wallet in staging, the FWD Safe in production.
+- Each forwarder accepts calls only from the protocol adapter that the deployment record of pa-evm names for it.
+- The migration contract stores the addresses of the two forwarders of the record, and the deployment wallet owns it.
 
-The kind table of the chain must have a member under the label of the legacy ERC20 forwarder for each token of the list. The kind tables repository writes one for each token whose `soft_migrate_from_legacy_forwarder` is `true` in its `tokens.json`. A wrapped token without a member gives its legacy-forwarder resources no way to convert and unwrap. A token whose balance has not moved must have no member when the protocol adapter starts to execute transactions.
+## 7. The list of tokens
+
+`migrate` moves only the tokens in its list. The team reads the list from the chain. The list contains each token of the `Wrapped` events that the legacy ERC20 forwarder emitted, from its deployment block to the block of the stop. The legacy protocol adapter executes no transaction after the stop, so this list is final. The legacy ERC20 forwarder can also hold a token that no wrap brought to it. That token is not in the list, because no legacy-forwarder resource represents it.
+
+The kind table of the chain must have legacy-forwarder entries for each token in the list. The kind tables repository writes these entries for each token that its file `tokens.json` marks with `soft_migrate_from_legacy_forwarder: true`. A wrapped token without entries gives its legacy-forwarder resources no way to unwrap. A token whose balance did not move must not have entries when the protocol adapter starts to execute transactions. Otherwise, its legacy-forwarder resources can unwrap tokens that other resources of the same token represent.
 
 ## 8. Steps
 
-These steps are step 11 of the state migration in pa-evm's [`01-state-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/01-state-migration.md#5-steps). They run after the stop of the legacy protocol adapter and before the completion run, while users cannot transact.
+These steps are step 11 of the Galileo upgrade of a migrated chain, in pa-evm's [`01-state-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/01-state-migration.md#5-steps). They occur after the stop of the legacy protocol adapter and before the completion run. During this time, users cannot transact.
 
 | # | Step | Signer |
 | --- | --- | --- |
-| 1 | Read the `Wrapped` events up to the block of the stop. If a token is missing from `tokens.json`, add it, generate the kind table again, and set the new root on the paused protocol adapter. | — |
-| 2 | Simulate the deployment and the proposal. The simulation executes the assignment as the FWD Safe. | — |
-| 3 | Deploy the migration contract and propose the assignment to the FWD Safe. | Deployment wallet |
-| 4 | Verify the migration contract on sourcify and Etherscan, so that the Safe owners can read its source. | — |
-| 5 | Assign the migration contract as the emergency caller of the legacy ERC20 forwarder. This cannot be undone. | FWD Safe |
+| 1 | Read the `Wrapped` events until the block of the stop. If a token is not in `tokens.json`, add it. The kind tables repository then makes a new kind table, and the deployment wallet sets its root on the paused protocol adapter. | Deployment wallet, for a new root |
+| 2 | Simulate the deployment and the proposal. The simulation executes the Safe transaction as the FWD Safe. | — |
+| 3 | Deploy the migration contract, and propose it to the FWD Safe as the emergency caller. | Deployment wallet |
+| 4 | Publish the source code of the migration contract on sourcify and Etherscan, so that the signers can read it. | — |
+| 5 | Set the migration contract as the emergency caller of the legacy ERC20 forwarder. Nobody can undo this step. | FWD Safe |
 | 6 | Simulate the move. | — |
-| 7 | Move the tokens: one transaction, so a revert moves nothing. | Deployment wallet |
-| 8 | Check that the legacy ERC20 forwarder holds none of the listed tokens. | — |
+| 7 | Move the tokens. The move is one chain transaction, so a revert moves no token. A long list can need more gas than one chain transaction allows. Then the team splits the list into several calls. | Deployment wallet |
+| 8 | Check that the legacy ERC20 forwarder holds none of the tokens in the list. | — |
 
-The migration run of the state migration also sends its transactions from the deployment wallet. So steps 3 and 7, and a new kind table root in step 1, wait until that run has ended. The other steps can run while it copies the state.
+The migration run of the state migration also sends its chain transactions from the deployment wallet. An account sends its chain transactions in a fixed order, so two scripts that send from the same account at the same time can conflict. So steps 3 and 7, and a new root in step 1, wait until the migration run ends. The other steps can occur during the migration run.
 
 ```mermaid
 sequenceDiagram
@@ -116,53 +113,51 @@ sequenceDiagram
     Note over LegacyFwd: The legacy protocol adapter is stopped
     Wallet->>Migration: Deploy with CREATE2
     Wallet->>FWDSafe: Propose setEmergencyCaller(migration)
-    FWDSafe->>LegacyFwd: setEmergencyCaller(migration) (cannot be undone)
+    FWDSafe->>LegacyFwd: setEmergencyCaller(migration) (nobody can undo it)
     Wallet->>Migration: migrate(tokens)
     loop Each token
         Migration->>Token: balanceOf(legacy ERC20 forwarder)
         Migration->>LegacyFwd: forwardEmergencyCall(unwrap the full balance to the ERC20 forwarder)
         LegacyFwd->>Token: transfer(ERC20 forwarder, amount)
-        Migration->>Token: Check both balances
+        Migration->>Token: Check the two balances
         Migration->>Migration: Emit ERC20TokenMigrated
     end
     Note over Fwd: The completion run lifts the pause of the protocol adapter
 ```
 
-## 9. Why this order keeps the tokens safe
+## 9. Reason for the order
 
-The members under the label of the legacy ERC20 forwarder let a legacy-forwarder resource unwrap from the ERC20 forwarder. Before the move, the ERC20 forwarder does not hold the tokens behind these resources, so an unwrap would pay with tokens that back other resources. The ERC20 forwarder pays out only on calls from its protocol adapter, and the protocol adapter stays paused from its deployment until the completion run, which starts only after the move. So no legacy-forwarder resource can unwrap before its tokens arrive.
+The legacy-forwarder entries let a legacy-forwarder resource convert and unwrap from the ERC20 forwarder. Before the move, the ERC20 forwarder does not hold the tokens of these resources. So an unwrap at that time sends tokens that other resources represent. The ERC20 forwarder sends tokens only when its protocol adapter calls it. The protocol adapter stays paused from its deployment until the completion run, and the completion run starts only after the move. So no legacy-forwarder resource can unwrap before the ERC20 forwarder holds its tokens.
 
 ## 10. Staging and production
 
-The FWD Safe assigns the emergency caller in both environments, and the deployment wallet owns the migration contract in both. `IS_PRODUCTION` selects the ERC20 forwarder that receives the tokens. The legacy ERC20 forwarder keeps its emergency caller, so its tokens can move to the ERC20 forwarder of one environment only. The environment is chosen before the proposal.
+The FWD Safe sets the emergency caller in both environments, and the deployment wallet owns the migration contract in both environments. The environment variable `IS_PRODUCTION` selects the ERC20 forwarder that receives the tokens. The legacy ERC20 forwarder keeps its emergency caller, so its tokens can move to the ERC20 forwarder of only one environment. The team selects the environment before the proposal, for example staging on a test network and production on a main network.
 
 ## 11. Events
 
-| Contract | Event | Emitted when |
+| Contract | Event | When |
 | --- | --- | --- |
-| ERC20 forwarder | `Wrapped(token, from, amount)` | a wrap pulls tokens from a user |
-| ERC20 forwarder | `Unwrapped(token, to, amount)` | an unwrap transfers tokens to a receiver |
-| Legacy ERC20 forwarder | `Unwrapped(token, to, amount)` | an unwrap, also each move of the asset migration, with the ERC20 forwarder as `to` |
-| `LegacyERC20ForwarderMigration` | `ERC20TokenMigrated(legacyForwarder, forwarder, token, amount)` | each listed token is moved, also with a zero amount |
+| ERC20 forwarder | `Wrapped(token, from, amount)` | A wrap takes tokens from a user. |
+| ERC20 forwarder | `Unwrapped(token, to, amount)` | An unwrap sends tokens to a receiver. |
+| Legacy ERC20 forwarder | `Unwrapped(token, to, amount)` | An unwrap, and also each move of the asset migration, with the ERC20 forwarder as `to` |
+| `LegacyERC20ForwarderMigration` | `ERC20TokenMigrated(legacyForwarder, forwarder, token, amount)` | The contract moved a token, also with a zero amount. |
 
-The ERC20 forwarder emits no event when it receives the moved tokens. An indexer that computes its token balance from `Wrapped` and `Unwrapped` must add the amounts of `ERC20TokenMigrated`.
+The ERC20 forwarder emits no event when it receives the tokens of the asset migration. An indexer that calculates the token balance of the ERC20 forwarder from `Wrapped` and `Unwrapped` events must add the amounts of the `ERC20TokenMigrated` events.
 
 ## 12. Trust assumptions
 
-- **The protocol adapter stays paused until the move ends.** Neither the forwarder nor the migration contract checks this. The order of the state migration keeps the pause in place.
-- **The FWD Safe assigns the right contract.** The assignment cannot be undone. The CREATE2 address commits to both forwarders and the owner, and the Safe owners read `LEGACY_FORWARDER()`, `FORWARDER()` and `owner()` on the verified contract before they confirm.
-- **The owner of the migration contract can only move tokens to the ERC20 forwarder.** It chooses which tokens move and when, but not the amount or the receiver.
-- **The token list is complete.** A token that the list leaves out stays in the legacy ERC20 forwarder until a later `migrate` moves it. Until then, it must have no member in the kind table.
-- **No fee-on-transfer token.** The ERC20 forwarder must receive exactly the moved amount, or the move reverts.
-- **A balance fits in 128 bits.** The legacy ERC20 forwarder takes `uint128` amounts. A larger balance reverts the move.
+- **The protocol adapter stays paused until the move ends.** The forwarders and the migration contract do not check this. Only the order of the steps keeps the pause.
+- **The FWD Safe sets the correct contract.** Nobody can undo this step. The CREATE2 address depends on the two forwarders and the owner. Before they confirm, the signers read `LEGACY_FORWARDER()`, `FORWARDER()` and `owner()` on the published contract.
+- **The owner of the migration contract can move tokens only to the ERC20 forwarder.** The owner selects the tokens and the time. The owner cannot select the amount or the receiver.
+- **The list of tokens is complete.** A token that is not in the list stays in the legacy ERC20 forwarder until a later `migrate` moves it. Until then, the token must not have legacy-forwarder entries.
+- **No token takes a fee on a transfer.** The ERC20 forwarder must receive exactly the moved amount, or the move reverts. The legacy ERC20 forwarder checked the same condition for each wrap. But a token can start to take a fee after its wrap, for example after an upgrade of the token. Then `migrate` reverts for that token. The team moves the other tokens without it. The migration contract can move that token only when the token no longer takes the fee.
+- **Each balance fits into 128 bits.** The legacy ERC20 forwarder accepts amounts of type `uint128`. A larger balance makes the move revert.
 
 ## 13. Parameters
 
-| Name | Value | Used for |
+| Name | Value | Use |
 | --- | --- | --- |
-| `Parameters.DEPLOYMENT_WALLET` | `0x61462bE56782568376f9cB069382EFa72764a407` | Owner of every migration contract. Deploys it, proposes the assignment and moves the tokens. |
-| `Parameters.FWD_MULTISIG`, the FWD Safe | `0xc703402252Ce1251aa07e0815D50060d27fdd6C4`, 3 of 5 | Emergency committee of every legacy ERC20 forwarder |
 | `Parameters.MIGRATION_SALT` | `"ERC20ForwarderMigration"` | CREATE2 salt of the migration contracts |
-| `IS_PRODUCTION` | `true` or `false` | Selects the ERC20 forwarder that receives the tokens |
+| `IS_PRODUCTION` | `true` or `false` | An environment variable of the scripts. It selects the ERC20 forwarder that receives the tokens. |
 
-[`crates/bindings/deployments.json`](../crates/bindings/deployments.json) records, under `legacy`, the legacy ERC20 forwarder of each chain with the logic ref that it accepts.
+The pa-evm [overview](https://github.com/anoma/pa-evm/blob/next/docs/00-galileo-upgrade.md#accounts-and-controls) gives the addresses of the deployment wallet and the FWD Safe. The deployment record, [`crates/bindings/deployments.json`](../crates/bindings/deployments.json), lists the legacy ERC20 forwarder of each chain under `legacy`, with the logic ref that it accepts.
