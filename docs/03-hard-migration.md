@@ -1,12 +1,12 @@
 # Hard Migration — Specification & Architecture
 
-This document specifies the hard migration of ERC20 resources: how the draft [`EmergencyMigratingERC20Forwarder`](../contracts/src/draft/EmergencyMigratingERC20Forwarder.sol) and the emergency-migrating ERC20 circuit let resource owners move their resources away from a circuit version with a flaw ([anoma/dos-pm#42](https://github.com/anoma/dos-pm/issues/42)). The contracts and the circuit crates call the hard migration *emergency migration*. The protocol adapter's part, and the comparison with the soft migration, are in pa-evm's [`03-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/03-resource-kind-migration.md). The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md).
+This document specifies the hard migration of ERC20 resources: how the draft [`EmergencyMigratingERC20Forwarder`](../contracts/src/draft/EmergencyMigratingERC20Forwarder.sol) and the emergency-migrating ERC20 circuit let resource owners move their resources away from a circuit version with a flaw ([anoma/dos-pm#42](https://github.com/anoma/dos-pm/issues/42)). The contracts and the circuit crates call the hard migration *emergency migration*. The protocol adapter's part, and the comparison with the soft migration, are in pa-evm's [`03-resource-kind-migration.md`](https://github.com/anoma/pa-evm/blob/next/docs/03-resource-kind-migration.md). The upgrade steps of the forwarder are in [`02-upgrades.md`](./02-upgrades.md). The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md).
 
 ## 1. Purpose
 
 A flaw in an ERC20 transfer circuit can let false proofs pass, for example a flaw in the circuit code or in the RISC Zero version that it uses. The owner of the protocol adapter then denies the logic ref of that circuit version, so no transaction consumes or creates its resources. The resources and their tokens stay where they are, but no transaction can spend them. The hard migration lets each owner create resources of a version without the flaw, for the same quantity, from a proof that their resources exist and are unspent. No proof of the flawed circuit runs again.
 
-The hard migration is neither the asset migration of [`01-upgrades-and-asset-migration.md`](./01-upgrades-and-asset-migration.md), which moves the tokens of the legacy ERC20 forwarder once per chain, nor the soft migration, in which owners convert their resources of a trusted, deprecated version. A hard migration moves no tokens: they stay in the forwarder.
+The hard migration is neither the asset migration of [`01-asset-migration.md`](./01-asset-migration.md), which moves the tokens of the legacy ERC20 forwarder once per chain, nor the soft migration, in which owners convert their resources of a trusted, deprecated version. A hard migration moves no tokens: they stay in the forwarder.
 
 ## 2. Terms
 

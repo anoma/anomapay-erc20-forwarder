@@ -1,6 +1,6 @@
 # Migration Checklist
 
-How to move the tokens a chain's legacy ERC20 forwarder holds to the ERC20 forwarder of one environment. A chain without a legacy ERC20 forwarder skips all of this. [`docs/01-upgrades-and-asset-migration.md`](./docs/01-upgrades-and-asset-migration.md#4-asset-migration) explains the asset migration and the order of its steps, and the pa-evm [`MIGRATION_CHECKLIST.md`](https://github.com/anoma/pa-evm/blob/next/MIGRATION_CHECKLIST.md) moves the protocol adapter state. This file covers the forwarder's part, which is step 5 of the pa-evm checklist.
+How to move the tokens a chain's legacy ERC20 forwarder holds to the ERC20 forwarder of one environment. A chain without a legacy ERC20 forwarder skips all of this. [`docs/01-asset-migration.md`](./docs/01-asset-migration.md) explains the asset migration and the order of its steps, and the pa-evm [`MIGRATION_CHECKLIST.md`](https://github.com/anoma/pa-evm/blob/next/MIGRATION_CHECKLIST.md) moves the protocol adapter state. This file covers the forwarder's part, which is step 5 of the pa-evm checklist.
 
 ## How it works
 
