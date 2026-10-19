@@ -45,7 +45,7 @@ After each flaw, the team does these steps:
 2. The owner of the protocol adapter denies each vulnerable logic ref with `denyLogicRefs`. So each vulnerable logic ref is on both denylists.
 3. The owner of the forwarder upgrades it to `EmergencyMigratingERC20Forwarder`. In the same chain transaction, the owner calls `reinitialize` with the logic ref of C and the list of vulnerable logic refs. Section [6](#6-which-resources-can-hard-migrate) states which logic refs the list can contain.
 4. The kind tables repository lists C as the active version. Each kind of a version without the flaw gets a new kind point. It is the kind point of the kind of C with the same token and the label ref of the ERC20 forwarder. This includes the kinds of the legacy-forwarder resources, if their version has no flaw. The kind tables keep each vulnerable version in their list, but no transaction can use its entries, because the protocol adapter denies its logic ref.
-5. The owner of the protocol adapter sets the new kind table root. If B has no flaw, the owner also deprecates the logic ref of B.
+5. The owner of the protocol adapter sets the new kind tree root. If B has no flaw, the owner also deprecates the logic ref of B.
 6. The owner of the protocol adapter lifts the pause.
 7. Users hard-migrate their resources with a vulnerable logic ref. They soft-migrate their resources of a deprecated version without the flaw.
 
