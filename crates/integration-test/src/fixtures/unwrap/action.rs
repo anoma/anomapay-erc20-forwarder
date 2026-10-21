@@ -7,6 +7,7 @@ use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
 use anomapay_erc20_witness::AUTH_SIGNATURE_DOMAIN;
 use anomapay_erc20_witness::ForwarderInfo;
 use anomapay_erc20_witness::LabelInfo;
+use anomapay_erc20_witness::OrderingInfo;
 use anomapay_erc20_witness::TokenTransferWitness;
 use anomapay_erc20_witness::call_type::CallType;
 
@@ -96,7 +97,10 @@ pub fn build(
                 .clone()
                 .unwrap_or_else(|| owner.address().to_vec()),
             permit_info: None,
-            ordering_info: None,
+            ordering_info: Some(OrderingInfo {
+                after_tags: overrides.after_tags.clone(),
+                before_tags: overrides.before_tags.clone(),
+            }),
         }),
         Some(LabelInfo {
             forwarder_addr: forwarder.to_vec(),

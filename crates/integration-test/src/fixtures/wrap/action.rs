@@ -8,6 +8,7 @@ use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource};
 use anomapay_erc20_witness::EncryptionInfo;
 use anomapay_erc20_witness::ForwarderInfo;
 use anomapay_erc20_witness::LabelInfo;
+use anomapay_erc20_witness::OrderingInfo;
 use anomapay_erc20_witness::PermitInfo;
 use anomapay_erc20_witness::TokenTransferWitness;
 use anomapay_erc20_witness::ValueInfo;
@@ -103,7 +104,10 @@ pub async fn build(
                 permit_deadline: permit_deadline.to_be_bytes_vec(),
                 permit_sig,
             }),
-            ordering_info: None,
+            ordering_info: Some(OrderingInfo {
+                after_tags: overrides.after_tags,
+                before_tags: overrides.before_tags,
+            }),
         }),
         Some(LabelInfo {
             forwarder_addr: forwarder.to_vec(),
