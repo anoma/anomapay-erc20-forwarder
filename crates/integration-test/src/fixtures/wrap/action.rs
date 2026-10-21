@@ -103,6 +103,7 @@ pub async fn build(
                 permit_deadline: permit_deadline.to_be_bytes_vec(),
                 permit_sig,
             }),
+            ordering_info: None,
         }),
         Some(LabelInfo {
             forwarder_addr: forwarder.to_vec(),
@@ -135,7 +136,7 @@ pub async fn build(
             sender.nf_key.clone(),
         )],
         vec![created],
-        crate::fixtures::resource::kind_table(),
+        crate::fixtures::resource::kind_tree(),
     );
 
     Ok(ActionData {
