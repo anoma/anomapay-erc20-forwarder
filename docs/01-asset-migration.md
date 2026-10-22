@@ -58,7 +58,7 @@ The constructor stores two addresses: the legacy ERC20 forwarder (`LEGACY_FORWAR
 Only the owner can call `migrate(tokens)`. For each token in the list, the function does these steps:
 
 1. It reads the full balance of the legacy ERC20 forwarder.
-2. It calls `forwardEmergencyCall` with an unwrap of that amount to the ERC20 forwarder.
+2. It calls `forwardEmergencyCall` with an unwrap of that amount to the ERC20 forwarder. The legacy ERC20 forwarder unwraps at most `type(uint128).max` in one call, so a larger balance takes more than one call.
 3. It reverts if the legacy ERC20 forwarder still holds some of the token.
 4. It reverts if the ERC20 forwarder did not receive exactly that amount.
 5. It emits `ERC20TokenMigrated(legacyForwarder, forwarder, token, amount)`. The amount is zero if the legacy ERC20 forwarder held none of the token.
@@ -117,8 +117,10 @@ sequenceDiagram
     Wallet->>Migration: migrate(tokens)
     loop Each token
         Migration->>Token: balanceOf(legacy ERC20 forwarder)
-        Migration->>LegacyFwd: forwardEmergencyCall(unwrap the full balance to the ERC20 forwarder)
-        LegacyFwd->>Token: transfer(ERC20 forwarder, amount)
+        loop Each part of at most type(uint128).max
+            Migration->>LegacyFwd: forwardEmergencyCall(unwrap the part to the ERC20 forwarder)
+            LegacyFwd->>Token: transfer(ERC20 forwarder, part)
+        end
         Migration->>Token: Check the two balances
         Migration->>Migration: Emit ERC20TokenMigrated
     end
@@ -151,7 +153,7 @@ The ERC20 forwarder emits no event when it receives the tokens of the asset migr
 - **The owner of the migration contract can move tokens only to the ERC20 forwarder.** The owner selects the tokens and the time. The owner cannot select the amount or the receiver.
 - **The list of tokens is complete.** A token that is not in the list stays in the legacy ERC20 forwarder until a later `migrate` moves it. Until then, the token must not have legacy-forwarder entries.
 - **No token takes a fee on a transfer.** The ERC20 forwarder must receive exactly the moved amount, or the move reverts. The legacy ERC20 forwarder checked the same condition for each wrap. But a token can start to take a fee after its wrap, for example after an upgrade of the token. Then `migrate` reverts for that token. The team moves the other tokens without it. The migration contract can move that token only when the token no longer takes the fee.
-- **Each balance fits into 128 bits.** The legacy ERC20 forwarder accepts amounts of type `uint128`. A larger balance makes the move revert.
+- **Each balance moves in one transaction.** The legacy ERC20 forwarder unwraps at most `type(uint128).max` in one call, so `migrate` moves a larger balance in more than one call. A balance that needs more calls than one transaction can make cannot move. Only a token with a total supply far above 2^128 units can have such a balance.
 
 ## 13. Parameters
 
