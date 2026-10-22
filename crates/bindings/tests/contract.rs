@@ -5,8 +5,10 @@
 #[cfg(test)]
 extern crate dotenvy;
 
-use alloy::primitives::B256;
+use alloy::primitives::{B256, U256};
+use alloy::providers::ext::AnvilApi;
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
+use alloy::signers::local::PrivateKeySigner;
 use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::{Environment as PaEnvironment, protocol_adapter_address};
 use anoma_pa_evm_bindings::helpers::alchemy_url;
@@ -162,9 +164,17 @@ async fn fwd_instance(
 ) -> erc20_forwarder::ERC20Forwarder::ERC20ForwarderInstance<DynProvider> {
     let rpc_url = alchemy_url(chain).expect("Couldn't get RPC URL for chain");
 
+    // anvil estimates the gas of a creation as if the sender had nonce 0, so the deployer must be
+    // an account that the forked chain has never seen.
+    let deployer = PrivateKeySigner::random();
     let provider = ProviderBuilder::new()
-        .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url))
-        .expect("Couldn't create anvil provider");
+        .wallet(deployer.clone())
+        .connect_anvil_with_config(|a| a.fork(rpc_url));
+    provider
+        .anvil_set_balance(deployer.address(), U256::from(10).pow(U256::from(18)))
+        .await
+        .expect("Couldn't fund the deployer");
+
     erc20_forwarder(&provider.erased(), environment)
         .await
         .expect("Couldn't get ERC20 forwarder instance")
