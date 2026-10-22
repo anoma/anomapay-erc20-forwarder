@@ -2,12 +2,12 @@
 pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
-import {ILogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.11/src/interfaces/ILogicRefDenylist.sol";
-import {IProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.11/src/interfaces/IProtocolAdapter.sol";
-import {ProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.11/src/ProtocolAdapter.sol";
-import {LogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.11/src/state/LogicRefDenylist.sol";
-import {TxGen} from "anoma-pa-evm-2.0.0-rc.11/test/libs/TxGen.sol";
-import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.4/test/script/DeployRiscZeroContractsMock.s.sol";
+import {ILogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.12/src/interfaces/ILogicRefDenylist.sol";
+import {IProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.12/src/interfaces/IProtocolAdapter.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.12/src/ProtocolAdapter.sol";
+import {LogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.12/src/state/LogicRefDenylist.sol";
+import {TxGen} from "anoma-pa-evm-2.0.0-rc.12/test/libs/TxGen.sol";
+import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.5/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
@@ -160,7 +160,7 @@ contract EmergencyMigratingERC20ForwarderIntegrationTest is Test {
         appData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
         appData.externalPayload[0] = IProtocolAdapter.ExpirableBlob({
             deletionCriterion: IProtocolAdapter.DeletionCriterion.Immediately,
-            blob: abi.encode(address(_forwarder), input, bytes(""))
+            blob: abi.encode(address(_forwarder), input, bytes(""), new bytes32[](0), new bytes32[](0))
         });
     }
 

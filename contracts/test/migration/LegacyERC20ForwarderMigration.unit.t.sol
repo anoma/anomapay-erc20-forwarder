@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuard.sol";
-import {ERC20Example} from "anoma-forwarder-bases-3.0.1/test/examples/ERC20Example.sol";
+import {ERC20Example} from "anoma-forwarder-bases-3.1.0/test/examples/ERC20Example.sol";
 import {Test} from "forge-std-1.17.0/src/Test.sol";
 
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
