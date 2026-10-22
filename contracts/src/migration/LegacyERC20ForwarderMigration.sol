@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
+import {Math} from "@openzeppelin-contracts-5.7.0/utils/math/Math.sol";
 import {SafeCast} from "@openzeppelin-contracts-5.7.0/utils/math/SafeCast.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuard.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
@@ -57,16 +58,22 @@ contract LegacyERC20ForwarderMigration is ILegacyERC20ForwarderMigration, Ownabl
         // forge-lint: disable-next-item(calls-loop)
         for (uint256 i = 0; i < count; ++i) {
             IERC20 token = tokens[i];
-            uint128 amount = SafeCast.toUint128(token.balanceOf(address(LEGACY_FORWARDER)));
+            uint256 amount = token.balanceOf(address(LEGACY_FORWARDER));
 
             uint256 balanceBefore = token.balanceOf(FORWARDER);
-            bytes memory output = LEGACY_FORWARDER.forwardEmergencyCall(
-                abi.encode(ERC20Forwarder.CallType.Unwrap, token, amount, FORWARDER)
-            );
+            // The legacy ERC20 forwarder unwraps at most `type(uint128).max` per call; a zero balance takes one call.
+            uint256 unmoved = amount;
+            do {
+                uint128 part = SafeCast.toUint128(Math.min(unmoved, type(uint128).max));
+                bytes memory output = LEGACY_FORWARDER.forwardEmergencyCall(
+                    abi.encode(ERC20Forwarder.CallType.Unwrap, token, part, FORWARDER)
+                );
 
-            // NOTE: The legacy ERC20 forwarder returns empty bytes for a successful unwrap.
-            // slither-disable-next-line incorrect-equality
-            require(output.length == 0, UnexpectedEmergencyCallOutput({token: address(token), output: output}));
+                // NOTE: The legacy ERC20 forwarder returns empty bytes for a successful unwrap.
+                // slither-disable-next-line incorrect-equality
+                require(output.length == 0, UnexpectedEmergencyCallOutput({token: address(token), output: output}));
+                unmoved -= part;
+            } while (unmoved != 0);
 
             uint256 remaining = token.balanceOf(address(LEGACY_FORWARDER));
             // NOTE: The amount is the balance of the legacy ERC20 forwarder read in this call, so that balance must end

@@ -3,11 +3,11 @@ pragma solidity ^0.8.30;
 
 import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
-import {SafeCast} from "@openzeppelin-contracts-5.7.0/utils/math/SafeCast.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuard.sol";
 import {ERC20Example} from "anoma-forwarder-bases-3.0.1/test/examples/ERC20Example.sol";
 import {Test} from "forge-std-1.17.0/src/Test.sol";
 
+import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {ILegacyERC20ForwarderMigration} from "../../src/migration/ILegacyERC20ForwarderMigration.sol";
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
 import {ERC20ReentrantExample} from "../examples/ERC20ReentrantExample.sol";
@@ -45,7 +45,9 @@ contract LegacyERC20ForwarderMigrationUnitTest is Test {
         _legacyForwarder.setEmergencyCaller(address(_migration));
     }
 
-    function testFuzz_migrate_moves_the_full_balance_to_the_destination(uint128 amount, uint128 held) public {
+    function testFuzz_migrate_moves_the_full_balance_to_the_destination(uint256 amount, uint128 held) public {
+        // Up to three calls of the legacy ERC20 forwarder.
+        amount = bound(amount, 0, 3 * uint256(type(uint128).max));
         _token.mint(address(_legacyForwarder), amount);
         _token.mint(_forwarder, held);
 
@@ -108,14 +110,36 @@ contract LegacyERC20ForwarderMigrationUnitTest is Test {
         _migration.migrate(_tokens);
     }
 
-    function test_migrate_reverts_if_the_balance_exceeds_the_amount_type_of_the_legacy_forwarder() public {
-        uint256 amount = uint256(type(uint128).max) + 1;
+    function test_migrate_moves_a_balance_above_the_amount_type_of_the_legacy_forwarder_in_several_calls() public {
+        uint128 maxPart = type(uint128).max;
+        uint256 amount = 2 * uint256(maxPart) + 1;
         _token.mint(address(_legacyForwarder), amount);
 
-        vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, 128, amount));
+        vm.expectCall(
+            address(_legacyForwarder),
+            abi.encodeCall(
+                LegacyERC20ForwarderMock.forwardEmergencyCall,
+                (abi.encode(ERC20Forwarder.CallType.Unwrap, _token, maxPart, _forwarder))
+            ),
+            2
+        );
+        vm.expectCall(
+            address(_legacyForwarder),
+            abi.encodeCall(
+                LegacyERC20ForwarderMock.forwardEmergencyCall,
+                (abi.encode(ERC20Forwarder.CallType.Unwrap, _token, uint128(1), _forwarder))
+            ),
+            1
+        );
+        vm.expectEmit(address(_migration));
+        emit ILegacyERC20ForwarderMigration.ERC20TokenMigrated(
+            address(_legacyForwarder), _forwarder, address(_token), amount
+        );
+
         _migration.migrate(_tokens);
 
-        assertEq(_token.balanceOf(address(_legacyForwarder)), amount, "the source lost the balance");
+        assertEq(_token.balanceOf(address(_legacyForwarder)), 0, "the source keeps a balance");
+        assertEq(_token.balanceOf(_forwarder), amount, "the destination balance differs");
     }
 
     function test_migrate_reverts_if_the_destination_does_not_receive_the_amount() public {
