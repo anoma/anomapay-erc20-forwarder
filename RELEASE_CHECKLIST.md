@@ -98,7 +98,7 @@ These apply to all three cases and are done once per session.
   export IS_PRODUCTION=false
   ```
 
-  The proxy recipes and the migration recipes read it. The upgrade recipes take their addresses as arguments.
+  The proxy recipes and the migration recipes read it. The upgrade recipes read the proxy of their environment from the record.
 
 ## Releasing a new ERC20 Forwarder Version
 
@@ -162,13 +162,15 @@ For each chain in the `staging` section of the record:
 - [ ] **Simulate** the upgrade by running
 
   ```sh
-  just contracts-simulate-staging-upgrade $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-staging-upgrade <CHAIN>
   ```
+
+  The upgrade reads the proxy from the record and upgrades it to the implementation this source predicts. It reverts unless that implementation is deployed.
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-upgrade deployer $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-execute-staging-upgrade deployer <CHAIN>
   ```
 
 - [ ] Confirm the proxy now delegates to the new implementation with
@@ -242,13 +244,13 @@ For each chain in the `production` section of the record:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the upgrade, by running
 
   ```sh
-  just contracts-simulate-production-upgrade-proposal $PROXY_ADDRESS <PROPOSER> $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-production-upgrade-proposal <PROPOSER> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-upgrade deployer $PROXY_ADDRESS <PROPOSER> $IMPL_ADDRESS <CHAIN>
+  just contracts-propose-production-upgrade deployer <PROPOSER> <CHAIN>
   ```
 
   where `<PROPOSER>` is a Safe owner or delegate.

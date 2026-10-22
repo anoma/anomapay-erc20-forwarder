@@ -13,29 +13,16 @@ import {ProductionScript} from "./ProductionScript.s.sol";
 /// proxy. The Safe owners confirm and execute the proposed upgrade in the Safe app.
 /// @custom:security-contact security@anoma.foundation
 contract ProposeERC20ForwarderUpgrade is ProductionScript {
-    /// @notice Proposes the upgrade to the Safe owning the proxy.
-    /// @param proxy The production environment ERC20 forwarder proxy to upgrade.
+    /// @notice Proposes the upgrade of the recorded production proxy to the implementation this source version
+    /// predicts to the Safe owning the proxy.
     /// @param proposer The Safe owner or delegate proposing the transaction.
-    /// @param newImplementation The implementation contract to upgrade to, which must be the one this source version
-    /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
-    /// compares two independent derivations.
-    function run(address proxy, address proposer, address newImplementation) public {
+    function run(address proposer) public {
         DeployERC20ForwarderImplementation implementationDeployScript = new DeployERC20ForwarderImplementation();
-        address predictedImplementation = implementationDeployScript.predict();
-
-        require(
-            newImplementation == predictedImplementation,
-            DeployERC20ForwarderImplementation.UnexpectedImplementation(predictedImplementation, newImplementation)
-        );
-        require(
-            newImplementation.code.length != 0,
-            DeployERC20ForwarderImplementation.ImplementationNotDeployed(newImplementation)
-        );
+        address implementation = _requireDeployedImplementation(implementationDeployScript);
 
         _propose({
-            proxy: proxy,
             callData: abi.encodeCall(
-                UUPSUpgradeable.upgradeToAndCall, (newImplementation, implementationDeployScript.INITIALIZATION_DATA())
+                UUPSUpgradeable.upgradeToAndCall, (implementation, implementationDeployScript.INITIALIZATION_DATA())
             ),
             proposer: proposer
         });

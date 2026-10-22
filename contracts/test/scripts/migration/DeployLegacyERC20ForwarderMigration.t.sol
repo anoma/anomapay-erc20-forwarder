@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {DeployLegacyERC20ForwarderMigration} from "../../../script/migration/DeployLegacyERC20ForwarderMigration.s.sol";
 import {MigrationScript} from "../../../script/migration/MigrationScript.s.sol";
 import {Parameters} from "../../../script/Parameters.sol";
+import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";
 import {LegacyERC20ForwarderMigration} from "../../../src/migration/LegacyERC20ForwarderMigration.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
 import {ERC20ForwarderMock} from "../../mocks/ERC20Forwarder.m.sol";
@@ -87,7 +88,9 @@ contract DeployLegacyERC20ForwarderMigrationTest is MigrationFixture {
     function test_run_reverts_if_the_environment_records_no_deployment() public {
         DeployLegacyERC20ForwarderMigration script = new DeployLegacyERC20ForwarderMigration();
 
-        vm.expectRevert(abi.encodeWithSelector(MigrationScript.DeploymentNotRecorded.selector, "production", _CHAIN_ID));
+        vm.expectRevert(
+            abi.encodeWithSelector(RecordedDeploymentsScript.DeploymentNotRecorded.selector, "production", _CHAIN_ID)
+        );
         script.run({isProduction: true});
     }
 

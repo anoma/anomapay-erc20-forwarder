@@ -26,9 +26,6 @@ contract DeployERC20ForwarderImplementation is Script {
     /// @notice Thrown if the implementation of the current source version is already deployed.
     error ImplementationAlreadyDeployed(address implementation);
 
-    /// @notice Thrown if an implementation to upgrade to is not the one the current source version deploys to.
-    error UnexpectedImplementation(address expected, address actual);
-
     /// @notice Validates the ERC20 forwarder implementation for upgrade safety and deploys it.
     /// @return implementation The ERC20 forwarder implementation contract — the contract to verify on block
     /// explorers, which carries the source.
