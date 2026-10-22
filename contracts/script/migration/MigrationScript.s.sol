@@ -7,13 +7,12 @@ import {
 } from "anoma-pa-evm-2.0.0-rc.12/generated/RecordedDeployments.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
-import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
-import {DeployERC20ForwarderProxy} from "../DeployERC20ForwarderProxy.s.sol";
 import {Parameters} from "../Parameters.sol";
+import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title MigrationScript
 /// @author Anoma Foundation, 2026
@@ -21,12 +20,9 @@ import {Parameters} from "../Parameters.sol";
 /// forwarder proxy. Both forwarders come from the recorded deployments, their protocol adapters from the records of the
 /// protocol adapter package, and all of them are checked against the chain, so `--rpc-url` alone names the chain.
 /// @custom:security-contact security@anoma.foundation
-abstract contract MigrationScript is Script {
+abstract contract MigrationScript is RecordedDeploymentsScript {
     /// @notice Thrown if the chain ran no legacy ERC20 forwarder, i.e. it has no tokens to move.
     error LegacyForwarderNotRecorded(uint256 chainId);
-
-    /// @notice Thrown if the environment records no ERC20 forwarder for the chain, i.e. it has no destination.
-    error DeploymentNotRecorded(string environment, uint256 chainId);
 
     /// @notice Thrown if a forwarder forwards for another protocol adapter than the recorded one.
     error ProtocolAdapterMismatch(address expected, address actual);
@@ -57,16 +53,10 @@ abstract contract MigrationScript is Script {
     /// @return legacyForwarder The chain's legacy ERC20 forwarder, which holds the tokens.
     /// @return forwarder The environment's ERC20 forwarder of the chain, which receives them.
     function _configuration(bool isProduction) internal returns (address legacyForwarder, address forwarder) {
-        DeployERC20ForwarderProxy proxyDeployScript = new DeployERC20ForwarderProxy();
-
         legacyForwarder = RecordedDeployments.legacyForwarder(block.chainid);
         require(legacyForwarder != address(0), LegacyForwarderNotRecorded(block.chainid));
 
-        forwarder = RecordedDeployments.forwarderProxy({isProduction: isProduction, chainId: block.chainid});
-        require(
-            forwarder != address(0),
-            DeploymentNotRecorded(proxyDeployScript.environmentName(isProduction), block.chainid)
-        );
+        forwarder = _requireRecordedProxy(isProduction);
 
         address expectedOwner = isProduction ? Parameters.FWD_MULTISIG : Parameters.DEPLOYMENT_WALLET;
         address actualOwner = ERC20Forwarder(forwarder).owner();
