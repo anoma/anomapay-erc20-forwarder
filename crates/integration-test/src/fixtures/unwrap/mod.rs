@@ -5,5 +5,5 @@
 mod action;
 mod resource;
 
-pub use action::{ActionData, build};
+pub use action::{ActionData, Parts, build, parts};
 pub use resource::Overrides;

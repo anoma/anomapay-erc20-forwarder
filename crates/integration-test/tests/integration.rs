@@ -39,7 +39,6 @@ async fn happy_wrap_transfer_unwrap<Env: Environment>(
         11,
         wrap::Overrides::default(),
     )
-    .await
     .context("failed to build wrap action")?;
     let tx = prove_actions(&env, &[wrap.witnesses])
         .await
@@ -124,7 +123,6 @@ async fn happy_wrap_unwrap<Env: Environment>(
         41,
         wrap::Overrides::default(),
     )
-    .await
     .context("failed to build wrap action")?;
     let tx = prove_actions(&env, &[wrap.witnesses])
         .await
@@ -190,7 +188,6 @@ async fn transfer_negative_invalid_permit_signature_len<Env: Environment>(
         23,
         wrap::Overrides::invalid_permit_signature_length(),
     )
-    .await
     .context("failed to build invalid wrap action")?;
 
     assert_err(prove_actions(&env, &[bad.witnesses]).await)
@@ -221,7 +218,6 @@ async fn transfer_negative_invalid_created_nonce<Env: Environment>(
         41,
         wrap::Overrides::default(),
     )
-    .await
     .context("failed to build wrap action")?;
 
     let bad = transfer::build(
@@ -262,7 +258,6 @@ async fn transfer_negative_invalid_auth_signature<Env: Environment>(
         31,
         wrap::Overrides::default(),
     )
-    .await
     .context("failed to build wrap action")?;
 
     let bad = transfer::build(

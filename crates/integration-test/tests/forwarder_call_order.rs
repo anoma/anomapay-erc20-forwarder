@@ -53,7 +53,6 @@ async fn execute_runs_a_wrap_after_the_unwrap_that_its_after_tags_name<Env: Envi
         41,
         wrap::Overrides::default(),
     )
-    .await
     .context("failed to build the first wrap action")?;
     let tx = prove_actions(&env, &[wrap.witnesses])
         .await
@@ -144,7 +143,6 @@ async fn prove_wrap_before_unwrap<Env: Environment>(
             ..Default::default()
         },
     )
-    .await
     .context("failed to build the second wrap action")?;
 
     prove_actions(env, &[wrap.witnesses, unwrap.witnesses])

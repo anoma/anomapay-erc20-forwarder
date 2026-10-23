@@ -1,5 +1,5 @@
 use alloy::primitives::{Address, B256, Signature, U256, address};
-use alloy::signers::{Signer, local::PrivateKeySigner};
+use alloy::signers::{SignerSync, local::PrivateKeySigner};
 use alloy::sol;
 use alloy::sol_types::eip712_domain;
 
@@ -34,7 +34,7 @@ sol! {
     }
 }
 
-pub async fn permit_witness_transfer_from_signature(
+pub fn permit_witness_transfer_from_signature(
     signer: &PrivateKeySigner,
     permit2_data: Permit2Data,
 ) -> anyhow::Result<Signature> {
@@ -57,5 +57,5 @@ pub async fn permit_witness_transfer_from_signature(
         },
     };
 
-    Ok(signer.sign_typed_data(&typed_data, &domain).await?)
+    Ok(signer.sign_typed_data_sync(&typed_data, &domain)?)
 }
