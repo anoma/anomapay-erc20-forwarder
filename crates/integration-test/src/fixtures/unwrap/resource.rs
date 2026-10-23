@@ -24,10 +24,6 @@ pub struct Overrides {
     /// owner's own address).
     pub ethereum_account_addr: Option<Vec<u8>>,
     pub auth_signature: Option<AuthoritySignature>,
-    /// Tags of the resources whose forwarder calls must run before the call of the created resource.
-    pub after_tags: Vec<Digest>,
-    /// Tags of the resources whose forwarder calls must not run before the call of the created resource.
-    pub before_tags: Vec<Digest>,
 }
 
 impl Overrides {

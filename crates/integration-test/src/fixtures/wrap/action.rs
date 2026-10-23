@@ -7,7 +7,6 @@ use anoma_rm_risc0::resource::Resource;
 use anomapay_erc20_witness::EncryptionInfo;
 use anomapay_erc20_witness::ForwarderInfo;
 use anomapay_erc20_witness::LabelInfo;
-use anomapay_erc20_witness::OrderingInfo;
 use anomapay_erc20_witness::PermitInfo;
 use anomapay_erc20_witness::TokenTransferWitness;
 use anomapay_erc20_witness::ValueInfo;
@@ -99,10 +98,7 @@ pub fn parts(
             .as_secs(),
     );
     let Overrides {
-        permit_signature,
-        after_tags,
-        before_tags,
-        ..
+        permit_signature, ..
     } = overrides;
     let signer = sender.signer();
     let nf_key = sender.nf_key.clone();
@@ -141,10 +137,7 @@ pub fn parts(
                         permit_deadline: permit_deadline.to_be_bytes_vec(),
                         permit_sig,
                     }),
-                    ordering_info: Some(OrderingInfo {
-                        after_tags,
-                        before_tags,
-                    }),
+                    ordering_info: None,
                 }),
                 Some(LabelInfo {
                     forwarder_addr: forwarder.to_vec(),

@@ -21,10 +21,6 @@ pub struct Overrides {
     /// contract — e.g. the generic-call forwarder, which authorizes the Permit2
     /// transfer via ERC-1271, so any `permit_signature` is accepted.
     pub ethereum_account_addr: Option<Vec<u8>>,
-    /// Tags of the resources whose forwarder calls must run before the call of the consumed resource.
-    pub after_tags: Vec<Digest>,
-    /// Tags of the resources whose forwarder calls must not run before the call of the consumed resource.
-    pub before_tags: Vec<Digest>,
 }
 
 impl Overrides {

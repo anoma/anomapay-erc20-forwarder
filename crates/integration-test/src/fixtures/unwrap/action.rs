@@ -6,7 +6,6 @@ use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
 use anomapay_erc20_witness::AUTH_SIGNATURE_DOMAIN;
 use anomapay_erc20_witness::ForwarderInfo;
 use anomapay_erc20_witness::LabelInfo;
-use anomapay_erc20_witness::OrderingInfo;
 use anomapay_erc20_witness::TokenTransferWitness;
 use anomapay_erc20_witness::call_type::CallType;
 
@@ -112,12 +111,7 @@ pub fn parts(
         .ethereum_account_addr
         .clone()
         .unwrap_or_else(|| owner.address().to_vec());
-    let Overrides {
-        auth_signature,
-        after_tags,
-        before_tags,
-        ..
-    } = overrides;
+    let Overrides { auth_signature, .. } = overrides;
     let nf_key = owner.nf_key.clone();
     let consumed_logic: Logic = Box::new(
         move |resource: Resource,
@@ -151,10 +145,7 @@ pub fn parts(
                     call_type: CallType::Unwrap,
                     ethereum_account_addr,
                     permit_info: None,
-                    ordering_info: Some(OrderingInfo {
-                        after_tags,
-                        before_tags,
-                    }),
+                    ordering_info: None,
                 }),
                 Some(LabelInfo {
                     forwarder_addr: forwarder.to_vec(),
