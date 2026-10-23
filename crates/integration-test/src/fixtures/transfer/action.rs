@@ -101,7 +101,7 @@ pub fn build(
     let compliance = compliance::from_resources(
         vec![consumed_witness],
         vec![created],
-        crate::fixtures::resource::kind_table(),
+        crate::fixtures::resource::kind_tree(),
     );
 
     Ok(ActionData {
