@@ -2,7 +2,7 @@ use alloy::primitives::Address;
 use anoma_rm_risc0::action_tree::ActionTree as ArmTree;
 use anoma_rm_risc0::compliance;
 use anoma_rm_risc0::merkle_path::MerklePath;
-use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource};
+use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource, ResourceWitness};
 use anomapay_erc20_witness::AUTH_SIGNATURE_DOMAIN;
 use anomapay_erc20_witness::EncryptionInfo;
 use anomapay_erc20_witness::LabelInfo;
@@ -99,8 +99,10 @@ pub fn build(
         None => ConsumedResourceWitness::from_resource(consumed, sender.nf_key.clone()),
     };
     let compliance = compliance::from_resources(
-        vec![consumed_witness],
-        vec![created],
+        vec![
+            ResourceWitness::Consumed(consumed_witness),
+            ResourceWitness::Created(created),
+        ],
         crate::fixtures::resource::kind_tree(),
     );
 

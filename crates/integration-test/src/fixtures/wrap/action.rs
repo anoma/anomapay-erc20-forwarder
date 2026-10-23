@@ -4,7 +4,7 @@ use std::time::Duration;
 use alloy::primitives::{Address, B256, U256};
 use anoma_rm_risc0::action_tree::ActionTree as ArmTree;
 use anoma_rm_risc0::compliance;
-use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource};
+use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource, ResourceWitness};
 use anomapay_erc20_witness::EncryptionInfo;
 use anomapay_erc20_witness::ForwarderInfo;
 use anomapay_erc20_witness::LabelInfo;
@@ -135,11 +135,13 @@ pub async fn build(
     );
 
     let compliance = compliance::from_resources(
-        vec![ConsumedResourceWitness::from_resource(
-            consumed,
-            sender.nf_key.clone(),
-        )],
-        vec![created],
+        vec![
+            ResourceWitness::Consumed(ConsumedResourceWitness::from_resource(
+                consumed,
+                sender.nf_key.clone(),
+            )),
+            ResourceWitness::Created(created),
+        ],
         crate::fixtures::resource::kind_tree(),
     );
 
