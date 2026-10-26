@@ -2,26 +2,19 @@ use std::ops::Add;
 use std::time::Duration;
 
 use alloy::primitives::{Address, B256, U256};
-use anoma_rm_risc0::Digest;
 use anoma_rm_risc0::resource::Resource;
-use anomapay_erc20_witness::EncryptionInfo;
-use anomapay_erc20_witness::ForwarderInfo;
-use anomapay_erc20_witness::LabelInfo;
-use anomapay_erc20_witness::PermitInfo;
-use anomapay_erc20_witness::TokenTransferWitness;
-use anomapay_erc20_witness::ValueInfo;
-use anomapay_erc20_witness::call_type::CallType;
+use anomapay_erc20_library::TransferLogic;
 
 use super::resource;
 use super::resource::Overrides;
 use crate::fixtures::action::{self, Logic, Part};
-use crate::fixtures::resource::persistent;
+use crate::fixtures::resource::created_persistent;
 use crate::logic;
 use crate::permit2::Permit2Data;
 use crate::permit2::permit_witness_transfer_from_signature;
 use anoma_pa_evm_integration_test::keychain::EvmSigner;
 use anoma_pa_testkit::fixtures::identities;
-use anoma_pa_testkit::witness::{ActionWitnesses, LogicWitness};
+use anoma_pa_testkit::witness::ActionWitnesses;
 
 /// The derived data of a built wrap action: the action witnesses plus the
 /// ephemeral resource it consumes and the persistent wrapped resource it
@@ -78,15 +71,16 @@ pub fn parts(
         .ethereum_account_addr
         .clone()
         .unwrap_or_else(|| sender.address().to_vec());
-    let amount = overrides.quantity.unwrap_or(quantity);
 
     let consumed = resource::consumed(&sender, forwarder, token, quantity, seed, &overrides);
-    let created = persistent(
+    let amount = consumed.quantity;
+    let created = created_persistent(
         &sender,
         forwarder,
         token,
         amount,
         [seed.wrapping_add(33); 32],
+        None,
     );
 
     let permit_nonce = resource::random_permit_nonce(seed);
@@ -102,76 +96,38 @@ pub fn parts(
     } = overrides;
     let signer = sender.signer();
     let nf_key = sender.nf_key.clone();
-    let consumed_logic: Logic = Box::new(
-        move |resource: Resource,
-              action_tree_root: Digest|
-              -> anyhow::Result<Box<dyn LogicWitness>> {
-            let permit_sig = match permit_signature {
-                Some(bytes) => bytes,
-                None => permit_witness_transfer_from_signature(
-                    &signer,
-                    Permit2Data {
-                        chain_id,
-                        token,
-                        amount: U256::from(amount),
-                        nonce: permit_nonce,
-                        deadline: permit_deadline,
-                        spender: forwarder,
-                        action_tree_root: B256::from_slice(action_tree_root.as_bytes()),
-                    },
-                )?
-                .into(),
-            };
-            Ok(Box::new(logic::Witness::new(TokenTransferWitness::new(
+    let consumed_logic: Logic = Box::new(move |resource, action_tree_root| {
+        let permit_sig = match permit_signature {
+            Some(bytes) => bytes,
+            None => permit_witness_transfer_from_signature(
+                &signer,
+                Permit2Data {
+                    chain_id,
+                    token,
+                    amount: U256::from(amount),
+                    nonce: permit_nonce,
+                    deadline: permit_deadline,
+                    spender: forwarder,
+                    action_tree_root: B256::from_slice(action_tree_root.as_bytes()),
+                },
+            )?
+            .into(),
+        };
+        Ok(Box::new(logic::Witness::new(
+            TransferLogic::mint_resource_logic_with_permit(
                 resource,
-                true,
                 action_tree_root,
-                Some(nf_key),
-                None,
-                None,
-                Some(ForwarderInfo {
-                    call_type: CallType::Wrap,
-                    ethereum_account_addr,
-                    permit_info: Some(PermitInfo {
-                        permit_nonce: permit_nonce.to_be_bytes_vec(),
-                        permit_deadline: permit_deadline.to_be_bytes_vec(),
-                        permit_sig,
-                    }),
-                }),
-                Some(LabelInfo {
-                    forwarder_addr: forwarder.to_vec(),
-                    erc20_token_addr: token.to_vec(),
-                }),
-                None,
-            ))))
-        },
-    );
-
-    let discovery_pk = sender.discovery_pk;
-    let value_info = ValueInfo {
-        auth_pk: sender.auth_verifying_key(),
-        encryption_pk: sender.encryption_pk,
-    };
-    let created_logic: Logic = Box::new(
-        move |resource: Resource,
-              action_tree_root: Digest|
-              -> anyhow::Result<Box<dyn LogicWitness>> {
-            Ok(Box::new(logic::Witness::new(TokenTransferWitness::new(
-                resource,
-                false,
-                action_tree_root,
-                None,
-                None,
-                Some(EncryptionInfo::new(&discovery_pk)),
-                None,
-                Some(LabelInfo {
-                    forwarder_addr: forwarder.to_vec(),
-                    erc20_token_addr: token.to_vec(),
-                }),
-                Some(value_info),
-            ))))
-        },
-    );
+                nf_key,
+                forwarder.to_vec(),
+                token.to_vec(),
+                ethereum_account_addr,
+                permit_nonce.to_be_bytes_vec(),
+                permit_deadline.to_be_bytes_vec(),
+                permit_sig,
+            )
+            .witness,
+        )))
+    });
 
     Ok(Parts {
         consumed: Part::Consumed {
@@ -180,10 +136,6 @@ pub fn parts(
             merkle_path: None,
             logic: consumed_logic,
         },
-        created: Part::Created {
-            resource: created,
-            nonce: None,
-            logic: created_logic,
-        },
+        created,
     })
 }

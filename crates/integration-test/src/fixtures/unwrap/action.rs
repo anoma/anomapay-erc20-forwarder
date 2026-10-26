@@ -1,21 +1,16 @@
 use alloy::primitives::Address;
-use anoma_rm_risc0::Digest;
 use anoma_rm_risc0::merkle_path::MerklePath;
 use anoma_rm_risc0::resource::Resource;
-use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
-use anomapay_erc20_witness::AUTH_SIGNATURE_DOMAIN;
-use anomapay_erc20_witness::ForwarderInfo;
-use anomapay_erc20_witness::LabelInfo;
-use anomapay_erc20_witness::TokenTransferWitness;
-use anomapay_erc20_witness::call_type::CallType;
+use anomapay_erc20_library::TransferLogic;
 
 use super::resource;
 use super::resource::Overrides;
 use crate::fixtures::action::{self, Logic, Part};
+use crate::fixtures::resource::consumed_persistent;
 use crate::logic;
 use anoma_pa_evm_integration_test::keychain::EvmSigner;
 use anoma_pa_testkit::fixtures::identities;
-use anoma_pa_testkit::witness::{ActionWitnesses, LogicWitness};
+use anoma_pa_testkit::witness::ActionWitnesses;
 
 /// The derived data of a built unwrap action: the action witnesses plus
 /// the persistent resource it consumes and the ephemeral resource it creates
@@ -111,57 +106,21 @@ pub fn parts(
         .ethereum_account_addr
         .clone()
         .unwrap_or_else(|| owner.address().to_vec());
-    let Overrides { auth_signature, .. } = overrides;
-    let nf_key = owner.nf_key.clone();
-    let consumed_logic: Logic = Box::new(
-        move |resource: Resource,
-              action_tree_root: Digest|
-              -> anyhow::Result<Box<dyn LogicWitness>> {
-            let auth_sig: AuthoritySignature = auth_signature.unwrap_or_else(|| {
-                owner
-                    .auth_signing_key
-                    .sign(AUTH_SIGNATURE_DOMAIN, action_tree_root.as_bytes())
-            });
-            Ok(logic::consumed_persistent(
+    let created_logic: Logic = Box::new(move |resource, action_tree_root| {
+        Ok(Box::new(logic::Witness::new(
+            TransferLogic::burn_resource_logic(
                 resource,
                 action_tree_root,
-                &owner,
-                auth_sig,
-            ))
-        },
-    );
-    let created_logic: Logic = Box::new(
-        move |resource: Resource,
-              action_tree_root: Digest|
-              -> anyhow::Result<Box<dyn LogicWitness>> {
-            Ok(Box::new(logic::Witness::new(TokenTransferWitness::new(
-                resource,
-                false,
-                action_tree_root,
-                None,
-                None,
-                None,
-                Some(ForwarderInfo {
-                    call_type: CallType::Unwrap,
-                    ethereum_account_addr,
-                    permit_info: None,
-                }),
-                Some(LabelInfo {
-                    forwarder_addr: forwarder.to_vec(),
-                    erc20_token_addr: token.to_vec(),
-                }),
-                None,
-            ))))
-        },
-    );
+                forwarder.to_vec(),
+                token.to_vec(),
+                ethereum_account_addr,
+            )
+            .witness,
+        )))
+    });
 
     Ok(Parts {
-        consumed: Part::Consumed {
-            resource: consumed,
-            nf_key,
-            merkle_path,
-            logic: consumed_logic,
-        },
+        consumed: consumed_persistent(consumed, owner, merkle_path, overrides.auth_signature),
         created: Part::Created {
             resource: created,
             nonce: None,

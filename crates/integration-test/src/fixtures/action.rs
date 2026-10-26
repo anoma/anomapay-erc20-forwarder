@@ -17,7 +17,8 @@ pub type Logic = Box<dyn FnOnce(Resource, Digest) -> anyhow::Result<Box<dyn Logi
 
 /// A resource of an action and the function that builds its logic witness.
 pub enum Part {
-    /// A consumed resource and the key that nullifies it. A `merkle_path` of `None` proves against the initial root.
+    /// A consumed resource and the key that nullifies it. `None` is an empty `merkle_path`; an ephemeral resource
+    /// ignores the path.
     Consumed {
         resource: Resource,
         nf_key: NullifierKey,
@@ -52,15 +53,15 @@ pub fn build(parts: Vec<Part>) -> anyhow::Result<ActionData> {
         .collect::<Result<Vec<Digest>, _>>()
         .context("failed to compute the consumed nullifiers")?;
 
+    let mut consumed_index = 0;
     let mut created_index = 0;
     let mut resources = Vec::with_capacity(parts.len());
     let mut tags = Vec::with_capacity(parts.len());
     for part in &parts {
         match part {
-            Part::Consumed {
-                resource, nf_key, ..
-            } => {
-                tags.push(resource.nullifier(nf_key)?);
+            Part::Consumed { resource, .. } => {
+                tags.push(nullifiers[consumed_index]);
+                consumed_index += 1;
                 resources.push(*resource);
             }
             Part::Created {
@@ -96,12 +97,13 @@ pub fn build(parts: Vec<Part>) -> anyhow::Result<ActionData> {
                 logic,
                 ..
             } => {
-                resource_witnesses.push(ResourceWitness::Consumed(match merkle_path {
-                    Some(path) => {
-                        ResourceWitnessConsumed::from_resource_with_path(resource, nf_key, path)
-                    }
-                    None => ResourceWitnessConsumed::from_resource(resource, nf_key),
-                }));
+                resource_witnesses.push(ResourceWitness::Consumed(
+                    ResourceWitnessConsumed::from_resource_with_path(
+                        resource,
+                        nf_key,
+                        merkle_path.unwrap_or_else(MerklePath::empty),
+                    ),
+                ));
                 logic
             }
             Part::Created { logic, .. } => {
