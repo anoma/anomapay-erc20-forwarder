@@ -7,7 +7,7 @@ use anoma_rm_risc0::action_tree::ActionTree;
 use anoma_rm_risc0::compliance;
 use anoma_rm_risc0::merkle_path::MerklePath;
 use anoma_rm_risc0::nullifier_key::NullifierKey;
-use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource, ResourceWitness};
+use anoma_rm_risc0::resource::{Resource, ResourceWitness, ResourceWitnessConsumed};
 use anyhow::Context;
 
 use super::resource::kind_tree;
@@ -98,9 +98,9 @@ pub fn build(parts: Vec<Part>) -> anyhow::Result<ActionData> {
             } => {
                 resource_witnesses.push(ResourceWitness::Consumed(match merkle_path {
                     Some(path) => {
-                        ConsumedResourceWitness::from_resource_with_path(resource, nf_key, path)
+                        ResourceWitnessConsumed::from_resource_with_path(resource, nf_key, path)
                     }
-                    None => ConsumedResourceWitness::from_resource(resource, nf_key),
+                    None => ResourceWitnessConsumed::from_resource(resource, nf_key),
                 }));
                 logic
             }

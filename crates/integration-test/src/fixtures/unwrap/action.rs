@@ -145,7 +145,6 @@ pub fn parts(
                     call_type: CallType::Unwrap,
                     ethereum_account_addr,
                     permit_info: None,
-                    ordering_info: None,
                 }),
                 Some(LabelInfo {
                     forwarder_addr: forwarder.to_vec(),

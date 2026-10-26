@@ -137,7 +137,6 @@ pub fn parts(
                         permit_deadline: permit_deadline.to_be_bytes_vec(),
                         permit_sig,
                     }),
-                    ordering_info: None,
                 }),
                 Some(LabelInfo {
                     forwarder_addr: forwarder.to_vec(),
