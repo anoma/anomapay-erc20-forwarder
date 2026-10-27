@@ -11,6 +11,7 @@ use anoma_rm_risc0::resource::Resource;
 use anomapay_erc20_library::TransferLogic;
 use anomapay_erc20_witness::{calculate_label_ref, calculate_value_ref_from_ethereum_account_addr};
 
+use crate::fixtures::CREATED_RAND_SEED;
 use crate::logic;
 use crate::permit2::{Permit2Data, permit_witness_transfer_from_signature};
 
@@ -100,13 +101,12 @@ pub fn consumed(
 }
 
 /// An ephemeral resource whose forwarder call releases `quantity` tokens of `token` from
-/// `forwarder` to `ethereum_account_addr`. `seed` sets its random fields.
+/// `forwarder` to `ethereum_account_addr`.
 pub fn created(
     ethereum_account_addr: Address,
     forwarder: Address,
     token: Address,
     quantity: u128,
-    seed: u8,
 ) -> ActionResource {
     let resource = ResourceToCreate {
         logic_ref: logic::verifying_key(),
@@ -116,7 +116,7 @@ pub fn created(
         is_ephemeral: true,
         // No one consumes the resource, so any nullifier key commitment works.
         nk_commitment: NullifierKeyCommitment::default(),
-        rand_seed: [seed; 32],
+        rand_seed: CREATED_RAND_SEED,
     };
     ActionResource::created(resource, move |resource, action_tree_root| {
         Ok(TransferLogic::burn_resource_logic(

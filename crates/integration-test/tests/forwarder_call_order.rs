@@ -56,7 +56,7 @@ async fn execute_runs_the_forwarder_calls_in_the_order_of_the_resources<Env: Env
             [41; 32],
             ephemeral::Overrides::default(),
         ),
-        persistent::created(&owner, forwarder, token, quantity, 42),
+        persistent::created(&owner, forwarder, token, quantity),
     ])
     .context("failed to build the first wrap action")?;
     let wrapped = wrap.resources()[1];
@@ -118,8 +118,7 @@ async fn prove_unwrap_and_wrap<Env: Environment>(
     let path = commitment_path(env, resource.commitment())
         .context("failed to generate the unwrap merkle path")?;
     let unwrap_consumed = persistent::consumed(&owner, resource, path, None);
-    let unwrap_created =
-        ephemeral::created(owner.address(), forwarder, token, resource.quantity, 47);
+    let unwrap_created = ephemeral::created(owner.address(), forwarder, token, resource.quantity);
     let wrap_consumed = ephemeral::consumed(
         &owner,
         chain_id,
@@ -129,7 +128,7 @@ async fn prove_unwrap_and_wrap<Env: Environment>(
         [43; 32],
         ephemeral::Overrides::default(),
     );
-    let wrap_created = persistent::created(&owner, forwarder, token, quantity, 44);
+    let wrap_created = persistent::created(&owner, forwarder, token, quantity);
 
     let resources = if unwrap_first {
         [unwrap_consumed, unwrap_created, wrap_consumed, wrap_created]

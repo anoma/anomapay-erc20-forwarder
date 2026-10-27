@@ -47,7 +47,7 @@ async fn execute_wraps_transfers_and_unwraps_tokens<Env: Environment>(
             [11; 32],
             ephemeral::Overrides::default(),
         ),
-        persistent::created(&alice, forwarder, token, quantity, 12),
+        persistent::created(&alice, forwarder, token, quantity),
     ])
     .context("failed to build wrap action")?;
     let tx = prove_actions(&env, [&wrap])
@@ -63,7 +63,7 @@ async fn execute_wraps_transfers_and_unwraps_tokens<Env: Environment>(
 
     let transfer = action::build([
         persistent::consumed(&alice, wrapped, transfer_path, None),
-        persistent::created(&bob, forwarder, token, wrapped.quantity, 17),
+        persistent::created(&bob, forwarder, token, wrapped.quantity),
     ])
     .context("failed to build transfer action")?;
     let tx = prove_actions(&env, [&transfer])
@@ -79,7 +79,7 @@ async fn execute_wraps_transfers_and_unwraps_tokens<Env: Environment>(
 
     let unwrap = action::build([
         persistent::consumed(&bob, transferred, unwrap_path, None),
-        ephemeral::created(bob.address(), forwarder, token, transferred.quantity, 21),
+        ephemeral::created(bob.address(), forwarder, token, transferred.quantity),
     ])
     .context("failed to build unwrap action")?;
     let tx = prove_actions(&env, [&unwrap])
@@ -124,7 +124,7 @@ async fn execute_wraps_and_unwraps_tokens<Env: Environment>(
             [41; 32],
             ephemeral::Overrides::default(),
         ),
-        persistent::created(&alice, forwarder, token, quantity, 42),
+        persistent::created(&alice, forwarder, token, quantity),
     ])
     .context("failed to build wrap action")?;
     let tx = prove_actions(&env, [&wrap])
@@ -140,7 +140,7 @@ async fn execute_wraps_and_unwraps_tokens<Env: Environment>(
 
     let unwrap = action::build([
         persistent::consumed(&alice, wrapped, unwrap_path, None),
-        ephemeral::created(alice.address(), forwarder, token, wrapped.quantity, 47),
+        ephemeral::created(alice.address(), forwarder, token, wrapped.quantity),
     ])
     .context("failed to build unwrap action")?;
     let tx = prove_actions(&env, [&unwrap])
@@ -185,7 +185,7 @@ async fn prove_actions_errors_on_a_short_permit_signature<Env: Environment>(
             [23; 32],
             ephemeral::Overrides::invalid_permit_signature_length(),
         ),
-        persistent::created(&alice, forwarder, token, quantity, 24),
+        persistent::created(&alice, forwarder, token, quantity),
     ])
     .context("failed to build invalid wrap action")?;
 
@@ -222,7 +222,7 @@ async fn prove_actions_errors_on_an_auth_signature_over_another_message<Env: Env
             [31; 32],
             ephemeral::Overrides::default(),
         ),
-        persistent::created(&alice, forwarder, token, quantity, 32),
+        persistent::created(&alice, forwarder, token, quantity),
     ])
     .context("failed to build wrap action")?;
     let wrapped = wrap.resources()[1];
@@ -231,7 +231,7 @@ async fn prove_actions_errors_on_an_auth_signature_over_another_message<Env: Env
     let auth_signature = alice.auth_signing_key.sign(AUTH_SIGNATURE_DOMAIN, &[0; 32]);
     let bad = action::build([
         persistent::consumed(&alice, wrapped, MerklePath::empty(), Some(auth_signature)),
-        persistent::created(&bob, forwarder, token, wrapped.quantity, 37),
+        persistent::created(&bob, forwarder, token, wrapped.quantity),
     ])
     .context("failed to build invalid transfer action")?;
 

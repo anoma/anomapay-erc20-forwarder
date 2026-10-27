@@ -12,6 +12,7 @@ use anomapay_erc20_witness::{
     AUTH_SIGNATURE_DOMAIN, ValueInfo, calculate_label_ref, calculate_persistent_value_ref,
 };
 
+use crate::fixtures::CREATED_RAND_SEED;
 use crate::logic;
 
 /// The persistent `resource` of `owner`, consumed with the owner's signature over the action tree
@@ -44,14 +45,12 @@ pub fn consumed(
     )
 }
 
-/// A persistent resource of `owner` that holds `quantity` tokens of `token` in `forwarder`. `seed`
-/// sets its random fields.
+/// A persistent resource of `owner` that holds `quantity` tokens of `token` in `forwarder`.
 pub fn created(
     owner: &Keychain,
     forwarder: Address,
     token: Address,
     quantity: u128,
-    seed: u8,
 ) -> ActionResource {
     let auth_pk = owner.auth_verifying_key();
     let encryption_pk = owner.encryption_pk;
@@ -66,7 +65,7 @@ pub fn created(
         }),
         is_ephemeral: false,
         nk_commitment: owner.nf_key.commit(),
-        rand_seed: [seed; 32],
+        rand_seed: CREATED_RAND_SEED,
     };
     ActionResource::created(resource, move |resource, action_tree_root| {
         Ok(TransferLogic::create_persistent_resource_logic(

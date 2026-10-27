@@ -12,3 +12,6 @@
 
 pub mod ephemeral;
 pub mod persistent;
+
+/// The random seed of a created resource; its derived nonce already makes the commitment unique.
+const CREATED_RAND_SEED: [u8; 32] = [0; 32];

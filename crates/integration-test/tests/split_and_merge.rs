@@ -57,8 +57,8 @@ async fn execute_splits_and_merges_wrapped_tokens<Env: Environment>(
             [11; 32],
             ephemeral::Overrides::default(),
         ),
-        persistent::created(&alice, forwarder, token, alice_quantity, 12),
-        persistent::created(&bob, forwarder, token, bob_quantity, 13),
+        persistent::created(&alice, forwarder, token, alice_quantity),
+        persistent::created(&bob, forwarder, token, bob_quantity),
     ])
     .context("failed to build the wrap")?;
     prove_and_execute(&mut env, &wrap)
@@ -83,7 +83,7 @@ async fn execute_splits_and_merges_wrapped_tokens<Env: Environment>(
             commitment_path(&env, wrapped[2].commitment())?,
             None,
         ),
-        persistent::created(&bob, forwarder, token, quantity, 21),
+        persistent::created(&bob, forwarder, token, quantity),
     ])
     .context("failed to build the merge")?;
     prove_and_execute(&mut env, &merge)
@@ -98,8 +98,8 @@ async fn execute_splits_and_merges_wrapped_tokens<Env: Environment>(
             commitment_path(&env, merged.commitment())?,
             None,
         ),
-        persistent::created(&alice, forwarder, token, alice_quantity, 31),
-        persistent::created(&bob, forwarder, token, bob_quantity, 32),
+        persistent::created(&alice, forwarder, token, alice_quantity),
+        persistent::created(&bob, forwarder, token, bob_quantity),
     ])
     .context("failed to build the split")?;
     prove_and_execute(&mut env, &split)
@@ -120,7 +120,7 @@ async fn execute_splits_and_merges_wrapped_tokens<Env: Environment>(
             commitment_path(&env, parts[2].commitment())?,
             None,
         ),
-        ephemeral::created(bob.address(), forwarder, token, quantity, 41),
+        ephemeral::created(bob.address(), forwarder, token, quantity),
     ])
     .context("failed to build the unwrap")?;
     prove_and_execute(&mut env, &unwrap)
