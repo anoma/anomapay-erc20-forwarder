@@ -1,12 +1,12 @@
 use alloy::primitives::Address;
 use anoma_rm_risc0::Digest;
-use anoma_rm_risc0::resource::Resource;
 use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
 use anomapay_erc20_witness::calculate_label_ref;
 use anomapay_erc20_witness::calculate_value_ref_from_ethereum_account_addr;
 
 use crate::logic;
 use anoma_pa_evm_integration_test::keychain::EvmSigner;
+use anoma_pa_testkit::fixtures::action::ResourceToCreate;
 use anoma_pa_testkit::fixtures::identities::Keychain;
 
 // No `Debug`: `Keychain` is not `Debug` (it holds signing keys).
@@ -42,7 +42,7 @@ impl Overrides {
     }
 }
 
-/// The created ephemeral resource. [`crate::fixtures::action::build`] sets its nonce.
+/// The created ephemeral resource that releases the tokens.
 pub(super) fn created(
     owner: &Keychain,
     forwarder: Address,
@@ -50,7 +50,7 @@ pub(super) fn created(
     quantity: u128,
     seed: u8,
     overrides: &Overrides,
-) -> Resource {
+) -> ResourceToCreate {
     let label_ref = overrides
         .created_label_ref
         .unwrap_or(calculate_label_ref(forwarder.as_ref(), token.as_ref()));
@@ -61,13 +61,12 @@ pub(super) fn created(
                 owner.address().as_ref(),
             ));
 
-    Resource {
+    ResourceToCreate {
         logic_ref: logic::verifying_key(),
         label_ref,
         quantity: overrides.quantity.unwrap_or(quantity),
         value_ref,
         is_ephemeral: overrides.created_is_ephemeral.unwrap_or(true),
-        nonce: [0; 32],
         nk_commitment: owner.nf_key.commit(),
         rand_seed: [seed.wrapping_add(71); 32],
     }

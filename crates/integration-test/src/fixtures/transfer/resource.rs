@@ -7,7 +7,6 @@ pub struct Overrides {
     pub consumed_label_ref: Option<Digest>,
     pub consumed_value_ref: Option<Digest>,
     pub auth_signature: Option<AuthoritySignature>,
-    pub created_nonce: Option<[u8; 32]>,
 }
 
 impl Overrides {
@@ -21,15 +20,6 @@ impl Overrides {
     pub fn invalid_value_ref() -> Self {
         Self {
             consumed_value_ref: Some(Digest::default()),
-            ..Self::default()
-        }
-    }
-
-    /// A created nonce that is not derived from the consumed nullifiers, which
-    /// the compliance circuit re-derives and rejects.
-    pub fn invalid_created_nonce() -> Self {
-        Self {
-            created_nonce: Some([0u8; 32]),
             ..Self::default()
         }
     }

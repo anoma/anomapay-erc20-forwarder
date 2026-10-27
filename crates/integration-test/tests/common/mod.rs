@@ -24,7 +24,7 @@ use anomapay_erc20_forwarder_integration_test::deploy::permit2::deploy_permit2_c
 use anomapay_erc20_forwarder_integration_test::logic;
 use anyhow::Context;
 
-pub use anoma_pa_testkit::{commitment_root, execute_tx, prove_actions};
+pub use anoma_pa_testkit::{commitment_path, commitment_root, execute_tx, prove_actions};
 
 pub async fn setup_anomapay_erc20_local() -> anyhow::Result<EvmLocalEnv> {
     EvmLocalEnv::setup(async |builder: &mut StateBuilder| {
