@@ -4,7 +4,6 @@ use anoma_rm_risc0::resource::Resource;
 use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
 use anomapay_erc20_witness::calculate_label_ref;
 use anomapay_erc20_witness::calculate_value_ref_from_ethereum_account_addr;
-use anyhow::Context;
 
 use crate::logic;
 use anoma_pa_evm_integration_test::keychain::EvmSigner;
@@ -25,10 +24,6 @@ pub struct Overrides {
     /// owner's own address).
     pub ethereum_account_addr: Option<Vec<u8>>,
     pub auth_signature: Option<AuthoritySignature>,
-    /// Tags of the resources whose forwarder calls must run before the call of the created resource.
-    pub after_tags: Vec<Digest>,
-    /// Tags of the resources whose forwarder calls must not run before the call of the created resource.
-    pub before_tags: Vec<Digest>,
 }
 
 impl Overrides {
@@ -47,18 +42,15 @@ impl Overrides {
     }
 }
 
+/// The created ephemeral resource. [`crate::fixtures::action::build`] sets its nonce.
 pub(super) fn created(
     owner: &Keychain,
-    consumed_nullifier: Digest,
     forwarder: Address,
     token: Address,
     quantity: u128,
     seed: u8,
     overrides: &Overrides,
-) -> anyhow::Result<Resource> {
-    let nonce = Resource::derive_nonce_from_nullifiers(0, &[consumed_nullifier])
-        .context("failed to derive the created resource nonce")?;
-
+) -> Resource {
     let label_ref = overrides
         .created_label_ref
         .unwrap_or(calculate_label_ref(forwarder.as_ref(), token.as_ref()));
@@ -69,14 +61,14 @@ pub(super) fn created(
                 owner.address().as_ref(),
             ));
 
-    Ok(Resource {
+    Resource {
         logic_ref: logic::verifying_key(),
         label_ref,
         quantity: overrides.quantity.unwrap_or(quantity),
         value_ref,
         is_ephemeral: overrides.created_is_ephemeral.unwrap_or(true),
-        nonce,
+        nonce: [0; 32],
         nk_commitment: owner.nf_key.commit(),
         rand_seed: [seed.wrapping_add(71); 32],
-    })
+    }
 }

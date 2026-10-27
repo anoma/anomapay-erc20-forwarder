@@ -1,18 +1,12 @@
 use alloy::primitives::Address;
-use anoma_rm_risc0::action_tree::ActionTree as ArmTree;
-use anoma_rm_risc0::compliance;
 use anoma_rm_risc0::merkle_path::MerklePath;
-use anoma_rm_risc0::resource::{ConsumedResourceWitness, Resource};
-use anoma_rm_risc0_gadgets::authority::AuthoritySignature;
-use anomapay_erc20_witness::AUTH_SIGNATURE_DOMAIN;
-use anomapay_erc20_witness::ForwarderInfo;
-use anomapay_erc20_witness::LabelInfo;
-use anomapay_erc20_witness::OrderingInfo;
-use anomapay_erc20_witness::TokenTransferWitness;
-use anomapay_erc20_witness::call_type::CallType;
+use anoma_rm_risc0::resource::Resource;
+use anomapay_erc20_library::TransferLogic;
 
 use super::resource;
 use super::resource::Overrides;
+use crate::fixtures::action::{self, Logic, Part};
+use crate::fixtures::resource::consumed_persistent;
 use crate::logic;
 use anoma_pa_evm_integration_test::keychain::EvmSigner;
 use anoma_pa_testkit::fixtures::identities;
@@ -25,6 +19,13 @@ pub struct ActionData {
     pub witnesses: ActionWitnesses,
     pub consumed_persistent: Resource,
     pub created_ephemeral: Resource,
+}
+
+/// The resources of an unwrap: the consumed persistent resource and the
+/// created ephemeral resource, whose forwarder call releases the tokens.
+pub struct Parts {
+    pub consumed: Part,
+    pub created: Part,
 }
 
 /// Build an unwrap action: the owner (`Overrides::owner`, defaulting to bob)
@@ -40,6 +41,38 @@ pub fn build(
     merkle_path: Option<MerklePath>,
     overrides: Overrides,
 ) -> anyhow::Result<ActionData> {
+    let Parts { consumed, created } = parts(
+        resource_to_unwrap,
+        forwarder,
+        token,
+        seed,
+        merkle_path,
+        overrides,
+    )?;
+    let action = action::build(vec![consumed, created])?;
+    let [consumed_persistent, created_ephemeral] = <[Resource; 2]>::try_from(action.resources)
+        .map_err(|resources| {
+            anyhow::anyhow!("an unwrap has 2 resources, not {}", resources.len())
+        })?;
+
+    Ok(ActionData {
+        witnesses: action.witnesses,
+        consumed_persistent,
+        created_ephemeral,
+    })
+}
+
+/// The resources of an unwrap action, for an action that [`action::build`]
+/// assembles from several kinds. The owner's signature covers the root of that
+/// action.
+pub fn parts(
+    resource_to_unwrap: Resource,
+    forwarder: Address,
+    token: Address,
+    seed: u8,
+    merkle_path: Option<MerklePath>,
+    overrides: Overrides,
+) -> anyhow::Result<Parts> {
     let owner = match overrides.owner.clone() {
         Some(owner) => owner,
         None => identities::bob()?,
@@ -60,73 +93,38 @@ pub fn build(
     if let Some(quantity) = overrides.quantity {
         consumed.quantity = quantity;
     }
-
-    let consumed_nf = consumed.nullifier(&owner.nf_key)?;
     let created = resource::created(
         &owner,
-        consumed_nf,
         forwarder,
         token,
         consumed.quantity,
         seed,
         &resource_overrides,
-    )?;
-
-    let action_tree_root = ArmTree::new(vec![consumed_nf, created.commitment()]).root()?;
-
-    let auth_sig: AuthoritySignature = match overrides.auth_signature {
-        Some(sig) => sig,
-        None => owner
-            .auth_signing_key
-            .sign(AUTH_SIGNATURE_DOMAIN, action_tree_root.as_bytes()),
-    };
-
-    let consumed_logic = logic::consumed_persistent(consumed, action_tree_root, &owner, auth_sig);
-
-    let created_logic = TokenTransferWitness::new(
-        created,
-        false,
-        action_tree_root,
-        None,
-        None,
-        None,
-        Some(ForwarderInfo {
-            call_type: CallType::Unwrap,
-            ethereum_account_addr: overrides
-                .ethereum_account_addr
-                .clone()
-                .unwrap_or_else(|| owner.address().to_vec()),
-            permit_info: None,
-            ordering_info: Some(OrderingInfo {
-                after_tags: overrides.after_tags.clone(),
-                before_tags: overrides.before_tags.clone(),
-            }),
-        }),
-        Some(LabelInfo {
-            forwarder_addr: forwarder.to_vec(),
-            erc20_token_addr: token.to_vec(),
-        }),
-        None,
     );
 
-    let consumed_witness = match merkle_path {
-        Some(path) => {
-            ConsumedResourceWitness::from_resource_with_path(consumed, owner.nf_key.clone(), path)
-        }
-        None => ConsumedResourceWitness::from_resource(consumed, owner.nf_key.clone()),
-    };
-    let compliance = compliance::from_resources(
-        vec![consumed_witness],
-        vec![created],
-        crate::fixtures::resource::kind_tree(),
-    );
+    let ethereum_account_addr = overrides
+        .ethereum_account_addr
+        .clone()
+        .unwrap_or_else(|| owner.address().to_vec());
+    let created_logic: Logic = Box::new(move |resource, action_tree_root| {
+        Ok(Box::new(logic::Witness::new(
+            TransferLogic::burn_resource_logic(
+                resource,
+                action_tree_root,
+                forwarder.to_vec(),
+                token.to_vec(),
+                ethereum_account_addr,
+            )
+            .witness,
+        )))
+    });
 
-    Ok(ActionData {
-        witnesses: ActionWitnesses {
-            compliance_witness: Box::new(compliance),
-            logic_witnesses: vec![consumed_logic, Box::new(logic::Witness::new(created_logic))],
+    Ok(Parts {
+        consumed: consumed_persistent(consumed, owner, merkle_path, overrides.auth_signature),
+        created: Part::Created {
+            resource: created,
+            nonce: None,
+            logic: created_logic,
         },
-        consumed_persistent: consumed,
-        created_ephemeral: created,
     })
 }
