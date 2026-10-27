@@ -13,8 +13,8 @@ edition = "2024"
 [workspace.dependencies]
 alloy = { version = "2.5.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.39"
-anoma-pa-evm-bindings = { git = "https://github.com/anoma/pa-evm", tag = "bindings/v3.0.0-rc.19" }
-anoma-pa-testkit = "1.0.0-rc.4"
+anoma-pa-evm-bindings = { git = "https://github.com/anoma/pa-evm", rev = "4808edb45b5e0a20db5ab4a5428367a1fe36c278" }
+anoma-pa-testkit = "1.0.0-rc.5"
 anoma-rm-risc0 = { version = "2.0.0-rc.8", features = ["bonsai", "aggregation"] }
 anoma-rm-risc0-gadgets = "2.0.0-rc.8"
 # The circuit crates are pinned exactly: another build has another logic ref, which the deployed forwarder refuses.
@@ -37,6 +37,6 @@ tokio = { version = "1.54.1", features = ["rt-multi-thread"] }
 anomapay-erc20-forwarder-bindings = { path = "crates/bindings" }
 anomapay-erc20-forwarder-integration-test = { path = "crates/integration-test" }
 
-# Upstream test crates, pinned by git tag (see anoma-pa-testkit ADR-0002). For
+# Upstream test crates, pinned by a git tag or commit (see anoma-pa-testkit ADR-0002). For
 # cross-repo development, override locally with a `[patch]` to a path checkout.
-anoma-pa-evm-integration-test = { git = "https://github.com/anoma/pa-evm", tag = "bindings/v3.0.0-rc.19" }
+anoma-pa-evm-integration-test = { git = "https://github.com/anoma/pa-evm", rev = "4808edb45b5e0a20db5ab4a5428367a1fe36c278" }

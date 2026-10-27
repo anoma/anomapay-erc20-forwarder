@@ -12,13 +12,19 @@ _Avoid_: transfer (as an umbrella for the whole app), shielded token
 An ERC20 token's value represented as an ARM resource, no longer held as a plain ERC20 balance.
 
 **Wrap**:
-Lock an ERC20 token and create the corresponding shielded resource.
+Lock ERC20 tokens and create the shielded resources that hold them.
 
 **Transfer**:
-Move value from one shielded resource to another — the shielded-to-shielded action. "Transfer" names *only* this action, never the app.
+Move value from shielded resources to other shielded resources — the shielded-to-shielded action. "Transfer" names *only* this action, never the app.
+
+**Split**:
+A transfer that creates more shielded resources than it consumes.
+
+**Merge**:
+A transfer that consumes more shielded resources than it creates.
 
 **Unwrap**:
-Consume a shielded resource and release the underlying ERC20 token.
+Consume shielded resources and release the underlying ERC20 tokens.
 
 **Forwarder**:
 The EVM contract through which the protocol adapter drives ERC20 state changes (wrap/unwrap) on behalf of AnomaPay ERC20 actions.
