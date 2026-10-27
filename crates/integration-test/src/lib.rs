@@ -2,9 +2,9 @@
 //!
 //! Exposes provisioning helpers (`deploy`, `state`), the app's resource `logic`
 //! (verifying key and the witness of a consumed persistent resource), and the
-//! persistent and ephemeral resources in `fixtures`, from which the scenarios — and
-//! dependent apps — build wraps, transfers and unwraps. The scenarios themselves
-//! live under `tests/`.
+//! persistent and ephemeral resources in `fixtures` with the builders of whole wraps,
+//! transfers and unwraps in `fixtures::token`, which the scenarios and dependent apps use.
+//! The scenarios themselves live under `tests/`.
 
 pub mod deploy;
 pub mod fixtures;
