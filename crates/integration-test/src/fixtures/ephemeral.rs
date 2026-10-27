@@ -34,14 +34,14 @@ impl Overrides {
 
 /// An ephemeral resource of `owner` whose forwarder call pulls `quantity` tokens of `token` from
 /// the owner's account into `forwarder`, with the owner's Permit2 signature over the action tree
-/// root. `seed` sets its nonce, its random fields and its Permit2 nonce.
+/// root. `nonce` sets its nonce, its random fields and its Permit2 nonce.
 pub fn consumed(
     owner: &Keychain,
     chain_id: u64,
     forwarder: Address,
     token: Address,
     quantity: u128,
-    seed: u8,
+    nonce: [u8; 32],
     overrides: Overrides,
 ) -> ActionResource {
     let Overrides {
@@ -55,11 +55,11 @@ pub fn consumed(
         quantity,
         value_ref: calculate_value_ref_from_ethereum_account_addr(ethereum_account_addr.as_ref()),
         is_ephemeral: true,
-        nonce: [seed; 32],
+        nonce,
         nk_commitment: owner.nf_key.commit(),
-        rand_seed: [seed; 32],
+        rand_seed: nonce,
     };
-    let permit_nonce = U256::from(seed);
+    let permit_nonce = U256::from_be_bytes(nonce);
     let permit_deadline = U256::MAX;
     let signer = owner.signer();
     let nf_key = owner.nf_key.clone();

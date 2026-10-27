@@ -53,7 +53,7 @@ async fn execute_runs_the_forwarder_calls_in_the_order_of_the_resources<Env: Env
             forwarder,
             token,
             quantity,
-            41,
+            [41; 32],
             ephemeral::Overrides::default(),
         ),
         persistent::created(&owner, forwarder, token, quantity, 42),
@@ -126,7 +126,7 @@ async fn prove_unwrap_and_wrap<Env: Environment>(
         forwarder,
         token,
         quantity,
-        43,
+        [43; 32],
         ephemeral::Overrides::default(),
     );
     let wrap_created = persistent::created(&owner, forwarder, token, quantity, 44);

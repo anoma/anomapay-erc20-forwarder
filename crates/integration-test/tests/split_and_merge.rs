@@ -54,7 +54,7 @@ async fn execute_splits_and_merges_wrapped_tokens<Env: Environment>(
             forwarder,
             token,
             quantity,
-            11,
+            [11; 32],
             ephemeral::Overrides::default(),
         ),
         persistent::created(&alice, forwarder, token, alice_quantity, 12),
