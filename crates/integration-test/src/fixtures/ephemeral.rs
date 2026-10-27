@@ -24,15 +24,6 @@ pub struct Overrides {
     pub permit_signature: Option<Vec<u8>>,
 }
 
-impl Overrides {
-    pub fn invalid_permit_signature_length() -> Self {
-        Self {
-            permit_signature: Some(vec![7u8; 64]),
-            ..Self::default()
-        }
-    }
-}
-
 /// An ephemeral resource of `owner` whose forwarder call pulls `quantity` tokens of `token` from
 /// the owner's account into `forwarder`, with the owner's Permit2 signature over the action tree
 /// root. `nonce` sets its nonce, its random fields and its Permit2 nonce.
