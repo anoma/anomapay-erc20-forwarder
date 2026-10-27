@@ -25,15 +25,15 @@ The move must end while the protocol adapter proxy is still paused. The kind tre
 
 - [ ] List the tokens the legacy ERC20 forwarder wrapped. Read its `Wrapped(address indexed token, address indexed from, uint128 amount)` events from its deployment block, and collect the distinct tokens. Read them from the chain: the backend's token list misses tokens that the legacy ERC20 forwarder wrapped. A token that it holds but never wrapped stays out of the list, because no legacy-forwarder resource represents it.
 
-- [ ] Check that the chain's section in the kind tables' [`tokens.json`](https://github.com/anoma/risc0-kind-tables/blob/next/crates/kind-tables/data/tokens.json) lists every token of that list, before pa-evm generates the chain's kind table. The generator writes members under the label of the legacy ERC20 forwarder only for the tokens listed there. A wrapped token that is missing gets no member under the label of the legacy ERC20 forwarder, and its legacy-forwarder resources lose their only way to unwrap.
+- [ ] Check that the chain's section in the kind trees' [`tokens.json`](https://github.com/anoma/risc0-kind-trees/blob/next/crates/kind-trees/data/tokens.json) lists every token of that list and marks it with `soft_migrate_from_legacy_forwarder`, before the kind trees repository generates the chain's kind tree. The generator writes legacy-forwarder entries only for the tokens marked there. A wrapped token that is missing or not marked gets no legacy-forwarder entries, and its legacy-forwarder resources have no way to unwrap.
 
 ## Per chain
 
 These steps are step 5 of the pa-evm checklist: they run after the stop of the legacy protocol adapter and before the completion run. Users cannot transact in that time. The deploy script refuses to run before the stop, because the legacy ERC20 forwarder accepts the caller assignment only after it. Agree on a signing time with the committee's signers before the stop.
 
-The pa-evm migration run sends its transactions from the deployment wallet, and so do steps 3 and 7 and a kind table update in step 1. Send those only after that run has ended. The other steps can run while it copies the state.
+The pa-evm migration run sends its transactions from the deployment wallet, and so do steps 3 and 7 and a kind tree root update in step 1. Send those only after that run has ended. The other steps can run while it copies the state.
 
-1. [ ] Read the `Wrapped` events again, up to the block of the stop. The legacy protocol adapter executes no transaction after the stop, so this list is final. If it has a token that `tokens.json` does not list, add the token, regenerate the kind table, and install the new commitment on the protocol adapter proxy while it is still paused. Then export the list:
+1. [ ] Read the `Wrapped` events again, up to the block of the stop. The legacy protocol adapter executes no transaction after the stop, so this list is final. If it has a token that `tokens.json` does not list or mark, add or mark the token, regenerate the kind tree, and set the new kind tree root on the protocol adapter proxy while it is still paused. Then export the list:
 
    ```sh
    export TOKENS='[<TOKEN>,<TOKEN>]'
