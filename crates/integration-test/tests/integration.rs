@@ -22,7 +22,7 @@ use rstest::*;
 #[case::local(setup_anomapay_erc20_local())]
 #[cfg_attr(feature = "e2e", case::e2e_test(setup_anomapay_erc20_e2e()))]
 #[tokio::test]
-async fn happy_wrap_transfer_unwrap<Env: Environment>(
+async fn execute_wraps_transfers_and_unwraps_tokens<Env: Environment>(
     #[future(awt)]
     #[case]
     env_with_setup: anyhow::Result<Env>,
@@ -100,7 +100,7 @@ async fn happy_wrap_transfer_unwrap<Env: Environment>(
 #[case::local(setup_anomapay_erc20_local())]
 #[cfg_attr(feature = "e2e", case::e2e_test(setup_anomapay_erc20_e2e()))]
 #[tokio::test]
-async fn happy_wrap_unwrap<Env: Environment>(
+async fn execute_wraps_and_unwraps_tokens<Env: Environment>(
     #[future(awt)]
     #[case]
     env_with_setup: anyhow::Result<Env>,
@@ -162,7 +162,7 @@ async fn happy_wrap_unwrap<Env: Environment>(
     expect_integration_panic(Needle::Static("Signature must be 65 bytes long"))
 )]
 #[tokio::test]
-async fn transfer_negative_invalid_permit_signature_len<Env: Environment>(
+async fn prove_actions_errors_on_a_short_permit_signature<Env: Environment>(
     #[future(awt)]
     #[case]
     env_with_setup: anyhow::Result<Env>,
@@ -198,7 +198,7 @@ async fn transfer_negative_invalid_permit_signature_len<Env: Environment>(
     expect_integration_panic(Needle::Static("Invalid signature"))
 )]
 #[tokio::test]
-async fn transfer_negative_invalid_auth_signature<Env: Environment>(
+async fn prove_actions_errors_on_an_auth_signature_over_another_message<Env: Environment>(
     #[future(awt)]
     #[case]
     env_with_setup: anyhow::Result<Env>,
