@@ -11,6 +11,8 @@ pub type EvmE2eEnv = anoma_pa_evm_integration_test::envs::e2e::Environment;
 pub type EvmLocalEnv = anoma_pa_evm_integration_test::envs::local::Environment;
 
 use alloy::primitives::{B256, U256};
+#[cfg(feature = "e2e")]
+use alloy::providers::ext::AnvilApi;
 use anoma_pa_evm_integration_test::keychain::EvmSigner;
 use anoma_pa_evm_integration_test::state::actors::default_signer_in_state;
 use anoma_pa_evm_integration_test::state::pa::pa_address_in_state;
@@ -41,6 +43,16 @@ pub async fn setup_anomapay_erc20_local() -> anyhow::Result<EvmLocalEnv> {
 #[cfg(feature = "e2e")]
 pub async fn setup_anomapay_erc20_e2e() -> anyhow::Result<EvmE2eEnv> {
     EvmE2eEnv::setup(async |builder: &mut StateBuilder| {
+        let provider = default_signer_in_state(builder.as_state())
+            .context("failed to retrieve default signer from setup state")?;
+        let deployer = identities::alice()
+            .context("failed to build sender keychain")?
+            .address();
+        // anvil estimates the gas of a creation at nonce 0, so the deployer must start at nonce 1.
+        provider
+            .anvil_set_nonce(deployer, 1)
+            .await
+            .context("failed to set the deployer nonce to 1")?;
         setup_transfer_env_on_builder(builder).await
     })
     .await
