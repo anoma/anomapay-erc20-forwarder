@@ -11,6 +11,7 @@ use anoma_rm_risc0::resource::Resource;
 use anomapay_erc20_library::TransferLogic;
 use anomapay_erc20_witness::{calculate_label_ref, calculate_value_ref_from_ethereum_account_addr};
 
+use crate::fixtures::CREATED_RAND_SEED;
 use crate::logic;
 use crate::permit2::{Permit2Data, permit_witness_transfer_from_signature};
 
@@ -23,25 +24,16 @@ pub struct Overrides {
     pub permit_signature: Option<Vec<u8>>,
 }
 
-impl Overrides {
-    pub fn invalid_permit_signature_length() -> Self {
-        Self {
-            permit_signature: Some(vec![7u8; 64]),
-            ..Self::default()
-        }
-    }
-}
-
 /// An ephemeral resource of `owner` whose forwarder call pulls `quantity` tokens of `token` from
 /// the owner's account into `forwarder`, with the owner's Permit2 signature over the action tree
-/// root. `seed` sets its nonce, its random fields and its Permit2 nonce.
+/// root. `nonce` sets its nonce, its random fields and its Permit2 nonce.
 pub fn consumed(
     owner: &Keychain,
     chain_id: u64,
     forwarder: Address,
     token: Address,
     quantity: u128,
-    seed: u8,
+    nonce: [u8; 32],
     overrides: Overrides,
 ) -> ActionResource {
     let Overrides {
@@ -55,11 +47,11 @@ pub fn consumed(
         quantity,
         value_ref: calculate_value_ref_from_ethereum_account_addr(ethereum_account_addr.as_ref()),
         is_ephemeral: true,
-        nonce: [seed; 32],
+        nonce,
         nk_commitment: owner.nf_key.commit(),
-        rand_seed: [seed; 32],
+        rand_seed: nonce,
     };
-    let permit_nonce = U256::from(seed);
+    let permit_nonce = U256::from_be_bytes(nonce);
     let permit_deadline = U256::MAX;
     let signer = owner.signer();
     let nf_key = owner.nf_key.clone();
@@ -100,13 +92,12 @@ pub fn consumed(
 }
 
 /// An ephemeral resource whose forwarder call releases `quantity` tokens of `token` from
-/// `forwarder` to `ethereum_account_addr`. `seed` sets its random fields.
+/// `forwarder` to `ethereum_account_addr`.
 pub fn created(
     ethereum_account_addr: Address,
     forwarder: Address,
     token: Address,
     quantity: u128,
-    seed: u8,
 ) -> ActionResource {
     let resource = ResourceToCreate {
         logic_ref: logic::verifying_key(),
@@ -116,7 +107,7 @@ pub fn created(
         is_ephemeral: true,
         // No one consumes the resource, so any nullifier key commitment works.
         nk_commitment: NullifierKeyCommitment::default(),
-        rand_seed: [seed; 32],
+        rand_seed: CREATED_RAND_SEED,
     };
     ActionResource::created(resource, move |resource, action_tree_root| {
         Ok(TransferLogic::burn_resource_logic(

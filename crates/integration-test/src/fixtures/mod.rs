@@ -9,6 +9,11 @@
 //!   the tokens.
 //!
 //! In each transaction, the consumed and the created resources of a token hold the same quantity.
+//! [`token`] builds whole wraps, transfers and unwraps from these resources.
 
 pub mod ephemeral;
 pub mod persistent;
+pub mod token;
+
+/// The random seed of a created resource; its derived nonce already makes the commitment unique.
+const CREATED_RAND_SEED: [u8; 32] = [0; 32];
