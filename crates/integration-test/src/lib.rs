@@ -1,9 +1,10 @@
 //! Integration-test harness for the AnomaPay ERC20 forwarder.
 //!
 //! Exposes provisioning helpers (`deploy`, `state`), the app's resource `logic`
-//! (verifying key + witness adapter), and the wrap / transfer / unwrap action
-//! `fixtures` that the scenarios — and dependent apps — reuse. The scenarios
-//! themselves live under `tests/`.
+//! (verifying key and the witness of a consumed persistent resource), and the
+//! persistent and ephemeral resources in `fixtures`, from which the scenarios — and
+//! dependent apps — build wraps, transfers and unwraps. The scenarios themselves
+//! live under `tests/`.
 
 pub mod deploy;
 pub mod fixtures;

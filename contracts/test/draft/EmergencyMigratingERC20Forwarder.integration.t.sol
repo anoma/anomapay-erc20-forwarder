@@ -2,11 +2,11 @@
 pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
-import {ILogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.13/src/interfaces/ILogicRefDenylist.sol";
-import {IProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.13/src/interfaces/IProtocolAdapter.sol";
-import {ProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.13/src/ProtocolAdapter.sol";
-import {LogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.13/src/state/LogicRefDenylist.sol";
-import {TxGen} from "anoma-pa-evm-2.0.0-rc.13/test/libs/TxGen.sol";
+import {ILogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.14/src/interfaces/ILogicRefDenylist.sol";
+import {IProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.14/src/interfaces/IProtocolAdapter.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.14/src/ProtocolAdapter.sol";
+import {LogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.14/src/state/LogicRefDenylist.sol";
+import {TxGen} from "anoma-pa-evm-2.0.0-rc.14/test/libs/TxGen.sol";
 import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.5/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";

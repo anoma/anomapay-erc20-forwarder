@@ -7,19 +7,19 @@ use alloy::primitives::U256;
 use anoma_pa_evm_integration_test::keychain::EvmSigner;
 use anoma_pa_evm_integration_test::state::actors::default_signer;
 use anoma_pa_evm_integration_test::state::chains::chain_id;
-use anoma_pa_testkit::environment::CommitmentTree;
 use anoma_pa_testkit::environment::Environment;
-use anoma_pa_testkit::environment::ProtocolAdapter;
-use anoma_pa_testkit::fixtures::identities;
+use anoma_pa_testkit::fixtures::{action, identities};
 use anoma_rm_risc0::resource::Resource;
 use anomapay_erc20_forwarder_integration_test::deploy::erc20_bindings::erc20_example;
-use anomapay_erc20_forwarder_integration_test::fixtures::{action, unwrap, wrap};
+use anomapay_erc20_forwarder_integration_test::fixtures::{ephemeral, persistent};
 use anomapay_erc20_forwarder_integration_test::state::erc20::erc20_address;
 use anomapay_erc20_forwarder_integration_test::state::forwarder::erc20_forwarder_address;
 use anyhow::Context;
 #[cfg(feature = "e2e")]
 use common::setup_anomapay_erc20_e2e;
-use common::{commitment_root, execute_tx, prove_actions, setup_anomapay_erc20_local};
+use common::{
+    commitment_path, commitment_root, execute_tx, prove_actions, setup_anomapay_erc20_local,
+};
 use rstest::*;
 
 /// The owner wraps its whole balance first, so the wrap of the action can only pull the tokens that the unwrap of the
@@ -37,36 +37,41 @@ async fn execute_runs_the_forwarder_calls_in_the_order_of_the_resources<Env: Env
     let chain_id = chain_id(&env)?;
     let forwarder = erc20_forwarder_address(&env)?;
     let token = erc20_address(&env, "example")?;
-    let owner = identities::alice()?.address();
+    let owner = identities::alice()?;
     let erc20 = erc20_example(token, default_signer(&env)?);
 
     let balance = erc20
-        .balanceOf(owner)
+        .balanceOf(owner.address())
         .call()
         .await
         .context("failed to read the balance of the owner")?;
     let quantity = u128::try_from(balance).context("the balance of the owner exceeds u128")?;
-    let wrap = wrap::build(
-        chain_id,
-        forwarder,
-        token,
-        quantity,
-        41,
-        wrap::Overrides::default(),
-    )
+    let wrap = action::build([
+        ephemeral::consumed(
+            &owner,
+            chain_id,
+            forwarder,
+            token,
+            quantity,
+            41,
+            ephemeral::Overrides::default(),
+        ),
+        persistent::created(&owner, forwarder, token, quantity, 42),
+    ])
     .context("failed to build the first wrap action")?;
-    let tx = prove_actions(&env, &[wrap.witnesses])
+    let wrapped = wrap.resources()[1];
+    let tx = prove_actions(&env, [&wrap])
         .await
         .context("failed to prove the first wrap action")?;
     execute_tx(&mut env, tx)
         .await
         .context("failed to execute the first wrap action")?;
     anyhow::ensure!(
-        erc20.balanceOf(owner).call().await? == U256::ZERO,
+        erc20.balanceOf(owner.address()).call().await? == U256::ZERO,
         "the owner holds no tokens after the first wrap"
     );
 
-    let wrap_first = prove_unwrap_and_wrap(&env, wrap.created_persistent, quantity, false).await?;
+    let wrap_first = prove_unwrap_and_wrap(&env, wrapped, quantity, false).await?;
     let Err(error) = execute_tx(&mut env, wrap_first).await else {
         anyhow::bail!("the wrap must not pull tokens before the unwrap releases them");
     };
@@ -76,7 +81,7 @@ async fn execute_runs_the_forwarder_calls_in_the_order_of_the_resources<Env: Env
     );
 
     let before = commitment_root(&env)?;
-    let unwrap_first = prove_unwrap_and_wrap(&env, wrap.created_persistent, quantity, true).await?;
+    let unwrap_first = prove_unwrap_and_wrap(&env, wrapped, quantity, true).await?;
     execute_tx(&mut env, unwrap_first)
         .await
         .context("failed to execute the action with the unwrap first")?;
@@ -86,7 +91,7 @@ async fn execute_runs_the_forwarder_calls_in_the_order_of_the_resources<Env: Env
     );
 
     anyhow::ensure!(
-        erc20.balanceOf(owner).call().await? == U256::ZERO,
+        erc20.balanceOf(owner.address()).call().await? == U256::ZERO,
         "the wrap pulls the tokens that the unwrap releases"
     );
     anyhow::ensure!(
@@ -108,42 +113,32 @@ async fn prove_unwrap_and_wrap<Env: Environment>(
     let chain_id = chain_id(env)?;
     let forwarder = erc20_forwarder_address(env)?;
     let token = erc20_address(env, "example")?;
+    let owner = identities::alice()?;
 
-    let path = env
-        .protocol_adapter()
-        .commitment_tree()
-        .path_to(resource.commitment())
+    let path = commitment_path(env, resource.commitment())
         .context("failed to generate the unwrap merkle path")?;
-    let unwrap = unwrap::parts(
-        resource,
-        forwarder,
-        token,
-        47,
-        Some(path),
-        unwrap::Overrides {
-            owner: Some(identities::alice()?),
-            ..Default::default()
-        },
-    )
-    .context("failed to build the unwrap parts")?;
-    let wrap = wrap::parts(
+    let unwrap_consumed = persistent::consumed(&owner, resource, path, None);
+    let unwrap_created =
+        ephemeral::created(owner.address(), forwarder, token, resource.quantity, 47);
+    let wrap_consumed = ephemeral::consumed(
+        &owner,
         chain_id,
         forwarder,
         token,
         quantity,
         43,
-        wrap::Overrides::default(),
-    )
-    .context("failed to build the wrap parts")?;
+        ephemeral::Overrides::default(),
+    );
+    let wrap_created = persistent::created(&owner, forwarder, token, quantity, 44);
 
-    let parts = if unwrap_first {
-        vec![unwrap.consumed, unwrap.created, wrap.consumed, wrap.created]
+    let resources = if unwrap_first {
+        [unwrap_consumed, unwrap_created, wrap_consumed, wrap_created]
     } else {
-        vec![unwrap.consumed, wrap.consumed, unwrap.created, wrap.created]
+        [unwrap_consumed, wrap_consumed, unwrap_created, wrap_created]
     };
-    let action = action::build(parts).context("failed to build the action")?;
+    let witnesses = action::build(resources).context("failed to build the action")?;
 
-    prove_actions(env, &[action.witnesses])
+    prove_actions(env, [&witnesses])
         .await
         .context("failed to prove the action")
 }
