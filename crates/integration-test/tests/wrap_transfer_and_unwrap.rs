@@ -1,3 +1,6 @@
+//! Checks that the protocol adapter executes wraps, transfers and unwraps, and that proving fails
+//! for a wrap or a transfer with a wrong signature.
+
 mod common;
 
 use anoma_pa_testkit::assert::{Needle, expect_integration_panic};
