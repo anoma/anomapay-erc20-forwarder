@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Parameters as ProtocolAdapterParameters} from "anoma-pa-evm-2.0.0-rc.12/script/Parameters.sol";
+import {Parameters as ProtocolAdapterParameters} from "anoma-pa-evm-2.0.0-rc.14/script/Parameters.sol";
 
 /// @title Parameters
 /// @author Anoma Foundation, 2026
@@ -24,7 +24,7 @@ library Parameters {
     bytes32 internal constant MIGRATION_SALT = "ERC20ForwarderMigration";
 
     /// @notice The logic ref of the token transfer circuit, which the proxies are initialized with.
-    bytes32 internal constant LOGIC_REF = 0x533868e294fc632d1809edb4875d6a084746817b230e95351845d175449f2404;
+    bytes32 internal constant LOGIC_REF = 0x9c7f5feab5f4dc239b5caf180f633e4eac94b5ba6504029abee8d49541f4e026;
 
     /// @notice The deployment wallet, which owns the staging proxies and upgrades them instantly. The protocol adapter
     /// repository names the same wallet.
