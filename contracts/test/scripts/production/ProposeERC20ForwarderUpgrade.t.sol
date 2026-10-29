@@ -7,9 +7,11 @@ import {DeployERC20ForwarderImplementation} from "../../../script/DeployERC20For
 import {Parameters} from "../../../script/Parameters.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
 import {ProposeERC20ForwarderUpgrade} from "../../../script/production/ProposeERC20ForwarderUpgrade.s.sol";
+import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";
 import {ERC20Forwarder} from "../../../src/ERC20Forwarder.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
 import {DeployERC20ForwarderProxyMock} from "../../mocks/DeployERC20ForwarderProxy.m.sol";
+import {ProposeERC20ForwarderUpgradeMock} from "../../mocks/ProposeERC20ForwarderUpgrade.m.sol";
 
 /// @notice Checks the production-only upgrade proposal script against a Safe-owned production proxy. Outside
 /// broadcast mode, the script simulates the Safe executing the upgrade, so the proxy must end up on the new
@@ -37,14 +39,14 @@ contract ProposeERC20ForwarderUpgradeTest is SafeFixture {
     }
 
     function test_run_upgrades_the_proxy() public {
-        ProposeERC20ForwarderUpgrade script = new ProposeERC20ForwarderUpgrade();
+        ProposeERC20ForwarderUpgrade script = new ProposeERC20ForwarderUpgradeMock(_productionProxy);
 
         vm.expectEmit({
             checkTopic1: true, checkTopic2: false, checkTopic3: false, checkData: true, emitter: _productionProxy
         });
         emit IERC1967.Upgraded(_implementation);
 
-        script.run({proxy: _productionProxy, proposer: _owner, newImplementation: _implementation});
+        script.run({proposer: _owner});
 
         assertEq(
             ERC20Forwarder(_productionProxy).getImplementation(),
@@ -54,14 +56,14 @@ contract ProposeERC20ForwarderUpgradeTest is SafeFixture {
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_production_deployment() public {
-        ProposeERC20ForwarderUpgrade script = new ProposeERC20ForwarderUpgrade();
+        ProposeERC20ForwarderUpgrade script = new ProposeERC20ForwarderUpgradeMock(_stagingProxy);
 
         vm.expectRevert(abi.encodeWithSelector(ProductionScript.NotAProductionDeployment.selector, _stagingProxy));
-        script.run({proxy: _stagingProxy, proposer: _owner, newImplementation: _implementation});
+        script.run({proposer: _owner});
     }
 
     function test_run_reverts_if_the_implementation_is_not_deployed() public {
-        ProposeERC20ForwarderUpgrade script = new ProposeERC20ForwarderUpgrade();
+        ProposeERC20ForwarderUpgrade script = new ProposeERC20ForwarderUpgradeMock(_productionProxy);
 
         vm.etch(_implementation, "");
 
@@ -70,18 +72,17 @@ contract ProposeERC20ForwarderUpgradeTest is SafeFixture {
                 DeployERC20ForwarderImplementation.ImplementationNotDeployed.selector, _implementation
             )
         );
-        script.run({proxy: _productionProxy, proposer: _owner, newImplementation: _implementation});
+        script.run({proposer: _owner});
     }
 
-    function test_run_reverts_if_the_implementation_is_unexpected() public {
+    function test_run_reverts_if_the_proxy_is_not_recorded() public {
         ProposeERC20ForwarderUpgrade script = new ProposeERC20ForwarderUpgrade();
-        address unexpected = makeAddr("unexpected implementation");
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                DeployERC20ForwarderImplementation.UnexpectedImplementation.selector, _implementation, unexpected
+                RecordedDeploymentsScript.DeploymentNotRecorded.selector, "production", block.chainid
             )
         );
-        script.run({proxy: _productionProxy, proposer: _owner, newImplementation: unexpected});
+        script.run({proposer: _owner});
     }
 }
