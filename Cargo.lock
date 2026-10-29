@@ -1190,7 +1190,6 @@ dependencies = [
  "rstest",
  "serde_json",
  "tokio",
- "transfer_library",
 ]
 
 [[package]]
@@ -7854,35 +7853,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e0d2eaa99c3c2e41547cfa109e910a68ea03823cccad4a0525dcbc9b01e8c71"
 dependencies = [
  "tracing-core",
-]
-
-[[package]]
-name = "transfer_library"
-version = "3.0.0-rc.2.1"
-source = "git+https://github.com/anoma/anomapay-erc20-resource?rev=4b9562e5e918d4a6182872d50f183eb7fe9caf37#4b9562e5e918d4a6182872d50f183eb7fe9caf37"
-dependencies = [
- "anoma-rm-risc0",
- "anoma-rm-risc0-gadgets",
- "hex",
- "k256",
- "lazy_static",
- "serde",
- "transfer_witness",
-]
-
-[[package]]
-name = "transfer_witness"
-version = "3.0.0-rc.2.1"
-source = "git+https://github.com/anoma/anomapay-erc20-resource?rev=4b9562e5e918d4a6182872d50f183eb7fe9caf37#4b9562e5e918d4a6182872d50f183eb7fe9caf37"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "anoma-rm-risc0",
- "anoma-rm-risc0-gadgets",
- "bincode",
- "k256",
- "rand 0.9.5",
- "serde",
 ]
 
 [[package]]
