@@ -11,7 +11,7 @@ import {ProtocolAdapterMock} from "../mocks/ProtocolAdapter.m.sol";
 
 /// @notice A test fixture providing the regular `ERC20Forwarder` proxy with the active version B, a protocol adapter
 /// mock that denies nothing, and the draft implementation. The logic refs name the circuit versions of
-/// `docs/emergency-migration.md`: A deprecated, B active, C the new version, D the version of a second incident.
+/// `docs/03-hard-migration.md`: A deprecated, B active, C the new version, D the version of a second flaw.
 abstract contract EmergencyMigratingERC20ForwarderFixture is Test {
     uint128 internal constant _AMOUNT = 1000;
     bytes32 internal constant _DEPRECATED_LOGIC_REF = bytes32(uint256(1));
