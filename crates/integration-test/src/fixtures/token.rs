@@ -51,14 +51,11 @@ impl Token {
 
     /// A wrap that pulls `quantity` tokens from the account of `payer`, who receives them.
     pub fn wrap(&self, payer: &Keychain, quantity: u128) -> ActionBuilder<FromAccount> {
-        let number = self.wraps.get() + 1;
-        self.wraps.set(number);
-        let nonce = keccak256([self.address.as_slice(), &number.to_be_bytes()].concat()).0;
         self.builder(
             Consumed::Account {
                 payer: Box::new(payer.clone()),
                 quantity,
-                nonce,
+                nonce: self.next_wrap_nonce(),
             },
             Some(Receiver::from(payer)),
         )
@@ -78,6 +75,13 @@ impl Token {
             .first()
             .map(|(owner, _)| Receiver::Account(owner.address()));
         self.builder(Consumed::Resources(inputs), main_receiver)
+    }
+
+    /// Numbers one more wrap of the token and returns its nonce.
+    pub fn next_wrap_nonce(&self) -> [u8; 32] {
+        let number = self.wraps.get() + 1;
+        self.wraps.set(number);
+        keccak256([self.address.as_slice(), &number.to_be_bytes()].concat()).0
     }
 
     fn builder<Source>(

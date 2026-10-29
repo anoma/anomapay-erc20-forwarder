@@ -29,8 +29,11 @@ alloy = { workspace = true, features = [
   "sol-types",
 ] }
 alloy-chains = { workspace = true }
+anoma-pa-evm-bindings = { workspace = true }
 anoma-rm-risc0 = { workspace = true, features = ["compliance_circuit"] }
 anoma-rm-risc0-gadgets = { workspace = true }
+anomapay_emergency_migrating_erc20_library = { workspace = true }
+anomapay_emergency_migrating_erc20_witness = { workspace = true }
 anomapay_erc20_library = { workspace = true }
 anomapay_erc20_witness = { workspace = true }
 anyhow = { workspace = true }
