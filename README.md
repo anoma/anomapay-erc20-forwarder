@@ -6,6 +6,8 @@
 
 A forwarder contract written in Solidity that enables wrapping and unwrapping of arbitrary ERC20 tokens on the [AnomaPay application](https://anomapay.app/) using the [Anoma EVM protocol adapter](https://github.com/anoma/pa-evm).
 
+The [documentation](./docs/README.md) specifies the forwarder: its upgradeability and ownership, the soft migration, the hard migration, and the migration from the legacy ERC20 forwarder.
+
 ## Project Structure
 
 This monorepo is structured as follows:
