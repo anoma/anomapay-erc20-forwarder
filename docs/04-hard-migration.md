@@ -47,6 +47,8 @@ The forwarder must replace only resources that its tokens back:
 
 The forwarder does not check that a legacy-forwarder resource carries the legacy logic ref. It accepts each listed logic ref with either forwarder address. The owner of the protocol adapter deprecates the legacy logic ref before the first transaction, so legacy-forwarder resources come only from the copy of the state. Any other legacy-forwarder resource needs a flaw, and that flaw can also forge resources of this forwarder.
 
+A consumed resource cannot hard-migrate, also when an attacker consumed it with the flaw. A hard migration also does not replace unwrapped tokens: after an attack, unwraps succeed in the order of execution until the tokens run out.
+
 ## 5. Why both denylists
 
 A deprecation is not sufficient. The vulnerable logic ref must be on both denylists of the protocol adapter:
@@ -74,10 +76,8 @@ A flaw can let an attacker forge old resources, and the state cannot show the di
 
 ## 8. Trust assumptions
 
-- **Only in-circuit checks cover the quantities.** The balance check of wrap and unwrap, an out-of-circuit check, does not apply, because no tokens move.
-- **The owner selects the vulnerable logic refs.** The forwarder cannot check that it holds the tokens that back their resources.
-- **Unwrapped tokens are not replaced.** After an attack, unwraps succeed in the order of execution until the tokens run out.
-- **Consumed resources cannot hard-migrate,** also when an attacker consumed them with the flaw.
+- **The in-circuit checks cover the quantities.** The balance check of wrap and unwrap, an out-of-circuit check, does not apply, because no tokens move.
+- **The owner lists only logic refs of resources that the tokens in the forwarder back.** The forwarder cannot check that it holds the tokens that back their resources.
 
 ## 9. Parameters
 

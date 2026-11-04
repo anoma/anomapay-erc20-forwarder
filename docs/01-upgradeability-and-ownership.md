@@ -34,9 +34,9 @@ The forwarder acts only when its protocol adapter calls it. So a pause of the pr
 
 ## 4. Trust assumptions
 
-- **The owner controls the tokens.** An upgrade replaces all code, so the owner can change how tokens leave the forwarder. In production, the FWD Safe signers decide each upgrade.
-- **A response to a flaw in production needs two Safes.** The PA Safe pauses the protocol adapter, and the FWD Safe upgrades the forwarder.
-- **The ownership transfer takes one step.** `transferOwnership` and `renounceOwnership` come unchanged from OpenZeppelin. Nobody can undo a transfer to a wrong address. After a renouncement, nobody can upgrade the forwarder.
+- **The owner upgrades only to reviewed code.** An upgrade replaces all code, so the owner can change how tokens leave the forwarder. In production, the FWD Safe signers decide each upgrade.
+- **The PA Safe and the FWD Safe respond to a flaw in time.** In production, the PA Safe pauses the protocol adapter, and the FWD Safe upgrades the forwarder.
+- **The owner transfers the ownership only to a correct address.** `transferOwnership` and `renounceOwnership` come unchanged from OpenZeppelin, and a transfer completes in one step. Nobody can undo a transfer to a wrong address, and after a renouncement nobody can upgrade the forwarder.
 
 ## 5. Parameters
 
