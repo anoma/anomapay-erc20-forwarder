@@ -2,7 +2,7 @@
 
 **Status: draft.** No script deploys it, and no environment uses it. Section [7](#7-status-of-the-draft) lists the open points.
 
-This document specifies the hard migration of ERC20 resources, which the code calls emergency migration. It uses two drafts: the forwarder implementation [`EmergencyMigratingERC20Forwarder`](../contracts/src/draft/EmergencyMigratingERC20Forwarder.sol) and the emergency-migrating ERC20 circuit of anoma/anomapay-erc20-resource.
+This document specifies the hard migration of ERC20 resources, which the code calls emergency migration. It uses two drafts: the forwarder implementation [`EmergencyMigratingERC20Forwarder`](../contracts/src/draft/EmergencyMigratingERC20Forwarder.sol) and the emergency-migrating ERC20 circuit of anoma/anomapay-erc20-resource. The glossary [`CONTEXT.md`](../CONTEXT.md#language) defines the terms.
 
 ## 1. Mechanism
 
