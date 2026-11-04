@@ -1,6 +1,6 @@
 # Soft Migration
 
-This document specifies the soft migration of ERC20 resources: users replace their resources of a deprecated version with resources of the active version. It states what the kind tree, the ERC20 forwarder and the protocol adapter each add, and what a prover needs. [`06-asset-migration.md`](./06-asset-migration.md) specifies the soft migration of the legacy-forwarder resources.
+This document specifies the soft migration of ERC20 resources: users replace their resources of a deprecated version with resources of the active version. It states what the kind tree, the ERC20 forwarder and the protocol adapter each add, and what a prover needs. [`06-asset-migration.md`](./06-asset-migration.md) specifies the soft migration of the legacy-forwarder resources. The glossary [`CONTEXT.md`](../CONTEXT.md#language) defines the terms.
 
 ## 1. Mechanism
 
@@ -30,8 +30,8 @@ After the upgrade of the forwarder, a wrap or an unwrap that a prover proved for
 
 ## 3. Trust assumptions
 
-- **A soft migration also converts forged resources.** Until the owner of the protocol adapter denies an old version with a flaw, a forged old resource can convert into a resource of the active version that looks correct.
-- **A wrong kind tree entry lets users take tokens that back other resources.** For example, an entry that makes the kinds of two tokens aliases lets a user wrap one token and unwrap the other. The owner of the protocol adapter sets only kind tree roots that the kind trees repository published.
+- **The owner of the protocol adapter denies a flawed version in time.** Until then, a soft migration also converts forged resources: a forged old resource can convert into a resource of the active version that looks correct.
+- **The owner of the protocol adapter sets only reviewed kind tree roots.** A wrong kind tree entry lets users take tokens that back other resources. For example, an entry that makes the kinds of two tokens aliases lets a user wrap one token and unwrap the other.
 - **Each kind with unspent resources keeps a way to unwrap.** R2 fails if a release removes the entries of a kind while resources of that kind exist.
 
 ## 4. Parameters

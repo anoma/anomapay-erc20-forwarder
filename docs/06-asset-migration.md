@@ -56,8 +56,8 @@ In both environments, the FWD Safe sets the emergency caller and the deployment 
 ## 7. Trust assumptions
 
 - **The protocol adapter stays paused until the move ends.** Before the move, the ERC20 forwarder does not hold the tokens that back the legacy-forwarder resources, so an unwrap of such a resource would send tokens that back other resources. The ERC20 forwarder sends tokens only when its protocol adapter calls it. No contract checks that the pause lasts until the move ends.
-- **The FWD Safe sets the correct contract.** Nobody can undo this step.
-- **The owner of the migration contract selects the tokens and the time,** but not the amount or the receiver.
+- **The FWD Safe sets the correct migration contract as the emergency caller.** Nobody can undo this step.
+- **The owner of the migration contract moves the tokens during the pause.** It selects the tokens and the time, but not the amount or the receiver.
 - **The list of tokens is complete.** A token outside the list stays in the legacy ERC20 forwarder until a later `migrate`, and it must have no legacy-forwarder entries until then.
 - **No token takes a fee on a transfer.** Otherwise, `migrate` reverts for that token, and the other tokens move without it. Such a token stays in the legacy ERC20 forwarder, so it must have no legacy-forwarder entries.
 - **Each token accepts a transfer of zero.** A zero balance gives one unwrap of zero. If the token rejects it, `migrate` reverts, and the other tokens move without it.

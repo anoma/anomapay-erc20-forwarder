@@ -45,20 +45,35 @@ The hash that identifies the code of a resource logic.
 **Label ref**:
 The hash of the data that separates the resources of one resource logic. For an ERC20 resource, the data are the addresses of the forwarder and the token.
 
+**Value ref**:
+For a persistent ERC20 resource, the SHA-256 hash of the authorization key and the encryption key of its owner. For the ephemeral resource of an unwrap, the address of the receiver.
+
+**Action tree root**:
+The root of a Merkle tree over the tags of an action, in the order of its list. The tag of a resource is its nullifier if the transaction consumes it, else its commitment.
+
+**App data / Deletion criterion**:
+The app data of a resource holds four lists of blobs: the resource payload, the discovery payload, the external payload and the application payload. The deletion criterion of a blob is `Never` or `Immediately`. The protocol adapter emits each blob with `Never` as an event. Each blob of the external payload is an external call, whatever its deletion criterion.
+
+**External call**:
+A call that the protocol adapter makes to a forwarder when it processes a resource. The external payload of the resource carries it, and the resource logic proof covers it.
+
 **In-circuit check**:
 A check that a circuit makes: a proof of the circuit is valid only if the check holds. For example, the ERC20 resource logic checks the signature of the owner.
 
 **Out-of-circuit check**:
 A check outside the circuits, for example a check that the forwarder or the protocol adapter makes on chain.
 
+**Compliance unit / Aggregation proof / Delta proof**:
+Each action has one compliance unit. Its compliance proof shows the **compliance checks**: the in-circuit checks that the action follows the rules of the ARM. The aggregation proof aggregates the compliance proofs and the resource logic proofs of a transaction into one proof, so the protocol adapter verifies only the aggregation proof and the delta proof. The delta proof shows that a transaction balances: for each kind point, the consumed and the created quantities are equal.
+
 **Forwarder**:
-The EVM contract through which the protocol adapter drives ERC20 state changes (wrap/unwrap) on behalf of AnomaPay ERC20 actions.
+The contract that the protocol adapter calls for a wrap or an unwrap. It holds the tokens that back the ERC20 resources.
 
 **Environment**:
 One of the two ERC20 forwarder deployments the repo maintains, each recorded per chain in the deployment record and tracking a branch. Say "environment" (not "network" or "deployment target") — a chain is where an environment lives, not which one it is.
 
 **Staging / Production**:
-The two environments. Staging is owned by the deployment wallet and upgraded directly; production is owned by a Safe multisig whose signers confirm and execute upgrades. Each environment's forwarder settles through the protocol adapter proxy of the same environment. The branches tracking them keep their own names, `staging` and `main`.
+The two environments. Staging is owned by the deployment wallet and upgraded directly; production is owned by a Safe multisig whose signers confirm and execute upgrades. Each environment's forwarder accepts calls only from the protocol adapter proxy of the same environment. The branches tracking them keep their own names, `staging` and `main`.
 
 **Promotion**:
 Moving a commit unchanged from `next` to `staging`, or from `staging` to `main`. The pull request opening one carries the gate proving the environment it targets runs that commit's source. Changes only ever flow this way.
@@ -109,7 +124,7 @@ The hash to curve of the logic ref and the label ref of a resource.
 The point that the compliance circuit multiplies by the quantity of a resource. Two resources balance against each other only if they have the same kind point.
 
 **Kind tree**:
-A Merkle tree that gives kinds their kind points. Two kinds with the same kind point are **aliases**. The protocol adapter stores the root of one kind tree.
+A Merkle tree that gives kinds their kind points. Two kinds with the same kind point are **aliases**. The protocol adapter stores the root of one kind tree, its **kind tree root**.
 
 **Conversion**:
 A transaction that consumes resources of one kind and creates resources of another kind for the same quantity. The kind tree gives both kinds one kind point, so the transaction balances.
