@@ -1,4 +1,4 @@
-# Soft Migration of ERC20 Resources
+# Soft Migration
 
 This document specifies the soft migration of ERC20 resources: users replace their resources of a deprecated version with resources of the active version. It states what the kind tree, the ERC20 forwarder and the protocol adapter each add, and what a prover needs. [`06-asset-migration.md`](./06-asset-migration.md) specifies the soft migration of the legacy-forwarder resources.
 

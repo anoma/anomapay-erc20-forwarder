@@ -1,4 +1,4 @@
-# ERC20 Forwarder Upgradeability and Ownership
+# Upgradeability and Ownership
 
 This document specifies the ERC20 forwarder after its deployment: the proxy, its owners, its upgrades and the controls for a flaw. The [overview](./README.md) lists the other documents, and the glossary [`CONTEXT.md`](../CONTEXT.md#language) defines the terms.
 

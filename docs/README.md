@@ -13,7 +13,7 @@ A release of a new version of the ERC20 resource logic changes the accepted logi
 | Document                                                                     | Content                                                                                                        |
 | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | [`01-upgradeability-and-ownership.md`](./01-upgradeability-and-ownership.md) | The proxy, its owners, its upgrades and the response to a flaw                                                 |
-| [`02-wrap-and-unwrap.md`](./02-wrap-and-unwrap.md)                           | How the protocol adapter calls the forwarder, and what a wrap and an unwrap do                                 |
+| [`02-contract-and-calls.md`](./02-contract-and-calls.md)                     | How the protocol adapter calls the forwarder, and what a wrap and an unwrap do                                 |
 | [`03-soft-migration.md`](./03-soft-migration.md)                             | How users convert their resources of a deprecated version into resources of the active version                 |
 | [`04-hard-migration.md`](./04-hard-migration.md)                             | The draft that replaces resources of a version with a flaw                                                     |
 | [`05-legacy-erc20-forwarder.md`](./05-legacy-erc20-forwarder.md)             | How the ERC20 forwarder differs from the legacy ERC20 forwarder                                                |

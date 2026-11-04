@@ -1,4 +1,4 @@
-# Hard Migration of ERC20 Resources (Draft)
+# Hard Migration (Draft)
 
 **Status: draft.** No script deploys it, and no environment uses it. Section [7](#7-status-of-the-draft) lists the open points.
 

@@ -1,6 +1,6 @@
-# Wrap and Unwrap
+# Contract and Calls
 
-This document specifies how the protocol adapter calls the ERC20 forwarder, and what a wrap and an unwrap do. The code is in [`contracts/src/ERC20Forwarder.sol`](../contracts/src/ERC20Forwarder.sol) and [`contracts/src/ERC20ForwarderPermit2.sol`](../contracts/src/ERC20ForwarderPermit2.sol). The glossary [`CONTEXT.md`](../CONTEXT.md#language) defines the terms.
+This document specifies the ERC20 forwarder: its resources, how the protocol adapter calls it, and what a wrap and an unwrap do. The code is in [`contracts/src/ERC20Forwarder.sol`](../contracts/src/ERC20Forwarder.sol) and [`contracts/src/ERC20ForwarderPermit2.sol`](../contracts/src/ERC20ForwarderPermit2.sol). The glossary [`CONTEXT.md`](../CONTEXT.md#language) defines the terms.
 
 ## 1. Resources and calls
 
