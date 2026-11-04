@@ -9,7 +9,7 @@ An ERC20 resource is persistent or ephemeral. A persistent ERC20 resource stays 
 - A **wrap** consumes an ephemeral ERC20 resource. Its call takes tokens from their owner.
 - An **unwrap** creates an ephemeral ERC20 resource. Its call sends tokens to a receiver.
 
-For a wrap, the transaction also creates ERC20 resources of the same kind point, usually persistent ones. For an unwrap, it also consumes them. Otherwise the transaction does not balance. The kind of an ERC20 resource follows from its logic ref and its label ref. The label ref is the hash of the forwarder address and the token address. An upgrade keeps the address, so it keeps the label refs.
+For a wrap, the transaction also creates ERC20 resources of the same kind base, usually persistent ones. For an unwrap, it also consumes them. Otherwise the transaction does not balance. The kind of an ERC20 resource follows from its logic ref and its label ref. The label ref is the hash of the forwarder address and the token address. An upgrade keeps the address, so it keeps the label refs.
 
 When the protocol adapter processes an ephemeral ERC20 resource, it calls `forwardCall(logicRef, input)` on the forwarder with the logic ref of the resource. The ERC20 resource logic builds the input and the expected output of the call. Its in-circuit checks require that the forwarder and the token of the call are the addresses that the label ref hashes, and that the amount is the quantity of the resource. The resource logic proof covers the call, so a prover cannot change it.
 
