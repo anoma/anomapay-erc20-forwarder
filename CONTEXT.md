@@ -64,7 +64,7 @@ A check that a circuit makes: a proof of the circuit is valid only if the check 
 A check outside the circuits, for example a check that the forwarder or the protocol adapter makes on chain.
 
 **Compliance unit / Aggregation proof / Delta proof**:
-Each action has one compliance unit. Its compliance proof shows the **compliance checks**: the in-circuit checks that the action follows the rules of the ARM. The aggregation proof aggregates the compliance proofs and the resource logic proofs of a transaction into one proof, so the protocol adapter verifies only the aggregation proof and the delta proof. The delta proof shows that a transaction balances: for each kind point, the consumed and the created quantities are equal.
+Each action has one compliance unit. Its compliance proof shows the **compliance checks**: the in-circuit checks that the action follows the rules of the ARM. The aggregation proof aggregates the compliance proofs and the resource logic proofs of a transaction into one proof, so the protocol adapter verifies only the aggregation proof and the delta proof. The delta proof shows that a transaction balances: for each kind base, the consumed and the created quantities are equal.
 
 **Forwarder**:
 The contract that the protocol adapter calls for a wrap or an unwrap. It holds the tokens that back the ERC20 resources.
@@ -120,14 +120,15 @@ The logic ref of a circuit version with a flaw. The owner of the protocol adapte
 **Kind**:
 The hash to curve of the logic ref and the label ref of a resource.
 
-**Kind point**:
-The point that the compliance circuit multiplies by the quantity of a resource. Two resources balance against each other only if they have the same kind point.
+**Kind base**:
+The point that the compliance circuit multiplies by the quantity of a resource. Two resources balance against each other only if they have the same kind base.
+_Avoid_: kind point
 
 **Kind tree**:
-A Merkle tree that gives kinds their kind points. Two kinds with the same kind point are **aliases**. The protocol adapter stores the root of one kind tree, its **kind tree root**.
+A Merkle tree that gives kinds their kind bases. Two kinds with the same kind base are **aliases**. The protocol adapter stores the root of one kind tree, its **kind tree root**.
 
 **Conversion**:
-A transaction that consumes resources of one kind and creates resources of another kind for the same quantity. The kind tree gives both kinds one kind point, so the transaction balances.
+A transaction that consumes resources of one kind and creates resources of another kind for the same quantity. The kind tree gives both kinds one kind base, so the transaction balances.
 
 **Soft migration**:
 The process in which users convert their resources of a deprecated version, and their legacy-forwarder resources, into resources of the active version.

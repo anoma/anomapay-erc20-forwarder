@@ -4,13 +4,13 @@ This document specifies the soft migration of ERC20 resources: users replace the
 
 ## 1. Mechanism
 
-A new version of a resource logic has a new logic ref, so its resources have new kinds. Resources of two kinds balance against each other only if the kind tree gives both kinds one kind point. Then a conversion balances: it consumes old resources and creates new resources for the same quantity.
+A new version of a resource logic has a new logic ref, so its resources have new kinds. Resources of two kinds balance against each other only if the kind tree gives both kinds one kind base. Then a conversion balances: it consumes old resources and creates new resources for the same quantity.
 
 In this document, the **old version** is the version whose resources users replace, and an **old resource** is a resource of it. The **active version** is the version that the ERC20 forwarder accepts.
 
 A soft migration needs three changes:
 
-1. **The kind tree** gives each kind of the old version the kind point of the kind of the active version with the same label ref.
+1. **The kind tree** gives each kind of the old version the kind base of the kind of the active version with the same label ref.
 2. **The ERC20 forwarder** accepts only the logic ref of the active version. So an old resource can unwrap only after a conversion, in an earlier transaction or in the same transaction.
 3. **The owner of the protocol adapter deprecates the logic ref of the old version.** Transactions can then consume old resources but not create them.
 
@@ -18,8 +18,8 @@ Each user converts their old resources when they use them. A conversion consumes
 
 The kind trees follow two rules:
 
-- **R1: one forwarder.** Two kinds can share a kind point only if one forwarder holds the tokens that back the resources of both kinds. Otherwise, a user could wrap one token and unwrap another.
-- **R2: a way to unwrap.** Each kind with unspent resources keeps a way to unwrap: the forwarder accepts its logic ref, or it shares the kind point of a kind whose logic ref the forwarder accepts.
+- **R1: one forwarder.** Two kinds can share a kind base only if one forwarder holds the tokens that back the resources of both kinds. Otherwise, a user could wrap one token and unwrap another.
+- **R2: a way to unwrap.** Each kind with unspent resources keeps a way to unwrap: the forwarder accepts its logic ref, or it shares the kind base of a kind whose logic ref the forwarder accepts.
 
 After the upgrade of the forwarder, a wrap or an unwrap that a prover proved for the old version reverts, and the prover proves it again. After the deprecation, the number of old resources can only decrease. The kind tree keeps their entries while old resources exist (R2).
 
