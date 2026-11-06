@@ -19,7 +19,7 @@ The deployment record, [`crates/bindings/deployments.json`](../crates/bindings/d
 
 ## 2. A new logic ref
 
-`ERC20Forwarder` has no function that changes the accepted logic ref or the protocol adapter. So a new version of the ERC20 resource logic needs an upgrade to an implementation that sets the new logic ref. That implementation must let only the owner set it, in the same chain transaction as the upgrade. Otherwise, after an upgrade without the call, any account can set a logic ref that it controls and unwrap any amount. The test contract [`ERC20ForwarderUpgradeExample`](../contracts/test/examples/ERC20ForwarderUpgradeExample.sol) shows such an implementation without the owner check. After the upgrade, the forwarder rejects calls with the old logic ref, and users convert their resources of the old version ([`03-soft-migration.md`](./03-soft-migration.md)).
+`ERC20Forwarder` has no function that changes the accepted logic ref or the protocol adapter. So a new version of the ERC20 resource logic needs an upgrade to an implementation that sets the new logic ref. That implementation must let only the owner set it, in the same chain transaction as the upgrade. Otherwise, after an upgrade without the call, any account can set a logic ref that it controls and unwrap any amount. The test contract [`ERC20ForwarderUpgradeExample`](../contracts/test/examples/ERC20ForwarderUpgradeExample.sol) shows such an implementation. After the upgrade, the forwarder rejects calls with the old logic ref, and users convert their resources of the old version ([`03-soft-migration.md`](./03-soft-migration.md)).
 
 ## 3. Controls for a flaw
 
