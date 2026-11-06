@@ -120,7 +120,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
         bytes calldata specificInput = input[_GENERIC_INPUT_OFFSET:];
 
         // NOTE: The balance read before the external call is reentrancy-protected by the `nonReentrant` modifier in
-        // `ForwarderBase.forwardCall` and `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
+        // `ForwarderBaseUpgradeable.forwardCall`.
         // slither-disable-next-line reentrancy-balance
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 balanceDelta = 0;
@@ -163,8 +163,8 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
             signature: abi.encodePacked(data.r, data.s, data.v)
         });
 
-        // NOTE: The event ordering is protected by the `nonReentrant` modifier in `ForwarderBase.forwardCall` and
-        // `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
+        // NOTE: The event ordering is protected by the `nonReentrant` modifier in
+        // `ForwarderBaseUpgradeable.forwardCall`.
         // slither-disable-next-line reentrancy-events
         emit Wrapped({token: token, from: data.owner, amount: amount});
     }
@@ -180,8 +180,8 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
 
         IERC20(token).safeTransfer({to: data.receiver, value: amount});
 
-        // NOTE: The event ordering is protected by the `nonReentrant` modifier in `ForwarderBase.forwardCall` and
-        // `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
+        // NOTE: The event ordering is protected by the `nonReentrant` modifier in
+        // `ForwarderBaseUpgradeable.forwardCall`.
         // slither-disable-next-line reentrancy-events
         emit Unwrapped({token: token, to: data.receiver, amount: amount});
     }
