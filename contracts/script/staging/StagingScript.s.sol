@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Script} from "forge-std-1.17.0/src/Script.sol";
-
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {Parameters} from "../Parameters.sol";
+import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title StagingScript
 /// @author Anoma Foundation, 2026
 /// @notice The base of the scripts acting on the staging environment ERC20 forwarder proxy, which the staging proxy
 /// owner drives directly.
 /// @custom:security-contact security@anoma.foundation
-abstract contract StagingScript is Script {
+abstract contract StagingScript is RecordedDeploymentsScript {
     /// @notice Thrown if the proxy is not a staging deployment, i.e. not owned by the staging proxy owner.
     error NotAStagingDeployment(address proxy);
 
