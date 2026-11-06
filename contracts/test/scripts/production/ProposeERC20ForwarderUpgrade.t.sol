@@ -10,13 +10,12 @@ import {ProposeERC20ForwarderUpgrade} from "../../../script/production/ProposeER
 import {ERC20Forwarder} from "../../../src/ERC20Forwarder.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
 import {DeployERC20ForwarderProxyMock} from "../../mocks/DeployERC20ForwarderProxy.m.sol";
+import {ProtocolAdapterMock} from "../../mocks/ProtocolAdapter.m.sol";
 
 /// @notice Checks the production-only upgrade proposal script against a Safe-owned production proxy. Outside
 /// broadcast mode, the script simulates the Safe executing the upgrade, so the proxy must end up on the new
 /// implementation.
 contract ProposeERC20ForwarderUpgradeTest is SafeFixture {
-    address internal immutable _PROTOCOL_ADAPTER = makeAddr("protocol adapter");
-
     address internal _owner;
     address internal _safe;
     address internal _productionProxy;
@@ -27,7 +26,8 @@ contract ProposeERC20ForwarderUpgradeTest is SafeFixture {
         // Keep the script on the simulation branch regardless of the shell environment.
         vm.setEnv("SAFE_BROADCAST", "false");
 
-        DeployERC20ForwarderProxyMock deployScript = new DeployERC20ForwarderProxyMock(_PROTOCOL_ADAPTER);
+        DeployERC20ForwarderProxyMock deployScript =
+            new DeployERC20ForwarderProxyMock(address(new ProtocolAdapterMock(makeAddr("protocol adapter owner"))));
 
         _owner = makeAddr("safe owner");
         _safe = _deploySafeAt(_owner, Parameters.FWD_MULTISIG);

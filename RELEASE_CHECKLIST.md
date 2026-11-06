@@ -108,6 +108,8 @@ A release candidate and a release go through the same cycle. Steps 1 to 5 are re
 
 - [ ] Bump `VERSION` in [`./contracts/src/ERC20Forwarder.sol`](./contracts/src/ERC20Forwarder.sol) following [SemVer](https://semver.org/spec/v2.0.0.html).
 
+- [ ] Set `_REINITIALIZER_VERSION` in the same file to one more than in the implementation that the staging proxies run. Each upgrade calls `reinitializeLogicRef` with `Parameters.LOGIC_REF`, and the call runs only on a proxy whose initializer version is below this number. A production proxy skips the numbers of the release candidates, so the same call works there. Without this step, the upgrade simulation in step 3 reverts with `InvalidInitialization`.
+
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.0.0-rc.N`, where `A` is the last `MAJOR` version number incremented by 1.
 
 - [ ] Regenerate the recorded deployments library and the bindings with `just contracts-gen`, then run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
@@ -223,7 +225,7 @@ For each chain in the `staging` section of the record:
 
 ### 6. Lift the Release Candidate to a Release
 
-- [ ] On a branch off `next`, strip the `-rc.N` suffix from `VERSION` and from the `bindings` package version, and merge it into `next`.
+- [ ] On a branch off `next`, strip the `-rc.N` suffix from `VERSION` and from the `bindings` package version, raise `_REINITIALIZER_VERSION` by one as in step 1, and merge it into `next`.
 
 - [ ] Repeat steps 2 to 4. The release version is a different implementation at a different address, so it has to be deployed to staging and promoted like any other candidate. This is the extra staging deploy round a release costs, and it is what lets production run the exact implementation staging validated.
 

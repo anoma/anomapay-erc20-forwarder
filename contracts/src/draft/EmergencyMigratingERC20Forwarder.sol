@@ -68,11 +68,6 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
     error LogicRefNotDenied(bytes32 logicRef, bool consumed);
 
-    /// @notice Thrown if a denylist of the protocol adapter contains the new logic reference.
-    /// @param logicRef The new logic reference.
-    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
-    error LogicRefAlreadyDenied(bytes32 logicRef, bool consumed);
-
     /// @notice Thrown if `reinitialize` lists no vulnerable logic reference.
     error EmptyVulnerableLogicRefList();
 
@@ -247,20 +242,6 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
         require(
             ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: false}),
             LogicRefNotDenied({logicRef: logicRef, consumed: false})
-        );
-    }
-
-    /// @notice Checks that no denylist of the protocol adapter contains the new logic reference.
-    /// @param protocolAdapter The protocol adapter that holds the denylists.
-    /// @param logicRef The new logic reference.
-    function _checkLogicRefNotDenied(address protocolAdapter, bytes32 logicRef) internal view {
-        require(
-            !ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: true}),
-            LogicRefAlreadyDenied({logicRef: logicRef, consumed: true})
-        );
-        require(
-            !ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: false}),
-            LogicRefAlreadyDenied({logicRef: logicRef, consumed: false})
         );
     }
 

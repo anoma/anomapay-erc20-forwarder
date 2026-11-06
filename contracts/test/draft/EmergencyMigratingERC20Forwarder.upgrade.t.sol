@@ -9,6 +9,7 @@ import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
 import {EmergencyMigratingERC20Forwarder} from "../../src/draft/EmergencyMigratingERC20Forwarder.sol";
 import {IEmergencyMigratingERC20Forwarder} from "../../src/draft/IEmergencyMigratingERC20Forwarder.sol";
+import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {EmergencyMigratingERC20ForwarderFixture} from "../fixtures/EmergencyMigratingERC20ForwarderFixture.sol";
 
 /// @dev Each test upgrades the regular forwarder itself.
@@ -154,11 +155,7 @@ contract EmergencyMigratingERC20ForwarderUpgradeTest is EmergencyMigratingERC20F
         _setDenied({logicRef: _ACTIVE_LOGIC_REF, isDenied: true});
         _protocolAdapter.mockSetLogicRefDenied({logicRef: _NEW_LOGIC_REF, consumed: consumed, isDenied: true});
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                EmergencyMigratingERC20Forwarder.LogicRefAlreadyDenied.selector, _NEW_LOGIC_REF, consumed
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC20Forwarder.LogicRefAlreadyDenied.selector, _NEW_LOGIC_REF, consumed));
         _upgradeTo({
             implementation: _implementation,
             newLogicRef: _NEW_LOGIC_REF,

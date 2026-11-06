@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/utils/SafeERC20.sol";
 import {ForwarderBaseUpgradeable} from "anoma-forwarder-bases-3.1.0/src/ForwarderBaseUpgradeable.sol";
 import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol";
+import {ILogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.14/src/interfaces/ILogicRefDenylist.sol";
 import {
     IPermit2,
     ISignatureTransfer
@@ -69,6 +70,10 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     /// @inheritdoc IVersion
     string public constant override VERSION = "2.0.0-rc.9";
 
+    /// @notice The initializer version that `reinitializeLogicRef` sets. It must exceed the initializer version of each
+    /// proxy that upgrades to this implementation.
+    uint64 internal constant _REINITIALIZER_VERSION = 2;
+
     /// @notice Emitted when ERC20 tokens get wrapped.
     /// @param token The ERC20 token address.
     /// @param from The address from which tokens were withdrawn.
@@ -83,6 +88,11 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
 
     error BalanceMismatch(uint256 expected, uint256 actual);
     error InvalidInputLength(uint256 expected, uint256 actual);
+
+    /// @notice Thrown if a denylist of the protocol adapter contains the new logic reference.
+    /// @param logicRef The new logic reference.
+    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
+    error LogicRefAlreadyDenied(bytes32 logicRef, bool consumed);
 
     /// @notice Disables the initializers on the implementation contract to prevent it from being left uninitialized.
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -106,6 +116,23 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
         __ForwarderBaseUpgradeable_init({
             protocolAdapter: protocolAdapter, logicRef: logicRef, initialOwner: initialOwner
         });
+    }
+
+    /// @notice Replaces the accepted logic ref. Only the owner can call it, at most once for each implementation.
+    /// @param newLogicRef The logic ref that the forwarder accepts after the call.
+    function reinitializeLogicRef( /* solhint-disable-line comprehensive-interface */
+        bytes32 newLogicRef
+    )
+        external
+        virtual
+        onlyOwner
+        reinitializer(_REINITIALIZER_VERSION)
+    {
+        require(newLogicRef != bytes32(0), ZeroLogicRefNotAllowed());
+
+        ForwarderBaseStorage storage $ = _getForwarderBaseStorage();
+        _checkLogicRefNotDenied({protocolAdapter: $._protocolAdapter, logicRef: newLogicRef});
+        $._logicRef = newLogicRef;
     }
 
     /// @notice Forwards a call wrapping or unwrapping ERC20 tokens based on the provided input.
@@ -184,6 +211,20 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
         // `ForwarderBaseUpgradeable.forwardCall`.
         // slither-disable-next-line reentrancy-events
         emit Unwrapped({token: token, to: data.receiver, amount: amount});
+    }
+
+    /// @notice Checks that no denylist of the protocol adapter contains the new logic reference.
+    /// @param protocolAdapter The protocol adapter that holds the denylists.
+    /// @param logicRef The new logic reference.
+    function _checkLogicRefNotDenied(address protocolAdapter, bytes32 logicRef) internal view {
+        require(
+            !ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: true}),
+            LogicRefAlreadyDenied({logicRef: logicRef, consumed: true})
+        );
+        require(
+            !ILogicRefDenylist(protocolAdapter).isLogicRefDenied({logicRef: logicRef, consumed: false}),
+            LogicRefAlreadyDenied({logicRef: logicRef, consumed: false})
+        );
     }
 
     /// @notice Checks that the length of an input is the expected length.

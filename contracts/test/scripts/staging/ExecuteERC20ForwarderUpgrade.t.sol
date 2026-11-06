@@ -8,18 +8,18 @@ import {DeployERC20ForwarderImplementation} from "../../../script/DeployERC20For
 import {ExecuteERC20ForwarderUpgrade} from "../../../script/staging/ExecuteERC20ForwarderUpgrade.s.sol";
 import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
 import {DeployERC20ForwarderProxyMock} from "../../mocks/DeployERC20ForwarderProxy.m.sol";
+import {ProtocolAdapterMock} from "../../mocks/ProtocolAdapter.m.sol";
 
 /// @notice Checks the staging-only upgrade execution script. `ERC20Forwarder.upgrade.t.sol` covers the upgrade
 /// mechanism itself.
 contract ExecuteERC20ForwarderUpgradeTest is Test {
-    address internal immutable _PROTOCOL_ADAPTER = makeAddr("protocol adapter");
-
     address internal _stagingProxy;
     address internal _productionProxy;
     address internal _implementation;
 
     function setUp() public {
-        DeployERC20ForwarderProxyMock deployScript = new DeployERC20ForwarderProxyMock(_PROTOCOL_ADAPTER);
+        DeployERC20ForwarderProxyMock deployScript =
+            new DeployERC20ForwarderProxyMock(address(new ProtocolAdapterMock(makeAddr("protocol adapter owner"))));
 
         (_stagingProxy, _implementation,,) = deployScript.run({isProduction: false});
         (_productionProxy,,,) = deployScript.run({isProduction: true});

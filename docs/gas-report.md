@@ -1,17 +1,18 @@
 | src/ERC20Forwarder.sol:ERC20Forwarder Contract |                 |        |        |        |         |
 |------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                | Deployment Size |        |        |        |         |
-|                                        1415765 |            6483 |        |        |        |         |
+|                                        1609159 |            7386 |        |        |        |         |
 |                                                |                 |        |        |        |         |
 | Function Name                                  | Min             | Avg    | Median | Max    | # Calls |
-| UPGRADE_INTERFACE_VERSION                      |             583 |    583 |    583 |    583 |       2 |
-| VERSION                                        |             666 |    666 |    666 |    666 |       3 |
+| UPGRADE_INTERFACE_VERSION                      |             605 |    605 |    605 |    605 |       2 |
+| VERSION                                        |             688 |    688 |    688 |    688 |       3 |
 | forwardCall                                    |            4772 |  45677 |  41534 | 104269 |      15 |
-| getImplementation                              |             388 |    388 |    388 |    388 |       3 |
-| getLogicRef                                    |            2426 |   2426 |   2426 |   2426 |       3 |
+| getImplementation                              |             410 |    410 |    410 |    410 |       3 |
+| getLogicRef                                    |            2448 |   2448 |   2448 |   2448 |       6 |
 | getProtocolAdapter                             |             278 |   1389 |   2278 |   2278 |      36 |
-| initialize                                     |           92519 |  92519 |  92519 |  92519 |     109 |
-| owner                                          |             366 |   1585 |   2366 |   2366 |      41 |
+| initialize                                     |           92734 |  92734 |  92734 |  92734 |     116 |
+| owner                                          |             388 |   1607 |   2388 |   2388 |      41 |
 | proxiableUUID                                  |             240 |    240 |    240 |    240 |       2 |
-| upgradeToAndCall                               |            2893 | 107336 | 108666 | 160624 |      53 |
+| reinitializeLogicRef                           |            2381 |  15740 |  19388 |  24188 |       8 |
+| upgradeToAndCall                               |            2893 | 104620 | 108934 | 160892 |      56 |
 

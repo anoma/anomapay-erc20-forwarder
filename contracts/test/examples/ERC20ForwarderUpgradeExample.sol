@@ -9,10 +9,11 @@ import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 /// @custom:security-contact security@anoma.foundation
 /// @custom:oz-upgrades-from ERC20Forwarder
 contract ERC20ForwarderUpgradeExample is ERC20Forwarder {
-    /// @notice Initializes a freshly deployed proxy of this implementation at storage version 2.
-    /// @param protocolAdapter The protocol adapter contract that can forward calls.
-    /// @param logicRef The reference to the ERC20 resource logic function triggering the forward calls.
-    /// @param initialOwner The initial owner of the contract having the upgrade authority.
+    /// @notice The initializer version of this implementation, one more than that of `ERC20Forwarder`.
+    uint64 public constant REINITIALIZER_VERSION = _REINITIALIZER_VERSION + 1;
+
+    /// @inheritdoc ERC20Forwarder
+    /// @dev The upgrade safety validation requires each implementation to define an initializer.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address protocolAdapter,
         bytes32 logicRef,
@@ -20,22 +21,28 @@ contract ERC20ForwarderUpgradeExample is ERC20Forwarder {
     )
         external
         override
-        reinitializer(2)
+        initializer
     {
         __ForwarderBaseUpgradeable_init({
             protocolAdapter: protocolAdapter, logicRef: logicRef, initialOwner: initialOwner
         });
     }
 
-    /// @notice Reinitializes an existing proxy when it is upgraded to this implementation.
-    /// @param upgradedLogicRef The logic ref that this implementation accepts.
-    function reinitialize( /* solhint-disable-line comprehensive-interface */
-        bytes32 upgradedLogicRef
+    /// @notice Replaces the accepted logic ref. Only the owner can call it, at most once for each implementation.
+    /// @param newLogicRef The logic ref that the forwarder accepts after the call.
+    /// @dev Repeats the body of `ERC20Forwarder.reinitializeLogicRef` at `REINITIALIZER_VERSION`.
+    function reinitializeLogicRef( /* solhint-disable-line comprehensive-interface */
+        bytes32 newLogicRef
     )
         external
-        reinitializer(2)
+        override
+        onlyOwner
+        reinitializer(REINITIALIZER_VERSION)
     {
+        require(newLogicRef != bytes32(0), ZeroLogicRefNotAllowed());
+
         ForwarderBaseStorage storage $ = _getForwarderBaseStorage();
-        $._logicRef = upgradedLogicRef;
+        _checkLogicRefNotDenied({protocolAdapter: $._protocolAdapter, logicRef: newLogicRef});
+        $._logicRef = newLogicRef;
     }
 }

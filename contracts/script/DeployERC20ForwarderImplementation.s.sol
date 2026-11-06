@@ -16,9 +16,10 @@ contract DeployERC20ForwarderImplementation is Script {
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
     bytes32 public constant IMPLEMENTATION_SALT = Parameters.IMPLEMENTATION_SALT;
 
-    /// @notice The initialization data to pass to `upgradeToAndCall` when upgrading a proxy to this implementation —
-    /// empty because the current version requires no reinitialization.
-    bytes public constant INITIALIZATION_DATA = "";
+    /// @notice The call that `upgradeToAndCall` makes when it upgrades a proxy to this implementation. It sets the
+    /// accepted logic ref to `Parameters.LOGIC_REF`.
+    bytes public constant INITIALIZATION_DATA =
+        abi.encodeCall(ERC20Forwarder.reinitializeLogicRef, (Parameters.LOGIC_REF));
 
     /// @notice Thrown if the implementation of the current source version is not deployed yet.
     error ImplementationNotDeployed(address implementation);

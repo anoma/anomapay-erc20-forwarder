@@ -36,6 +36,6 @@ After the upgrade of the forwarder, a wrap or an unwrap that a prover proved for
 
 ## 4. Parameters
 
-| Name                   | Value                                                     | Use                                                                                                                             |
-| ---------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `Parameters.LOGIC_REF` | In [`Parameters.sol`](../contracts/script/Parameters.sol) | The logic ref that a new ERC20 forwarder accepts ([`01-upgradeability-and-ownership.md`](./01-upgradeability-and-ownership.md)) |
+| Name                   | Value                                                     | Use                                                                                                                                                              |
+| ---------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Parameters.LOGIC_REF` | In [`Parameters.sol`](../contracts/script/Parameters.sol) | The logic ref that a new ERC20 forwarder accepts and that the upgrade scripts set ([`01-upgradeability-and-ownership.md`](./01-upgradeability-and-ownership.md)) |

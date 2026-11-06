@@ -19,7 +19,7 @@ The deployment record, [`crates/bindings/deployments.json`](../crates/bindings/d
 
 ## 2. A new logic ref
 
-`ERC20Forwarder` has no function that changes the accepted logic ref or the protocol adapter. So a new version of the ERC20 resource logic needs an upgrade to an implementation that sets the new logic ref. That implementation must let only the owner set it, in the same chain transaction as the upgrade. Otherwise, after an upgrade without the call, any account can set a logic ref that it controls and unwrap any amount. The test contract [`ERC20ForwarderUpgradeExample`](../contracts/test/examples/ERC20ForwarderUpgradeExample.sol) shows such an implementation without the owner check. After the upgrade, the forwarder rejects calls with the old logic ref, and users convert their resources of the old version ([`03-soft-migration.md`](./03-soft-migration.md)).
+**`reinitializeLogicRef(newLogicRef)`** replaces the accepted logic ref. Only the owner can call it, and it runs at most once on a proxy for each implementation. The new logic ref must not be zero and must be on no denylist of the protocol adapter. The upgrade scripts call it with `Parameters.LOGIC_REF` in the same chain transaction as the upgrade. No function replaces the protocol adapter. After the replacement, the forwarder rejects calls with the old logic ref, and users convert their resources of the old version ([`03-soft-migration.md`](./03-soft-migration.md)).
 
 ## 3. Controls for a flaw
 
@@ -34,17 +34,17 @@ The forwarder acts only when its protocol adapter calls it. So a pause of the pr
 
 ## 4. Trust assumptions
 
-- **The owner upgrades only to reviewed code.** An upgrade replaces all code, so the owner can change how tokens leave the forwarder. In production, the FWD Safe signers decide each upgrade.
+- **The owner upgrades only to reviewed code and sets only reviewed logic refs.** An upgrade replaces all code, and the forwarder wraps and unwraps tokens only for resources with the accepted logic ref. So the owner can change how tokens leave the forwarder. In production, the FWD Safe signers decide each upgrade and each logic ref.
 - **The PA Safe and the FWD Safe respond to a flaw in time.** In production, the PA Safe pauses the protocol adapter, and the FWD Safe upgrades the forwarder.
 - **The owner transfers the ownership only to a correct address.** `transferOwnership` and `renounceOwnership` come unchanged from OpenZeppelin, and a transfer completes in one step. Nobody can undo a transfer to a wrong address, and after a renouncement nobody can upgrade the forwarder.
 
 ## 5. Parameters
 
-| Name                               | Value                                                     | Use                                                                                                |
-| ---------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `Parameters.PROXY_SALT_STAGING`    | `"ERC20ForwarderProxyStaging"`                            | CREATE2 salt of the staging proxies                                                                |
-| `Parameters.PROXY_SALT_PRODUCTION` | `"ERC20ForwarderProxyProduction"`                         | CREATE2 salt of the production proxies                                                             |
-| `Parameters.IMPLEMENTATION_SALT`   | `"ERC20ForwarderImpl"`                                    | CREATE2 salt of the implementations, in both environments                                          |
-| `Parameters.LOGIC_REF`             | In [`Parameters.sol`](../contracts/script/Parameters.sol) | The logic ref that a new proxy accepts. A proxy keeps its logic ref until an upgrade sets another. |
-| `Parameters.DEPLOYMENT_WALLET`     | `0x61462bE56782568376f9cB069382EFa72764a407`              | Owner of the staging proxies                                                                       |
-| `Parameters.FWD_MULTISIG`          | `0xc703402252Ce1251aa07e0815D50060d27fdd6C4`              | The FWD Safe, owner of the production proxies                                                      |
+| Name                               | Value                                                     | Use                                                                     |
+| ---------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `Parameters.PROXY_SALT_STAGING`    | `"ERC20ForwarderProxyStaging"`                            | CREATE2 salt of the staging proxies                                     |
+| `Parameters.PROXY_SALT_PRODUCTION` | `"ERC20ForwarderProxyProduction"`                         | CREATE2 salt of the production proxies                                  |
+| `Parameters.IMPLEMENTATION_SALT`   | `"ERC20ForwarderImpl"`                                    | CREATE2 salt of the implementations, in both environments               |
+| `Parameters.LOGIC_REF`             | In [`Parameters.sol`](../contracts/script/Parameters.sol) | The logic ref that a new proxy accepts and that the upgrade scripts set |
+| `Parameters.DEPLOYMENT_WALLET`     | `0x61462bE56782568376f9cB069382EFa72764a407`              | Owner of the staging proxies                                            |
+| `Parameters.FWD_MULTISIG`          | `0xc703402252Ce1251aa07e0815D50060d27fdd6C4`              | The FWD Safe, owner of the production proxies                           |
