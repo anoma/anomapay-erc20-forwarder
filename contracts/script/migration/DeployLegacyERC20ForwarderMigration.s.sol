@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IOwnerManager} from "safe-smart-account-1.5.0/contracts/interfaces/IOwnerManager.sol";
-import {Safe} from "safe-utils-0.0.22/src/Safe.sol";
+import {Safe} from "safe-utils-0.0.24/src/Safe.sol";
 
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
 import {Parameters} from "../Parameters.sol";
