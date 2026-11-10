@@ -23,19 +23,26 @@ The deployment record, [`crates/bindings/deployments.json`](../crates/bindings/d
 
 ## 3. Controls for a flaw
 
-The forwarder acts only when its protocol adapter calls it. So a pause of the protocol adapter also stops the forwarder.
+The forwarder acts only when its protocol adapter calls it, and only for a resource with the accepted logic ref. So two controls of the protocol adapter can also stop the forwarder:
 
-| Flaw in                                                               | Controls                                                                                                                     |
-| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| The code of the ERC20 forwarder                                       | The pause of the protocol adapter, and an upgrade of the forwarder                                                           |
-| A version of the ERC20 resource logic                                 | A hard migration ([`04-hard-migration.md`](./04-hard-migration.md))                                                          |
-| The protocol adapter, its circuits or the RISC Zero verifier contract | An upgrade of the protocol adapter                                                                                           |
-| A RISC Zero zkVM release                                              | An upgrade of the protocol adapter, and a hard migration of each version of the ERC20 resource logic built with that release |
+- **The pause.** The protocol adapter executes no transaction until its owner lifts the pause.
+- **The denylists.** The protocol adapter keeps two denylists of logic refs: one for consumed resources and one for created resources. No function removes an entry.
+  - To _deprecate_ a logic ref, the owner of the protocol adapter adds it to the list for created resources. Transactions can still consume its resources, but no transaction can create one. So its resources can convert into resources of the active version ([`03-soft-migration.md`](./03-soft-migration.md)).
+  - To _deny_ a logic ref, the owner adds it to both lists. No transaction can consume or create its resources, so they cannot convert. Only a hard migration replaces them ([`04-hard-migration.md`](./04-hard-migration.md)).
+
+The owner deprecates the logic ref of a version only after the forwarder accepts another version. A deprecation of the accepted logic ref stops each unwrap, because an unwrap creates the resource that makes its call. It also stops each wrap and each transfer, because the owner deprecates or denies each other version.
+
+| Flaw in                                                               | Controls                                                                                                                                                           |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The code of the ERC20 forwarder                                       | The pause of the protocol adapter until an upgrade of the forwarder. A denial of the accepted logic ref also stops the flaw, but then each user must hard-migrate. |
+| A version of the ERC20 resource logic                                 | The denial of its logic ref, and a hard migration                                                                                                                  |
+| The protocol adapter, its circuits or the RISC Zero verifier contract | An upgrade of the protocol adapter                                                                                                                                 |
+| A RISC Zero zkVM release                                              | An upgrade of the protocol adapter, the denial of each version of the ERC20 resource logic built with that release, and a hard migration                           |
 
 ## 4. Trust assumptions
 
 - **The owner upgrades only to reviewed code.** An upgrade replaces all code, so the owner can change how tokens leave the forwarder. In production, the FWD Safe signers decide each upgrade.
-- **The PA Safe and the FWD Safe respond to a flaw in time.** In production, the PA Safe pauses the protocol adapter, and the FWD Safe upgrades the forwarder.
+- **The PA Safe and the FWD Safe respond to a flaw in time.** In production, the PA Safe pauses the protocol adapter and denies logic refs, and the FWD Safe upgrades the forwarder.
 - **The owner transfers the ownership only to a correct address.** `transferOwnership` and `renounceOwnership` come unchanged from OpenZeppelin, and a transfer completes in one step. Nobody can undo a transfer to a wrong address, and after a renouncement nobody can upgrade the forwarder.
 
 ## 5. Parameters
