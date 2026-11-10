@@ -10,7 +10,7 @@ In this document, the **old version** is the version whose resources users repla
 
 A soft migration needs three changes:
 
-1. **The kind tree** gives each kind of the old version the kind base of the kind of the active version with the same label ref.
+1. **The kind tree** gives each kind of the old version the kind base of the kind of the active version with the same label ref. It does this only for the tokens that `tokens.json` of the kind trees repository lists. Old resources of another token cannot unwrap after the upgrade of the forwarder. They can unwrap again after the kind trees list the token and the owner of the protocol adapter stores the new root.
 2. **The ERC20 forwarder** accepts only the logic ref of the active version. So an old resource can unwrap only after a conversion, in an earlier transaction or in the same transaction.
 3. **The owner of the protocol adapter deprecates the logic ref of the old version.** Transactions can then consume old resources but not create them.
 
