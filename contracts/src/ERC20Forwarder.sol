@@ -30,8 +30,8 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     /// @notice A struct containing wrap specific inputs.
     /// @param nonce A unique value to prevent signature replays.
     /// @param deadline The deadline of the permit signature.
-    /// @param owner The owner from which the funds a transferred from and signer of the Permit2 message.
-    /// @param witness The action tree root that was signed over in addition to the permit data.
+    /// @param owner The account that signs the Permit2 message and from which Permit2 transfers the tokens.
+    /// @param actionTreeRoot The action tree root that the owner signs together with the permit data.
     /// @param r The ECDSA signature component `r` of the Permit2 signature.
     /// @param s The ECDSA signature component `s` of the Permit2 signature.
     /// @param v The ECDSA recovery identifier (27 or 28) of the Permit2 signature.
@@ -53,6 +53,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     }
 
     /// @notice The offset for the calltype specific input data (3 slots).
+    // NOTE: Slither does not see the uses of this constant as slice bounds.
     // slither-disable-next-line unused-state
     uint256 internal constant _GENERIC_INPUT_OFFSET = 3 * 32;
 
