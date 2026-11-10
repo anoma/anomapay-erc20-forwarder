@@ -16,12 +16,9 @@ A soft migration needs three changes:
 
 Each user converts their old resources when they use them. A conversion consumes an old resource, so the protocol adapter verifies a proof of the old version. So the old version must still be trusted. A version with a flaw needs a hard migration ([`04-hard-migration.md`](./04-hard-migration.md)).
 
-The kind trees follow two rules:
+The [rules of the kind trees](https://github.com/anoma/risc0-kind-trees/blob/next/docs/01-entries-and-rules.md#2-rules) decide which conversions exist.
 
-- **R1: one forwarder.** Two kinds can share a kind base only if one forwarder holds the tokens that back the resources of both kinds. Otherwise, a user could wrap one token and unwrap another.
-- **R2: a way to unwrap.** Each kind with unspent resources keeps a way to unwrap: the forwarder accepts its logic ref, or it shares the kind base of a kind whose logic ref the forwarder accepts.
-
-After the upgrade of the forwarder, a wrap or an unwrap that a prover proved for the old version reverts, and the prover proves it again. After the deprecation, the number of old resources can only decrease. The kind tree keeps their entries while old resources exist (R2).
+After the upgrade of the forwarder, a wrap or an unwrap that a prover proved for the old version reverts, and the prover proves it again. After the deprecation, the number of old resources can only decrease. The kind tree keeps their entries while old resources exist.
 
 ## 2. What a prover needs
 
@@ -32,7 +29,7 @@ After the upgrade of the forwarder, a wrap or an unwrap that a prover proved for
 
 - **The owner of the protocol adapter denies a flawed version in time.** Until then, a soft migration also converts forged resources: a forged old resource can convert into a resource of the active version that looks correct.
 - **The owner of the protocol adapter sets only reviewed kind tree roots.** A wrong kind tree entry lets users take tokens that back other resources. For example, an entry that makes the kinds of two tokens aliases lets a user wrap one token and unwrap the other.
-- **Each kind with unspent resources keeps a way to unwrap.** R2 fails if a release removes the entries of a kind while resources of that kind exist.
+- **Each kind with unspent resources keeps a way to unwrap.** This does not hold if a release of the kind trees removes the entries of a kind while resources of that kind exist.
 
 ## 4. Parameters
 
