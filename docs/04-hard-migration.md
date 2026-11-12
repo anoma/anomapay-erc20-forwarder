@@ -1,8 +1,8 @@
-# Hard Migration (Draft)
+# Hard Migration
 
-**Status: draft.** No script deploys it, and no environment uses it. Section [7](#7-status-of-the-draft) lists the open points.
+**Status:** this document specifies the hard migration, and its implementation is a draft. No script deploys the implementation, and no environment uses it. Section [7](#7-status-of-the-implementation) lists its open points.
 
-This document specifies the hard migration of ERC20 resources, which the code calls emergency migration. It uses two drafts: the forwarder implementation [`EmergencyMigratingERC20Forwarder`](../contracts/src/draft/EmergencyMigratingERC20Forwarder.sol) and the emergency-migrating ERC20 circuit of anoma/anomapay-erc20-resource. The glossary [`CONTEXT.md`](../CONTEXT.md#language) defines the terms.
+This document specifies the hard migration of ERC20 resources, which the code calls emergency migration. Its implementation has two parts: the forwarder implementation [`EmergencyMigratingERC20Forwarder`](../contracts/src/draft/EmergencyMigratingERC20Forwarder.sol) and the emergency-migrating ERC20 circuit of anoma/anomapay-erc20-resource. The glossary [`CONTEXT.md`](../CONTEXT.md#language) defines the terms.
 
 ## 1. Mechanism
 
@@ -64,10 +64,10 @@ The commitment tree only grows, and after the denial no transaction adds an old 
 
 A flaw can let an attacker forge old resources, and the state cannot show the difference to correct ones. A root from before an attack would also exclude the correct resources of later transactions, and the start of an attack is usually unknown. So forged resources can hard-migrate too.
 
-## 7. Status of the draft
+## 7. Status of the implementation
 
 - The kind trees do not list the emergency-migrating circuit yet.
-- `reinitialize` uses `reinitializer(2)`. After a release that runs a reinitializer of version 2, the draft needs a higher version number.
+- `reinitialize` uses `reinitializer(2)`. After a release that runs a reinitializer of version 2, the implementation needs a higher version number.
 - If the owner does not call `reinitialize` in the upgrade transaction, each `Migrate` call reverts.
 - On a chain with a legacy ERC20 forwarder, an implementation with a zero `LEGACY_FORWARDER` rejects all legacy-forwarder resources. An upgrade to an implementation with the correct address repairs this.
 - `VERSION` is a constant of `ERC20Forwarder`. Before a release, it must become a function that each implementation can override.
