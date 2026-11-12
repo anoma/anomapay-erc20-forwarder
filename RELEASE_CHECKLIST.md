@@ -34,7 +34,7 @@ Changes flow one way, `next` → `staging` → `main`, and the promotion pull re
 
 - **`next`** integrates feature branches. Nothing is asserted about deployments, so a version bump is green before anything is deployed.
 - **`staging`** receives `next`. A pull request into it requires every entry in the staging section to run the source version, checked with `VERIFY_STAGING_DEPLOYMENTS`.
-- **`main`** receives `staging`. A pull request into it requires every entry in the production section to run the source version, carry no prerelease suffix, and be owned by a Safe, checked with `VERIFY_PRODUCTION_DEPLOYMENTS`.
+- **`main`** receives `staging`. A pull request into it requires every entry in the production section to run the source version, carry no prerelease suffix, and be owned by the forwarder multisig, checked with `VERIFY_PRODUCTION_DEPLOYMENTS`.
 
 The flags gate the deployment tests in the contracts and the crates suites alike; unset, the gated tests skip and read no chain.
 
@@ -276,7 +276,7 @@ For each chain in the `production` section of the record:
 
 ### 8. Promote `staging` into `main`
 
-- [ ] Open a pull request from `staging` into `main`. CI sets `VERIFY_PRODUCTION_DEPLOYMENTS`, so the deployment tests check that every chain in the production section runs this source, carries no prerelease suffix, and is owned by a Safe.
+- [ ] Open a pull request from `staging` into `main`. CI sets `VERIFY_PRODUCTION_DEPLOYMENTS`, so the deployment tests check that every chain in the production section runs this source, carries no prerelease suffix, and is owned by the forwarder multisig.
 
 - [ ] Merge it once green.
 
