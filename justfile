@@ -219,8 +219,15 @@ contracts-verify-custom address contract chain verifier-url *args:
     cd contracts && forge verify-contract {{address}} {{contract}} \
         --chain {{chain}} --verifier-url {{verifier-url}} --watch {{ args }}
 
-# Verify a contract on both sourcify and etherscan
-contracts-verify address contract chain: (contracts-verify-sourcify address contract chain) (contracts-verify-etherscan address contract chain)
+# Verify a contract on both sourcify and etherscan; a failure on one explorer does not stop the other
+contracts-verify address contract chain:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    failed=""
+    for explorer in sourcify etherscan; do
+        just contracts-verify-$explorer {{address}} {{contract}} {{chain}} || failed+=" $explorer"
+    done
+    if [ -n "$failed" ]; then echo "Verification of {{address}} failed on:$failed" >&2; exit 1; fi
 
 # Verify the ERC20 forwarder implementation on both explorers
 contracts-verify-impl implementation chain: (contracts-verify implementation "src/ERC20Forwarder.sol:ERC20Forwarder" chain)
@@ -229,10 +236,15 @@ contracts-verify-impl implementation chain: (contracts-verify implementation "sr
 contracts-verify-proxy proxy chain: \
     (contracts-verify proxy "dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy" chain)
 
-# Verify a deployment — the ERC20 forwarder implementation and the ERC-1967 proxy pointing at it — on both explorers
-contracts-verify-deployment implementation proxy chain: \
-    (contracts-verify-impl implementation chain) \
-    (contracts-verify-proxy proxy chain)
+# Verify a deployment — the ERC20 forwarder implementation and the ERC-1967 proxy pointing at it — on both explorers;
+# a failure on the implementation does not stop the proxy
+contracts-verify-deployment implementation proxy chain:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    status=0
+    just contracts-verify-impl {{implementation}} {{chain}} || status=1
+    just contracts-verify-proxy {{proxy}} {{chain}} || status=1
+    exit $status
 
 # Publish contracts at the version `ERC20Forwarder` compiles to
 contracts-publish *args:
