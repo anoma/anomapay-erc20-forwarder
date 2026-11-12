@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol";
+
 import {RecordedDeployments} from "../../../generated/RecordedDeployments.sol";
-import {ERC20Forwarder} from "../../../src/ERC20Forwarder.sol";
 import {DeploymentsFixture} from "../../fixtures/DeploymentsFixture.sol";
 
 /// @notice Checks the staging deployments recorded in `deployments.json`. The genesis check needs no chain access and
@@ -23,8 +24,14 @@ contract DeploymentsStagingTest is DeploymentsFixture {
         RecordedDeployments.Deployment[] memory deployments = _recordedDeployments({isProduction: false});
 
         for (uint256 i = 0; i < deployments.length; ++i) {
-            _selectForkAt(deployments[i].chainId);
-            string memory version = ERC20Forwarder(deployments[i].proxy.addr).VERSION();
+            string memory version = abi.decode(
+                _call({
+                    chainId: deployments[i].chainId,
+                    target: deployments[i].proxy.addr,
+                    data: abi.encodeCall(IVersion.VERSION, ())
+                }),
+                (string)
+            );
             string memory context = _deploymentContext({isProduction: false, chainId: deployments[i].chainId});
 
             assertTrue(
