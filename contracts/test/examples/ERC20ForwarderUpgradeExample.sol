@@ -9,10 +9,8 @@ import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 /// @custom:security-contact security@anoma.foundation
 /// @custom:oz-upgrades-from ERC20Forwarder
 contract ERC20ForwarderUpgradeExample is ERC20Forwarder {
-    /// @notice Initializes a freshly deployed proxy of this implementation at storage version 2.
-    /// @param protocolAdapter The protocol adapter contract that can forward calls.
-    /// @param logicRef The reference to the ERC20 resource logic function triggering the forward calls.
-    /// @param initialOwner The initial owner of the contract having the upgrade authority.
+    /// @inheritdoc ERC20Forwarder
+    /// @dev The upgrade safety validation rejects an implementation without its own initializer.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address protocolAdapter,
         bytes32 logicRef,
@@ -20,19 +18,20 @@ contract ERC20ForwarderUpgradeExample is ERC20Forwarder {
     )
         external
         override
-        reinitializer(2)
+        initializer
     {
         __ForwarderBaseUpgradeable_init({
             protocolAdapter: protocolAdapter, logicRef: logicRef, initialOwner: initialOwner
         });
     }
 
-    /// @notice Reinitializes an existing proxy when it is upgraded to this implementation.
+    /// @notice Reinitializes an existing proxy when it is upgraded to this implementation. Only the owner can call it.
     /// @param upgradedLogicRef The logic ref that this implementation accepts.
     function reinitialize( /* solhint-disable-line comprehensive-interface */
         bytes32 upgradedLogicRef
     )
         external
+        onlyOwner
         reinitializer(2)
     {
         ForwarderBaseStorage storage $ = _getForwarderBaseStorage();

@@ -9,8 +9,10 @@
 //!   the tokens.
 //!
 //! In each transaction, the consumed and the created resources of a token hold the same quantity.
-//! [`token`] builds whole wraps, transfers and unwraps from these resources.
+//! [`token`] builds whole wraps, transfers and unwraps from these resources. [`emergency_migrating`] holds the resources
+//! of the draft emergency migrating forwarder.
 
+pub mod emergency_migrating;
 pub mod ephemeral;
 pub mod persistent;
 pub mod token;

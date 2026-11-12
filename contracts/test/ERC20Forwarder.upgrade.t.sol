@@ -91,4 +91,21 @@ contract ERC20ForwarderUpgradeTest is Test {
         vm.prank(_FORWARDER_OWNER);
         _fwdProxy.upgradeToAndCall({newImplementation: _upgradedImplementation, data: _reinitializeCalldata});
     }
+
+    function test_reinitialize_of_the_upgrade_example_reverts_if_the_caller_is_not_the_owner() public {
+        vm.prank(_FORWARDER_OWNER);
+        _fwdProxy.upgradeToAndCall({newImplementation: _upgradedImplementation, data: ""});
+
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, address(this)));
+        ERC20ForwarderUpgradeExample(address(_fwdProxy)).reinitialize(_UPGRADED_LOGIC_REF);
+    }
+
+    function test_initialize_of_the_upgrade_example_reverts_after_an_upgrade_without_a_call() public {
+        vm.prank(_FORWARDER_OWNER);
+        _fwdProxy.upgradeToAndCall({newImplementation: _upgradedImplementation, data: ""});
+
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        ERC20ForwarderUpgradeExample(address(_fwdProxy))
+            .initialize({protocolAdapter: _pa, logicRef: _UPGRADED_LOGIC_REF, initialOwner: address(this)});
+    }
 }
