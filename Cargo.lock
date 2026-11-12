@@ -1160,7 +1160,6 @@ dependencies = [
  "alloy-chains",
  "anoma-pa-evm-bindings",
  "anomapay_erc20_library",
- "dotenvy",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
