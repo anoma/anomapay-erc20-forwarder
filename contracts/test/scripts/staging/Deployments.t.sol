@@ -26,7 +26,7 @@ contract DeploymentsStagingTest is DeploymentsFixture {
         for (uint256 i = 0; i < deployments.length; ++i) {
             string memory version = abi.decode(
                 _call({
-                    network: _network(deployments[i].chainId),
+                    chainId: deployments[i].chainId,
                     target: deployments[i].proxy.addr,
                     data: abi.encodeCall(IVersion.VERSION, ())
                 }),

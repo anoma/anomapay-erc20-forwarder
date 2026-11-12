@@ -24,59 +24,40 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
         address sourceImplementation = new DeployERC20ForwarderImplementation().predict();
 
         for (uint256 i = 0; i < deployments.length; ++i) {
-            string memory network = _network(deployments[i].chainId);
-            address proxy = deployments[i].proxy.addr;
-            string memory context = _deploymentContext({isProduction: isProduction, chainId: deployments[i].chainId});
-
-            assertGt(
-                _code({network: network, account: proxy}).length,
-                0,
-                string.concat(context, ": deployment missing on-chain")
+            address implementation = abi.decode(
+                _call({
+                    chainId: deployments[i].chainId,
+                    target: deployments[i].proxy.addr,
+                    data: abi.encodeCall(IImplementation.getImplementation, ())
+                }),
+                (address)
             );
             assertEq(
-                abi.decode(
-                    _call({
-                        network: network, target: proxy, data: abi.encodeCall(IImplementation.getImplementation, ())
-                    }),
-                    (address)
-                ),
+                implementation,
                 sourceImplementation,
-                string.concat(context, ": does not run the source implementation")
+                string.concat(
+                    _deploymentContext({isProduction: isProduction, chainId: deployments[i].chainId}),
+                    ": does not run the source implementation"
+                )
             );
         }
     }
 
-    /// @notice Returns the result of a call to an account on a network, read from the network's RPC endpoint.
-    /// @param network The RPC endpoint alias of the network.
+    /// @notice Returns the result of a call to an account on a supported network, run by the network's RPC endpoint.
+    /// @param chainId The chain ID of the network.
     /// @param target The account to call.
     /// @param data The calldata.
     /// @return result The return data.
-    /// @dev A fork does not work here: one forge run cannot fork Monad together with the other chains.
-    function _call(string memory network, address target, bytes memory data) internal returns (bytes memory result) {
+    /// @dev The endpoint runs the call, because forge cannot fork Monad and the other networks in one run.
+    function _call(uint256 chainId, address target, bytes memory data) internal returns (bytes memory result) {
+        string memory network = _supportedNetworks[chainId];
+        assertGt(bytes(network).length, 0, string.concat(chainId.toString(), ": unsupported network"));
+
         vm.serializeAddress({objectKey: "transaction", valueKey: "to", value: target});
         string memory transaction = vm.serializeBytes({objectKey: "transaction", valueKey: "data", value: data});
         result =
             vm.rpc({urlOrAlias: network, method: "eth_call", params: string.concat("[", transaction, ",\"latest\"]")});
-    }
-
-    /// @notice Returns the code of an account on a network, read from the network's RPC endpoint.
-    /// @param network The RPC endpoint alias of the network.
-    /// @param account The account.
-    /// @return code The code of the account.
-    function _code(string memory network, address account) internal returns (bytes memory code) {
-        code = vm.rpc({
-            urlOrAlias: network,
-            method: "eth_getCode",
-            params: string.concat("[\"", vm.toString(account), "\",\"latest\"]")
-        });
-    }
-
-    /// @notice Returns the RPC endpoint alias of the supported network with the provided chain ID.
-    /// @param chainId The chain ID of the supported network.
-    /// @return network The RPC endpoint alias.
-    function _network(uint256 chainId) internal view returns (string memory network) {
-        network = _supportedNetworks[chainId];
-        assertGt(bytes(network).length, 0, string.concat(chainId.toString(), ": unsupported network"));
+        assertGt(result.length, 0, string.concat(network, ": ", vm.toString(target), " returned no data"));
     }
 
     /// @notice Checks that every recorded proxy sits at the address its genesis deployment determines under the
