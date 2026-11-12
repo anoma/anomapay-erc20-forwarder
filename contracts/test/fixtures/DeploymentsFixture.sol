@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {IImplementation} from "anoma-forwarder-bases-3.1.0/src/interfaces/IImplementation.sol";
 import {SupportedNetworks} from "anoma-risc0-deployments-2.0.0/src/SupportedNetworks.sol";
 import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
@@ -8,7 +9,6 @@ import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployERC20ForwarderImplementation} from "../../script/DeployERC20ForwarderImplementation.s.sol";
 import {Parameters} from "../../script/Parameters.sol";
-import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 
 /// @notice A test fixture providing the ERC20 forwarder deployments recorded per environment in `deployments.json` —
 /// the single source of truth for the deterministic deployments — through the generated `RecordedDeployments` library.
@@ -21,32 +21,62 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     /// @param isProduction Whether to check the production or the staging environment.
     function _expectSourceImplementations(bool isProduction) internal {
         RecordedDeployments.Deployment[] memory deployments = _recordedDeployments(isProduction);
+        address sourceImplementation = new DeployERC20ForwarderImplementation().predict();
 
         for (uint256 i = 0; i < deployments.length; ++i) {
-            uint256 chainId = deployments[i].chainId;
-            RecordedDeployments.Proxy memory proxy = deployments[i].proxy;
-            string memory context = _deploymentContext({isProduction: isProduction, chainId: chainId});
+            string memory network = _network(deployments[i].chainId);
+            address proxy = deployments[i].proxy.addr;
+            string memory context = _deploymentContext({isProduction: isProduction, chainId: deployments[i].chainId});
 
-            // Predicted before the fork is selected, because selecting one discards the script deployed here.
-            address sourceImplementation = new DeployERC20ForwarderImplementation().predict();
-
-            _selectForkAt(chainId);
-            assertGt(proxy.addr.code.length, 0, string.concat(context, ": deployment missing on-chain"));
+            assertGt(
+                _code({network: network, account: proxy}).length,
+                0,
+                string.concat(context, ": deployment missing on-chain")
+            );
             assertEq(
-                ERC20Forwarder(proxy.addr).getImplementation(),
+                abi.decode(
+                    _call({
+                        network: network, target: proxy, data: abi.encodeCall(IImplementation.getImplementation, ())
+                    }),
+                    (address)
+                ),
                 sourceImplementation,
                 string.concat(context, ": does not run the source implementation")
             );
         }
     }
 
-    /// @notice Selects a fork of the supported network with the provided chain ID.
-    /// @param chainId The chain ID of the supported network to fork.
-    function _selectForkAt(uint256 chainId) internal {
-        string memory networkName = _supportedNetworks[chainId];
-        assertGt(bytes(networkName).length, 0, string.concat(chainId.toString(), ": unsupported network"));
+    /// @notice Returns the result of a call to an account on a network, read from the network's RPC endpoint.
+    /// @param network The RPC endpoint alias of the network.
+    /// @param target The account to call.
+    /// @param data The calldata.
+    /// @return result The return data.
+    /// @dev A fork does not work here: one forge run cannot fork Monad together with the other chains.
+    function _call(string memory network, address target, bytes memory data) internal returns (bytes memory result) {
+        vm.serializeAddress({objectKey: "transaction", valueKey: "to", value: target});
+        string memory transaction = vm.serializeBytes({objectKey: "transaction", valueKey: "data", value: data});
+        result =
+            vm.rpc({urlOrAlias: network, method: "eth_call", params: string.concat("[", transaction, ",\"latest\"]")});
+    }
 
-        vm.selectFork(vm.createFork(networkName));
+    /// @notice Returns the code of an account on a network, read from the network's RPC endpoint.
+    /// @param network The RPC endpoint alias of the network.
+    /// @param account The account.
+    /// @return code The code of the account.
+    function _code(string memory network, address account) internal returns (bytes memory code) {
+        code = vm.rpc({
+            urlOrAlias: network,
+            method: "eth_getCode",
+            params: string.concat("[\"", vm.toString(account), "\",\"latest\"]")
+        });
+    }
+
+    /// @notice Returns the RPC endpoint alias of the supported network with the provided chain ID.
+    /// @param chainId The chain ID of the supported network.
+    /// @return network The RPC endpoint alias.
+    function _network(uint256 chainId) internal view returns (string memory network) {
+        network = _supportedNetworks[chainId];
+        assertGt(bytes(network).length, 0, string.concat(chainId.toString(), ": unsupported network"));
     }
 
     /// @notice Checks that every recorded proxy sits at the address its genesis deployment determines under the
