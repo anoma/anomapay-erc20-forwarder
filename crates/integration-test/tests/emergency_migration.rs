@@ -177,7 +177,7 @@ async fn execute_migrates_resources_of_a_vulnerable_logic_ref<Env: Environment>(
             token.address(),
             vulnerable.iter().copied().zip(paths).collect(),
             keccak256([token.address().as_slice(), b"emergency migrate"].concat()).0,
-        ),
+        )?,
         persistent::created(
             &bob,
             token.forwarder(),
