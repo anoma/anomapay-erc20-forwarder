@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {ERC20Example} from "anoma-forwarder-bases-3.1.0/test/examples/ERC20Example.sol";
 import {Test} from "forge-std-1.17.0/src/Test.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 
 import {EmergencyMigratingERC20Forwarder} from "../../src/draft/EmergencyMigratingERC20Forwarder.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
