@@ -2,8 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {Script} from "forge-std-1.17.0/src/Script.sol";
-import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {Parameters} from "./Parameters.sol";
