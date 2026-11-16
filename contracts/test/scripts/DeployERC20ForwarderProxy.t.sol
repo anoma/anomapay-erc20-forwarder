@@ -44,23 +44,12 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
         assertEq(stagingImplementation, productionImplementation, "staging and production implementations differ");
     }
 
-    function test_run_reverts_if_the_chain_has_a_recorded_deployment() public {
-        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments({isProduction: false});
+    function test_run_reverts_if_the_chain_has_a_recorded_staging_deployment() public {
+        _expectRunRevertsOnRecordedChains({isProduction: false});
+    }
 
-        for (uint256 i = 0; i < deployments.length; ++i) {
-            vm.chainId(deployments[i].chainId);
-
-            DeployERC20ForwarderProxy script = new DeployERC20ForwarderProxyMock(_PROTOCOL_ADAPTER);
-
-            vm.expectRevert(
-                abi.encodeWithSelector(
-                    DeployERC20ForwarderProxy.DeploymentAlreadyRecorded.selector,
-                    DeploymentsJson.environment({isProduction: false}),
-                    deployments[i].chainId
-                )
-            );
-            script.run({isProduction: false});
-        }
+    function test_run_reverts_if_the_chain_has_a_recorded_production_deployment() public {
+        _expectRunRevertsOnRecordedChains({isProduction: true});
     }
 
     function test_run_reverts_if_the_records_name_no_protocol_adapter() public {
@@ -126,5 +115,27 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
             Parameters.LOGIC_REF,
             string.concat(environment, ": proxy logic ref differs")
         );
+    }
+
+    /// @notice Runs the deploy script on each chain on which the environment records a deployment, and expects each
+    /// run to revert.
+    /// @param isProduction Whether to check the production or the staging environment.
+    function _expectRunRevertsOnRecordedChains(bool isProduction) private {
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments(isProduction);
+
+        for (uint256 i = 0; i < deployments.length; ++i) {
+            vm.chainId(deployments[i].chainId);
+
+            DeployERC20ForwarderProxy script = new DeployERC20ForwarderProxyMock(_PROTOCOL_ADAPTER);
+
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    DeployERC20ForwarderProxy.DeploymentAlreadyRecorded.selector,
+                    DeploymentsJson.environment(isProduction),
+                    deployments[i].chainId
+                )
+            );
+            script.run({isProduction: isProduction});
+        }
     }
 }
