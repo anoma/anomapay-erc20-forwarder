@@ -40,7 +40,7 @@ contract MigrateERC20ForwarderAssets is MigrationScript {
     /// simulated state. Reverts on the first difference.
     /// @param isProduction Whether the tokens moved to the production or the staging ERC20 forwarder.
     /// @param tokens The ERC20 tokens the move covered.
-    function verify(bool isProduction, IERC20[] calldata tokens) public {
+    function verify(bool isProduction, IERC20[] calldata tokens) public view {
         address legacyForwarder = address(_assignedMigration(isProduction).LEGACY_FORWARDER());
 
         for (uint256 i = 0; i < tokens.length; ++i) {

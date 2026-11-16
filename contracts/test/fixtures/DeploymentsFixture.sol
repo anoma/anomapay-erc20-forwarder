@@ -7,6 +7,7 @@ import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
 import {DeployERC20ForwarderImplementation} from "../../script/DeployERC20ForwarderImplementation.s.sol";
+import {DeploymentRecords} from "../../script/DeploymentRecords.sol";
 import {Parameters} from "../../script/Parameters.sol";
 import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
 
@@ -99,19 +100,12 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
         deployments = isProduction ? RecordedDeployments.production() : RecordedDeployments.staging();
     }
 
-    /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
-    /// @param isProduction Whether to name the production or the staging environment.
-    /// @return name The environment name.
-    function _environmentName(bool isProduction) internal pure returns (string memory name) {
-        name = isProduction ? "production" : "staging";
-    }
-
     /// @notice Returns the `<environment>, <chain ID>` prefix identifying a recorded deployment in assert messages.
     /// @param isProduction Whether the deployment belongs to the production or the staging environment.
     /// @param chainId The chain ID of the deployment.
     /// @return context The assert message prefix.
     function _deploymentContext(bool isProduction, uint256 chainId) internal pure returns (string memory context) {
-        context = string.concat(_environmentName(isProduction), ", ", chainId.toString());
+        context = string.concat(DeploymentRecords.environment(isProduction), ", ", chainId.toString());
     }
 
     /// @notice Returns whether a version is a release, i.e. carries no prerelease suffix.

@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {DeployERC20ForwarderProxy} from "../../script/DeployERC20ForwarderProxy.s.sol";
+import {DeploymentRecords} from "../../script/DeploymentRecords.sol";
 import {Parameters} from "../../script/Parameters.sol";
 import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
@@ -54,7 +55,7 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
             vm.expectRevert(
                 abi.encodeWithSelector(
                     DeployERC20ForwarderProxy.DeploymentAlreadyRecorded.selector,
-                    _environmentName({isProduction: false}),
+                    DeploymentRecords.environment({isProduction: false}),
                     deployments[i].chainId
                 )
             );
@@ -68,7 +69,7 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
         vm.expectRevert(
             abi.encodeWithSelector(
                 DeployERC20ForwarderProxy.ProtocolAdapterNotRecorded.selector,
-                _environmentName({isProduction: false}),
+                DeploymentRecords.environment({isProduction: false}),
                 block.chainid
             )
         );
@@ -105,7 +106,7 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
             )
         );
 
-        string memory environment = _environmentName(isProduction);
+        string memory environment = DeploymentRecords.environment(isProduction);
 
         assertEq(proxy, predicted, string.concat(environment, ": proxy address differs from the prediction"));
         assertGt(implementation.code.length, 0, string.concat(environment, ": implementation is not deployed"));

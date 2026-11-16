@@ -60,7 +60,7 @@ contract DeployLegacyERC20ForwarderMigration is MigrationScript {
     /// @notice Predicts the deterministic address the migration contract of the chain deploys to.
     /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
     /// @return migration The predicted migration contract address.
-    function predict(bool isProduction) public returns (address migration) {
+    function predict(bool isProduction) public view returns (address migration) {
         (address legacyForwarder, address forwarder) = _configuration(isProduction);
         migration = _predict({legacyForwarder: legacyForwarder, forwarder: forwarder});
     }

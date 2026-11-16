@@ -50,7 +50,7 @@ abstract contract MigrationScript is RecordedDeploymentsScript {
     /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
     /// @return legacyForwarder The chain's legacy ERC20 forwarder, which holds the tokens.
     /// @return forwarder The environment's ERC20 forwarder of the chain, which receives them.
-    function _configuration(bool isProduction) internal returns (address legacyForwarder, address forwarder) {
+    function _configuration(bool isProduction) internal view returns (address legacyForwarder, address forwarder) {
         legacyForwarder = RecordedDeployments.legacyForwarder(block.chainid);
         require(legacyForwarder != address(0), LegacyForwarderNotRecorded(block.chainid));
 
@@ -80,6 +80,7 @@ abstract contract MigrationScript is RecordedDeploymentsScript {
     /// @return forwarder The environment's ERC20 forwarder of the chain, which receives them.
     function _checkedConfiguration(bool isProduction, LegacyERC20ForwarderMigration migration)
         internal
+        view
         returns (address legacyForwarder, address forwarder)
     {
         (legacyForwarder, forwarder) = _configuration(isProduction);
@@ -107,7 +108,7 @@ abstract contract MigrationScript is RecordedDeploymentsScript {
     /// checking it the way `_checkedConfiguration` does.
     /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
     /// @return migration The migration contract the Safe assigned.
-    function _assignedMigration(bool isProduction) internal returns (LegacyERC20ForwarderMigration migration) {
+    function _assignedMigration(bool isProduction) internal view returns (LegacyERC20ForwarderMigration migration) {
         (address legacyForwarder,) = _configuration(isProduction);
 
         address caller = IEmergencyMigratable(legacyForwarder).getEmergencyCaller();

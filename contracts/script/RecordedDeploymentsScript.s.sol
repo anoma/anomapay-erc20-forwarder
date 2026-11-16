@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {DeployERC20ForwarderImplementation} from "./DeployERC20ForwarderImplementation.s.sol";
-import {DeployERC20ForwarderProxy} from "./DeployERC20ForwarderProxy.s.sol";
+import {DeploymentRecords} from "./DeploymentRecords.sol";
 import {RecordedDeployments} from "./RecordedDeployments.sol";
 
 /// @title RecordedDeploymentsScript
@@ -20,12 +20,9 @@ abstract contract RecordedDeploymentsScript is Script {
     /// it is recorded.
     /// @param isProduction Whether to read the production or the staging ERC20 forwarder.
     /// @return proxy The recorded ERC20 forwarder proxy.
-    function _requireRecordedProxy(bool isProduction) internal returns (address proxy) {
+    function _requireRecordedProxy(bool isProduction) internal view returns (address proxy) {
         proxy = _recordedProxy(isProduction);
-        if (proxy == address(0)) {
-            // A `require` would create the script on every call: it evaluates the error arguments first.
-            revert DeploymentNotRecorded(new DeployERC20ForwarderProxy().environmentName(isProduction), block.chainid);
-        }
+        require(proxy != address(0), DeploymentNotRecorded(DeploymentRecords.environment(isProduction), block.chainid));
     }
 
     /// @notice Returns the implementation of this source version, and reverts unless it is deployed.
