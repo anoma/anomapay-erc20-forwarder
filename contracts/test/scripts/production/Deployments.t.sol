@@ -4,8 +4,8 @@ pragma solidity ^0.8.30;
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
 import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol";
 
-import {RecordedDeployments} from "../../../generated/RecordedDeployments.sol";
 import {Parameters} from "../../../script/Parameters.sol";
+import {RecordedDeployments} from "../../../script/RecordedDeployments.sol";
 import {DeploymentsFixture} from "../../fixtures/DeploymentsFixture.sol";
 
 /// @notice Checks the production deployments recorded in `deployments.json`. The genesis check needs no chain access
@@ -45,7 +45,7 @@ contract DeploymentsProductionTest is DeploymentsFixture {
         }
     }
 
-    function test_recorded_deployments_use_the_environment_salt() public pure {
+    function test_recorded_deployments_use_the_environment_salt() public view {
         _expectGenesisDeployments({isProduction: true});
     }
 }

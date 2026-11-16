@@ -29,6 +29,12 @@ checksum = "c5894583671855f922886c86a7e580262a65314745d04f3b7a2d0661a24b3d43"
 integrity = "f2d0c3e5e74800b6d672da94c3475c2929c90bc97508b0f420e104ac791f4f04"
 
 [[dependencies]]
+name = "anoma-pa-evm-bindings"
+version = "3.0.0-rc.22"
+git = "https://github.com/anoma/pa-evm.git"
+rev = "85a6e6adada36d1b875bfb40b727bb7c027f6666"
+
+[[dependencies]]
 name = "anoma-risc0-deployments"
 version = "2.0.0"
 url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/2_0_0_12-11-2026_09:11:55_contracts.zip"

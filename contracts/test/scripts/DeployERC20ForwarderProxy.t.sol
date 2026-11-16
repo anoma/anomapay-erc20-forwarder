@@ -3,15 +3,15 @@ pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployERC20ForwarderProxy} from "../../script/DeployERC20ForwarderProxy.s.sol";
 import {Parameters} from "../../script/Parameters.sol";
+import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
 import {DeployERC20ForwarderProxyMock} from "../mocks/DeployERC20ForwarderProxy.m.sol";
 
 /// @notice Checks the proxy deploy script against a fresh chain, forwarding for a given protocol adapter because the
-/// records name no test deployment. The deployments it records are checked in `Deployments.t.sol` and its promotion
+/// records hold no test deployment. The deployments it records are checked in `Deployments.t.sol` and its promotion
 /// gates instead.
 contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
     address internal immutable _PROTOCOL_ADAPTER = makeAddr("protocol adapter");

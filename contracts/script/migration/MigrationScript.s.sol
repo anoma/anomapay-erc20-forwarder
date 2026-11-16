@@ -2,24 +2,22 @@
 pragma solidity ^0.8.30;
 
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
-import {
-    RecordedDeployments as ProtocolAdapterDeployments
-} from "anoma-pa-evm-2.0.0-rc.16/generated/RecordedDeployments.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
-import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
 import {DeployERC20ForwarderProxy} from "../DeployERC20ForwarderProxy.s.sol";
 import {Parameters} from "../Parameters.sol";
+import {ProtocolAdapterDeployments} from "../ProtocolAdapterDeployments.sol";
+import {RecordedDeployments} from "../RecordedDeployments.sol";
 
 /// @title MigrationScript
 /// @author Anoma Foundation, 2026
 /// @notice The base of the scripts that move one chain's ERC20 tokens from the legacy ERC20 forwarder to the ERC20
-/// forwarder proxy. Both forwarders come from the recorded deployments, their protocol adapters from the records of the
-/// protocol adapter package, and all of them are checked against the chain, so `--rpc-url` alone names the chain.
+/// forwarder proxy. Both forwarders come from the recorded deployments, their protocol adapters from the protocol
+/// adapter records, and all of them are checked against the chain, so `--rpc-url` alone names the chain.
 /// @custom:security-contact security@anoma.foundation
 abstract contract MigrationScript is Script {
     /// @notice Thrown if the chain ran no legacy ERC20 forwarder, i.e. it has no tokens to move.
@@ -51,8 +49,8 @@ abstract contract MigrationScript is Script {
     /// ERC20 forwarder to accept both emergency calls.
     error ProtocolAdapterNotStopped(address protocolAdapter);
 
-    /// @notice Returns the chain's recorded forwarders and checks them against the chain: the environment's proxy
-    /// owner owns the ERC20 forwarder, and each forwarder forwards for the protocol adapter the records name for it.
+    /// @notice Returns the chain's recorded forwarders and checks them against the chain: the environment's proxy owner
+    /// owns the ERC20 forwarder, and each forwarder forwards for its recorded protocol adapter.
     /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
     /// @return legacyForwarder The chain's legacy ERC20 forwarder, which holds the tokens.
     /// @return forwarder The environment's ERC20 forwarder of the chain, which receives them.
@@ -140,7 +138,7 @@ abstract contract MigrationScript is Script {
 
     /// @notice Reverts unless the forwarder forwards for the expected protocol adapter.
     /// @param forwarder The forwarder to check.
-    /// @param expected The protocol adapter the records name for the forwarder.
+    /// @param expected The recorded protocol adapter of the forwarder.
     function _requireProtocolAdapter(address forwarder, address expected) internal view {
         address actual = IProtocolAdapterSpecific(forwarder).getProtocolAdapter();
         require(actual == expected, ProtocolAdapterMismatch({expected: expected, actual: actual}));

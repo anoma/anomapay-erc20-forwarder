@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol";
 
-import {RecordedDeployments} from "../../../generated/RecordedDeployments.sol";
+import {RecordedDeployments} from "../../../script/RecordedDeployments.sol";
 import {DeploymentsFixture} from "../../fixtures/DeploymentsFixture.sol";
 
 /// @notice Checks the staging deployments recorded in `deployments.json`. The genesis check needs no chain access and
@@ -41,7 +41,7 @@ contract DeploymentsStagingTest is DeploymentsFixture {
         }
     }
 
-    function test_recorded_deployments_use_the_environment_salt() public pure {
+    function test_recorded_deployments_use_the_environment_salt() public view {
         _expectGenesisDeployments({isProduction: false});
     }
 }
