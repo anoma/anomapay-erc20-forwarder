@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
-import {Parameters} from "../Parameters.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title MigrateERC20ForwarderAssets
@@ -40,7 +40,7 @@ contract MigrateERC20ForwarderAssets is MigrationScript {
     /// simulated state. Reverts on the first difference.
     /// @param isProduction Whether the tokens moved to the production or the staging ERC20 forwarder.
     /// @param tokens The ERC20 tokens the move covered.
-    function verify(bool isProduction, IERC20[] calldata tokens) public {
+    function verify(bool isProduction, IERC20[] calldata tokens) public view {
         address legacyForwarder = address(_assignedMigration(isProduction).LEGACY_FORWARDER());
 
         for (uint256 i = 0; i < tokens.length; ++i) {

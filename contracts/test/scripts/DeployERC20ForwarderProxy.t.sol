@@ -4,8 +4,9 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {DeployERC20ForwarderProxy} from "../../script/DeployERC20ForwarderProxy.s.sol";
-import {Parameters} from "../../script/Parameters.sol";
-import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
+import {DeploymentsJson} from "../../script/libs/DeploymentsJson.sol";
+import {Parameters} from "../../script/libs/Parameters.sol";
+import {RecordedDeployments} from "../../script/libs/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
 import {DeployERC20ForwarderProxyMock} from "../mocks/DeployERC20ForwarderProxy.m.sol";
@@ -43,23 +44,12 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
         assertEq(stagingImplementation, productionImplementation, "staging and production implementations differ");
     }
 
-    function test_run_reverts_if_the_chain_has_a_recorded_deployment() public {
-        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments({isProduction: false});
+    function test_run_reverts_if_the_chain_has_a_recorded_staging_deployment() public {
+        _expectRunRevertsOnRecordedChains({isProduction: false});
+    }
 
-        for (uint256 i = 0; i < deployments.length; ++i) {
-            vm.chainId(deployments[i].chainId);
-
-            DeployERC20ForwarderProxy script = new DeployERC20ForwarderProxyMock(_PROTOCOL_ADAPTER);
-
-            vm.expectRevert(
-                abi.encodeWithSelector(
-                    DeployERC20ForwarderProxy.DeploymentAlreadyRecorded.selector,
-                    _environmentName({isProduction: false}),
-                    deployments[i].chainId
-                )
-            );
-            script.run({isProduction: false});
-        }
+    function test_run_reverts_if_the_chain_has_a_recorded_production_deployment() public {
+        _expectRunRevertsOnRecordedChains({isProduction: true});
     }
 
     function test_run_reverts_if_the_records_name_no_protocol_adapter() public {
@@ -68,7 +58,7 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
         vm.expectRevert(
             abi.encodeWithSelector(
                 DeployERC20ForwarderProxy.ProtocolAdapterNotRecorded.selector,
-                _environmentName({isProduction: false}),
+                DeploymentsJson.environment({isProduction: false}),
                 block.chainid
             )
         );
@@ -105,7 +95,7 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
             )
         );
 
-        string memory environment = _environmentName(isProduction);
+        string memory environment = DeploymentsJson.environment(isProduction);
 
         assertEq(proxy, predicted, string.concat(environment, ": proxy address differs from the prediction"));
         assertGt(implementation.code.length, 0, string.concat(environment, ": implementation is not deployed"));
@@ -125,5 +115,27 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
             Parameters.LOGIC_REF,
             string.concat(environment, ": proxy logic ref differs")
         );
+    }
+
+    /// @notice Runs the deploy script on each chain on which the environment records a deployment, and expects each
+    /// run to revert.
+    /// @param isProduction Whether to check the production or the staging environment.
+    function _expectRunRevertsOnRecordedChains(bool isProduction) private {
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments(isProduction);
+
+        for (uint256 i = 0; i < deployments.length; ++i) {
+            vm.chainId(deployments[i].chainId);
+
+            DeployERC20ForwarderProxy script = new DeployERC20ForwarderProxyMock(_PROTOCOL_ADAPTER);
+
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    DeployERC20ForwarderProxy.DeploymentAlreadyRecorded.selector,
+                    DeploymentsJson.environment(isProduction),
+                    deployments[i].chainId
+                )
+            );
+            script.run({isProduction: isProduction});
+        }
     }
 }

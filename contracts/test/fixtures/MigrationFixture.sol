@@ -4,10 +4,10 @@ pragma solidity ^0.8.30;
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {ERC20Example} from "anoma-forwarder-bases-3.1.0/test/examples/ERC20Example.sol";
 
+import {Parameters} from "../../script/libs/Parameters.sol";
+import {ProtocolAdapterDeployments} from "../../script/libs/ProtocolAdapterDeployments.sol";
+import {RecordedDeployments} from "../../script/libs/RecordedDeployments.sol";
 import {DeployLegacyERC20ForwarderMigration} from "../../script/migration/DeployLegacyERC20ForwarderMigration.s.sol";
-import {Parameters} from "../../script/Parameters.sol";
-import {ProtocolAdapterDeployments} from "../../script/ProtocolAdapterDeployments.sol";
-import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
 import {DeployERC20ForwarderProxyMock} from "../mocks/DeployERC20ForwarderProxy.m.sol";
 import {LegacyERC20ForwarderMock} from "../mocks/LegacyERC20Forwarder.m.sol";

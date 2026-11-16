@@ -4,14 +4,13 @@ pragma solidity ^0.8.30;
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {IEmergencyMigratable} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IEmergencyMigratable.sol";
 import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/interfaces/IProtocolAdapterSpecific.sol";
-import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
-import {DeployERC20ForwarderProxy} from "../DeployERC20ForwarderProxy.s.sol";
-import {Parameters} from "../Parameters.sol";
-import {ProtocolAdapterDeployments} from "../ProtocolAdapterDeployments.sol";
-import {RecordedDeployments} from "../RecordedDeployments.sol";
+import {Parameters} from "../libs/Parameters.sol";
+import {ProtocolAdapterDeployments} from "../libs/ProtocolAdapterDeployments.sol";
+import {RecordedDeployments} from "../libs/RecordedDeployments.sol";
+import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title MigrationScript
 /// @author Anoma Foundation, 2026
@@ -19,12 +18,9 @@ import {RecordedDeployments} from "../RecordedDeployments.sol";
 /// forwarder proxy. Both forwarders come from the recorded deployments, their protocol adapters from the protocol
 /// adapter records, and all of them are checked against the chain, so `--rpc-url` alone names the chain.
 /// @custom:security-contact security@anoma.foundation
-abstract contract MigrationScript is Script {
+abstract contract MigrationScript is RecordedDeploymentsScript {
     /// @notice Thrown if the chain ran no legacy ERC20 forwarder, i.e. it has no tokens to move.
     error LegacyForwarderNotRecorded(uint256 chainId);
-
-    /// @notice Thrown if the environment records no ERC20 forwarder for the chain, i.e. it has no destination.
-    error DeploymentNotRecorded(string environment, uint256 chainId);
 
     /// @notice Thrown if a forwarder forwards for another protocol adapter than the recorded one.
     error ProtocolAdapterMismatch(address expected, address actual);
@@ -54,17 +50,11 @@ abstract contract MigrationScript is Script {
     /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
     /// @return legacyForwarder The chain's legacy ERC20 forwarder, which holds the tokens.
     /// @return forwarder The environment's ERC20 forwarder of the chain, which receives them.
-    function _configuration(bool isProduction) internal returns (address legacyForwarder, address forwarder) {
-        DeployERC20ForwarderProxy proxyDeployScript = new DeployERC20ForwarderProxy();
-
+    function _configuration(bool isProduction) internal view returns (address legacyForwarder, address forwarder) {
         legacyForwarder = RecordedDeployments.legacyForwarder(block.chainid);
         require(legacyForwarder != address(0), LegacyForwarderNotRecorded(block.chainid));
 
-        forwarder = RecordedDeployments.forwarderProxy({isProduction: isProduction, chainId: block.chainid});
-        require(
-            forwarder != address(0),
-            DeploymentNotRecorded(proxyDeployScript.environmentName(isProduction), block.chainid)
-        );
+        forwarder = _requireRecordedProxy(isProduction);
 
         address expectedOwner = isProduction ? Parameters.FWD_MULTISIG : Parameters.DEPLOYMENT_WALLET;
         address actualOwner = ERC20Forwarder(forwarder).owner();
@@ -90,6 +80,7 @@ abstract contract MigrationScript is Script {
     /// @return forwarder The environment's ERC20 forwarder of the chain, which receives them.
     function _checkedConfiguration(bool isProduction, LegacyERC20ForwarderMigration migration)
         internal
+        view
         returns (address legacyForwarder, address forwarder)
     {
         (legacyForwarder, forwarder) = _configuration(isProduction);
@@ -117,7 +108,7 @@ abstract contract MigrationScript is Script {
     /// checking it the way `_checkedConfiguration` does.
     /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
     /// @return migration The migration contract the Safe assigned.
-    function _assignedMigration(bool isProduction) internal returns (LegacyERC20ForwarderMigration migration) {
+    function _assignedMigration(bool isProduction) internal view returns (LegacyERC20ForwarderMigration migration) {
         (address legacyForwarder,) = _configuration(isProduction);
 
         address caller = IEmergencyMigratable(legacyForwarder).getEmergencyCaller();

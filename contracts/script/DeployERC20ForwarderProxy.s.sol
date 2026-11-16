@@ -6,9 +6,10 @@ import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {DeployERC20ForwarderImplementation} from "./DeployERC20ForwarderImplementation.s.sol";
-import {Parameters} from "./Parameters.sol";
-import {ProtocolAdapterDeployments} from "./ProtocolAdapterDeployments.sol";
-import {RecordedDeployments} from "./RecordedDeployments.sol";
+import {DeploymentsJson} from "./libs/DeploymentsJson.sol";
+import {Parameters} from "./libs/Parameters.sol";
+import {ProtocolAdapterDeployments} from "./libs/ProtocolAdapterDeployments.sol";
+import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
 
 /// @title DeployERC20ForwarderProxy
 /// @author Anoma Foundation, 2025
@@ -58,8 +59,8 @@ contract DeployERC20ForwarderProxy is Script {
         // Checks
         {
             require(
-                !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
-                DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
+                RecordedDeployments.forwarderProxy({isProduction: isProduction, chainId: block.chainid}) == address(0),
+                DeploymentAlreadyRecorded(DeploymentsJson.environment(isProduction), block.chainid)
             );
 
             implementation = implementationDeployScript.predict();
@@ -100,13 +101,6 @@ contract DeployERC20ForwarderProxy is Script {
         });
     }
 
-    /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
-    /// @param isProduction Whether to name the production or the staging environment.
-    /// @return name The environment name.
-    function environmentName(bool isProduction) public pure returns (string memory name) {
-        name = isProduction ? "production" : "staging";
-    }
-
     /// @notice Returns the recorded protocol adapter proxy of the environment on this chain, which the forwarder proxy
     /// forwards for, and reverts if the environment records none.
     /// @param isProduction Whether to return the production or the staging environment protocol adapter proxy.
@@ -114,7 +108,10 @@ contract DeployERC20ForwarderProxy is Script {
     function _protocolAdapter(bool isProduction) internal view virtual returns (address protocolAdapter) {
         protocolAdapter =
             ProtocolAdapterDeployments.protocolAdapterProxy({isProduction: isProduction, chainId: block.chainid});
-        require(protocolAdapter != address(0), ProtocolAdapterNotRecorded(environmentName(isProduction), block.chainid));
+        require(
+            protocolAdapter != address(0),
+            ProtocolAdapterNotRecorded(DeploymentsJson.environment(isProduction), block.chainid)
+        );
     }
 
     /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.

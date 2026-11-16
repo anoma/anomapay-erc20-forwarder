@@ -7,8 +7,9 @@ import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
 import {DeployERC20ForwarderImplementation} from "../../script/DeployERC20ForwarderImplementation.s.sol";
-import {Parameters} from "../../script/Parameters.sol";
-import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
+import {DeploymentsJson} from "../../script/libs/DeploymentsJson.sol";
+import {Parameters} from "../../script/libs/Parameters.sol";
+import {RecordedDeployments} from "../../script/libs/RecordedDeployments.sol";
 
 /// @notice A test fixture providing the ERC20 forwarder deployments recorded per environment in `deployments.json` —
 /// the single source of truth for the deterministic deployments — through `RecordedDeployments`.
@@ -20,7 +21,7 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     /// it runs.
     /// @param isProduction Whether to check the production or the staging environment.
     function _expectSourceImplementations(bool isProduction) internal {
-        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments(isProduction);
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments(isProduction);
         address sourceImplementation = new DeployERC20ForwarderImplementation().predict();
 
         for (uint256 i = 0; i < deployments.length; ++i) {
@@ -66,7 +67,7 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     function _expectGenesisDeployments(bool isProduction) internal view {
         bytes32 salt = isProduction ? Parameters.PROXY_SALT_PRODUCTION : Parameters.PROXY_SALT_STAGING;
 
-        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments(isProduction);
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments(isProduction);
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             RecordedDeployments.Proxy memory recordedProxy = deployments[i].proxy;
@@ -88,30 +89,12 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
         }
     }
 
-    /// @notice Returns the deployments of an environment, as `RecordedDeployments` records them.
-    /// @param isProduction Whether to return the production or the staging environment.
-    /// @return deployments The recorded deployments.
-    function _recordedDeployments(bool isProduction)
-        internal
-        view
-        returns (RecordedDeployments.Deployment[] memory deployments)
-    {
-        deployments = isProduction ? RecordedDeployments.production() : RecordedDeployments.staging();
-    }
-
-    /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
-    /// @param isProduction Whether to name the production or the staging environment.
-    /// @return name The environment name.
-    function _environmentName(bool isProduction) internal pure returns (string memory name) {
-        name = isProduction ? "production" : "staging";
-    }
-
     /// @notice Returns the `<environment>, <chain ID>` prefix identifying a recorded deployment in assert messages.
     /// @param isProduction Whether the deployment belongs to the production or the staging environment.
     /// @param chainId The chain ID of the deployment.
     /// @return context The assert message prefix.
     function _deploymentContext(bool isProduction, uint256 chainId) internal pure returns (string memory context) {
-        context = string.concat(_environmentName(isProduction), ", ", chainId.toString());
+        context = string.concat(DeploymentsJson.environment(isProduction), ", ", chainId.toString());
     }
 
     /// @notice Returns whether a version is a release, i.e. carries no prerelease suffix.
