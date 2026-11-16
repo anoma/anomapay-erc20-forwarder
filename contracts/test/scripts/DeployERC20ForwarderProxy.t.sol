@@ -4,9 +4,9 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {DeployERC20ForwarderProxy} from "../../script/DeployERC20ForwarderProxy.s.sol";
-import {DeploymentRecords} from "../../script/DeploymentRecords.sol";
-import {Parameters} from "../../script/Parameters.sol";
-import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
+import {DeploymentRecords} from "../../script/libs/DeploymentRecords.sol";
+import {Parameters} from "../../script/libs/Parameters.sol";
+import {RecordedDeployments} from "../../script/libs/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
 import {DeployERC20ForwarderProxyMock} from "../mocks/DeployERC20ForwarderProxy.m.sol";

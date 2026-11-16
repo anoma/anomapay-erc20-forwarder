@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {IERC1967} from "@openzeppelin-contracts-5.7.0/interfaces/IERC1967.sol";
 
 import {DeployERC20ForwarderImplementation} from "../../../script/DeployERC20ForwarderImplementation.s.sol";
-import {Parameters} from "../../../script/Parameters.sol";
+import {Parameters} from "../../../script/libs/Parameters.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
 import {ProposeERC20ForwarderUpgrade} from "../../../script/production/ProposeERC20ForwarderUpgrade.s.sol";
 import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";

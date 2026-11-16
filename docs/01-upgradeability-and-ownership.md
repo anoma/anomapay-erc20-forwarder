@@ -47,11 +47,11 @@ The owner deprecates the logic ref of a version only after the forwarder accepts
 
 ## 5. Parameters
 
-| Name                               | Value                                                     | Use                                                                                                |
-| ---------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `Parameters.PROXY_SALT_STAGING`    | `"ERC20ForwarderProxyStaging"`                            | CREATE2 salt of the staging proxies                                                                |
-| `Parameters.PROXY_SALT_PRODUCTION` | `"ERC20ForwarderProxyProduction"`                         | CREATE2 salt of the production proxies                                                             |
-| `Parameters.IMPLEMENTATION_SALT`   | `"ERC20ForwarderImpl"`                                    | CREATE2 salt of the implementations, in both environments                                          |
-| `Parameters.LOGIC_REF`             | In [`Parameters.sol`](../contracts/script/Parameters.sol) | The logic ref that a new proxy accepts. A proxy keeps its logic ref until an upgrade sets another. |
-| `Parameters.DEPLOYMENT_WALLET`     | `0x61462bE56782568376f9cB069382EFa72764a407`              | Owner of the staging proxies                                                                       |
-| `Parameters.FWD_MULTISIG`          | `0xc703402252Ce1251aa07e0815D50060d27fdd6C4`              | The FWD Safe, owner of the production proxies                                                      |
+| Name                               | Value                                                          | Use                                                                                                |
+| ---------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `Parameters.PROXY_SALT_STAGING`    | `"ERC20ForwarderProxyStaging"`                                 | CREATE2 salt of the staging proxies                                                                |
+| `Parameters.PROXY_SALT_PRODUCTION` | `"ERC20ForwarderProxyProduction"`                              | CREATE2 salt of the production proxies                                                             |
+| `Parameters.IMPLEMENTATION_SALT`   | `"ERC20ForwarderImpl"`                                         | CREATE2 salt of the implementations, in both environments                                          |
+| `Parameters.LOGIC_REF`             | In [`Parameters.sol`](../contracts/script/libs/Parameters.sol) | The logic ref that a new proxy accepts. A proxy keeps its logic ref until an upgrade sets another. |
+| `Parameters.DEPLOYMENT_WALLET`     | `0x61462bE56782568376f9cB069382EFa72764a407`                   | Owner of the staging proxies                                                                       |
+| `Parameters.FWD_MULTISIG`          | `0xc703402252Ce1251aa07e0815D50060d27fdd6C4`                   | The FWD Safe, owner of the production proxies                                                      |

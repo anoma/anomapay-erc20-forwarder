@@ -7,9 +7,9 @@ import {IProtocolAdapterSpecific} from "anomapay-erc20-forwarder-1.0.1/src/inter
 
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
-import {Parameters} from "../Parameters.sol";
-import {ProtocolAdapterDeployments} from "../ProtocolAdapterDeployments.sol";
-import {RecordedDeployments} from "../RecordedDeployments.sol";
+import {Parameters} from "../libs/Parameters.sol";
+import {ProtocolAdapterDeployments} from "../libs/ProtocolAdapterDeployments.sol";
+import {RecordedDeployments} from "../libs/RecordedDeployments.sol";
 import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title MigrationScript

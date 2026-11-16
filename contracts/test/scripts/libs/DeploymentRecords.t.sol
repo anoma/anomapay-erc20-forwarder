@@ -3,9 +3,9 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.17.0/src/Test.sol";
 
-import {DeploymentRecords} from "../../script/DeploymentRecords.sol";
-import {ProtocolAdapterDeployments} from "../../script/ProtocolAdapterDeployments.sol";
-import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
+import {DeploymentRecords} from "../../../script/libs/DeploymentRecords.sol";
+import {ProtocolAdapterDeployments} from "../../../script/libs/ProtocolAdapterDeployments.sol";
+import {RecordedDeployments} from "../../../script/libs/RecordedDeployments.sol";
 
 /// @notice Checks that a reader reads only the records of its own package.
 contract DeploymentRecordsTest is Test {

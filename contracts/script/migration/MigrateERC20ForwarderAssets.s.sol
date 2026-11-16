@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
-import {Parameters} from "../Parameters.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title MigrateERC20ForwarderAssets

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Parameters} from "../../../script/libs/Parameters.sol";
 import {DeployLegacyERC20ForwarderMigration} from "../../../script/migration/DeployLegacyERC20ForwarderMigration.s.sol";
 import {MigrationScript} from "../../../script/migration/MigrationScript.s.sol";
-import {Parameters} from "../../../script/Parameters.sol";
 import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";
 import {LegacyERC20ForwarderMigration} from "../../../src/migration/LegacyERC20ForwarderMigration.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";

@@ -92,7 +92,7 @@ These apply to all three cases and are done once per session.
   export ETHERSCAN_API_KEY=<KEY>
   ```
 
-- [ ] Select the environment. It picks the CREATE2 salt and the proxy owner from [`Parameters.sol`](./contracts/script/Parameters.sol), and is deliberately kept out of `contracts/.env` so that it is a conscious choice per session.
+- [ ] Select the environment. It picks the CREATE2 salt and the proxy owner from [`Parameters.sol`](./contracts/script/libs/Parameters.sol), and is deliberately kept out of `contracts/.env` so that it is a conscious choice per session.
 
   ```sh
   export IS_PRODUCTION=false
@@ -319,8 +319,8 @@ For **production**:
 For **both**:
 
 - [ ] Check the two values the proxy commits to. The deploy script reads both itself:
-  - the protocol adapter proxy of the **same** environment on this chain, from `deployments.json` of the `anoma-pa-evm-bindings` dependency in [`./contracts/foundry.toml`](./contracts/foundry.toml). The script reverts with `ProtocolAdapterNotRecorded` if the environment records none, so bump the dependency first: its `version` and `tag`, the two paths in `fs_permissions`, and `_DIRECTORY` in [`ProtocolAdapterDeployments`](./contracts/script/ProtocolAdapterDeployments.sol).
-  - `LOGIC_REF` in [`Parameters.sol`](./contracts/script/Parameters.sol), which `just bindings-test` checks against the `ANOMAPAY_ERC20_CIRCUIT_ID` of the [`anomapay_erc20_library`](https://github.com/anoma/anomapay-erc20-resource) version pinned in [`./Cargo.toml`](./Cargo.toml).
+  - the protocol adapter proxy of the **same** environment on this chain, from `deployments.json` of the `anoma-pa-evm-bindings` dependency in [`./contracts/foundry.toml`](./contracts/foundry.toml). The script reverts with `ProtocolAdapterNotRecorded` if the environment records none, so bump the dependency first: its `version` and `tag`, the two paths in `fs_permissions`, and `_DIRECTORY` in [`ProtocolAdapterDeployments`](./contracts/script/libs/ProtocolAdapterDeployments.sol).
+  - `LOGIC_REF` in [`Parameters.sol`](./contracts/script/libs/Parameters.sol), which `just bindings-test` checks against the `ANOMAPAY_ERC20_CIRCUIT_ID` of the [`anomapay_erc20_library`](https://github.com/anoma/anomapay-erc20-resource) version pinned in [`./Cargo.toml`](./Cargo.toml).
 
 - [ ] Run the test suites as in step 2 of the release cycle.
 

@@ -6,10 +6,10 @@ import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {DeployERC20ForwarderImplementation} from "./DeployERC20ForwarderImplementation.s.sol";
-import {DeploymentRecords} from "./DeploymentRecords.sol";
-import {Parameters} from "./Parameters.sol";
-import {ProtocolAdapterDeployments} from "./ProtocolAdapterDeployments.sol";
-import {RecordedDeployments} from "./RecordedDeployments.sol";
+import {DeploymentRecords} from "./libs/DeploymentRecords.sol";
+import {Parameters} from "./libs/Parameters.sol";
+import {ProtocolAdapterDeployments} from "./libs/ProtocolAdapterDeployments.sol";
+import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
 
 /// @title DeployERC20ForwarderProxy
 /// @author Anoma Foundation, 2025

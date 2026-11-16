@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
-import {Parameters} from "../Parameters.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title StagingScript

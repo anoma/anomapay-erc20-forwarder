@@ -6,7 +6,7 @@ import {IOwnerManager} from "safe-smart-account-1.5.0/contracts/interfaces/IOwne
 import {Safe} from "safe-utils-0.0.24/src/Safe.sol";
 
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
-import {Parameters} from "../Parameters.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title DeployLegacyERC20ForwarderMigration
