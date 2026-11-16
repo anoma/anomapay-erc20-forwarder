@@ -18,7 +18,7 @@ contract ProposeERC20ForwarderUpgrade is ProductionScript {
     /// @param proposer The Safe owner or delegate proposing the transaction.
     function run(address proposer) public {
         DeployERC20ForwarderImplementation implementationDeployScript = new DeployERC20ForwarderImplementation();
-        address implementation = _requireDeployedImplementation(implementationDeployScript);
+        address implementation = implementationDeployScript.deployed();
 
         _propose({
             callData: abi.encodeCall(

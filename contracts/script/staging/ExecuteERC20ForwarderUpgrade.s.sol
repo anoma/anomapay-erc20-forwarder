@@ -18,7 +18,7 @@ contract ExecuteERC20ForwarderUpgrade is StagingScript {
     /// as the proxy owner. Without `--broadcast`, the upgrade is simulated locally.
     function run() public {
         DeployERC20ForwarderImplementation implementationDeployScript = new DeployERC20ForwarderImplementation();
-        address implementation = _requireDeployedImplementation(implementationDeployScript);
+        address implementation = implementationDeployScript.deployed();
         address proxy = _requireRecordedProxy({isProduction: false});
         address owner = _stagingOwner({proxy: proxy});
 

@@ -41,6 +41,13 @@ contract DeployERC20ForwarderImplementation is Script {
         vm.stopBroadcast();
     }
 
+    /// @notice Returns the implementation of this source version, and reverts unless it is deployed.
+    /// @return implementation The deployed implementation contract.
+    function deployed() public view returns (address implementation) {
+        implementation = predict();
+        require(implementation.code.length != 0, ImplementationNotDeployed({implementation: implementation}));
+    }
+
     /// @notice Predicts the deterministic address the implementation of this source version deploys to. The
     /// constructor takes no arguments, so the address is the same on every chain.
     /// @return implementation The predicted implementation contract address.
