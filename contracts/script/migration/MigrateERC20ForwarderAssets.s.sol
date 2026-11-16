@@ -22,11 +22,11 @@ contract MigrateERC20ForwarderAssets is MigrationScript {
     error TokenNotMigrated(address token, uint256 balance);
 
     /// @notice Moves the tokens as the deployment wallet. Without `--broadcast` the move is simulated locally.
+    /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
+    /// @param tokens The ERC20 tokens to move.
     /// @dev The migration contract moves each token's full balance from the legacy ERC20 forwarder and reverts unless
     /// the ERC20 forwarder receives all of it. A token left out of `tokens` can be moved by a later run. The script
     /// broadcasts as the deployment wallet, because with `--account` alone forge runs it as its default sender.
-    /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
-    /// @param tokens The ERC20 tokens to move.
     function executeMigration(bool isProduction, IERC20[] calldata tokens) public {
         LegacyERC20ForwarderMigration migration = _assignedMigration(isProduction);
 
