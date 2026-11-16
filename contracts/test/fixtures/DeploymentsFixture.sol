@@ -6,12 +6,12 @@ import {SupportedNetworks} from "anoma-risc0-deployments-2.0.0/src/SupportedNetw
 import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
-import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployERC20ForwarderImplementation} from "../../script/DeployERC20ForwarderImplementation.s.sol";
 import {Parameters} from "../../script/Parameters.sol";
+import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
 
 /// @notice A test fixture providing the ERC20 forwarder deployments recorded per environment in `deployments.json` —
-/// the single source of truth for the deterministic deployments — through the generated `RecordedDeployments` library.
+/// the single source of truth for the deterministic deployments — through `RecordedDeployments`.
 abstract contract DeploymentsFixture is SupportedNetworks, Test {
     using LibString for *;
 
@@ -63,7 +63,7 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     /// @notice Checks that every recorded proxy sits at the address its genesis deployment determines under the
     /// environment salt — the check that the first deployment of an environment used the right salt.
     /// @param isProduction Whether to check the production or the staging environment.
-    function _expectGenesisDeployments(bool isProduction) internal pure {
+    function _expectGenesisDeployments(bool isProduction) internal view {
         bytes32 salt = isProduction ? Parameters.PROXY_SALT_PRODUCTION : Parameters.PROXY_SALT_STAGING;
 
         RecordedDeployments.Deployment[] memory deployments = _recordedDeployments(isProduction);
@@ -93,7 +93,7 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     /// @return deployments The recorded deployments.
     function _recordedDeployments(bool isProduction)
         internal
-        pure
+        view
         returns (RecordedDeployments.Deployment[] memory deployments)
     {
         deployments = isProduction ? RecordedDeployments.production() : RecordedDeployments.staging();

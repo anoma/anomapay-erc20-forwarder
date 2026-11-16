@@ -3,13 +3,11 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {ERC20Example} from "anoma-forwarder-bases-3.1.0/test/examples/ERC20Example.sol";
-import {
-    RecordedDeployments as ProtocolAdapterDeployments
-} from "anoma-pa-evm-2.0.0-rc.16/generated/RecordedDeployments.sol";
 
-import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployLegacyERC20ForwarderMigration} from "../../script/migration/DeployLegacyERC20ForwarderMigration.s.sol";
 import {Parameters} from "../../script/Parameters.sol";
+import {ProtocolAdapterDeployments} from "../../script/ProtocolAdapterDeployments.sol";
+import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
 import {DeployERC20ForwarderProxyMock} from "../mocks/DeployERC20ForwarderProxy.m.sol";
 import {LegacyERC20ForwarderMock} from "../mocks/LegacyERC20Forwarder.m.sol";
@@ -18,8 +16,8 @@ import {SafeFixture} from "./SafeFixture.sol";
 
 /// @notice A test fixture providing the starting point of a migration on a chain that records both forwarders: a
 /// stopped stand-in for the legacy protocol adapter, a legacy ERC20 forwarder holding a token balance, and a real ERC20
-/// forwarder proxy forwarding for the recorded protocol adapter proxy — each installed at the address the records name
-/// — plus the forwarder multisig. It builds them locally instead of forking the chain.
+/// forwarder proxy forwarding for the recorded protocol adapter proxy — each installed at its recorded address — plus
+/// the forwarder multisig. It builds them locally instead of forking the chain.
 abstract contract MigrationFixture is SafeFixture {
     uint256 internal constant _CHAIN_ID = 11155111;
     uint128 internal constant _AMOUNT = 42;
@@ -74,7 +72,7 @@ abstract contract MigrationFixture is SafeFixture {
         migration = new DeployLegacyERC20ForwarderMigration().run({isProduction: false});
     }
 
-    /// @notice Installs a stand-in for the legacy protocol adapter at the address the records name.
+    /// @notice Installs a stand-in for the legacy protocol adapter at its recorded address.
     /// @param isStopped Whether its owner has stopped it.
     function _installLegacyProtocolAdapter(bool isStopped) internal {
         ProtocolAdapterMock protocolAdapter = new ProtocolAdapterMock(address(this));
@@ -84,7 +82,7 @@ abstract contract MigrationFixture is SafeFixture {
         _install({source: address(protocolAdapter), target: _legacyProtocolAdapter});
     }
 
-    /// @notice Installs a deployed contract at the address the records name, which is where the scripts look for it.
+    /// @notice Installs a deployed contract at its recorded address, which is where the scripts look for it.
     /// @param source The deployed contract.
     /// @param target The recorded address.
     function _install(address source, address target) internal {
