@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeploymentRecords} from "./DeploymentRecords.sol";
+import {DeploymentsJson} from "./DeploymentsJson.sol";
 
 /// @title RecordedDeployments
 /// @author Anoma Foundation, 2026
@@ -38,8 +38,8 @@ library RecordedDeployments {
     /// @param chainId The chain ID to look for.
     /// @return proxy The recorded proxy, or the zero address if the environment records none for the chain.
     function forwarderProxy(bool isProduction, uint256 chainId) internal view returns (address proxy) {
-        proxy = DeploymentRecords.addressOf({
-            json: _records(), key: DeploymentRecords.environment(isProduction), chainId: chainId, field: "proxy.address"
+        proxy = DeploymentsJson.addressOf({
+            json: _records(), key: DeploymentsJson.environment(isProduction), chainId: chainId, field: "proxy.address"
         });
     }
 
@@ -47,7 +47,7 @@ library RecordedDeployments {
     /// @param chainId The chain ID to look for.
     /// @return forwarder The legacy ERC20 forwarder, or the zero address if the chain ran none.
     function legacyForwarder(uint256 chainId) internal view returns (address forwarder) {
-        forwarder = DeploymentRecords.addressOf({json: _records(), key: "legacy", chainId: chainId, field: "forwarder"});
+        forwarder = DeploymentsJson.addressOf({json: _records(), key: "legacy", chainId: chainId, field: "forwarder"});
     }
 
     /// @notice Returns the deployments an environment records.
@@ -55,13 +55,13 @@ library RecordedDeployments {
     /// @return recorded The recorded deployments.
     function deployments(bool isProduction) internal view returns (Deployment[] memory recorded) {
         bytes memory encoded =
-            DeploymentRecords.entries({json: _records(), key: DeploymentRecords.environment(isProduction)});
+            DeploymentsJson.entries({json: _records(), key: DeploymentsJson.environment(isProduction)});
         recorded = abi.decode(encoded, (Deployment[]));
     }
 
     /// @notice Returns the content of the records file.
     /// @return json The JSON text of the file.
     function _records() private view returns (string memory json) {
-        json = DeploymentRecords.read({directory: _DIRECTORY, packageName: _PACKAGE_NAME});
+        json = DeploymentsJson.read({directory: _DIRECTORY, packageName: _PACKAGE_NAME});
     }
 }

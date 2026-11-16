@@ -7,7 +7,7 @@ import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
 import {DeployERC20ForwarderImplementation} from "../../script/DeployERC20ForwarderImplementation.s.sol";
-import {DeploymentRecords} from "../../script/libs/DeploymentRecords.sol";
+import {DeploymentsJson} from "../../script/libs/DeploymentsJson.sol";
 import {Parameters} from "../../script/libs/Parameters.sol";
 import {RecordedDeployments} from "../../script/libs/RecordedDeployments.sol";
 
@@ -94,7 +94,7 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     /// @param chainId The chain ID of the deployment.
     /// @return context The assert message prefix.
     function _deploymentContext(bool isProduction, uint256 chainId) internal pure returns (string memory context) {
-        context = string.concat(DeploymentRecords.environment(isProduction), ", ", chainId.toString());
+        context = string.concat(DeploymentsJson.environment(isProduction), ", ", chainId.toString());
     }
 
     /// @notice Returns whether a version is a release, i.e. carries no prerelease suffix.

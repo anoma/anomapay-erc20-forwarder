@@ -6,7 +6,7 @@ import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {DeployERC20ForwarderImplementation} from "./DeployERC20ForwarderImplementation.s.sol";
-import {DeploymentRecords} from "./libs/DeploymentRecords.sol";
+import {DeploymentsJson} from "./libs/DeploymentsJson.sol";
 import {Parameters} from "./libs/Parameters.sol";
 import {ProtocolAdapterDeployments} from "./libs/ProtocolAdapterDeployments.sol";
 import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
@@ -60,7 +60,7 @@ contract DeployERC20ForwarderProxy is Script {
         {
             require(
                 RecordedDeployments.forwarderProxy({isProduction: isProduction, chainId: block.chainid}) == address(0),
-                DeploymentAlreadyRecorded(DeploymentRecords.environment(isProduction), block.chainid)
+                DeploymentAlreadyRecorded(DeploymentsJson.environment(isProduction), block.chainid)
             );
 
             implementation = implementationDeployScript.predict();
@@ -110,7 +110,7 @@ contract DeployERC20ForwarderProxy is Script {
             ProtocolAdapterDeployments.protocolAdapterProxy({isProduction: isProduction, chainId: block.chainid});
         require(
             protocolAdapter != address(0),
-            ProtocolAdapterNotRecorded(DeploymentRecords.environment(isProduction), block.chainid)
+            ProtocolAdapterNotRecorded(DeploymentsJson.environment(isProduction), block.chainid)
         );
     }
 

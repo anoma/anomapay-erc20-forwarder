@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeploymentRecords} from "./DeploymentRecords.sol";
+import {DeploymentsJson} from "./DeploymentsJson.sol";
 
 /// @title ProtocolAdapterDeployments
 /// @author Anoma Foundation, 2026
@@ -20,8 +20,8 @@ library ProtocolAdapterDeployments {
     /// @param chainId The chain ID to look for.
     /// @return proxy The recorded proxy, or the zero address if the environment records none for the chain.
     function protocolAdapterProxy(bool isProduction, uint256 chainId) internal view returns (address proxy) {
-        proxy = DeploymentRecords.addressOf({
-            json: _records(), key: DeploymentRecords.environment(isProduction), chainId: chainId, field: "proxy.address"
+        proxy = DeploymentsJson.addressOf({
+            json: _records(), key: DeploymentsJson.environment(isProduction), chainId: chainId, field: "proxy.address"
         });
     }
 
@@ -30,12 +30,12 @@ library ProtocolAdapterDeployments {
     /// @return protocolAdapter The legacy protocol adapter, or the zero address if the chain ran none.
     function legacyProtocolAdapter(uint256 chainId) internal view returns (address protocolAdapter) {
         protocolAdapter =
-            DeploymentRecords.addressOf({json: _records(), key: "legacy", chainId: chainId, field: "protocolAdapter"});
+            DeploymentsJson.addressOf({json: _records(), key: "legacy", chainId: chainId, field: "protocolAdapter"});
     }
 
     /// @notice Returns the content of the records file.
     /// @return json The JSON text of the file.
     function _records() private view returns (string memory json) {
-        json = DeploymentRecords.read({directory: _DIRECTORY, packageName: _PACKAGE_NAME});
+        json = DeploymentsJson.read({directory: _DIRECTORY, packageName: _PACKAGE_NAME});
     }
 }
