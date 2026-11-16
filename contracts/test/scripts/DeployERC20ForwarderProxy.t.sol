@@ -45,7 +45,7 @@ contract DeployERC20ForwarderProxyTest is DeploymentsFixture {
     }
 
     function test_run_reverts_if_the_chain_has_a_recorded_deployment() public {
-        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments({isProduction: false});
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments({isProduction: false});
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             vm.chainId(deployments[i].chainId);

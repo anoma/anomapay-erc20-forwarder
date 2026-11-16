@@ -59,7 +59,7 @@ contract DeployERC20ForwarderProxy is Script {
         // Checks
         {
             require(
-                !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
+                RecordedDeployments.forwarderProxy({isProduction: isProduction, chainId: block.chainid}) == address(0),
                 DeploymentAlreadyRecorded(DeploymentRecords.environment(isProduction), block.chainid)
             );
 

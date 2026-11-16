@@ -21,7 +21,7 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     /// it runs.
     /// @param isProduction Whether to check the production or the staging environment.
     function _expectSourceImplementations(bool isProduction) internal {
-        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments(isProduction);
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments(isProduction);
         address sourceImplementation = new DeployERC20ForwarderImplementation().predict();
 
         for (uint256 i = 0; i < deployments.length; ++i) {
@@ -67,7 +67,7 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     function _expectGenesisDeployments(bool isProduction) internal view {
         bytes32 salt = isProduction ? Parameters.PROXY_SALT_PRODUCTION : Parameters.PROXY_SALT_STAGING;
 
-        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments(isProduction);
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments(isProduction);
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             RecordedDeployments.Proxy memory recordedProxy = deployments[i].proxy;
@@ -87,17 +87,6 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
                 )
             );
         }
-    }
-
-    /// @notice Returns the deployments of an environment, as `RecordedDeployments` records them.
-    /// @param isProduction Whether to return the production or the staging environment.
-    /// @return deployments The recorded deployments.
-    function _recordedDeployments(bool isProduction)
-        internal
-        view
-        returns (RecordedDeployments.Deployment[] memory deployments)
-    {
-        deployments = isProduction ? RecordedDeployments.production() : RecordedDeployments.staging();
     }
 
     /// @notice Returns the `<environment>, <chain ID>` prefix identifying a recorded deployment in assert messages.

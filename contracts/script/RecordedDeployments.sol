@@ -33,14 +33,6 @@ library RecordedDeployments {
     /// @notice The name of the bindings package.
     string internal constant _PACKAGE_NAME = "anomapay-erc20-forwarder-bindings";
 
-    /// @notice Returns whether the environment records a deployment for the chain.
-    /// @param isProduction Whether to check the production or the staging environment.
-    /// @param chainId The chain ID to look for.
-    /// @return recorded Whether the environment records a deployment for the chain.
-    function isRecorded(bool isProduction, uint256 chainId) internal view returns (bool recorded) {
-        recorded = forwarderProxy({isProduction: isProduction, chainId: chainId}) != address(0);
-    }
-
     /// @notice Returns the ERC20 forwarder proxy an environment records for a chain.
     /// @param isProduction Whether to read the production or the staging environment.
     /// @param chainId The chain ID to look for.
@@ -58,25 +50,13 @@ library RecordedDeployments {
         forwarder = DeploymentRecords.addressOf({json: _records(), key: "legacy", chainId: chainId, field: "forwarder"});
     }
 
-    /// @notice Returns the deployments the staging environment records.
-    /// @return deployments The recorded staging deployments.
-    function staging() internal view returns (Deployment[] memory deployments) {
-        deployments = _deployments({isProduction: false});
-    }
-
-    /// @notice Returns the deployments the production environment records.
-    /// @return deployments The recorded production deployments.
-    function production() internal view returns (Deployment[] memory deployments) {
-        deployments = _deployments({isProduction: true});
-    }
-
     /// @notice Returns the deployments an environment records.
     /// @param isProduction Whether to return the production or the staging environment.
-    /// @return deployments The recorded deployments.
-    function _deployments(bool isProduction) private view returns (Deployment[] memory deployments) {
+    /// @return recorded The recorded deployments.
+    function deployments(bool isProduction) internal view returns (Deployment[] memory recorded) {
         bytes memory encoded =
             DeploymentRecords.entries({json: _records(), key: DeploymentRecords.environment(isProduction)});
-        deployments = abi.decode(encoded, (Deployment[]));
+        recorded = abi.decode(encoded, (Deployment[]));
     }
 
     /// @notice Returns the content of the records file.

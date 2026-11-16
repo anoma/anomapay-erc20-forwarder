@@ -26,7 +26,7 @@ contract DeploymentsProductionTest is DeploymentsFixture {
         public
         onlyProduction
     {
-        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments({isProduction: true});
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments({isProduction: true});
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             uint256 chainId = deployments[i].chainId;
