@@ -48,6 +48,7 @@ The in-circuit checks of the ERC20 resource logic require that the value of the 
 
 - **The forwarder trusts its protocol adapter.** It executes each call of its protocol adapter with the accepted logic ref. The in-circuit checks of the resource logic cover the input of the call.
 - **Permit2 checks the authorization of a wrap.** The forwarder does not check the signature of the owner itself.
+- **The issuer of a token does not block or take the tokens of the forwarder.** Some tokens let their issuer block the transfers of an address or move its tokens, for example USDC and USDT. If the issuer blocks the forwarder, each unwrap of the token reverts. If the issuer takes tokens from the forwarder, the forwarder holds fewer tokens than its resources of that token.
 
 ## 6. Parameters
 
