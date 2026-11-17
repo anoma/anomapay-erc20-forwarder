@@ -163,6 +163,8 @@ contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, 
     /// - migrate resources that carry a vulnerable logic reference.
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
+        _checkMinimumLength({input: input, minimumLength: _GENERIC_INPUT_OFFSET});
+
         (EmergencyMigratingCallType callType,,) =
             abi.decode(input[:_GENERIC_INPUT_OFFSET], (EmergencyMigratingCallType, IERC20, uint128));
 

@@ -21,7 +21,7 @@ When the protocol adapter processes an ephemeral ERC20 resource, it calls `forwa
 - The logic ref is the accepted logic ref, which `getLogicRef()` returns (`LogicRefMismatch`).
 - No other call of the forwarder runs. A reentrancy guard rejects a second call.
 
-The input starts with three 32-byte words: the call type, the token and the amount, a `uint128`. The data of the call type follow, with a fixed length (`InvalidInputLength`):
+The input starts with three 32-byte words: the call type, the token and the amount, a `uint128`. A shorter input reverts with `InputTooShort`. The data of the call type follow, with a fixed length (`InvalidInputLength`):
 
 | Call type | Data length | Data                                                                                                                       |
 | --------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |

@@ -90,6 +90,9 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     /// @notice Thrown if the wrap data or the unwrap data do not have their fixed length.
     error InvalidInputLength(uint256 expected, uint256 actual);
 
+    /// @notice Thrown if the input is shorter than its call type, token and amount.
+    error InputTooShort(uint256 minimum, uint256 actual);
+
     /// @notice Disables the initializers on the implementation contract to prevent it from being left uninitialized.
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -120,6 +123,8 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     /// - unwrap ERC20 tokens from resources
     /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
+        _checkMinimumLength({input: input, minimumLength: _GENERIC_INPUT_OFFSET});
+
         (CallType callType, IERC20 token, uint128 amount) =
             abi.decode(input[:_GENERIC_INPUT_OFFSET], (CallType, IERC20, uint128));
 
@@ -197,5 +202,12 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     /// @param expectedLength The expected length.
     function _checkLength(bytes calldata input, uint256 expectedLength) internal pure {
         require(input.length == expectedLength, InvalidInputLength({expected: expectedLength, actual: input.length}));
+    }
+
+    /// @notice Checks that the length of an input is at least the minimum length.
+    /// @param input The input data to check.
+    /// @param minimumLength The minimum length.
+    function _checkMinimumLength(bytes calldata input, uint256 minimumLength) internal pure {
+        require(input.length >= minimumLength, InputTooShort({minimum: minimumLength, actual: input.length}));
     }
 }

@@ -182,6 +182,17 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _logicRef, input: inputWithWrongLength});
     }
 
+    function test_forwardCall_reverts_if_the_input_is_shorter_than_its_call_type_token_and_amount() public {
+        bytes memory shortInput = new bytes(_GENERIC_INPUT_OFFSET - 1);
+
+        vm.prank(address(_pa));
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC20Forwarder.InputTooShort.selector, _GENERIC_INPUT_OFFSET, shortInput.length),
+            address(_fwd)
+        );
+        _fwd.forwardCall({logicRef: _logicRef, input: shortInput});
+    }
+
     function test_unwrap_does_not_revert_if_the_amount_is_zero() public {
         _erc20.mint({to: address(_fwd), value: _TRANSFER_AMOUNT});
         uint256 startBalanceAlice = _erc20.balanceOf(_alice);
