@@ -42,6 +42,7 @@ The owner deprecates the logic ref of a version only after the forwarder accepts
 ## 4. Trust assumptions
 
 - **The owner upgrades only to reviewed code.** An upgrade replaces all code, so the owner can change how tokens leave the forwarder. In production, the FWD Safe signers decide each upgrade.
+- **The owner of the protocol adapter upgrades it only to reviewed code.** A new implementation of the protocol adapter can call the forwarder with the accepted logic ref and without a proof, so the owner of the protocol adapter can also move the tokens of the forwarder. In production, the PA Safe signers decide each upgrade of the protocol adapter.
 - **The PA Safe and the FWD Safe respond to a flaw in time.** In production, the PA Safe pauses the protocol adapter and denies logic refs, and the FWD Safe upgrades the forwarder.
 - **The owner transfers the ownership only to a correct address.** `transferOwnership` and `renounceOwnership` come unchanged from OpenZeppelin, and a transfer completes in one step. Nobody can undo a transfer to a wrong address, and after a renouncement nobody can upgrade the forwarder.
 
