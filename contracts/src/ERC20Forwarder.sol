@@ -149,7 +149,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     function _wrap(address token, uint128 amount, bytes calldata wrapInput) internal {
         _checkLength({input: wrapInput, expectedLength: _WRAP_DATA_LENGTH});
 
-        (WrapData memory data) = abi.decode(wrapInput, (WrapData));
+        WrapData memory data = abi.decode(wrapInput, (WrapData));
 
         _PERMIT2.permitWitnessTransferFrom({
             permit: ISignatureTransfer.PermitTransferFrom({
@@ -177,7 +177,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     function _unwrap(address token, uint128 amount, bytes calldata unwrapInput) internal {
         _checkLength({input: unwrapInput, expectedLength: _UNWRAP_DATA_LENGTH});
 
-        (UnwrapData memory data) = abi.decode(unwrapInput, (UnwrapData));
+        UnwrapData memory data = abi.decode(unwrapInput, (UnwrapData));
 
         IERC20(token).safeTransfer({to: data.receiver, value: amount});
 
