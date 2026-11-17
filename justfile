@@ -145,6 +145,22 @@ contracts-execute-staging-upgrade deployer chain *args:
         --sig "run()" \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
+# Simulate the staging withdrawal (dry-run): upgrades the staging proxy to the withdrawing implementation and sends its tokens to the dev wallet, run locally as the staging proxy owner
+contracts-simulate-staging-withdrawal chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/staging/ExecuteERC20ForwarderWithdrawal.s.sol:ExecuteERC20ForwarderWithdrawal \
+        --sig "run()" \
+        --rpc-url {{chain}} {{ args }}
+
+# Execute the staging withdrawal as the proxy owner: upgrades the staging proxy to the withdrawing implementation and sends its tokens to the dev wallet
+contracts-execute-staging-withdrawal deployer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/staging/ExecuteERC20ForwarderWithdrawal.s.sol:ExecuteERC20ForwarderWithdrawal \
+        --sig "run()" \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
 # Simulate the production upgrade proposal (dry-run): simulates the Safe executing the upgrade
 contracts-simulate-production-upgrade-proposal proposer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
