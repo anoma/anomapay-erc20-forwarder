@@ -22,6 +22,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using SafeERC20 for IERC20;
 
+    /// @notice The call types that the forwarder accepts.
     enum CallType {
         Wrap,
         Unwrap
@@ -82,7 +83,11 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     /// @param amount The token amount being withdrawn from the ERC20 forwarder contract.
     event Unwrapped(address indexed token, address indexed to, uint128 amount);
 
+    /// @notice Thrown if the increase of the forwarder's balance of the token in a wrap, or the decrease in an unwrap,
+    /// differs from the amount in the input.
     error BalanceMismatch(uint256 expected, uint256 actual);
+
+    /// @notice Thrown if the wrap data or the unwrap data do not have their fixed length.
     error InvalidInputLength(uint256 expected, uint256 actual);
 
     /// @notice Disables the initializers on the implementation contract to prevent it from being left uninitialized.
