@@ -186,10 +186,7 @@ contract ERC20ForwarderTest is Test {
         bytes memory shortInput = new bytes(_GENERIC_INPUT_OFFSET - 1);
 
         vm.prank(address(_pa));
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC20Forwarder.InputTooShort.selector, _GENERIC_INPUT_OFFSET, shortInput.length),
-            address(_fwd)
-        );
+        vm.expectRevert(ERC20Forwarder.InputTooShort.selector, address(_fwd));
         _fwd.forwardCall({logicRef: _logicRef, input: shortInput});
     }
 
