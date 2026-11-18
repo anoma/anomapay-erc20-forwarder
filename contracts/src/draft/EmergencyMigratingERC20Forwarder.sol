@@ -15,7 +15,7 @@ import {IEmergencyMigratingERC20Forwarder} from "./IEmergencyMigratingERC20Forwa
 /// @notice A draft ERC20 forwarder that wraps, unwraps, and migrates ERC20 resources from vulnerable logic references
 /// to its own.
 /// @custom:security-contact security@anoma.foundation
-/// @custom:oz-upgrades-from ERC20Forwarder
+/// @custom:oz-upgrades-from src/ERC20Forwarder.sol:ERC20Forwarder
 /// @custom:oz-upgrades-unsafe-allow missing-initializer
 contract EmergencyMigratingERC20Forwarder is IEmergencyMigratingERC20Forwarder, ERC20Forwarder {
     using EnumerableSet for EnumerableSet.Bytes32Set;

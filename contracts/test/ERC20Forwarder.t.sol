@@ -81,24 +81,7 @@ contract ERC20ForwarderTest is Test {
             witness: ERC20ForwarderPermit2.Witness(_ACTION_TREE_ROOT).hash()
         });
 
-        _defaultWrapInput = abi.encode(
-            /*       callType */
-            ERC20Forwarder.CallType.Wrap,
-            /*          token */
-            _defaultPermit.permitted.token,
-            /*         amount */
-            _defaultPermit.permitted.amount,
-            /*      wrap data */
-            ERC20Forwarder.WrapData({
-                nonce: _defaultPermit.nonce,
-                deadline: _defaultPermit.deadline,
-                owner: _alice,
-                actionTreeRoot: _ACTION_TREE_ROOT,
-                r: r,
-                s: s,
-                v: v
-            })
-        );
+        _defaultWrapInput = _wrapInput({permit: _defaultPermit, owner: _alice, r: r, s: s, v: v});
 
         _defaultUnwrapInput = abi.encode( /* callType */
             ERC20Forwarder.CallType.Unwrap,
@@ -269,25 +252,7 @@ contract ERC20ForwarderTest is Test {
             witness: ERC20ForwarderPermit2.Witness(_ACTION_TREE_ROOT).hash()
         });
 
-        bytes memory input = abi.encode( /*       callType */
-            ERC20Forwarder.CallType.Wrap,
-            /*          token */
-            permit.permitted.token,
-            /*         amount */
-            permit.permitted.amount,
-            /*          nonce */
-            permit.nonce,
-            /*       deadline */
-            permit.deadline,
-            /*           from */
-            _alice,
-            /* actionTreeRoot */
-            _ACTION_TREE_ROOT,
-            /*      signature */
-            r,
-            s,
-            v
-        );
+        bytes memory input = _wrapInput({permit: permit, owner: _alice, r: r, s: s, v: v});
 
         uint256 actualDepositAmount = _TRANSFER_AMOUNT - _erc20FeeSub.FEE();
 
@@ -352,25 +317,8 @@ contract ERC20ForwarderTest is Test {
             witness: ERC20ForwarderPermit2.Witness(_ACTION_TREE_ROOT).hash()
         });
 
-        bytes memory wrapInputWithZeroAmount = abi.encode( /*       callType */
-            ERC20Forwarder.CallType.Wrap,
-            /*          token */
-            permitWithZeroAmount.permitted.token,
-            /*         amount */
-            permitWithZeroAmount.permitted.amount,
-            /*          nonce */
-            permitWithZeroAmount.nonce,
-            /*       deadline */
-            permitWithZeroAmount.deadline,
-            /*           from */
-            _alice,
-            /* actionTreeRoot */
-            _ACTION_TREE_ROOT,
-            /*      signature */
-            r,
-            s,
-            v
-        );
+        bytes memory wrapInputWithZeroAmount =
+            _wrapInput({permit: permitWithZeroAmount, owner: _alice, r: r, s: s, v: v});
 
         vm.prank(address(_pa));
         bytes memory output = _fwd.forwardCall({logicRef: _logicRef, input: wrapInputWithZeroAmount});
@@ -392,7 +340,7 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _logicRef, input: _defaultWrapInput});
     }
 
-    function test_check_that_the_current_version_is_not_a_major_release() public view {
+    function test_check_that_the_current_version_is_not_a_major_release() public view virtual {
         int256 lt = -1;
         //int256 eq = 0;
         int256 gt = 1;
@@ -431,7 +379,7 @@ contract ERC20ForwarderTest is Test {
         // Deploy the ERC20 forwarder
         _fwd = ERC20Forwarder(
             Upgrades.deployUUPSProxy(
-                "ERC20Forwarder.sol:ERC20Forwarder",
+                "out/ERC20Forwarder.sol/ERC20Forwarder.json",
                 abi.encodeCall(ERC20Forwarder.initialize, (address(_pa), _logicRef, _FORWARDER_OWNER))
             )
         );
@@ -439,5 +387,29 @@ contract ERC20ForwarderTest is Test {
 
     function _permit2Contract() internal virtual returns (IPermit2 permit2) {
         permit2 = new DeployPermit2().run();
+    }
+
+    /// @notice The forwarder input of a wrap of `permit` from `owner` with the Permit2 signature `(r, s, v)`.
+    function _wrapInput(
+        ISignatureTransfer.PermitTransferFrom memory permit,
+        address owner,
+        bytes32 r,
+        bytes32 s,
+        uint8 v
+    ) internal pure virtual returns (bytes memory input) {
+        input = abi.encode(
+            ERC20Forwarder.CallType.Wrap,
+            permit.permitted.token,
+            permit.permitted.amount,
+            ERC20Forwarder.WrapData({
+                nonce: permit.nonce,
+                deadline: permit.deadline,
+                owner: owner,
+                actionTreeRoot: _ACTION_TREE_ROOT,
+                r: r,
+                s: s,
+                v: v
+            })
+        );
     }
 }

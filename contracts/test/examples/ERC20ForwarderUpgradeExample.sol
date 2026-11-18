@@ -7,7 +7,7 @@ import {ERC20Forwarder} from "../../src/ERC20Forwarder.sol";
 /// @author Anoma Foundation, 2025
 /// @notice A draft second version of the ERC20 forwarder used to exercise the UUPS upgrade path.
 /// @custom:security-contact security@anoma.foundation
-/// @custom:oz-upgrades-from ERC20Forwarder
+/// @custom:oz-upgrades-from src/ERC20Forwarder.sol:ERC20Forwarder
 contract ERC20ForwarderUpgradeExample is ERC20Forwarder {
     /// @inheritdoc ERC20Forwarder
     /// @dev The upgrade safety validation rejects an implementation without its own initializer.

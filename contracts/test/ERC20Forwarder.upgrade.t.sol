@@ -32,7 +32,7 @@ contract ERC20ForwarderUpgradeTest is Test {
 
         _fwdProxy = UUPSUpgradeable(
             Upgrades.deployUUPSProxy(
-                "ERC20Forwarder.sol:ERC20Forwarder",
+                "out/ERC20Forwarder.sol/ERC20Forwarder.json",
                 abi.encodeCall(ERC20Forwarder.initialize, (_pa, _INITIAL_LOGIC_REF, _FORWARDER_OWNER))
             )
         );

@@ -51,7 +51,7 @@ contracts-storage-check *skip:
     for sol in src/*.sol; do
         name="$(basename "$sol" .sol)"
         case " {{ skip }} " in *" $name "*) continue ;; esac
-        if [ "$(forge inspect "$name" storageLayout --json | jq '[.storage[] | select(.type | startswith("erc7201(") | not)] == []')" != true ]; then
+        if [ "$(forge inspect "$sol:$name" storageLayout --json | jq '[.storage[] | select(.type | startswith("erc7201(") | not)] == []')" != true ]; then
             printf '{{RED}}%s has storage outside ERC-7201 namespaces; upgrade-safe contracts must use ERC-7201 namespaced storage.{{NORMAL}}\n' "$sol"
             exit 1
         fi
@@ -83,7 +83,8 @@ contracts-gen-bindings:
     # `--select` keeps the script contracts themselves out of the bindings.
     # `forge bind` builds without bytecode, which drops the `deploy` helpers, so
     # build first and let it read those artifacts.
-    cd contracts && forge clean && forge build --skip test && forge bind \
+    # The draft `src/draft/ERC20Forwarder.sol` has the name of the 2.0.0 contract, so the build skips it.
+    cd contracts && forge clean && forge build --skip test --skip src/draft/ERC20Forwarder.sol && forge bind \
         --skip-build \
         --select '^(ERC20Forwarder|EmergencyMigratingERC20Forwarder|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
