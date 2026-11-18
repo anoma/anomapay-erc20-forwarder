@@ -36,6 +36,8 @@ The forwarder returns an empty output. The protocol adapter compares it with the
 
 The forwarder calls `permitWitnessTransferFrom` of Permit2. Permit2 transfers the amount of the token from the owner to the forwarder only if the owner signed this transfer. The signature covers the token, the amount, the nonce, the deadline, the forwarder as the spender, and the witness `Witness(bytes32 actionTreeRoot)`. Permit2 rejects a used nonce and a passed deadline, and it can transfer the tokens only after the owner approved Permit2 for the token. The forwarder emits `Wrapped(token, from, amount)`.
 
+The forwarder passes the signature to Permit2 as the 65 bytes `r`, `s` and `v`. If the owner is an EOA, an account that one private key controls, Permit2 recovers the signer from them. If the owner is a contract, Permit2 calls its `isValidSignature` with them (ERC-1271, the standard for signatures of contracts). An EOA with an EIP-7702 delegation counts as a contract here, because it runs the code of its delegate. So a contract can wrap only if it accepts a 65-byte signature.
+
 The in-circuit checks of the ERC20 resource logic require that the action tree root of the input is the action tree root of the action. So the signature authorizes the transfer only for this action. The action tree root covers the resources that the action creates, so the signature also fixes who owns the new ERC20 resources.
 
 ## 4. Unwrap
