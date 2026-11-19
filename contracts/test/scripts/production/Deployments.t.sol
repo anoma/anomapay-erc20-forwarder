@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
-import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol";
+import {IVersion} from "anoma-forwarder-bases-3.1.1/src/interfaces/IVersion.sol";
 
 import {Parameters} from "../../../script/libs/Parameters.sol";
 import {RecordedDeployments} from "../../../script/libs/RecordedDeployments.sol";

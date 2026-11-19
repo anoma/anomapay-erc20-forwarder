@@ -10,7 +10,7 @@ import {DeploymentsJson} from "./DeploymentsJson.sol";
 /// @custom:security-contact security@anoma.foundation
 library ProtocolAdapterDeployments {
     /// @notice The directory of the bindings package that holds the records, relative to the project root.
-    string internal constant _DIRECTORY = "dependencies/anoma-pa-evm-bindings-3.0.0-rc.22/crates/bindings";
+    string internal constant _DIRECTORY = "dependencies/anoma-pa-evm-bindings-3.0.0/crates/bindings";
 
     /// @notice The name of the bindings package.
     string internal constant _PACKAGE_NAME = "anoma-pa-evm-bindings";
