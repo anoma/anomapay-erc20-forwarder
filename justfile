@@ -78,12 +78,14 @@ contracts-test *args:
 
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
-    # The script directory is built (not skipped) because `ERC1967Proxy` only
-    # enters the compilation graph through `DeployERC20ForwarderProxy.s.sol`;
-    # `--select` keeps the script contracts themselves out of the bindings.
-    # `forge bind` builds without bytecode, which drops the `deploy` helpers, so
-    # build first and let it read those artifacts.
-    cd contracts && forge clean && forge build --skip test && forge bind \
+    # Only the files of the contracts in `--select`: with via_ir, the compiled file set changes the bytecode, and a verifier compiles a contract with its own imports only.
+    # `forge bind` builds without bytecode, so it reads these artifacts.
+    cd contracts && forge clean && forge build \
+        src/ERC20Forwarder.sol \
+        src/draft/EmergencyMigratingERC20Forwarder.sol \
+        dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol \
+        test/DeploymentParameters.sol \
+        && forge bind \
         --skip-build \
         --select '^(ERC20Forwarder|EmergencyMigratingERC20Forwarder|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
