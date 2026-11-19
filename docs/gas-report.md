@@ -1,11 +1,11 @@
 | src/ERC20Forwarder.sol:ERC20Forwarder Contract |                 |        |        |        |         |
 |------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                | Deployment Size |        |        |        |         |
-|                                        1415777 |            6483 |        |        |        |         |
+|                                        1415705 |            6483 |        |        |        |         |
 |                                                |                 |        |        |        |         |
 | Function Name                                  | Min             | Avg    | Median | Max    | # Calls |
 | UPGRADE_INTERFACE_VERSION                      |             583 |    583 |    583 |    583 |       2 |
-| VERSION                                        |             666 |    666 |    666 |    666 |       3 |
+| VERSION                                        |             666 |    666 |    666 |    666 |       2 |
 | forwardCall                                    |            4772 |  45677 |  41534 | 104269 |      15 |
 | getImplementation                              |             388 |    388 |    388 |    388 |       3 |
 | getLogicRef                                    |            2426 |   2426 |   2426 |   2426 |       3 |
