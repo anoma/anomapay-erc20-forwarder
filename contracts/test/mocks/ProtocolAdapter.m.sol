@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
+
+import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
+import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
+
+contract ProtocolAdapterMock is Ownable, Pausable {
+    mapping(bytes32 nullifier => bool isContained) internal _nullifierSet;
+    mapping(bytes32 root => bool isHistorical) internal _historicalRoots;
+    mapping(bytes32 logicRef => mapping(bool consumed => bool isDenied)) internal _deniedLogicRefs;
+
+    constructor(address emergencyStopCaller) Ownable(emergencyStopCaller) {}
+
+    function mockAddNullifier(bytes32 nullifier) external {
+        _nullifierSet[nullifier] = true;
+    }
+
+    function mockAddCommitmentTreeRoot(bytes32 root) external {
+        _historicalRoots[root] = true;
+    }
+
+    function mockSetLogicRefDenied(bytes32 logicRef, bool consumed, bool isDenied) external {
+        _deniedLogicRefs[logicRef][consumed] = isDenied;
+    }
+
+    function emergencyStop() external onlyOwner whenNotPaused {
+        _pause();
+    }
+
+    function isNullifierContained(bytes32 nullifier) external view returns (bool isContained) {
+        isContained = _nullifierSet[nullifier];
+    }
+
+    function isCommitmentTreeRootHistorical(bytes32 root) external view returns (bool isHistorical) {
+        isHistorical = _historicalRoots[root];
+    }
+
+    function isLogicRefDenied(bytes32 logicRef, bool consumed) external view returns (bool isDenied) {
+        isDenied = _deniedLogicRefs[logicRef][consumed];
+    }
+
+    function isEmergencyStopped() public view returns (bool isStopped) {
+        isStopped = paused();
+    }
+}

@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IERC20} from "@openzeppelin-contracts-5.5.0/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin-contracts-5.5.0/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/utils/SafeERC20.sol";
+import {ForwarderBaseUpgradeable} from "anoma-forwarder-bases-3.1.1/src/ForwarderBaseUpgradeable.sol";
+import {IVersion} from "anoma-forwarder-bases-3.1.1/src/interfaces/IVersion.sol";
 import {
     IPermit2,
     ISignatureTransfer
 } from "uniswap-permit2-0x000000000022D473030F116dDEE9F6B43aC78BA3/src/interfaces/IPermit2.sol";
 
-import {EmergencyMigratableForwarderBase} from "./bases/EmergencyMigratableForwarderBase.sol";
 import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 
 /// @title ERC20Forwarder
@@ -17,10 +18,11 @@ import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 /// - wrap ERC20 tokens into ERC20 resources using Uniswap's Permit2 and
 /// - unwrap ERC20 tokens from ERC20 resources.
 /// @custom:security-contact security@anoma.foundation
-contract ERC20Forwarder is EmergencyMigratableForwarderBase {
+contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using SafeERC20 for IERC20;
 
+    /// @notice The call types that the forwarder accepts.
     enum CallType {
         Wrap,
         Unwrap
@@ -29,8 +31,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @notice A struct containing wrap specific inputs.
     /// @param nonce A unique value to prevent signature replays.
     /// @param deadline The deadline of the permit signature.
-    /// @param owner The owner from which the funds a transferred from and signer of the Permit2 message.
-    /// @param witness The action tree root that was signed over in addition to the permit data.
+    /// @param owner The account that signs the Permit2 message and from which Permit2 transfers the tokens.
+    /// @param actionTreeRoot The action tree root that the owner signs together with the permit data.
     /// @param r The ECDSA signature component `r` of the Permit2 signature.
     /// @param s The ECDSA signature component `s` of the Permit2 signature.
     /// @param v The ECDSA recovery identifier (27 or 28) of the Permit2 signature.
@@ -52,6 +54,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     }
 
     /// @notice The offset for the calltype specific input data (3 slots).
+    // NOTE: Slither does not see the uses of this constant as slice bounds.
     // slither-disable-next-line unused-state
     uint256 internal constant _GENERIC_INPUT_OFFSET = 3 * 32;
 
@@ -65,6 +68,9 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
     IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
+    /// @inheritdoc IVersion
+    string public constant override VERSION = "2.0.0";
+
     /// @notice Emitted when ERC20 tokens get wrapped.
     /// @param token The ERC20 token address.
     /// @param from The address from which tokens were withdrawn.
@@ -77,19 +83,36 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param amount The token amount being withdrawn from the ERC20 forwarder contract.
     event Unwrapped(address indexed token, address indexed to, uint128 amount);
 
+    /// @notice Thrown if the increase of the forwarder's balance of the token in a wrap, or the decrease in an unwrap,
+    /// differs from the amount in the input.
     error BalanceMismatch(uint256 expected, uint256 actual);
+
+    /// @notice Thrown if the wrap data or the unwrap data do not have their fixed length.
     error InvalidInputLength(uint256 expected, uint256 actual);
+
+    /// @notice Disables the initializers on the implementation contract to prevent it from being left uninitialized.
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that can forward calls.
-    /// @param logicRef The reference to the logic function of the resource kind triggering the forward call.
-    /// @param emergencyCommittee The emergency committee that can set the emergency caller if the protocol adapter has
-    /// been stopped.
-    constructor(address protocolAdapter, bytes32 logicRef, address emergencyCommittee)
-        EmergencyMigratableForwarderBase(protocolAdapter, logicRef, emergencyCommittee)
-    {}
-
-    // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
+    /// @param logicRef The reference to the ERC20 resource logic function triggering the forward calls.
+    /// @param initialOwner The initial owner of the contract having the upgrade authority.
+    function initialize( /* solhint-disable-line comprehensive-interface*/
+        address protocolAdapter,
+        bytes32 logicRef,
+        address initialOwner
+    )
+        external
+        virtual
+        initializer
+    {
+        __ForwarderBaseUpgradeable_init({
+            protocolAdapter: protocolAdapter, logicRef: logicRef, initialOwner: initialOwner
+        });
+    }
 
     /// @notice Forwards a call wrapping or unwrapping ERC20 tokens based on the provided input.
     /// @param input Contains data to
@@ -103,7 +126,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         bytes calldata specificInput = input[_GENERIC_INPUT_OFFSET:];
 
         // NOTE: The balance read before the external call is reentrancy-protected by the `nonReentrant` modifier in
-        // `ForwarderBase.forwardCall` and `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
+        // `ForwarderBaseUpgradeable.forwardCall`.
         // slither-disable-next-line reentrancy-balance
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 balanceDelta = 0;
@@ -116,14 +139,12 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             balanceDelta = balanceBefore - token.balanceOf(address(this));
         }
 
-        if (balanceDelta != amount) {
-            revert BalanceMismatch({expected: amount, actual: balanceDelta});
-        }
+        // Check that the exact `amount` passed with the inputs is transferred.
+        // slither-disable-next-line incorrect-equality
+        require(balanceDelta == amount, BalanceMismatch({expected: amount, actual: balanceDelta}));
 
         output = "";
     }
-
-    // slither-disable-end dead-code
 
     /// @notice Wraps an ERC20 token and transfers funds from the user that must have authorized the call using
     /// `Permit2.permitWitnessTransferFrom`.
@@ -133,7 +154,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     function _wrap(address token, uint128 amount, bytes calldata wrapInput) internal {
         _checkLength({input: wrapInput, expectedLength: _WRAP_DATA_LENGTH});
 
-        (WrapData memory data) = abi.decode(wrapInput, (WrapData));
+        WrapData memory data = abi.decode(wrapInput, (WrapData));
 
         _PERMIT2.permitWitnessTransferFrom({
             permit: ISignatureTransfer.PermitTransferFrom({
@@ -148,8 +169,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             signature: abi.encodePacked(data.r, data.s, data.v)
         });
 
-        // NOTE: The event ordering is protected by the `nonReentrant` modifier in `ForwarderBase.forwardCall` and
-        // `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
+        // NOTE: The event ordering is protected by the `nonReentrant` modifier in
+        // `ForwarderBaseUpgradeable.forwardCall`.
         // slither-disable-next-line reentrancy-events
         emit Wrapped({token: token, from: data.owner, amount: amount});
     }
@@ -161,30 +182,20 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     function _unwrap(address token, uint128 amount, bytes calldata unwrapInput) internal {
         _checkLength({input: unwrapInput, expectedLength: _UNWRAP_DATA_LENGTH});
 
-        (UnwrapData memory data) = abi.decode(unwrapInput, (UnwrapData));
+        UnwrapData memory data = abi.decode(unwrapInput, (UnwrapData));
 
         IERC20(token).safeTransfer({to: data.receiver, value: amount});
 
-        // NOTE: The event ordering is protected by the `nonReentrant` modifier in `ForwarderBase.forwardCall` and
-        // `EmergencyMigratableForwarderBase.forwardEmergencyCall`.
+        // NOTE: The event ordering is protected by the `nonReentrant` modifier in
+        // `ForwarderBaseUpgradeable.forwardCall`.
         // slither-disable-next-line reentrancy-events
         emit Unwrapped({token: token, to: data.receiver, amount: amount});
-    }
-
-    /// @notice Forwards an emergency call wrapping or unwrapping ERC20 tokens based on the provided input.
-    /// @param input Contains data to withdraw or send ERC20 tokens from or to a user, respectively.
-    /// @return output The output of the emergency call.
-    /// @dev This function internally uses the `SafeERC20` library.
-    function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
-        output = _forwardCall(input);
     }
 
     /// @notice Checks that the length of an input is the expected length.
     /// @param input The input data to check.
     /// @param expectedLength The expected length.
     function _checkLength(bytes calldata input, uint256 expectedLength) internal pure {
-        if (input.length != expectedLength) {
-            revert InvalidInputLength({expected: expectedLength, actual: input.length});
-        }
+        require(input.length == expectedLength, InvalidInputLength({expected: expectedLength, actual: input.length}));
     }
 }

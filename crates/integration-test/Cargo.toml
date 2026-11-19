@@ -1,0 +1,49 @@
+[package]
+name = "anomapay-erc20-forwarder-integration-test"
+description = "Integration and e2e tests for the AnomaPay ERC20 forwarder."
+version = "0.2.0"
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+keywords.workspace = true
+edition.workspace = true
+publish = false
+
+[features]
+default = []
+e2e = ["anoma-pa-evm-integration-test/e2e"]
+
+[dependencies]
+anoma-pa-testkit = { workspace = true, features = ["fixtures"] }
+anoma-pa-evm-integration-test = { workspace = true }
+anomapay-erc20-forwarder-bindings = { workspace = true }
+
+alloy = { workspace = true, features = [
+  "contract",
+  "eip712",
+  "json",
+  "node-bindings",
+  "providers",
+  "rpc-types",
+  "signer-local",
+  "sol-types",
+] }
+alloy-chains = { workspace = true }
+anoma-pa-evm-bindings = { workspace = true }
+anoma-rm-risc0 = { workspace = true, features = ["compliance_circuit"] }
+anoma-rm-risc0-gadgets = { workspace = true }
+anomapay_emergency_migrating_erc20_library = { workspace = true }
+anomapay_emergency_migrating_erc20_witness = { workspace = true }
+anomapay_erc20_library = { workspace = true }
+anomapay_erc20_witness = { workspace = true }
+anyhow = { workspace = true }
+bincode = { workspace = true }
+risc0-zkvm = { workspace = true }
+
+[dev-dependencies]
+anoma-pa-testkit = { workspace = true, features = ["mocks"] }
+regex = { workspace = true }
+rstest = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }

@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
+
+import {IVersion} from "anoma-forwarder-bases-3.1.1/src/interfaces/IVersion.sol";
+
+import {RecordedDeployments} from "../../../script/libs/RecordedDeployments.sol";
+import {DeploymentsFixture} from "../../fixtures/DeploymentsFixture.sol";
+
+/// @notice Checks the staging deployments recorded in `deployments.json`. The genesis check needs no chain access and
+/// holds everywhere. That the environment runs this source holds only while the deployments are verified, because the
+/// source leads them between deployments.
+contract DeploymentsStagingTest is DeploymentsFixture {
+    /// @notice Skips the test unless the staging deployments are verified against this source.
+    modifier onlyStaging() {
+        vm.skip(!vm.envOr("VERIFY_STAGING_DEPLOYMENTS", false), "VERIFY_STAGING_DEPLOYMENTS is not set");
+        _;
+    }
+
+    function test_recorded_deployments_run_the_source_implementation() public onlyStaging {
+        _expectSourceImplementations({isProduction: false});
+    }
+
+    function test_recorded_deployments_run_a_release_or_release_candidate_version() public onlyStaging {
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments({isProduction: false});
+
+        for (uint256 i = 0; i < deployments.length; ++i) {
+            string memory version = abi.decode(
+                _call({
+                    chainId: deployments[i].chainId,
+                    target: deployments[i].proxy.addr,
+                    data: abi.encodeCall(IVersion.VERSION, ())
+                }),
+                (string)
+            );
+            string memory context = _deploymentContext({isProduction: false, chainId: deployments[i].chainId});
+
+            assertTrue(
+                _isRelease(version) || _isReleaseCandidate(version),
+                string.concat(context, ": version is neither a release nor a release candidate: ", version)
+            );
+        }
+    }
+
+    function test_recorded_deployments_use_the_environment_salt() public view {
+        _expectGenesisDeployments({isProduction: false});
+    }
+}

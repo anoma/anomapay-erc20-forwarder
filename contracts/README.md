@@ -1,4 +1,4 @@
-[![Contracts Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml) [![soldeer.xyz](https://img.shields.io/badge/soldeer.xyz-anomapay--erc20--forwarder-blue?logo=ethereum)](https://soldeer.xyz/project/anoma-pa-evm) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/bindings/LICENSE)
+[![Contracts Tests](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/anomapay-erc20-forwarder/actions/workflows/contracts.yml) [![soldeer.xyz](https://img.shields.io/badge/soldeer.xyz-anomapay--erc20--forwarder-blue?logo=ethereum)](https://soldeer.xyz/project/anomapay-erc20-forwarder) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/anomapay-erc20-forwarder/refs/heads/main/contracts/LICENSE)
 
 # ERC20Forwarder Contract
 
@@ -66,8 +66,16 @@ forge coverage
 
 Append the
 
-- `--no-match-coverage "(script|test)"` to exclude scripts, tests, and drafts,
-- `--report lcov` to generate the `lcov.info` file that can be used by code review tooling.
+- `--no-match-coverage "(script|test|draft)"` flag to exclude scripts, tests, and drafts
+- `--report lcov` flag to generate the `lcov.info` file that can be used by code review tooling.
+
+#### Gas Report
+
+[`docs/gas-report.md`](../docs/gas-report.md) lists the gas use of each external function of the contracts that `gas_reports` in `foundry.toml` names. The numbers come from the calls in the `test_` unit tests, not from fuzz or invariant runs. CI fails if the file is out of date, so the diff of a pull request shows its gas changes. To update the file, run from the repository root
+
+```sh
+just contracts-gen-gas-report
+```
 
 #### Linting & Static Analysis
 
@@ -76,25 +84,20 @@ As a prerequisite, install the
 - `solhint` linter (see https://github.com/protofire/solhint)
 - `slither` static analyzer (see https://github.com/crytic/slither)
 
-To run the linter and static analyzer, run
+To run the linters and static analyzer, run
 
 ```sh
+forge lint --deny notes && \
 bunx solhint --config .solhint.json 'src/**/*.sol' && \
 bunx solhint --config .solhint.other.json 'script/**/*.sol' 'test/**/*.sol' && \
 slither .
 ```
 
+`forge lint` runs its full rule set on `src` only. solhint checks `src` for the rules that `forge lint` lacks, and checks `script` and `test` with the relaxed `.solhint.other.json`. slither skips `assembly`, `calls-loop` and `locked-ether`, because `forge lint` reports every site that slither reports for them.
+
 #### Rust Bindings
 
-To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forge/reference/bind/) documentation), run
-
-```sh
-forge bind \
-  --select '^(ERC20Forwarder|ERC20ForwarderV2|ERC20ForwarderV3|IProtocolAdapterSpecific|ILogicRefSpecific|IEmergencyMigratable)$' \
-  --bindings-path ../bindings/src/generated/ \
-  --module \
-  --overwrite
-```
+To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forge/reference/bind/) documentation), run `just contracts-gen-bindings` from the repository root. It builds only the files of the contracts that get bindings: with `via_ir`, the set of compiled files changes the bytecode, and a verifier such as Etherscan or Sourcify compiles a contract with its own imports only.
 
 #### Documentation
 
@@ -109,8 +112,8 @@ forge doc
 To simulate deployment on sepolia, run
 
 ```sh
-forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder \
-  --sig "run(bool,address,bytes32,address)" <IS_TEST_DEPLOYMENT> <PROTOCOL_ADAPTER> <CARRIER_LOGIC_REF> <EMERGENCY_COMMITTEE> \
+forge script script/DeployERC20ForwarderProxy.s.sol:DeployERC20ForwarderProxy \
+  --sig "run(bool)" <IS_PRODUCTION> \
   --rpc-url sepolia
 ```
 

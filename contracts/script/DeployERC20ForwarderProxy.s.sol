@@ -1,0 +1,142 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
+
+import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
+import {Script} from "forge-std-1.17.0/src/Script.sol";
+
+import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
+import {DeployERC20ForwarderImplementation} from "./DeployERC20ForwarderImplementation.s.sol";
+import {DeploymentsJson} from "./libs/DeploymentsJson.sol";
+import {Parameters} from "./libs/Parameters.sol";
+import {ProtocolAdapterDeployments} from "./libs/ProtocolAdapterDeployments.sol";
+import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
+
+/// @title DeployERC20ForwarderProxy
+/// @author Anoma Foundation, 2025
+/// @notice A script to deploy the ERC20 forwarder implementation and an ERC-1967 proxy pointing to it on supported
+/// networks. The proxy forwards for the recorded protocol adapter proxy of the same environment on the chain.
+/// @custom:security-contact security@anoma.foundation
+contract DeployERC20ForwarderProxy is Script {
+    /// @notice The CREATE2 salt for the staging environment proxy deployment.
+    bytes32 public constant PROXY_SALT_STAGING = Parameters.PROXY_SALT_STAGING;
+
+    /// @notice The CREATE2 salt for the production environment proxy deployment.
+    bytes32 public constant PROXY_SALT_PRODUCTION = Parameters.PROXY_SALT_PRODUCTION;
+
+    /// @notice The staging environment proxy owner — the deployment wallet, upgrading instantly.
+    address public constant PROXY_OWNER_STAGING = Parameters.DEPLOYMENT_WALLET;
+
+    /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
+    address public constant PROXY_OWNER_PRODUCTION = Parameters.FWD_MULTISIG;
+
+    /// @notice Thrown if the environment already has a deployment recorded for this chain.
+    error DeploymentAlreadyRecorded(string environment, uint256 chainId);
+
+    /// @notice Thrown if the environment records no protocol adapter proxy for this chain, i.e. the proxy has no
+    /// protocol adapter to forward for.
+    error ProtocolAdapterNotRecorded(string environment, uint256 chainId);
+
+    /// @notice Thrown if the proxy of this source version is already deployed.
+    error ProxyAlreadyDeployed(address proxy);
+
+    /// @notice Deploys an ERC-1967 proxy pointing to the ERC20 forwarder implementation deterministically. The
+    /// implementation is validated for upgrade safety and deployed first, unless the other environment deployed it
+    /// already.
+    /// @param isProduction Whether to deploy the production or the staging environment proxy, selecting the CREATE2
+    /// salt, the owner receiving the authority to authorize upgrades, and the protocol adapter proxy to forward for.
+    /// @return proxy The ERC20 forwarder proxy contract to interact with.
+    /// @return implementation The ERC20 forwarder implementation contract the proxy delegates to.
+    /// @return initializerData The proxy constructor's initializer data, to record in `deployments.json`.
+    /// @return creationCode The ERC-1967 proxy creation code, to record in `deployments.json`.
+    function run(bool isProduction)
+        public
+        returns (address proxy, address implementation, bytes memory initializerData, bytes memory creationCode)
+    {
+        DeployERC20ForwarderImplementation implementationDeployScript = new DeployERC20ForwarderImplementation();
+
+        bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+
+        // Checks
+        {
+            require(
+                RecordedDeployments.forwarderProxy({isProduction: isProduction, chainId: block.chainid}) == address(0),
+                DeploymentAlreadyRecorded(DeploymentsJson.environment(isProduction), block.chainid)
+            );
+
+            implementation = implementationDeployScript.predict();
+
+            (proxy, initializerData, creationCode) = _predict({
+                salt: salt,
+                implementation: implementation,
+                protocolAdapter: _protocolAdapter(isProduction),
+                isProduction: isProduction
+            });
+            require(proxy.code.length == 0, ProxyAlreadyDeployed({proxy: proxy}));
+        }
+
+        // Deployment
+        if (implementation.code.length == 0) {
+            implementationDeployScript.run();
+        }
+
+        vm.startBroadcast();
+        proxy = address(new ERC1967Proxy{salt: salt}({implementation: implementation, _data: initializerData}));
+        vm.stopBroadcast();
+    }
+
+    /// @notice Predicts the deterministic address the proxy of this source version deploys to.
+    /// @param isProduction Whether to predict the production or the staging environment proxy.
+    /// @return proxy The predicted ERC20 forwarder proxy contract address.
+    /// @return implementation The predicted implementation contract address the proxy commits to.
+    function predict(bool isProduction) public returns (address proxy, address implementation) {
+        bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+
+        implementation = new DeployERC20ForwarderImplementation().predict();
+
+        (proxy,,) = _predict({
+            salt: salt,
+            implementation: implementation,
+            protocolAdapter: _protocolAdapter(isProduction),
+            isProduction: isProduction
+        });
+    }
+
+    /// @notice Returns the recorded protocol adapter proxy of the environment on this chain, which the forwarder proxy
+    /// forwards for, and reverts if the environment records none.
+    /// @param isProduction Whether to return the production or the staging environment protocol adapter proxy.
+    /// @return protocolAdapter The recorded protocol adapter proxy.
+    function _protocolAdapter(bool isProduction) internal view virtual returns (address protocolAdapter) {
+        protocolAdapter =
+            ProtocolAdapterDeployments.protocolAdapterProxy({isProduction: isProduction, chainId: block.chainid});
+        require(
+            protocolAdapter != address(0),
+            ProtocolAdapterNotRecorded(DeploymentsJson.environment(isProduction), block.chainid)
+        );
+    }
+
+    /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.
+    /// @param salt The CREATE2 salt of the environment.
+    /// @param implementation The implementation contract the proxy delegates to.
+    /// @param protocolAdapter The protocol adapter proxy of the same environment.
+    /// @param isProduction Whether to derive the production or the staging environment proxy, selecting the owner.
+    /// @return proxy The deterministic ERC20 forwarder proxy contract address.
+    /// @return initializerData The proxy constructor's initializer data.
+    /// @return creationCode The ERC-1967 proxy creation code.
+    function _predict(bytes32 salt, address implementation, address protocolAdapter, bool isProduction)
+        internal
+        pure
+        returns (address proxy, bytes memory initializerData, bytes memory creationCode)
+    {
+        initializerData = abi.encodeCall(
+            ERC20Forwarder.initialize,
+            (protocolAdapter, Parameters.LOGIC_REF, isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING)
+        );
+        creationCode = type(ERC1967Proxy).creationCode;
+
+        bytes memory constructorArgs = abi.encode(implementation, initializerData);
+
+        bytes memory initCode = abi.encodePacked(creationCode, constructorArgs);
+
+        proxy = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
+    }
+}
