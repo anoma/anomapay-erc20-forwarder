@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
-import {ERC20Example} from "anoma-forwarder-bases-3.1.0/test/examples/ERC20Example.sol";
+import {ERC20Example} from "anoma-forwarder-bases-3.1.1/test/examples/ERC20Example.sol";
 
 import {Parameters} from "../../script/libs/Parameters.sol";
 import {ProtocolAdapterDeployments} from "../../script/libs/ProtocolAdapterDeployments.sol";

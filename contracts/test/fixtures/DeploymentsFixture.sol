@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IImplementation} from "anoma-forwarder-bases-3.1.0/src/interfaces/IImplementation.sol";
-import {SupportedNetworks} from "anoma-risc0-deployments-2.0.0/src/SupportedNetworks.sol";
+import {IImplementation} from "anoma-forwarder-bases-3.1.1/src/interfaces/IImplementation.sol";
+import {SupportedNetworks} from "anoma-risc0-deployments-2.0.1/src/SupportedNetworks.sol";
 import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
