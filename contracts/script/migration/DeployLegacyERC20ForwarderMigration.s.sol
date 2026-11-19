@@ -6,7 +6,7 @@ import {IOwnerManager} from "safe-smart-account-1.5.0/contracts/interfaces/IOwne
 import {Safe} from "safe-utils-0.0.24/src/Safe.sol";
 
 import {LegacyERC20ForwarderMigration} from "../../src/migration/LegacyERC20ForwarderMigration.sol";
-import {Parameters} from "../Parameters.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title DeployLegacyERC20ForwarderMigration
@@ -33,10 +33,10 @@ contract DeployLegacyERC20ForwarderMigration is MigrationScript {
     /// and proposes it to the forwarder multisig as the emergency caller of the legacy ERC20 forwarder. Without
     /// `--broadcast`, the deployment is simulated locally and the Safe execution of the assignment is simulated instead
     /// of proposed.
-    /// @dev The script broadcasts as the deployment wallet, because with `--account` alone forge runs it as its default
-    /// sender.
     /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
     /// @return migration The migration contract, owned by the deployment wallet.
+    /// @dev The script broadcasts as the deployment wallet, because with `--account` alone forge runs it as its default
+    /// sender.
     function run(bool isProduction) public returns (LegacyERC20ForwarderMigration migration) {
         (address legacyForwarder, address forwarder) = _configuration(isProduction);
 
@@ -60,16 +60,16 @@ contract DeployLegacyERC20ForwarderMigration is MigrationScript {
     /// @notice Predicts the deterministic address the migration contract of the chain deploys to.
     /// @param isProduction Whether the tokens move to the production or the staging ERC20 forwarder.
     /// @return migration The predicted migration contract address.
-    function predict(bool isProduction) public returns (address migration) {
+    function predict(bool isProduction) public view returns (address migration) {
         (address legacyForwarder, address forwarder) = _configuration(isProduction);
         migration = _predict({legacyForwarder: legacyForwarder, forwarder: forwarder});
     }
 
     /// @notice Proposes a transaction to the forwarder multisig via the Safe Transaction Service, signed by the
     /// deployment wallet.
-    /// @dev Without `--broadcast`, the Safe execution of the transaction is simulated instead of proposed.
     /// @param target The contract the Safe calls.
     /// @param callData The call to propose.
+    /// @dev Without `--broadcast`, the Safe execution of the transaction is simulated instead of proposed.
     function _propose(address target, bytes memory callData) internal {
         address safe = Parameters.FWD_MULTISIG;
         _safe.initialize(safe);

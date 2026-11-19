@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts-5.7.0/utils/types/Time.sol";
-import {ERC20Example} from "anoma-forwarder-bases-3.1.0/test/examples/ERC20Example.sol";
+import {ERC20Example} from "anoma-forwarder-bases-3.1.1/test/examples/ERC20Example.sol";
 import {Test, Vm, stdError} from "forge-std-1.17.0/src/Test.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 import {
@@ -392,17 +392,12 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _logicRef, input: _defaultWrapInput});
     }
 
-    function test_check_that_the_current_version_is_not_a_major_release() public view {
-        int256 lt = -1;
-        //int256 eq = 0;
-        int256 gt = 1;
+    /// @dev Fails on a major version bump, so that the bump is deliberate.
+    function test_VERSION_has_the_major_version_2() public view {
+        bytes32 version = LibString.toSmallString(_fwd.VERSION());
 
-        assertEq(
-            SemVerLib.cmp(LibString.toSmallString(_fwd.VERSION()), "1.0.0"), gt, "version should be greater than 1.0.0"
-        );
-        assertEq(
-            SemVerLib.cmp(LibString.toSmallString(_fwd.VERSION()), "2.0.0"), lt, "version should be less than 2.0.0"
-        );
+        assertGe(SemVerLib.cmp(version, "2.0.0"), 0, "the version is below 2.0.0");
+        assertLt(SemVerLib.cmp(version, "3.0.0"), 0, "the version is 3.0.0 or above");
     }
 
     /// @dev `toSmallString` reverts if the version does not fit into `bytes32`, which `SemVerLib` comparisons

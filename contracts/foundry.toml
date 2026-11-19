@@ -22,25 +22,33 @@ src = "src"
 test = "test"
 out = "out"
 script = "script"
-# Let tests read build artifacts (needed by `openzeppelin-foundry-upgrades`). Setting
-# `fs_permissions` replaces the implicit artifact access.
-fs_permissions = [{ access = "read", path = "out" }]
+# Let scripts and tests read the build artifacts, which `openzeppelin-foundry-upgrades` needs, and the
+# deployment records of the forwarder and of the protocol adapter, each with the `Cargo.toml` that names its package.
+# Setting `fs_permissions` replaces the implicit artifact access.
+fs_permissions = [
+    { access = "read", path = "out" },
+    { access = "read", path = "../crates/bindings/deployments.json" },
+    { access = "read", path = "../crates/bindings/Cargo.toml" },
+    { access = "read", path = "dependencies/anoma-pa-evm-bindings-3.0.0/crates/bindings/deployments.json" },
+    { access = "read", path = "dependencies/anoma-pa-evm-bindings-3.0.0/crates/bindings/Cargo.toml" },
+]
 libs = ["dependencies"]
 auto_detect_remappings = false
 remappings = [
     "@openzeppelin-contracts-5.7.0/=dependencies/@openzeppelin-contracts-5.7.0/",
     "@openzeppelin-contracts-upgradeable-5.7.0/=dependencies/@openzeppelin-contracts-upgradeable-5.7.0/",
     "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.7.0/",
-    "anoma-forwarder-bases-3.1.0/=dependencies/anoma-forwarder-bases-3.1.0/",
-    "anoma-pa-evm-2.0.0-rc.16/=dependencies/anoma-pa-evm-2.0.0-rc.16/",
-    "anoma-risc0-deployments-2.0.0/=dependencies/anoma-risc0-deployments-2.0.0/",
+    "anoma-forwarder-bases-3.1.1/=dependencies/anoma-forwarder-bases-3.1.1/",
+    "anoma-pa-evm-2.0.0/=dependencies/anoma-pa-evm-2.0.0/",
+    "anoma-pa-evm-bindings-3.0.0/=dependencies/anoma-pa-evm-bindings-3.0.0/",
+    "anoma-risc0-deployments-2.0.1/=dependencies/anoma-risc0-deployments-2.0.1/",
     "anomapay-erc20-forwarder-1.0.1/=dependencies/anomapay-erc20-forwarder-1.0.1/",
-    "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-2.0.0-rc.16/dependencies/elliptic-curve-solidity-0.2.5/",
+    "elliptic-curve-solidity-0.2.5/=dependencies/anoma-pa-evm-2.0.0/dependencies/elliptic-curve-solidity-0.2.5/",
     "forge-std-1.17.0/=dependencies/forge-std-1.17.0/",
     "forge-std/=dependencies/forge-std-1.17.0/src/",
-    "openzeppelin-foundry-upgrades-0.4.2/=dependencies/openzeppelin-foundry-upgrades-0.4.2/",
-    "openzeppelin/contracts/=dependencies/anoma-pa-evm-2.0.0-rc.16/dependencies/risc0-risc0-ethereum-3.1.0/lib/openzeppelin-contracts/contracts/",
-    "risc0-risc0-ethereum-3.1.0/=dependencies/anoma-pa-evm-2.0.0-rc.16/dependencies/risc0-risc0-ethereum-3.1.0/",
+    "openzeppelin-foundry-upgrades-0.4.4/=dependencies/openzeppelin-foundry-upgrades-0.4.4/",
+    "openzeppelin/contracts/=dependencies/anoma-pa-evm-2.0.0/dependencies/risc0-risc0-ethereum-3.1.0/lib/openzeppelin-contracts/contracts/",
+    "risc0-risc0-ethereum-3.1.0/=dependencies/anoma-pa-evm-2.0.0/dependencies/risc0-risc0-ethereum-3.1.0/",
     "safe-smart-account-1.5.0/=dependencies/safe-smart-account-1.5.0/",
     "safe-smart-account/common/Enum.sol=dependencies/safe-smart-account-1.5.0/contracts/libraries/Enum.sol",
     "safe-smart-account/libraries/=dependencies/safe-smart-account-1.5.0/contracts/libraries/",
@@ -52,8 +60,8 @@ remappings = [
 ]
 ignored_warnings_from = [
     "dependencies/@openzeppelin-contracts-5.7.0/utils",                                           # Warning 6335: "error" and "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
-    "dependencies/anoma-pa-evm-2.0.0-rc.16/dependencies/risc0-risc0-ethereum-3.1.0/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
-    "dependencies/openzeppelin-foundry-upgrades-0.4.2/src",                                       # Warning 2018: Function state mutability can be restricted to pure
+    "dependencies/anoma-pa-evm-2.0.0/dependencies/risc0-risc0-ethereum-3.1.0/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
+    "dependencies/openzeppelin-foundry-upgrades-0.4.4/src",                                       # Warning 2018: Function state mutability can be restricted to pure
     "dependencies/safe-smart-account-1.5.0/contracts",                                            # Warning 6335: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
     "dependencies/safe-utils-0.0.24/lib/solidity-http/src/",                                      # Warning 6335: "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
     "dependencies/solady-0.1.26/src/utils",                                                       # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
@@ -71,12 +79,13 @@ ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
 [dependencies]
 "@openzeppelin-contracts" = "5.7.0"
 "@openzeppelin-contracts-upgradeable" = "5.7.0"
-"anoma-forwarder-bases" = "3.1.0"
-"anoma-pa-evm" = "2.0.0-rc.16"
-"anoma-risc0-deployments" = "2.0.0"
+"anoma-forwarder-bases" = "3.1.1"
+"anoma-pa-evm" = "2.0.0"
+"anoma-pa-evm-bindings" = { version = "3.0.0", git = "https://github.com/anoma/pa-evm.git", tag = "bindings/v3.0.0" }
+"anoma-risc0-deployments" = "2.0.1"
 "anomapay-erc20-forwarder" = "1.0.1"
 "forge-std" = "1.17.0"
-"openzeppelin-foundry-upgrades" = "0.4.2"
+"openzeppelin-foundry-upgrades" = "0.4.4"
 "safe-smart-account" = { version = "1.5.0", git = "https://github.com/safe-global/safe-smart-account.git", tag = "v1.5.0" }
 "safe-utils" = { version = "0.0.24", git = "https://github.com/Recon-Fuzz/safe-utils.git", tag = "v0.0.24" }
 "solady" = "0.1.26"

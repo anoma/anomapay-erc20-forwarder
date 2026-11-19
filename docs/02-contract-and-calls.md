@@ -28,13 +28,15 @@ The input starts with three 32-byte words: the call type, the token and the amou
 | `Wrap`    | 7 words     | `WrapData`: the Permit2 nonce and deadline, the owner of the tokens, the action tree root, and the signature `r`, `s`, `v` |
 | `Unwrap`  | 1 word      | `UnwrapData`: the receiver                                                                                                 |
 
-The forwarder reads its balance of the token before and after the transfer. A wrap reverts with `BalanceMismatch` if the balance does not increase by exactly the amount, and an unwrap if it does not decrease by exactly the amount. A change in the other direction reverts with an arithmetic underflow (`Panic(0x11)`). So the forwarder supports no token that takes a fee on a transfer.
+The forwarder reads its balance of the token before and after the transfer. A wrap reverts with `BalanceMismatch` if the balance does not increase by exactly the amount, and an unwrap if it does not decrease by exactly the amount. A change in the other direction reverts with an arithmetic underflow (`Panic(0x11)`). A token can take a fee from the amount that the receiver gets. Then a wrap reverts, because the balance of the forwarder increases by less than the amount. But an unwrap succeeds, because the balance of the forwarder decreases by exactly the amount, and the receiver gets less than the amount. So the forwarder supports no token that takes a fee on a transfer.
 
 The forwarder returns an empty output. The protocol adapter compares it with the expected output, which the resource logic sets to empty (`ForwarderCallOutputMismatch`). The resource logic gives the call the deletion criterion `Immediately`, so the protocol adapter emits the call only in `ForwarderCallExecuted`, with the input and the output.
 
 ## 3. Wrap
 
 The forwarder calls `permitWitnessTransferFrom` of Permit2. Permit2 transfers the amount of the token from the owner to the forwarder only if the owner signed this transfer. The signature covers the token, the amount, the nonce, the deadline, the forwarder as the spender, and the witness `Witness(bytes32 actionTreeRoot)`. Permit2 rejects a used nonce and a passed deadline, and it can transfer the tokens only after the owner approved Permit2 for the token. The forwarder emits `Wrapped(token, from, amount)`.
+
+The forwarder passes the signature to Permit2 as the 65 bytes `r`, `s` and `v`. If the owner is an EOA, an account that one private key controls, Permit2 recovers the signer from them. If the owner is a contract, Permit2 calls its `isValidSignature` with them (ERC-1271, the standard for signatures of contracts). An EOA with an EIP-7702 delegation counts as a contract here, because it runs the code of its delegate. So a contract can wrap only if it accepts a 65-byte signature.
 
 The in-circuit checks of the ERC20 resource logic require that the action tree root of the input is the action tree root of the action. So the signature authorizes the transfer only for this action. The action tree root covers the resources that the action creates, so the signature also fixes who owns the new ERC20 resources.
 
@@ -48,6 +50,7 @@ The in-circuit checks of the ERC20 resource logic require that the value of the 
 
 - **The forwarder trusts its protocol adapter.** It executes each call of its protocol adapter with the accepted logic ref. The in-circuit checks of the resource logic cover the input of the call.
 - **Permit2 checks the authorization of a wrap.** The forwarder does not check the signature of the owner itself.
+- **The issuer of a token does not block or take the tokens of the forwarder.** Some tokens let their issuer block the transfers of an address or move its tokens, for example USDC and USDT. If the issuer blocks the forwarder, each unwrap of the token reverts. If the issuer takes tokens from the forwarder, the forwarder holds fewer tokens than its resources of that token.
 
 ## 6. Parameters
 

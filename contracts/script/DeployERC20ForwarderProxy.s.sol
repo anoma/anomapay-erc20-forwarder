@@ -2,21 +2,19 @@
 pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
-import {
-    RecordedDeployments as ProtocolAdapterDeployments
-} from "anoma-pa-evm-2.0.0-rc.16/generated/RecordedDeployments.sol";
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
-import {RecordedDeployments} from "../generated/RecordedDeployments.sol";
 import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 import {DeployERC20ForwarderImplementation} from "./DeployERC20ForwarderImplementation.s.sol";
-import {Parameters} from "./Parameters.sol";
+import {DeploymentsJson} from "./libs/DeploymentsJson.sol";
+import {Parameters} from "./libs/Parameters.sol";
+import {ProtocolAdapterDeployments} from "./libs/ProtocolAdapterDeployments.sol";
+import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
 
 /// @title DeployERC20ForwarderProxy
 /// @author Anoma Foundation, 2025
 /// @notice A script to deploy the ERC20 forwarder implementation and an ERC-1967 proxy pointing to it on supported
-/// networks. The proxy forwards for the protocol adapter proxy that the protocol adapter package records for the same
-/// environment on the chain.
+/// networks. The proxy forwards for the recorded protocol adapter proxy of the same environment on the chain.
 /// @custom:security-contact security@anoma.foundation
 contract DeployERC20ForwarderProxy is Script {
     /// @notice The CREATE2 salt for the staging environment proxy deployment.
@@ -34,8 +32,8 @@ contract DeployERC20ForwarderProxy is Script {
     /// @notice Thrown if the environment already has a deployment recorded for this chain.
     error DeploymentAlreadyRecorded(string environment, uint256 chainId);
 
-    /// @notice Thrown if the protocol adapter package records no protocol adapter proxy of the environment for this
-    /// chain, i.e. the proxy has no protocol adapter to forward for.
+    /// @notice Thrown if the environment records no protocol adapter proxy for this chain, i.e. the proxy has no
+    /// protocol adapter to forward for.
     error ProtocolAdapterNotRecorded(string environment, uint256 chainId);
 
     /// @notice Thrown if the proxy of this source version is already deployed.
@@ -61,8 +59,8 @@ contract DeployERC20ForwarderProxy is Script {
         // Checks
         {
             require(
-                !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
-                DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
+                RecordedDeployments.forwarderProxy({isProduction: isProduction, chainId: block.chainid}) == address(0),
+                DeploymentAlreadyRecorded(DeploymentsJson.environment(isProduction), block.chainid)
             );
 
             implementation = implementationDeployScript.predict();
@@ -103,21 +101,17 @@ contract DeployERC20ForwarderProxy is Script {
         });
     }
 
-    /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
-    /// @param isProduction Whether to name the production or the staging environment.
-    /// @return name The environment name.
-    function environmentName(bool isProduction) public pure returns (string memory name) {
-        name = isProduction ? "production" : "staging";
-    }
-
-    /// @notice Returns the protocol adapter proxy that the protocol adapter package records for the environment on this
-    /// chain, which the forwarder proxy forwards for, and reverts unless the package records one.
+    /// @notice Returns the recorded protocol adapter proxy of the environment on this chain, which the forwarder proxy
+    /// forwards for, and reverts if the environment records none.
     /// @param isProduction Whether to return the production or the staging environment protocol adapter proxy.
     /// @return protocolAdapter The recorded protocol adapter proxy.
     function _protocolAdapter(bool isProduction) internal view virtual returns (address protocolAdapter) {
         protocolAdapter =
             ProtocolAdapterDeployments.protocolAdapterProxy({isProduction: isProduction, chainId: block.chainid});
-        require(protocolAdapter != address(0), ProtocolAdapterNotRecorded(environmentName(isProduction), block.chainid));
+        require(
+            protocolAdapter != address(0),
+            ProtocolAdapterNotRecorded(DeploymentsJson.environment(isProduction), block.chainid)
+        );
     }
 
     /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.

@@ -23,6 +23,10 @@ contracts-deps:
 contracts-deps-clean:
     cd contracts && forge soldeer clean
 
+# Install the contract tooling from the lockfile
+contracts-tooling:
+    cd contracts && bun install --frozen-lockfile
+
 # Clean contracts
 contracts-clean:
     cd contracts && forge clean
@@ -37,7 +41,6 @@ contracts-lint:
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
-    cd contracts && bunx --bun solhint --config .solhint.other.json 'generated/**/*.sol'
 
 # Checks that the storage layout of contracts in `src` is empty.
 # `skip` is a space-separated list of contract names to ignore (non-upgradeable bases).
@@ -73,18 +76,16 @@ contracts-fmt-check:
 contracts-test *args:
     cd contracts && forge test --force {{ args }}
 
-# Regenerate the recorded deployments library from the deployment records
-contracts-gen-deployments:
-    ./scripts/generate-recorded-deployments.sh
-
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
-    # The script directory is built (not skipped) because `ERC1967Proxy` only
-    # enters the compilation graph through `DeployERC20ForwarderProxy.s.sol`;
-    # `--select` keeps the script contracts themselves out of the bindings.
-    # `forge bind` builds without bytecode, which drops the `deploy` helpers, so
-    # build first and let it read those artifacts.
-    cd contracts && forge clean && forge build --skip test && forge bind \
+    # Only the files of the contracts in `--select`: with via_ir, the compiled file set changes the bytecode, and a verifier compiles a contract with its own imports only.
+    # `forge bind` builds without bytecode, so it reads these artifacts.
+    cd contracts && forge clean && forge build \
+        src/ERC20Forwarder.sol \
+        src/draft/EmergencyMigratingERC20Forwarder.sol \
+        dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol \
+        test/DeploymentParameters.sol \
+        && forge bind \
         --skip-build \
         --select '^(ERC20Forwarder|EmergencyMigratingERC20Forwarder|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
@@ -96,9 +97,6 @@ contracts-gen-gas-report:
     # Fuzz and invariant tests use other inputs on each run, so the report counts only the `test_` unit tests.
     # `sed` keeps the gas tables of the output.
     cd contracts && forge test --force --gas-report --md --match-test '^test_' | sed -n '/^|/,/^$/p' > ../docs/gas-report.md
-
-# Regenerate the recorded deployments library, then the Rust bindings
-contracts-gen: contracts-gen-deployments contracts-gen-bindings
 
 # Simulate the implementation deployment (dry-run)
 contracts-simulate-impl chain *args:
@@ -134,35 +132,35 @@ contracts-deploy-proxy deployer chain *args:
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally as the staging proxy owner
-contracts-simulate-staging-upgrade proxy implementation chain *args:
+contracts-simulate-staging-upgrade chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteERC20ForwarderUpgrade.s.sol:ExecuteERC20ForwarderUpgrade \
-        --sig "run(address,address)" {{proxy}} {{implementation}} \
+        --sig "run()" \
         --rpc-url {{chain}} {{ args }}
 
 # Execute the staging upgrade to the deployed implementation as the proxy owner
-contracts-execute-staging-upgrade deployer proxy implementation chain *args:
+contracts-execute-staging-upgrade deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteERC20ForwarderUpgrade.s.sol:ExecuteERC20ForwarderUpgrade \
-        --sig "run(address,address)" {{proxy}} {{implementation}} \
+        --sig "run()" \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the production upgrade proposal (dry-run): simulates the Safe executing the upgrade
-contracts-simulate-production-upgrade-proposal proxy proposer implementation chain *args:
+contracts-simulate-production-upgrade-proposal proposer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/production/ProposeERC20ForwarderUpgrade.s.sol:ProposeERC20ForwarderUpgrade \
-        --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
+        --sig "run(address)" {{proposer}} \
         --rpc-url {{chain}} {{ args }}
 
 # Propose the production upgrade to the deployed implementation to the owning Safe (proposer = unlocked deployer)
-contracts-propose-production-upgrade deployer proxy proposer implementation chain *args:
+contracts-propose-production-upgrade deployer proposer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/production/ProposeERC20ForwarderUpgrade.s.sol:ProposeERC20ForwarderUpgrade \
-        --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
+        --sig "run(address)" {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the migration contract deployment and caller assignment proposal as the deployment wallet (dry-run): simulates the Safe executing it
@@ -281,10 +279,6 @@ bindings-test *args:
 bindings-check: contracts-gen-bindings
     git diff --exit-code crates/bindings/src/generated/
 
-# Check the recorded deployments library is up-to-date
-contracts-deployments-check: contracts-gen-deployments
-    git diff --exit-code contracts/generated/RecordedDeployments.sol
-
 # Check the gas report is up-to-date
 contracts-gas-report-check: contracts-gen-gas-report
     git diff --exit-code docs/gas-report.md
@@ -386,8 +380,6 @@ all-check:
     @just all-fmt-check
     @echo "==> Linting..."
     @just all-lint
-    @echo "==> Checking the recorded deployments library is up-to-date..."
-    @just contracts-deployments-check
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
     @echo "==> Checking the gas report is up-to-date..."

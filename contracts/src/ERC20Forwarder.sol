@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.7.0/token/ERC20/utils/SafeERC20.sol";
-import {ForwarderBaseUpgradeable} from "anoma-forwarder-bases-3.1.0/src/ForwarderBaseUpgradeable.sol";
-import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol";
+import {ForwarderBaseUpgradeable} from "anoma-forwarder-bases-3.1.1/src/ForwarderBaseUpgradeable.sol";
+import {IVersion} from "anoma-forwarder-bases-3.1.1/src/interfaces/IVersion.sol";
 import {
     IPermit2,
     ISignatureTransfer
@@ -22,6 +22,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using SafeERC20 for IERC20;
 
+    /// @notice The call types that the forwarder accepts.
     enum CallType {
         Wrap,
         Unwrap
@@ -68,7 +69,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "2.0.0-rc.10";
+    string public constant override VERSION = "2.0.0";
 
     /// @notice Emitted when ERC20 tokens get wrapped.
     /// @param token The ERC20 token address.
@@ -82,7 +83,11 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     /// @param amount The token amount being withdrawn from the ERC20 forwarder contract.
     event Unwrapped(address indexed token, address indexed to, uint128 amount);
 
+    /// @notice Thrown if the increase of the forwarder's balance of the token in a wrap, or the decrease in an unwrap,
+    /// differs from the amount in the input.
     error BalanceMismatch(uint256 expected, uint256 actual);
+
+    /// @notice Thrown if the wrap data or the unwrap data do not have their fixed length.
     error InvalidInputLength(uint256 expected, uint256 actual);
 
     /// @notice Disables the initializers on the implementation contract to prevent it from being left uninitialized.
@@ -149,7 +154,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     function _wrap(address token, uint128 amount, bytes calldata wrapInput) internal {
         _checkLength({input: wrapInput, expectedLength: _WRAP_DATA_LENGTH});
 
-        (WrapData memory data) = abi.decode(wrapInput, (WrapData));
+        WrapData memory data = abi.decode(wrapInput, (WrapData));
 
         _PERMIT2.permitWitnessTransferFrom({
             permit: ISignatureTransfer.PermitTransferFrom({
@@ -177,7 +182,7 @@ contract ERC20Forwarder is IVersion, ForwarderBaseUpgradeable {
     function _unwrap(address token, uint128 amount, bytes calldata unwrapInput) internal {
         _checkLength({input: unwrapInput, expectedLength: _UNWRAP_DATA_LENGTH});
 
-        (UnwrapData memory data) = abi.decode(unwrapInput, (UnwrapData));
+        UnwrapData memory data = abi.decode(unwrapInput, (UnwrapData));
 
         IERC20(token).safeTransfer({to: data.receiver, value: amount});
 

@@ -92,13 +92,13 @@ These apply to all three cases and are done once per session.
   export ETHERSCAN_API_KEY=<KEY>
   ```
 
-- [ ] Select the environment. It picks the CREATE2 salt and the proxy owner from [`Parameters.sol`](./contracts/script/Parameters.sol), and is deliberately kept out of `contracts/.env` so that it is a conscious choice per session.
+- [ ] Select the environment. It picks the CREATE2 salt and the proxy owner from [`Parameters.sol`](./contracts/script/libs/Parameters.sol), and is deliberately kept out of `contracts/.env` so that it is a conscious choice per session.
 
   ```sh
   export IS_PRODUCTION=false
   ```
 
-  The proxy recipes and the migration recipes read it. The upgrade recipes take their addresses as arguments.
+  The proxy recipes and the migration recipes read it. The upgrade recipes read the proxy of their environment from the record.
 
 ## Releasing a new ERC20 Forwarder Version
 
@@ -110,7 +110,7 @@ A release candidate and a release go through the same cycle. Steps 1 to 5 are re
 
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.0.0-rc.N`, where `A` is the last `MAJOR` version number incremented by 1.
 
-- [ ] Regenerate the recorded deployments library and the bindings with `just contracts-gen`, then run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
+- [ ] Regenerate the bindings with `just contracts-gen-bindings`, then run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
 - [ ] Open a pull request into `next` and merge it once green. The deploy is a separate mechanical step afterwards.
 
@@ -162,13 +162,15 @@ For each chain in the `staging` section of the record:
 - [ ] **Simulate** the upgrade by running
 
   ```sh
-  just contracts-simulate-staging-upgrade $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-staging-upgrade <CHAIN>
   ```
+
+  The upgrade reads the proxy from the record and upgrades it to the implementation this source predicts. It reverts unless that implementation is deployed.
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-upgrade deployer $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-execute-staging-upgrade deployer <CHAIN>
   ```
 
 - [ ] Confirm the proxy now delegates to the new implementation with
@@ -242,13 +244,13 @@ For each chain in the `production` section of the record:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the upgrade, by running
 
   ```sh
-  just contracts-simulate-production-upgrade-proposal $PROXY_ADDRESS <PROPOSER> $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-production-upgrade-proposal <PROPOSER> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-upgrade deployer $PROXY_ADDRESS <PROPOSER> $IMPL_ADDRESS <CHAIN>
+  just contracts-propose-production-upgrade deployer <PROPOSER> <CHAIN>
   ```
 
   where `<PROPOSER>` is a Safe owner or delegate.
@@ -317,8 +319,8 @@ For **production**:
 For **both**:
 
 - [ ] Check the two values the proxy commits to. The deploy script reads both itself:
-  - the protocol adapter proxy of the **same** environment on this chain, from the records of the `anoma-pa-evm` package in [`./contracts/foundry.toml`](./contracts/foundry.toml). The script reverts with `ProtocolAdapterNotRecorded` if the package records none, so bump the package first.
-  - `LOGIC_REF` in [`Parameters.sol`](./contracts/script/Parameters.sol), which `just bindings-test` checks against the `ANOMAPAY_ERC20_CIRCUIT_ID` of the [`anomapay_erc20_library`](https://github.com/anoma/anomapay-erc20-resource) version pinned in [`./Cargo.toml`](./Cargo.toml).
+  - the protocol adapter proxy of the **same** environment on this chain, from `deployments.json` of the `anoma-pa-evm-bindings` dependency in [`./contracts/foundry.toml`](./contracts/foundry.toml). The script reverts with `ProtocolAdapterNotRecorded` if the environment records none, so bump the dependency first: its `version` and `tag`, the two paths in `fs_permissions`, and `_DIRECTORY` in [`ProtocolAdapterDeployments`](./contracts/script/libs/ProtocolAdapterDeployments.sol).
+  - `LOGIC_REF` in [`Parameters.sol`](./contracts/script/libs/Parameters.sol), which `just bindings-test` checks against the `ANOMAPAY_ERC20_CIRCUIT_ID` of the [`anomapay_erc20_library`](https://github.com/anoma/anomapay-erc20-resource) version pinned in [`./Cargo.toml`](./Cargo.toml).
 
 - [ ] Run the test suites as in step 2 of the release cycle.
 
@@ -365,15 +367,7 @@ For **both**:
   }
   ```
 
-  The genesis fields pin how the address was derived and cannot be recovered from the chain once the proxy is upgraded. They are written once and never edited.
-
-- [ ] Regenerate the library the deploy script reads the record through, and the bindings, with
-
-  ```sh
-  just contracts-gen
-  ```
-
-  and commit the changes alongside the record. The contracts package ships without `deployments.json`, so the deploy script reads the records from the generated [`./contracts/generated/RecordedDeployments.sol`](./contracts/generated/RecordedDeployments.sol); leaving it stale lets a genesis deploy run twice on the same chain. CI reruns the generator and fails on any diff.
+  The genesis fields pin how the address was derived and cannot be recovered from the chain once the proxy is upgraded. They are written once and never edited. The scripts read the records from this file, and the bindings crate embeds it, so a record needs no regeneration.
 
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 

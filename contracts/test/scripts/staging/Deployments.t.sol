@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol";
+import {IVersion} from "anoma-forwarder-bases-3.1.1/src/interfaces/IVersion.sol";
 
-import {RecordedDeployments} from "../../../generated/RecordedDeployments.sol";
+import {RecordedDeployments} from "../../../script/libs/RecordedDeployments.sol";
 import {DeploymentsFixture} from "../../fixtures/DeploymentsFixture.sol";
 
 /// @notice Checks the staging deployments recorded in `deployments.json`. The genesis check needs no chain access and
@@ -21,7 +21,7 @@ contract DeploymentsStagingTest is DeploymentsFixture {
     }
 
     function test_recorded_deployments_run_a_release_or_release_candidate_version() public onlyStaging {
-        RecordedDeployments.Deployment[] memory deployments = _recordedDeployments({isProduction: false});
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments({isProduction: false});
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             string memory version = abi.decode(
@@ -41,7 +41,7 @@ contract DeploymentsStagingTest is DeploymentsFixture {
         }
     }
 
-    function test_recorded_deployments_use_the_environment_salt() public pure {
+    function test_recorded_deployments_use_the_environment_salt() public view {
         _expectGenesisDeployments({isProduction: false});
     }
 }

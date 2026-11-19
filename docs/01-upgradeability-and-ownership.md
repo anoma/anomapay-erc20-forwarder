@@ -42,16 +42,17 @@ The owner deprecates the logic ref of a version only after the forwarder accepts
 ## 4. Trust assumptions
 
 - **The owner upgrades only to reviewed code.** An upgrade replaces all code, so the owner can change how tokens leave the forwarder. In production, the FWD Safe signers decide each upgrade.
+- **The owner of the protocol adapter upgrades it only to reviewed code.** A new implementation of the protocol adapter can call the forwarder with the accepted logic ref and without a proof, so the owner of the protocol adapter can also move the tokens of the forwarder. In production, the PA Safe signers decide each upgrade of the protocol adapter.
 - **The PA Safe and the FWD Safe respond to a flaw in time.** In production, the PA Safe pauses the protocol adapter and denies logic refs, and the FWD Safe upgrades the forwarder.
 - **The owner transfers the ownership only to a correct address.** `transferOwnership` and `renounceOwnership` come unchanged from OpenZeppelin, and a transfer completes in one step. Nobody can undo a transfer to a wrong address, and after a renouncement nobody can upgrade the forwarder.
 
 ## 5. Parameters
 
-| Name                               | Value                                                     | Use                                                                                                |
-| ---------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `Parameters.PROXY_SALT_STAGING`    | `"ERC20ForwarderProxyStaging"`                            | CREATE2 salt of the staging proxies                                                                |
-| `Parameters.PROXY_SALT_PRODUCTION` | `"ERC20ForwarderProxyProduction"`                         | CREATE2 salt of the production proxies                                                             |
-| `Parameters.IMPLEMENTATION_SALT`   | `"ERC20ForwarderImpl"`                                    | CREATE2 salt of the implementations, in both environments                                          |
-| `Parameters.LOGIC_REF`             | In [`Parameters.sol`](../contracts/script/Parameters.sol) | The logic ref that a new proxy accepts. A proxy keeps its logic ref until an upgrade sets another. |
-| `Parameters.DEPLOYMENT_WALLET`     | `0x61462bE56782568376f9cB069382EFa72764a407`              | Owner of the staging proxies                                                                       |
-| `Parameters.FWD_MULTISIG`          | `0xc703402252Ce1251aa07e0815D50060d27fdd6C4`              | The FWD Safe, owner of the production proxies                                                      |
+| Name                               | Value                                                          | Use                                                                                                |
+| ---------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `Parameters.PROXY_SALT_STAGING`    | `"ERC20ForwarderProxyStaging"`                                 | CREATE2 salt of the staging proxies                                                                |
+| `Parameters.PROXY_SALT_PRODUCTION` | `"ERC20ForwarderProxyProduction"`                              | CREATE2 salt of the production proxies                                                             |
+| `Parameters.IMPLEMENTATION_SALT`   | `"ERC20ForwarderImpl"`                                         | CREATE2 salt of the implementations, in both environments                                          |
+| `Parameters.LOGIC_REF`             | In [`Parameters.sol`](../contracts/script/libs/Parameters.sol) | The logic ref that a new proxy accepts. A proxy keeps its logic ref until an upgrade sets another. |
+| `Parameters.DEPLOYMENT_WALLET`     | `0x61462bE56782568376f9cB069382EFa72764a407`                   | Owner of the staging proxies                                                                       |
+| `Parameters.FWD_MULTISIG`          | `0xc703402252Ce1251aa07e0815D50060d27fdd6C4`                   | The FWD Safe, owner of the production proxies                                                      |

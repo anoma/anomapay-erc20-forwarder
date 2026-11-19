@@ -2,14 +2,14 @@
 pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
-import {ILogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.16/src/interfaces/ILogicRefDenylist.sol";
-import {IProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.16/src/interfaces/IProtocolAdapter.sol";
-import {ProtocolAdapter} from "anoma-pa-evm-2.0.0-rc.16/src/ProtocolAdapter.sol";
-import {LogicRefDenylist} from "anoma-pa-evm-2.0.0-rc.16/src/state/LogicRefDenylist.sol";
-import {TxGen} from "anoma-pa-evm-2.0.0-rc.16/test/libs/TxGen.sol";
-import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-2.0.0/test/script/DeployRiscZeroContractsMock.s.sol";
+import {ILogicRefDenylist} from "anoma-pa-evm-2.0.0/src/interfaces/ILogicRefDenylist.sol";
+import {IProtocolAdapter} from "anoma-pa-evm-2.0.0/src/interfaces/IProtocolAdapter.sol";
+import {ProtocolAdapter} from "anoma-pa-evm-2.0.0/src/ProtocolAdapter.sol";
+import {LogicRefDenylist} from "anoma-pa-evm-2.0.0/src/state/LogicRefDenylist.sol";
+import {TxGen} from "anoma-pa-evm-2.0.0/test/libs/TxGen.sol";
+import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-2.0.1/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.1.0/contracts/src/test/RiscZeroMockVerifier.sol";
 
@@ -62,12 +62,13 @@ contract EmergencyMigratingERC20ForwarderIntegrationTest is Test {
     function test_execute_emergency_migrates_a_resource_after_the_protocol_adapter_denies_its_logic_ref() public {
         // Create a resource with the vulnerable logic ref.
         TxGen.Resource memory resource = _resource({nonce: 1, logicRef: _VULNERABLE_LOGIC_REF, ephemeral: false});
-        _protocolAdapter.execute(
-            _transaction({
-                consumed: _withoutAppData(_resource({nonce: 0, logicRef: _VULNERABLE_LOGIC_REF, ephemeral: true})),
-                created: _withoutAppData(resource)
-            })
-        );
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed({
+            resource: _resource({nonce: 0, logicRef: _VULNERABLE_LOGIC_REF, ephemeral: true}),
+            appData: TxGen.emptyAppData()
+        });
+        resources[1] = TxGen.created({resource: resource, appData: TxGen.emptyAppData()});
+        _protocolAdapter.execute(_transaction(resources));
         bytes32 nullifier = TxGen.nullifier({resource: resource, nullifierKey: 0});
         bytes32 root = _protocolAdapter.latestCommitmentTreeRoot();
 
@@ -79,10 +80,13 @@ contract EmergencyMigratingERC20ForwarderIntegrationTest is Test {
         _protocolAdapter.denyLogicRefs(denials);
 
         // Check that the adapter no longer consumes the resource.
-        IProtocolAdapter.Transaction memory transfer = _transaction({
-            consumed: _withoutAppData(resource),
-            created: _withoutAppData(_resource({nonce: 2, logicRef: _VULNERABLE_LOGIC_REF, ephemeral: false}))
+        resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed({resource: resource, appData: TxGen.emptyAppData()});
+        resources[1] = TxGen.created({
+            resource: _resource({nonce: 2, logicRef: _VULNERABLE_LOGIC_REF, ephemeral: false}),
+            appData: TxGen.emptyAppData()
         });
+        IProtocolAdapter.Transaction memory transfer = _transaction(resources);
         vm.expectRevert(
             abi.encodeWithSelector(LogicRefDenylist.ResourceWithDeniedLogicRef.selector, _VULNERABLE_LOGIC_REF, true)
         );
@@ -90,10 +94,12 @@ contract EmergencyMigratingERC20ForwarderIntegrationTest is Test {
 
         // Check that the adapter creates no resource with the logic ref. It checks the denylists before the delta
         // proof, so the transaction needs no consumed resource.
-        IProtocolAdapter.Transaction memory creation = _transaction({
-            consumed: new TxGen.ResourceAndAppData[](0),
-            created: _withoutAppData(_resource({nonce: 3, logicRef: _VULNERABLE_LOGIC_REF, ephemeral: false}))
+        resources = new TxGen.ActionResource[](1);
+        resources[0] = TxGen.created({
+            resource: _resource({nonce: 3, logicRef: _VULNERABLE_LOGIC_REF, ephemeral: false}),
+            appData: TxGen.emptyAppData()
         });
+        IProtocolAdapter.Transaction memory creation = _transaction(resources);
         vm.expectRevert(
             abi.encodeWithSelector(LogicRefDenylist.ResourceWithDeniedLogicRef.selector, _VULNERABLE_LOGIC_REF, false)
         );
@@ -112,13 +118,15 @@ contract EmergencyMigratingERC20ForwarderIntegrationTest is Test {
 
         // Emergency-migrate the resource: a trigger with the new logic ref calls the forwarder, and the transaction
         // creates a resource of the same kind and quantity as the trigger.
-        IProtocolAdapter.Transaction memory migration = _transaction({
-            consumed: _withAppData({
-                resource: _resource({nonce: 4, logicRef: _NEW_LOGIC_REF, ephemeral: true}),
-                appData: _migrateCall({nullifier: nullifier, root: root})
-            }),
-            created: _withoutAppData(_resource({nonce: 5, logicRef: _NEW_LOGIC_REF, ephemeral: false}))
+        resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed({
+            resource: _resource({nonce: 4, logicRef: _NEW_LOGIC_REF, ephemeral: true}),
+            appData: _migrateCall({nullifier: nullifier, root: root})
         });
+        resources[1] = TxGen.created({
+            resource: _resource({nonce: 5, logicRef: _NEW_LOGIC_REF, ephemeral: false}), appData: TxGen.emptyAppData()
+        });
+        IProtocolAdapter.Transaction memory migration = _transaction(resources);
         vm.expectEmit(address(_forwarder));
         emit IEmergencyMigratingERC20Forwarder.Migrated({
             token: _TOKEN, vulnerableLogicRef: _VULNERABLE_LOGIC_REF, nullifier: nullifier
@@ -129,14 +137,13 @@ contract EmergencyMigratingERC20ForwarderIntegrationTest is Test {
         assertFalse(_protocolAdapter.isNullifierContained(nullifier), "the adapter does not consume the resource");
     }
 
-    /// @dev Builds a transaction of one action, mock-proven against the empty kind table.
-    function _transaction(TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created)
+    /// @dev Builds a transaction of one action of the resources, in list order, mock-proven against the empty kind
+    /// table.
+    function _transaction(TxGen.ActionResource[] memory resources)
         internal
         returns (IProtocolAdapter.Transaction memory txn)
     {
-        TxGen.ResourceLists[] memory actions = new TxGen.ResourceLists[](1);
-        actions[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        txn = vm.transaction({mockVerifier: _mockVerifier, actionResources: actions});
+        txn = vm.transaction({mockVerifier: _mockVerifier, actionResources: TxGen.oneAction(resources)});
     }
 
     /// @dev The external payload of a trigger that emergency-migrates the resource with the nullifier.
@@ -173,22 +180,5 @@ contract EmergencyMigratingERC20ForwarderIntegrationTest is Test {
             nonce: bytes32(nonce), logicRef: logicRef, labelRef: _LABEL_REF, quantity: _QUANTITY
         });
         resource.ephemeral = ephemeral;
-    }
-
-    function _withoutAppData(TxGen.Resource memory resource)
-        internal
-        pure
-        returns (TxGen.ResourceAndAppData[] memory resources)
-    {
-        resources = _withAppData({resource: resource, appData: TxGen.emptyAppData()});
-    }
-
-    function _withAppData(TxGen.Resource memory resource, IProtocolAdapter.AppData memory appData)
-        internal
-        pure
-        returns (TxGen.ResourceAndAppData[] memory resources)
-    {
-        resources = new TxGen.ResourceAndAppData[](1);
-        resources[0] = TxGen.ResourceAndAppData({resource: resource, appData: appData});
     }
 }
