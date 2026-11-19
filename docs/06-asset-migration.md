@@ -15,7 +15,7 @@ The owner of the protocol adapter deprecates `bc123236…` before the protocol a
 - the number of legacy-forwarder resources could grow, and the kind tree would have to keep their entries for an unlimited time,
 - the hard migration, which accepts each listed logic ref with either forwarder address, could meet legacy-forwarder resources that the copy of the state did not bring.
 
-The ERC20 forwarder accepts another logic ref, so no wrap creates resources with `bc123236…`. After the pause of the protocol adapter ends, each user converts their legacy-forwarder resources when they use them.
+The ERC20 forwarder accepts another logic ref, so no wrap creates resources with `bc123236…`. After the protocol adapter stores the kind tree root of the chain, each user converts their legacy-forwarder resources when they use them.
 
 A prover proves the consumption of a legacy-forwarder resource with the legacy circuit, whose logic ref is `bc123236…`. This repository keeps its binary in [`legacy-anomapay-erc20-circuit-guest.bin`](../crates/integration-test/elf/legacy-anomapay-erc20-circuit-guest.bin). It takes the witness of the active version.
 
@@ -47,7 +47,7 @@ A revert for one token moves no token of the call. The owner can call `migrate` 
 
 The list contains each token of the `Wrapped` events of the legacy ERC20 forwarder, up to the block of the stop. After the stop, the legacy protocol adapter executes no transaction, so this list is final. A token that the legacy ERC20 forwarder holds but never wrapped stays out, because it backs no legacy-forwarder resource.
 
-The kind tree of the chain must have legacy-forwarder entries for each token in the list (section 2). Without the entries, the legacy-forwarder resources of a token cannot unwrap. A token whose balance did not move must have no entries when the protocol adapter starts to execute transactions.
+The kind tree of the chain must have legacy-forwarder entries for each token in the list (section 2). Without the entries, the legacy-forwarder resources of a token cannot unwrap. A token whose balance did not move must have no entries in the kind tree whose root the protocol adapter stores.
 
 ## 6. Staging and production
 
@@ -55,9 +55,9 @@ In both environments, the FWD Safe sets the emergency caller and the deployment 
 
 ## 7. Trust assumptions
 
-- **The protocol adapter stays paused until the move ends.** Before the move, the ERC20 forwarder does not hold the tokens that back the legacy-forwarder resources, so an unwrap of such a resource would send tokens that back other resources. The ERC20 forwarder sends tokens only when its protocol adapter calls it. No contract checks that the pause lasts until the move ends.
+- **The protocol adapter stores the root of the empty kind tree until the move ends.** Before the move, the ERC20 forwarder does not hold the tokens that back the legacy-forwarder resources, so an unwrap of such a resource would send tokens that back other resources. With the root of the empty kind tree, no legacy-forwarder resource can convert, so none can unwrap. The ERC20 forwarder sends tokens only when its protocol adapter calls it. No contract checks that the kind tree root of the chain comes after the move.
 - **The FWD Safe sets the correct migration contract as the emergency caller.** Nobody can undo this step.
-- **The owner of the migration contract moves the tokens during the pause.** It selects the tokens and the time, but not the amount or the receiver.
+- **The owner of the migration contract moves the tokens before the protocol adapter stores the kind tree root of the chain.** It selects the tokens and the time, but not the amount or the receiver.
 - **The list of tokens is complete.** A token outside the list stays in the legacy ERC20 forwarder until a later `migrate`, and it must have no legacy-forwarder entries until then.
 - **No token takes a fee on a transfer.** Otherwise, `migrate` reverts for that token, and the other tokens move without it. Such a token stays in the legacy ERC20 forwarder, so it must have no legacy-forwarder entries.
 - **Each token accepts a transfer of zero.** A zero balance gives one unwrap of zero. If the token rejects it, `migrate` reverts, and the other tokens move without it.

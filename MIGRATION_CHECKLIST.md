@@ -1,6 +1,6 @@
 # Migration Checklist
 
-How to move the tokens a chain's legacy ERC20 forwarder holds to the ERC20 forwarder of one environment. A chain without a legacy ERC20 forwarder skips all of this. [`docs/06-asset-migration.md`](./docs/06-asset-migration.md) specifies the asset migration and the conditions that the order of its steps must keep. The pa-evm [`MIGRATION_CHECKLIST.md`](https://github.com/anoma/pa-evm/blob/next/MIGRATION_CHECKLIST.md) moves the protocol adapter state. This file covers the forwarder's part, which is step 5 of the pa-evm checklist.
+How to move the tokens a chain's legacy ERC20 forwarder holds to the ERC20 forwarder of one environment. A chain without a legacy ERC20 forwarder skips all of this. [`docs/06-asset-migration.md`](./docs/06-asset-migration.md) specifies the asset migration and the conditions that the order of its steps must keep. The pa-evm [`MIGRATION_CHECKLIST.md`](https://github.com/anoma/pa-evm/blob/next/MIGRATION_CHECKLIST.md) moves the protocol adapter state. This file covers the forwarder's part, which is step 9 of the pa-evm checklist.
 
 ## How it works
 
@@ -10,7 +10,7 @@ So the committee assigns a contract, not an account. [`LegacyERC20ForwarderMigra
 
 Two scripts do the work, and both take their addresses and salt from [`Parameters.sol`](./contracts/script/libs/Parameters.sol). [`DeployLegacyERC20ForwarderMigration`](./contracts/script/migration/DeployLegacyERC20ForwarderMigration.s.sol) deploys the migration contract, makes the deployment wallet `0x61462bE56782568376f9cB069382EFa72764a407` (`Parameters.DEPLOYMENT_WALLET`) its owner in both environments, and proposes the caller assignment to the committee Safe as the deployment wallet. It deploys with CREATE2, so the address commits to both forwarders and the owner: the proposal names the right contract before the deployment lands, and a repeated run finds the contract instead of deploying a second one. [`MigrateERC20ForwarderAssets`](./contracts/script/migration/MigrateERC20ForwarderAssets.s.sol) moves the tokens as the deployment wallet and checks the result. It reads the migration contract from the emergency caller of the legacy ERC20 forwarder. Both scripts read the two forwarders from [`deployments.json`](./crates/bindings/deployments.json) and check them against the chain: the environment's proxy owner owns the ERC20 forwarder, and each forwarder forwards for the protocol adapter that pa-evm records for it. They also check the migration contract: it holds the recorded forwarders, the deployment wallet owns it, and the owner of the legacy protocol adapter has stopped it.
 
-The move must end while the protocol adapter proxy is still paused. The kind tree of that proxy carries legacy-forwarder entries, which let a legacy-forwarder resource unwrap from the ERC20 forwarder. A paused proxy executes nothing, so no legacy-forwarder resource can unwrap before the ERC20 forwarder holds the tokens of the legacy ERC20 forwarder.
+The move must end before the protocol adapter proxy gets the kind tree root of the chain. The kind tree of the chain carries legacy-forwarder entries, which let a legacy-forwarder resource unwrap from the ERC20 forwarder. Until the proxy gets its root, the proxy stores the root of the empty kind tree, and with this root no legacy-forwarder resource can convert. So none can unwrap before the ERC20 forwarder holds the tokens of the legacy ERC20 forwarder.
 
 `IS_PRODUCTION` selects the environment whose ERC20 forwarder receives the tokens, and every migration recipe reads it. After the caller assignment, the tokens can move only to the ERC20 forwarder that the migration contract holds, so choose the environment before the proposal.
 
@@ -29,11 +29,9 @@ The move must end while the protocol adapter proxy is still paused. The kind tre
 
 ## Per chain
 
-These steps are step 5 of the pa-evm checklist: they run after the stop of the legacy protocol adapter and before the completion run. Users cannot transact in that time. The deploy script refuses to run before the stop, because the legacy ERC20 forwarder accepts the caller assignment only after it. Agree on a signing time with the committee's signers before the stop.
+These steps are step 9 of the pa-evm checklist: they run after the completion run and before the protocol adapter proxy gets the kind tree root of the chain. Users can transact in that time, but no legacy-forwarder resource can convert. The deploy script refuses to run before the stop of the legacy protocol adapter, because the legacy ERC20 forwarder accepts the caller assignment only after it. Agree on a signing time with the committee's signers.
 
-The pa-evm migration run sends its transactions from the deployment wallet, and so do steps 3 and 7 and a kind tree root update in step 1. Send those only after that run has ended. The other steps can run while it copies the state.
-
-1. [ ] Read the `Wrapped` events again, up to the block of the stop. The legacy protocol adapter executes no transaction after the stop, so this list is final. If it has a token that `tokens.json` does not list or mark, add or mark the token, regenerate the kind tree, and set the new kind tree root on the protocol adapter proxy while it is still paused. Then export the list:
+1. [ ] Read the `Wrapped` events again, up to the block of the stop. The legacy protocol adapter executes no transaction after the stop, so this list is final. If it has a token that `tokens.json` does not list or mark, add or mark the token and regenerate the kind tree, before its root goes to the protocol adapter proxy. Then export the list:
 
    ```sh
    export TOKENS='[<TOKEN>,<TOKEN>]'
@@ -98,4 +96,4 @@ The pa-evm migration run sends its transactions from the deployment wallet, and 
 
    It checks that the emergency caller of the legacy ERC20 forwarder is the migration contract between the recorded forwarders, and that the legacy ERC20 forwarder holds none of the tokens. The `ERC20TokenMigrated` events record the amounts the ERC20 forwarder received.
 
-9. [ ] Continue with step 6 of the pa-evm checklist. Its completion run unpauses the protocol adapter proxy, and legacy-forwarder resources can then unwrap from the ERC20 forwarder.
+9. [ ] Continue with step 10 of the pa-evm checklist. It installs the kind tree root of the chain on the protocol adapter proxy, and legacy-forwarder resources can then convert and unwrap from the ERC20 forwarder.
