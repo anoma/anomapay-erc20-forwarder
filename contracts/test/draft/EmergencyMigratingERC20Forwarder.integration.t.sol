@@ -51,7 +51,7 @@ contract EmergencyMigratingERC20ForwarderIntegrationTest is Test {
 
         _forwarder = EmergencyMigratingERC20Forwarder(
             Upgrades.deployUUPSProxy(
-                "ERC20Forwarder.sol:ERC20Forwarder",
+                "out/ERC20Forwarder.sol/ERC20Forwarder.json",
                 abi.encodeCall(
                     ERC20Forwarder.initialize, (address(_protocolAdapter), _VULNERABLE_LOGIC_REF, _FORWARDER_OWNER)
                 )

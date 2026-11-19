@@ -34,7 +34,7 @@ contract DeployERC20ForwarderImplementation is Script {
         require(implementation.code.length == 0, ImplementationAlreadyDeployed({implementation: implementation}));
 
         Options memory opts;
-        Upgrades.validateImplementation("ERC20Forwarder.sol:ERC20Forwarder", opts);
+        Upgrades.validateImplementation("out/ERC20Forwarder.sol/ERC20Forwarder.json", opts);
 
         vm.startBroadcast();
         implementation = address(new ERC20Forwarder{salt: IMPLEMENTATION_SALT}());

@@ -38,7 +38,7 @@ abstract contract EmergencyMigratingERC20ForwarderFixture is Test {
 
         _forwarder = EmergencyMigratingERC20Forwarder(
             Upgrades.deployUUPSProxy(
-                "ERC20Forwarder.sol:ERC20Forwarder",
+                "out/ERC20Forwarder.sol/ERC20Forwarder.json",
                 abi.encodeCall(
                     ERC20Forwarder.initialize, (address(_protocolAdapter), _ACTIVE_LOGIC_REF, _FORWARDER_OWNER)
                 )
