@@ -39,6 +39,15 @@ Our software undergoes regular audits:
 
 1. Informal Systems
    - Company Website: https://informal.systems
+   - Commit ID: [a7312982ed850625548dcc84d2181f9a8d4a1e7e](https://github.com/anoma/anomapay-erc20-forwarder/tree/a7312982ed850625548dcc84d2181f9a8d4a1e7e)
+   - Started: 2026-11-02
+   - Finished: 2026-11-19
+   - Last revised: 2026-11-25
+
+   [📄 Audit Report (pdf)](./audits/2026-11-25_Informal_Systems_Anoma_Galileo_V2.pdf)
+
+2. Informal Systems
+   - Company Website: https://informal.systems
    - Commit ID: [03e60b64d9dc3845c55e34d1d0bef25392cb5b60](https://github.com/anoma/anomapay-erc20-forwarder/tree/03e60b64d9dc3845c55e34d1d0bef25392cb5b60)
    - Started: 2025-12-01
    - Finished: 2025-12-16
